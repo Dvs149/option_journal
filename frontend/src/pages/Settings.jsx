@@ -33,6 +33,7 @@ import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLotSizes, STANDARD_INDICES } from '../context/LotSizeContext';
+import { useToast } from '../context/ToastContext';
 
 export default function Settings() {
   const { user, updateUser } = useAuth();
@@ -128,11 +129,10 @@ export default function Settings() {
     showWelcomeTips: true,
   });
 
-  const [toastMessage, setToastMessage] = useState('');
+  const { showToast } = useToast();
 
-  const triggerToast = (msg) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(''), 3000);
+  const triggerToast = (msg, type = 'success') => {
+    showToast(msg, type);
   };
 
   const handleAddIndex = (e) => {
@@ -254,19 +254,12 @@ export default function Settings() {
         </div>
       </div>
 
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
-      {/* 8 Navigation Sub-Tabs */}
+      {/* Navigation Sub-Tabs */}
       <div className="flex items-center gap-1.5 overflow-x-auto border-b border-[#1e293b] light:border-slate-200 pb-3 text-xs font-semibold whitespace-nowrap scrollbar-none">
         {[
           { id: 'General', label: 'General', icon: Sliders },
-          { id: 'Trading', label: 'Trading & Lot Sizes', icon: TrendingUp },
+          { id: 'Trading', label: 'Trading Settings', icon: TrendingUp },
+          { id: 'Lot Sizes', label: 'Index Lot Sizes', icon: Layers },
           { id: 'Risk Management', label: 'Risk Management', icon: Shield },
           { id: 'Notifications', label: 'Notifications', icon: Bell },
           { id: 'Appearance', label: 'Appearance', icon: Palette },
@@ -294,7 +287,7 @@ export default function Settings() {
       </div>
 
       {/* 3x3 Grid of Settings Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
         {/* Card 1: General Settings */}
         {isVisible('General') && (
           <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
@@ -376,7 +369,7 @@ export default function Settings() {
           </div>
         )}
 
-        {/* Card 2: Trading Settings with DYNAMIC LOT SIZE MANAGEMENT */}
+        {/* Card 2: Trading Settings */}
         {isVisible('Trading') && (
           <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
@@ -386,7 +379,7 @@ export default function Settings() {
                 </div>
                 <div>
                   <h2 className="text-sm font-bold text-white light:text-slate-900">Trading Settings</h2>
-                  <p className="text-[11px] text-slate-400">Default values & dynamic database lot sizes</p>
+                  <p className="text-[11px] text-slate-400">Default values for new trades</p>
                 </div>
               </div>
 
@@ -482,112 +475,124 @@ export default function Settings() {
                   className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none"
                 />
               </div>
+            </div>
+          </div>
+        )}
 
-              {/* DYNAMIC LOT SIZES MANAGEMENT ACCORDION / LIST */}
-              <div className="pt-3 border-t border-[#1e293b]/60 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-bold text-white light:text-slate-900 block">
-                      Manage All Index Lot Sizes
-                    </span>
-                    <span className="text-[10px] text-slate-400">
-                      Changes immediately reflect in Add Trade & Calculators
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        resetToDefaults();
-                        triggerToast('Reset lot sizes to standard exchange defaults (NIFTY: 50, BN: 15, SENSEX: 10, etc.)');
-                      }}
-                      className="p-1.5 rounded-lg bg-[#0e1626] light:bg-slate-100 hover:bg-[#162033] text-slate-400 hover:text-white border border-[#1e293b]"
-                      title="Reset to Exchange Defaults"
+        {/* Card: Manage All Index Lot Sizes (SEPARATE DEDICATED BOX) */}
+        {(isVisible('Trading') || isVisible('Lot Sizes')) && (
+          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+            {/* Header matching user image */}
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-bold text-white light:text-slate-900 tracking-tight">
+                  Manage All Index Lot Sizes
+                </h2>
+                <p className="text-[11px] text-slate-400 mt-0.5">
+                  Changes immediately reflect in Add Trade & Calculators
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetToDefaults();
+                    triggerToast('✓ Reset lot sizes to exchange defaults in Database!');
+                  }}
+                  className="p-2 rounded-xl bg-[#0e1626] light:bg-slate-100 hover:bg-[#162033] text-slate-400 hover:text-white border border-[#1e293b] light:border-slate-300 transition-all shadow-sm"
+                  title="Reset to Exchange Defaults"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAddIndexModal(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Add Index</span>
+                </button>
+              </div>
+            </div>
+
+            {/* List of Indices in compact 2-column grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[340px] overflow-y-auto pr-1">
+              {Object.keys(lotSizes)
+                .filter((k) => k !== 'BANK NIFTY')
+                .map((idxKey) => {
+                  const size = lotSizes[idxKey] || 1;
+                  const isStandard = STANDARD_INDICES.some((i) => i.id === idxKey);
+                  return (
+                    <div
+                      key={idxKey}
+                      className="p-2.5 px-3 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 flex items-center justify-between gap-2 hover:border-slate-700 transition-colors"
                     >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowAddIndexModal(true)}
-                      className="px-2 py-1 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white text-[10px] font-bold border border-blue-500/30 transition-all"
-                    >
-                      + Add Index
-                    </button>
-                  </div>
-                </div>
+                      <div className="min-w-0">
+                        <span className="font-bold text-white light:text-slate-900 text-xs tracking-wide block truncate">
+                          {idxKey}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono-numbers block mt-0.5">
+                          1 Lot = <span className="text-emerald-400 font-bold">{size} Qty</span>
+                        </span>
+                      </div>
 
-                {/* Index Lot Size List */}
-                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
-                  {Object.keys(lotSizes)
-                    .filter((k) => k !== 'BANK NIFTY')
-                    .map((idxKey) => {
-                      const size = lotSizes[idxKey] || 1;
-                      const isStandard = ['NIFTY', 'BANKNIFTY', 'SENSEX', 'FINNIFTY', 'MIDCPNIFTY', 'BANKEX', 'STOCK'].includes(idxKey);
-                      return (
-                        <div
-                          key={idxKey}
-                          className="px-2.5 py-1.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 flex items-center justify-between gap-2"
-                        >
-                          <div className="min-w-0">
-                            <span className="font-bold text-white light:text-slate-900 text-[11px] block truncate">
-                              {idxKey}
-                            </span>
-                            <span className="text-[9px] text-slate-400 font-mono-numbers">
-                              1 Lot = <strong className="text-emerald-400">{size} Qty</strong>
-                            </span>
-                          </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <input
+                          type="number"
+                          min="1"
+                          value={size}
+                          onChange={(e) => {
+                            updateLotSize(idxKey, e.target.value);
+                            triggerToast(`Saved ${idxKey} lot size (${e.target.value}) to Database!`);
+                          }}
+                          className="w-14 px-2 py-1 rounded-lg bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-300 text-center text-xs font-mono-numbers text-white light:text-slate-900 font-bold focus:outline-none focus:border-blue-500 shadow-inner"
+                        />
+                        {!isStandard && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              removeCustomIndex(idxKey);
+                              triggerToast(`Removed custom index ${idxKey}`);
+                            }}
+                            className="p-1 rounded-lg text-rose-400 hover:bg-rose-500/20 text-xs transition-colors"
+                            title="Remove custom index"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
 
-                          <div className="flex items-center gap-1 shrink-0">
-                            <input
-                              type="number"
-                              min="1"
-                              value={size}
-                              onChange={(e) => {
-                                updateLotSize(idxKey, e.target.value);
-                                triggerToast(`✓ Saved ${idxKey} lot size (${e.target.value}) to Database!`);
-                              }}
-                              className="w-16 px-1.5 py-1 rounded-lg bg-[#121b2d] border border-[#1e293b] text-right text-xs font-mono-numbers text-white font-bold focus:outline-none"
-                            />
-                            {!isStandard && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  removeCustomIndex(idxKey);
-                                  triggerToast(`Removed custom index ${idxKey}`);
-                                }}
-                                className="p-1 rounded text-rose-400 hover:bg-rose-500/20 text-xs"
-                                title="Remove custom index"
-                              >
-                                ✕
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+            {/* Bottom Preview Box - Exact match to user screenshot */}
+            <div className="px-3.5 py-2.5 rounded-xl bg-blue-950/20 light:bg-blue-50/60 border border-blue-900/40 light:border-blue-200 flex items-center justify-between text-xs font-mono-numbers">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400 font-sans text-[11px]">Preview:</span>
+                <div>
+                  <select
+                    value={testLots}
+                    onChange={(e) => setTestLots(parseInt(e.target.value, 10) || 1)}
+                    className="bg-[#0e1626] light:bg-white px-2.5 py-1 rounded-lg text-white light:text-slate-900 font-bold border border-[#1e293b] light:border-slate-300 text-xs focus:outline-none cursor-pointer"
+                  >
+                    <option value="1">1 Lot</option>
+                    <option value="2">2 Lots</option>
+                    <option value="3">3 Lots</option>
+                    <option value="4">4 Lots</option>
+                    <option value="5">5 Lots</option>
+                    <option value="10">10 Lots</option>
+                  </select>
                 </div>
+                <span className="text-blue-400 font-bold">
+                  of {defaultIndex}
+                </span>
+              </div>
 
-                {/* Live Preview Calculation */}
-                <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] flex items-center justify-between font-mono-numbers">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-slate-300 font-sans">Preview:</span>
-                    <select
-                      value={testLots}
-                      onChange={(e) => setTestLots(parseInt(e.target.value, 10) || 1)}
-                      className="bg-[#0e1626] px-1.5 py-0.5 rounded text-white border border-[#1e293b] text-xs font-bold"
-                    >
-                      <option value="1">1 Lot</option>
-                      <option value="2">2 Lots</option>
-                      <option value="3">3 Lots</option>
-                      <option value="5">5 Lots</option>
-                      <option value="10">10 Lots</option>
-                    </select>
-                    <span>of {defaultIndex}</span>
-                  </div>
-                  <strong className="text-white">
-                    = {testLots * getLotSize(defaultIndex)} Shares (Qty)
-                  </strong>
-                </div>
+              <div className="text-white light:text-slate-900 font-bold text-xs tracking-wider">
+                = {testLots * getLotSize(defaultIndex)} Shares (Qty)
               </div>
             </div>
           </div>

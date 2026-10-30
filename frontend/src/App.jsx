@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { FilterProvider } from './context/FilterContext';
 import { LotSizeProvider } from './context/LotSizeContext';
+import { ToastProvider } from './context/ToastContext';
 import AppLayout from './components/layout/AppLayout';
 
 import Dashboard from './pages/Dashboard';
@@ -44,8 +45,9 @@ export default function App() {
       <AuthProvider>
         <FilterProvider>
           <LotSizeProvider>
-            <BrowserRouter>
-            <Routes>
+            <ToastProvider>
+              <BrowserRouter>
+              <Routes>
               {/* Public Authentication */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
@@ -76,6 +78,7 @@ export default function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
+        </ToastProvider>
         </LotSizeProvider>
       </FilterProvider>
     </AuthProvider>

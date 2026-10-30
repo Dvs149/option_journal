@@ -31,6 +31,7 @@ import {
 } from 'recharts';
 import api from '../api/client';
 import { formatINR, formatCompactINR, formatDate } from '../utils/formatters';
+import { useToast } from '../context/ToastContext';
 
 // Sample curated August 2025 dataset matching the reference design exactly
 const DEFAULT_AUGUST_DAYS = {
@@ -77,7 +78,10 @@ export default function TradingCalendar() {
   const [selectedDayNumber, setSelectedDayNumber] = useState(12);
   const [loading, setLoading] = useState(false);
   const [tradeToDelete, setTradeToDelete] = useState(null);
-  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const { showToast } = useToast();
+  const setFeedbackMessage = (msg, type = 'success') => {
+    if (msg) showToast(msg, type);
+  };
 
   // Top Statistics state
   const stats = {
@@ -287,13 +291,6 @@ export default function TradingCalendar() {
           </button>
         </div>
       </div>
-
-      {feedbackMessage && (
-        <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 animate-fadeIn">
-          <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-          <span>{feedbackMessage}</span>
-        </div>
-      )}
 
       {/* 1. Top Statistics Row (7 Cards) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">

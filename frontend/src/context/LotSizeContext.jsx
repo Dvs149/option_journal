@@ -2,23 +2,27 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import api from '../api/client';
 
 export const DEFAULT_LOT_SIZES = {
-  'NIFTY': 50,
-  'BANK NIFTY': 15,
-  'BANKNIFTY': 15,
-  'SENSEX': 10,
-  'FINNIFTY': 25,
-  'MIDCPNIFTY': 50,
-  'BANKEX': 15,
+  'NIFTY': 65,
+  'BANK NIFTY': 30,
+  'BANKNIFTY': 30,
+  'FINNIFTY': 60,
+  'MIDCPNIFTY': 120,
+  'NIFTYNXT50': 25,
+  'SENSEX': 20,
+  'BANKEX': 30,
+  'SENSEX50': 75,
   'STOCK': 1,
 };
 
 export const STANDARD_INDICES = [
-  { id: 'NIFTY', name: 'NIFTY', defaultSize: 50, exchange: 'NSE', label: 'Nifty 50' },
-  { id: 'BANKNIFTY', name: 'BANKNIFTY', defaultSize: 15, exchange: 'NSE', label: 'Bank Nifty' },
-  { id: 'SENSEX', name: 'SENSEX', defaultSize: 10, exchange: 'BSE', label: 'BSE Sensex' },
-  { id: 'FINNIFTY', name: 'FINNIFTY', defaultSize: 25, exchange: 'NSE', label: 'Nifty Financial' },
-  { id: 'MIDCPNIFTY', name: 'MIDCPNIFTY', defaultSize: 50, exchange: 'NSE', label: 'Nifty Midcap' },
-  { id: 'BANKEX', name: 'BANKEX', defaultSize: 15, exchange: 'BSE', label: 'BSE Bankex' },
+  { id: 'NIFTY', name: 'NIFTY', defaultSize: 65, exchange: 'NSE', label: 'Nifty 50' },
+  { id: 'BANKNIFTY', name: 'BANKNIFTY', defaultSize: 30, exchange: 'NSE', label: 'Nifty Bank' },
+  { id: 'FINNIFTY', name: 'FINNIFTY', defaultSize: 60, exchange: 'NSE', label: 'Nifty Financial Services' },
+  { id: 'MIDCPNIFTY', name: 'MIDCPNIFTY', defaultSize: 120, exchange: 'NSE', label: 'Nifty Midcap Select' },
+  { id: 'NIFTYNXT50', name: 'NIFTYNXT50', defaultSize: 25, exchange: 'NSE', label: 'Nifty Next 50' },
+  { id: 'SENSEX', name: 'SENSEX', defaultSize: 20, exchange: 'BSE', label: 'BSE Sensex' },
+  { id: 'BANKEX', name: 'BANKEX', defaultSize: 30, exchange: 'BSE', label: 'BSE Bankex' },
+  { id: 'SENSEX50', name: 'SENSEX50', defaultSize: 75, exchange: 'BSE', label: 'BSE Sensex 50' },
   { id: 'STOCK', name: 'STOCK', defaultSize: 1, exchange: 'NSE', label: 'Individual Stocks' },
 ];
 

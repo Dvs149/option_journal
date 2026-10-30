@@ -19,6 +19,7 @@ import {
 import api from '../api/client';
 import { formatINR } from '../utils/formatters';
 import { useLotSizes } from '../context/LotSizeContext';
+import { useToast } from '../context/ToastContext';
 
 export default function AddTrade() {
   const navigate = useNavigate();
@@ -28,19 +29,25 @@ export default function AddTrade() {
   const [activeTab, setActiveTab] = useState('trade_details');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const { showToast } = useToast();
+  const setSuccessMessage = (msg) => { if (msg) showToast(msg, 'success'); };
+  const setErrorMessage = (msg) => { if (msg) showToast(msg, 'error'); };
   const [selectedScreenshot, setSelectedScreenshot] = useState(null);
   const [screenshotPreview, setScreenshotPreview] = useState(null);
 
   // Form State
   const [form, setForm] = useState({
-    trade_date: '2025-08-31',
+    trade_date: new Date().toISOString().split('T')[0],
     index_name: 'NIFTY',
     trading_type: 'Intraday',
     option_type: 'CE',
     strike_price: '25000',
-    expiry_date: '2025-09-04',
+    expiry_date: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
+    // Both Option Type (CE + PE) leg prices
+    ce_entry_price: '',
+    pe_entry_price: '',
+    ce_exit_price: '',
+    pe_exit_price: '',
     entry_premium: '123.00',
     exit_premium: '156.00',
     quantity: '50',
@@ -122,6 +129,32 @@ export default function AddTrade() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Both Option Type (CE & PE) Prices Change
+  const handleBothPricesChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => {
+      const next = { ...prev, [name]: value };
+
+      if (name === 'ce_entry_price' || name === 'pe_entry_price') {
+        const ce = parseFloat(name === 'ce_entry_price' ? value : next.ce_entry_price) || 0;
+        const pe = parseFloat(name === 'pe_entry_price' ? value : next.pe_entry_price) || 0;
+        if (ce > 0 || pe > 0) {
+          next.entry_premium = (ce + pe).toFixed(2);
+        }
+      }
+
+      if (name === 'ce_exit_price' || name === 'pe_exit_price') {
+        const ce = parseFloat(name === 'ce_exit_price' ? value : next.ce_exit_price) || 0;
+        const pe = parseFloat(name === 'pe_exit_price' ? value : next.pe_exit_price) || 0;
+        if (ce > 0 || pe > 0) {
+          next.exit_premium = (ce + pe).toFixed(2);
+        }
+      }
+
+      return next;
+    });
   };
 
   // Total Charges Computed
@@ -255,6 +288,10 @@ export default function AddTrade() {
       option_type: 'CE',
       strike_price: '',
       expiry_date: '',
+      ce_entry_price: '',
+      pe_entry_price: '',
+      ce_exit_price: '',
+      pe_exit_price: '',
       entry_premium: '',
       exit_premium: '',
       quantity: '50',
@@ -339,6 +376,11 @@ export default function AddTrade() {
         personal_notes: form.personal_notes,
       };
 
+      if (form.option_type === 'Both' && (form.ce_entry_price || form.pe_entry_price)) {
+        const legDetails = `Legs: [CE Entry: ₹${form.ce_entry_price || 0}, Exit: ₹${form.ce_exit_price || 0}] [PE Entry: ₹${form.pe_entry_price || 0}, Exit: ₹${form.pe_exit_price || 0}]`;
+        payload.trade_setup = payload.trade_setup ? `${payload.trade_setup} | ${legDetails}` : legDetails;
+      }
+
       await api.post('/trades', payload);
       setSuccessMessage('Trade successfully saved and recorded in journal!');
 
@@ -347,6 +389,10 @@ export default function AddTrade() {
         setForm((prev) => ({
           ...prev,
           strike_price: '',
+          ce_entry_price: '',
+          pe_entry_price: '',
+          ce_exit_price: '',
+          pe_exit_price: '',
           entry_premium: '',
           exit_premium: '',
           gross_profit: '0.00',
@@ -472,21 +518,6 @@ export default function AddTrade() {
         </button>
       </div>
 
-      {/* Notifications */}
-      {errorMessage && (
-        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs flex items-center gap-3 animate-fadeIn">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" />
-          <span className="flex-1">{errorMessage}</span>
-        </div>
-      )}
-
-      {successMessage && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-3 animate-fadeIn">
-          <CheckCircle2 className="w-5 h-5 flex-shrink-0" />
-          <span className="flex-1">{successMessage}</span>
-        </div>
-      )}
-
       {/* Main Grid: Left Form Cards (8 cols) & Right Summary + Quick Actions (4 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column (8 cols): Form Sections */}
@@ -573,7 +604,26 @@ export default function AddTrade() {
                       <button
                         key={opt}
                         type="button"
-                        onClick={() => setForm((prev) => ({ ...prev, option_type: opt }))}
+                        onClick={() => {
+                          setForm((prev) => {
+                            const next = { ...prev, option_type: opt };
+                            if (opt === 'Both') {
+                              if (!next.ce_entry_price && !next.pe_entry_price && parseFloat(next.entry_premium) > 0) {
+                                const total = parseFloat(next.entry_premium);
+                                const half = Math.floor(total / 2);
+                                next.ce_entry_price = half.toString();
+                                next.pe_entry_price = (total - half).toFixed(2);
+                              }
+                              if (!next.ce_exit_price && !next.pe_exit_price && parseFloat(next.exit_premium) > 0) {
+                                const total = parseFloat(next.exit_premium);
+                                const half = Math.floor(total / 2);
+                                next.ce_exit_price = half.toString();
+                                next.pe_exit_price = (total - half).toFixed(2);
+                              }
+                            }
+                            return next;
+                          });
+                        }}
                         className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
                           form.option_type === opt
                             ? 'bg-blue-600 text-white shadow-sm'
@@ -617,35 +667,125 @@ export default function AddTrade() {
 
               {/* Row 3: Entry Premium, Exit Premium, Quantity */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-slate-400 mb-1 font-medium">
-                    Entry Premium
-                  </label>
-                  <input
-                    type="number"
-                    step="0.05"
-                    placeholder="123.00"
-                    name="entry_premium"
-                    value={form.entry_premium}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
-                  />
-                </div>
+                {form.option_type === 'Both' ? (
+                  <>
+                    {/* Both: CE & PE Entry Prices */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-slate-400 font-medium">
+                          Entry Premium
+                        </label>
+                        <span className="text-[10px] text-blue-400 font-mono-numbers font-semibold">
+                          Total: ₹{form.entry_premium || '0.00'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="0.05"
+                            placeholder="CE Entry"
+                            name="ce_entry_price"
+                            value={form.ce_entry_price}
+                            onChange={handleBothPricesChange}
+                            className="w-full pl-2.5 pr-8 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
+                          />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 pointer-events-none">
+                            CE
+                          </span>
+                        </div>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="0.05"
+                            placeholder="PE Entry"
+                            name="pe_entry_price"
+                            value={form.pe_entry_price}
+                            onChange={handleBothPricesChange}
+                            className="w-full pl-2.5 pr-8 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
+                          />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-rose-400 pointer-events-none">
+                            PE
+                          </span>
+                        </div>
+                      </div>
+                    </div>
 
-                <div>
-                  <label className="block text-slate-400 mb-1 font-medium">
-                    Exit Premium
-                  </label>
-                  <input
-                    type="number"
-                    step="0.05"
-                    placeholder="156.00"
-                    name="exit_premium"
-                    value={form.exit_premium}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
-                  />
-                </div>
+                    {/* Both: CE & PE Exit Prices */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-slate-400 font-medium">
+                          Exit Premium
+                        </label>
+                        <span className="text-[10px] text-blue-400 font-mono-numbers font-semibold">
+                          Total: ₹{form.exit_premium || '0.00'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="0.05"
+                            placeholder="CE Exit"
+                            name="ce_exit_price"
+                            value={form.ce_exit_price}
+                            onChange={handleBothPricesChange}
+                            className="w-full pl-2.5 pr-8 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
+                          />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 pointer-events-none">
+                            CE
+                          </span>
+                        </div>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="0.05"
+                            placeholder="PE Exit"
+                            name="pe_exit_price"
+                            value={form.pe_exit_price}
+                            onChange={handleBothPricesChange}
+                            className="w-full pl-2.5 pr-8 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
+                          />
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-rose-400 pointer-events-none">
+                            PE
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-slate-400 mb-1 font-medium">
+                        Entry Premium
+                      </label>
+                      <input
+                        type="number"
+                        step="0.05"
+                        placeholder="123.00"
+                        name="entry_premium"
+                        value={form.entry_premium}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-400 mb-1 font-medium">
+                        Exit Premium
+                      </label>
+                      <input
+                        type="number"
+                        step="0.05"
+                        placeholder="156.00"
+                        name="exit_premium"
+                        value={form.exit_premium}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
+                      />
+                    </div>
+                  </>
+                )}
 
                 <div>
                   <label className="block text-slate-400 mb-1 font-medium">

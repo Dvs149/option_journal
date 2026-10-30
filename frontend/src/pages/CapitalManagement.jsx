@@ -415,7 +415,7 @@ export default function CapitalManagement() {
                   <select
                     value={calcIndex}
                     onChange={(e) => handleCalcIndexChange(e.target.value)}
-                    className="bg-transparent text-[10px] text-blue-400 font-bold border-none outline-none cursor-pointer"
+                    className="px-2 py-0.5 rounded-md bg-[#0e1626] border border-[#1e293b] text-[10px] text-blue-400 font-bold outline-none cursor-pointer"
                   >
                     {Object.keys(lotSizes).filter(k => k !== 'BANK NIFTY').map(idx => (
                       <option key={idx} value={idx} className="bg-[#121b2d] text-white">{idx}</option>

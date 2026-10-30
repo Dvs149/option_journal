@@ -70,18 +70,23 @@ class TradeController extends Controller
             });
         }
 
-        // Sorting
-        $sortBy = $request->input('sort_by', 'trade_date');
+        // Sorting: default to latest created trade first
+        $sortBy = $request->input('sort_by', 'id');
         $sortOrder = $request->input('sort_order', 'desc');
 
-        $allowedSorts = ['trade_date', 'net_pnl', 'gross_profit', 'gross_loss', 'total_charges', 'strike_price', 'quantity'];
-        if (in_array($sortBy, $allowedSorts)) {
-            $query->orderBy($sortBy, $sortOrder === 'asc' ? 'asc' : 'desc');
-        } else {
-            $query->orderBy('trade_date', 'desc');
+        if ($sortBy === 'latest') {
+            $sortBy = 'id';
         }
 
-        $query->orderBy('id', 'desc');
+        $allowedSorts = ['id', 'created_at', 'trade_date', 'net_pnl', 'gross_profit', 'gross_loss', 'total_charges', 'strike_price', 'quantity'];
+        if (in_array($sortBy, $allowedSorts)) {
+            $query->orderBy($sortBy, $sortOrder === 'asc' ? 'asc' : 'desc');
+            if ($sortBy !== 'id') {
+                $query->orderBy('id', 'desc');
+            }
+        } else {
+            $query->orderBy('id', 'desc');
+        }
 
         $perPage = min((int) $request->input('per_page', 15), 100);
         $trades = $query->paginate($perPage);

@@ -25,6 +25,7 @@ import {
   Trophy,
   SlidersHorizontal,
   ChevronDown,
+  ChevronUp,
   ArrowLeft,
   Receipt,
   BookOpen,
@@ -43,10 +44,11 @@ import {
 import api from '../api/client';
 import { formatINR, formatDate } from '../utils/formatters';
 import { useLotSizes } from '../context/LotSizeContext';
+import { useToast } from '../context/ToastContext';
 
 export default function AllTrades() {
   const navigate = useNavigate();
-  const { getLotSize } = useLotSizes();
+  const { lotSizes = {}, getLotSize } = useLotSizes();
 
   // Primary state
   const [trades, setTrades] = useState([]);
@@ -90,7 +92,22 @@ export default function AllTrades() {
   const [tradeToDelete, setTradeToDelete] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [savingEdit, setSavingEdit] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [sortBy, setSortBy] = useState('latest');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const { showToast } = useToast();
+  const setFeedbackMessage = (msg, type = 'success') => {
+    if (msg) showToast(msg, type);
+  };
+
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortBy(field);
+      setSortOrder('desc');
+    }
+    setPage(1);
+  };
 
   // Fetch Dashboard Stats & Trades
   useEffect(() => {
@@ -99,7 +116,7 @@ export default function AllTrades() {
 
   useEffect(() => {
     fetchTrades();
-  }, [selectedIndex, selectedTradingType, selectedOption, selectedStrategy, page, perPage]);
+  }, [selectedIndex, selectedTradingType, selectedOption, selectedStrategy, page, perPage, sortBy, sortOrder]);
 
   const fetchStats = async () => {
     try {
@@ -130,6 +147,8 @@ export default function AllTrades() {
           option_type: selectedOption === 'ALL' ? undefined : selectedOption,
           strategy_name: selectedStrategy === 'ALL' ? undefined : selectedStrategy,
           search: search || undefined,
+          sort_by: sortBy === 'latest' ? 'id' : sortBy,
+          sort_order: sortOrder,
           page,
           per_page: perPage,
         },
@@ -305,14 +324,6 @@ export default function AllTrades() {
             View, edit, delete and analyze all your trading records
           </p>
         </div>
-
-        {/* Global actions / feedback message */}
-        {feedbackMessage && (
-          <div className="p-2.5 px-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 animate-fadeIn">
-            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-            <span>{feedbackMessage}</span>
-          </div>
-        )}
       </div>
 
       {/* 1. Main Statistics Cards (6 Horizontal Cards) */}
@@ -456,12 +467,13 @@ export default function AllTrades() {
               className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none"
             >
               <option value="ALL">All Indices</option>
-              <option value="NIFTY">NIFTY</option>
-              <option value="BANK NIFTY">BANK NIFTY</option>
-              <option value="SENSEX">SENSEX</option>
-              <option value="BANKEX">BANKEX</option>
-              <option value="FINNIFTY">FINNIFTY</option>
-              <option value="MIDCPNIFTY">MIDCPNIFTY</option>
+              {Object.keys(lotSizes)
+                .filter((idx) => idx !== 'BANK NIFTY')
+                .map((idx) => (
+                  <option key={idx} value={idx}>
+                    {idx === 'BANKNIFTY' ? 'BANK NIFTY' : idx}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -526,19 +538,39 @@ export default function AllTrades() {
           </div>
         </div>
 
-        {/* Row 2: Search Input & Action Buttons */}
+        {/* Row 2: Search Input, Sort Selector & Action Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-1">
-          {/* Search Box */}
-          <form onSubmit={handleSearchSubmit} className="relative w-full sm:max-w-xs">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search trades..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 transition-colors"
-            />
-          </form>
+          {/* Search Box & Sort */}
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-1">
+            <form onSubmit={handleSearchSubmit} className="relative w-full sm:max-w-xs">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search trades..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 transition-colors"
+              />
+            </form>
+
+            <select
+              value={`${sortBy}_${sortOrder}`}
+              onChange={(e) => {
+                const [sb, so] = e.target.value.split('_');
+                setSortBy(sb);
+                setSortOrder(so);
+                setPage(1);
+              }}
+              className="px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none shrink-0"
+              title="Sort Order"
+            >
+              <option value="latest_desc">Latest First (Newest Entry)</option>
+              <option value="trade_date_desc">Date (Newest to Oldest)</option>
+              <option value="trade_date_asc">Date (Oldest to Newest)</option>
+              <option value="net_pnl_desc">Net P&L (Highest First)</option>
+              <option value="net_pnl_asc">Net P&L (Lowest First)</option>
+            </select>
+          </div>
 
           {/* Action Buttons */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -617,18 +649,66 @@ export default function AllTrades() {
                         className="rounded bg-[#0e1626] border-[#1e293b] text-blue-600 focus:ring-0 cursor-pointer"
                       />
                     </th>
-                    <th className="py-3 px-3">Date</th>
+                    <th
+                      onClick={() => handleSort('trade_date')}
+                      className="py-3 px-3 cursor-pointer select-none hover:text-white light:hover:text-slate-900 transition-colors"
+                      title="Sort by Date"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Date</span>
+                        {sortBy === 'trade_date' ? (
+                          sortOrder === 'asc' ? <ChevronUp className="w-3 h-3 text-blue-400" /> : <ChevronDown className="w-3 h-3 text-blue-400" />
+                        ) : (
+                          <ArrowUpDown className="w-2.5 h-2.5 text-slate-500 opacity-60" />
+                        )}
+                      </div>
+                    </th>
                     <th className="py-3 px-3">Index</th>
                     <th className="py-3 px-2">Type</th>
                     <th className="py-3 px-2">CE/PE</th>
-                    <th className="py-3 px-2">Strike</th>
+                    <th
+                      onClick={() => handleSort('strike_price')}
+                      className="py-3 px-2 cursor-pointer select-none hover:text-white light:hover:text-slate-900 transition-colors"
+                      title="Sort by Strike"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Strike</span>
+                        {sortBy === 'strike_price' && (
+                          sortOrder === 'asc' ? <ChevronUp className="w-3 h-3 text-blue-400" /> : <ChevronDown className="w-3 h-3 text-blue-400" />
+                        )}
+                      </div>
+                    </th>
                     <th className="py-3 px-2">Expiry</th>
                     <th className="py-3 px-2 text-right">Lots</th>
                     <th className="py-3 px-2 text-right">Entry</th>
                     <th className="py-3 px-2 text-right">Exit</th>
-                    <th className="py-3 px-3 text-right">Gross P/L</th>
+                    <th
+                      onClick={() => handleSort('gross_profit')}
+                      className="py-3 px-3 text-right cursor-pointer select-none hover:text-white light:hover:text-slate-900 transition-colors"
+                      title="Sort by Gross P/L"
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        <span>Gross P/L</span>
+                        {sortBy === 'gross_profit' && (
+                          sortOrder === 'asc' ? <ChevronUp className="w-3 h-3 text-blue-400" /> : <ChevronDown className="w-3 h-3 text-blue-400" />
+                        )}
+                      </div>
+                    </th>
                     <th className="py-3 px-2 text-right">Charges</th>
-                    <th className="py-3 px-3 text-right">Net P&L</th>
+                    <th
+                      onClick={() => handleSort('net_pnl')}
+                      className="py-3 px-3 text-right cursor-pointer select-none hover:text-white light:hover:text-slate-900 transition-colors"
+                      title="Sort by Net P&L"
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        <span>Net P&L</span>
+                        {sortBy === 'net_pnl' ? (
+                          sortOrder === 'asc' ? <ChevronUp className="w-3 h-3 text-blue-400" /> : <ChevronDown className="w-3 h-3 text-blue-400" />
+                        ) : (
+                          <ArrowUpDown className="w-2.5 h-2.5 text-slate-500 opacity-60" />
+                        )}
+                      </div>
+                    </th>
                     <th className="py-3 px-3">Strategy</th>
                     <th className="py-3 px-3 text-center">Actions</th>
                   </tr>
@@ -1337,11 +1417,13 @@ export default function AllTrades() {
                     onChange={(e) => setEditForm({ ...editForm, index_name: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white"
                   >
-                    <option value="NIFTY">NIFTY</option>
-                    <option value="BANK NIFTY">BANK NIFTY</option>
-                    <option value="SENSEX">SENSEX</option>
-                    <option value="BANKEX">BANKEX</option>
-                    <option value="FINNIFTY">FINNIFTY</option>
+                    {Object.keys(lotSizes)
+                      .filter((idx) => idx !== 'BANK NIFTY')
+                      .map((idx) => (
+                        <option key={idx} value={idx}>
+                          {idx === 'BANKNIFTY' ? 'BANK NIFTY' : idx} (Lot: {lotSizes[idx]})
+                        </option>
+                      ))}
                   </select>
                 </div>
               </div>
@@ -1396,28 +1478,130 @@ export default function AllTrades() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-400 mb-1">Entry Premium</label>
-                  <input
-                    type="number"
-                    step="0.05"
-                    value={editForm.entry_premium || ''}
-                    onChange={(e) => setEditForm({ ...editForm, entry_premium: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers"
-                  />
+              {editForm.option_type === 'Both' ? (
+                <div className="space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-slate-400 text-xs">Entry Premium (CE + PE)</label>
+                      <span className="text-[10px] text-blue-400 font-mono-numbers font-semibold">
+                        Total: ₹{editForm.entry_premium || '0.00'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.05"
+                          placeholder="CE Entry"
+                          value={editForm.ce_entry_price || ''}
+                          onChange={(e) => {
+                            const ce = parseFloat(e.target.value) || 0;
+                            const pe = parseFloat(editForm.pe_entry_price) || 0;
+                            setEditForm({
+                              ...editForm,
+                              ce_entry_price: e.target.value,
+                              entry_premium: (ce + pe).toFixed(2),
+                            });
+                          }}
+                          className="w-full pl-2.5 pr-8 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers text-xs"
+                        />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 pointer-events-none">CE</span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.05"
+                          placeholder="PE Entry"
+                          value={editForm.pe_entry_price || ''}
+                          onChange={(e) => {
+                            const ce = parseFloat(editForm.ce_entry_price) || 0;
+                            const pe = parseFloat(e.target.value) || 0;
+                            setEditForm({
+                              ...editForm,
+                              pe_entry_price: e.target.value,
+                              entry_premium: (ce + pe).toFixed(2),
+                            });
+                          }}
+                          className="w-full pl-2.5 pr-8 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers text-xs"
+                        />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-rose-400 pointer-events-none">PE</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-slate-400 text-xs">Exit Premium (CE + PE)</label>
+                      <span className="text-[10px] text-blue-400 font-mono-numbers font-semibold">
+                        Total: ₹{editForm.exit_premium || '0.00'}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.05"
+                          placeholder="CE Exit"
+                          value={editForm.ce_exit_price || ''}
+                          onChange={(e) => {
+                            const ce = parseFloat(e.target.value) || 0;
+                            const pe = parseFloat(editForm.pe_exit_price) || 0;
+                            setEditForm({
+                              ...editForm,
+                              ce_exit_price: e.target.value,
+                              exit_premium: (ce + pe).toFixed(2),
+                            });
+                          }}
+                          className="w-full pl-2.5 pr-8 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers text-xs"
+                        />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 pointer-events-none">CE</span>
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.05"
+                          placeholder="PE Exit"
+                          value={editForm.pe_exit_price || ''}
+                          onChange={(e) => {
+                            const ce = parseFloat(editForm.ce_exit_price) || 0;
+                            const pe = parseFloat(e.target.value) || 0;
+                            setEditForm({
+                              ...editForm,
+                              pe_exit_price: e.target.value,
+                              exit_premium: (ce + pe).toFixed(2),
+                            });
+                          }}
+                          className="w-full pl-2.5 pr-8 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers text-xs"
+                        />
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-rose-400 pointer-events-none">PE</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-slate-400 mb-1">Exit Premium</label>
-                  <input
-                    type="number"
-                    step="0.05"
-                    value={editForm.exit_premium || ''}
-                    onChange={(e) => setEditForm({ ...editForm, exit_premium: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers"
-                  />
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-slate-400 mb-1">Entry Premium</label>
+                    <input
+                      type="number"
+                      step="0.05"
+                      value={editForm.entry_premium || ''}
+                      onChange={(e) => setEditForm({ ...editForm, entry_premium: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 mb-1">Exit Premium</label>
+                    <input
+                      type="number"
+                      step="0.05"
+                      value={editForm.exit_premium || ''}
+                      onChange={(e) => setEditForm({ ...editForm, exit_premium: e.target.value })}
+                      className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="flex justify-end gap-2 pt-2">
                 <button

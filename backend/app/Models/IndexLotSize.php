@@ -40,12 +40,14 @@ class IndexLotSize extends Model
     public static function getExchangeDefaults(): array
     {
         return [
-            'NIFTY' => ['lot_size' => 50, 'exchange' => 'NSE', 'display_name' => 'Nifty 50'],
-            'BANKNIFTY' => ['lot_size' => 15, 'exchange' => 'NSE', 'display_name' => 'Bank Nifty'],
-            'SENSEX' => ['lot_size' => 10, 'exchange' => 'BSE', 'display_name' => 'BSE Sensex'],
-            'FINNIFTY' => ['lot_size' => 25, 'exchange' => 'NSE', 'display_name' => 'Nifty Financial'],
-            'MIDCPNIFTY' => ['lot_size' => 50, 'exchange' => 'NSE', 'display_name' => 'Nifty Midcap'],
-            'BANKEX' => ['lot_size' => 15, 'exchange' => 'BSE', 'display_name' => 'BSE Bankex'],
+            'NIFTY' => ['lot_size' => 65, 'exchange' => 'NSE', 'display_name' => 'Nifty 50'],
+            'BANKNIFTY' => ['lot_size' => 30, 'exchange' => 'NSE', 'display_name' => 'Nifty Bank'],
+            'FINNIFTY' => ['lot_size' => 60, 'exchange' => 'NSE', 'display_name' => 'Nifty Financial Services'],
+            'MIDCPNIFTY' => ['lot_size' => 120, 'exchange' => 'NSE', 'display_name' => 'Nifty Midcap Select'],
+            'NIFTYNXT50' => ['lot_size' => 25, 'exchange' => 'NSE', 'display_name' => 'Nifty Next 50'],
+            'SENSEX' => ['lot_size' => 20, 'exchange' => 'BSE', 'display_name' => 'BSE Sensex'],
+            'BANKEX' => ['lot_size' => 30, 'exchange' => 'BSE', 'display_name' => 'BSE Bankex'],
+            'SENSEX50' => ['lot_size' => 75, 'exchange' => 'BSE', 'display_name' => 'BSE Sensex 50'],
             'STOCK' => ['lot_size' => 1, 'exchange' => 'NSE', 'display_name' => 'Individual Stocks'],
         ];
     }
