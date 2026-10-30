@@ -96,7 +96,8 @@ export default function Register() {
                 <IndianRupee className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="number"
-                  step="1000"
+                  min="0"
+                  step="any"
                   required
                   placeholder="500000"
                   value={initialCapital}

@@ -15,6 +15,7 @@ import {
   ArrowRight,
   Layers,
   ChevronDown,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -32,6 +33,7 @@ import {
 import api from '../api/client';
 import { formatINR, formatCompactINR, formatDate } from '../utils/formatters';
 import { useToast } from '../context/ToastContext';
+import EditTradeModal from '../components/trades/EditTradeModal';
 
 export default function TradingCalendar() {
   const navigate = useNavigate();
@@ -45,6 +47,7 @@ export default function TradingCalendar() {
   const [selectedDayNumber, setSelectedDayNumber] = useState(today.getDate());
   const [loading, setLoading] = useState(false);
   const [tradeToDelete, setTradeToDelete] = useState(null);
+  const [tradeToEdit, setTradeToEdit] = useState(null);
   const { showToast } = useToast();
   const setFeedbackMessage = (msg, type = 'success') => {
     if (msg) showToast(msg, type);
@@ -252,16 +255,22 @@ export default function TradingCalendar() {
     { day: 'Fri', pnl: 18.5, positive: true },
   ];
 
-  // Delete trade from day view
-  const handleDeleteTrade = async (id) => {
+  // Delete trade from day view with confirmation
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteTrade = async () => {
+    if (!tradeToDelete) return;
     try {
-      await api.delete(`/trades/${id}`);
+      setIsDeleting(true);
+      await api.delete(`/trades/${tradeToDelete.id}`);
       setFeedbackMessage('Trade deleted successfully.');
-      fetchCalendar(currentDate.year, currentDate.month);
       setTradeToDelete(null);
-      setTimeout(() => setFeedbackMessage(''), 3000);
+      fetchCalendar(currentDate.year, currentDate.month);
     } catch (e) {
       console.error('Failed to delete trade', e);
+      setFeedbackMessage(e.response?.data?.message || 'Failed to delete trade', 'error');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -568,7 +577,9 @@ export default function TradingCalendar() {
                               className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                                 t.option_type === 'CE'
                                   ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                  : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                  : t.option_type === 'PE'
+                                  ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                  : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                               }`}
                             >
                               {t.option_type}
@@ -598,7 +609,7 @@ export default function TradingCalendar() {
                             <div className="flex items-center justify-center gap-1">
                               <button
                                 type="button"
-                                onClick={() => navigate('/trades')}
+                                onClick={() => setTradeToEdit(t)}
                                 className="p-1 rounded hover:bg-[#1e293b] text-slate-400 hover:text-blue-400 transition-colors"
                                 title="Edit Trade"
                               >
@@ -606,7 +617,7 @@ export default function TradingCalendar() {
                               </button>
                               <button
                                 type="button"
-                                onClick={() => handleDeleteTrade(t.id)}
+                                onClick={() => setTradeToDelete(t)}
                                 className="p-1 rounded hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 transition-colors"
                                 title="Delete Trade"
                               >
@@ -827,6 +838,60 @@ export default function TradingCalendar() {
           </div>
         </div>
       </div>
+
+      {/* Edit Trade Modal */}
+      {tradeToEdit && (
+        <EditTradeModal
+          trade={tradeToEdit}
+          isOpen={!!tradeToEdit}
+          onClose={() => setTradeToEdit(null)}
+          onSaved={() => {
+            fetchCalendar(currentDate.year, currentDate.month);
+            setTradeToEdit(null);
+          }}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {tradeToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-rose-400">
+              <div className="p-2 rounded-2xl bg-rose-500/10">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-white light:text-slate-900">
+                Delete Trade Record?
+              </h3>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Are you sure you want to permanently delete this trade record for{' '}
+              <strong className="text-white light:text-slate-900">
+                {tradeToDelete.index_name} {tradeToDelete.option_type} ({formatDate(tradeToDelete.trade_date)})
+              </strong>
+              ? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setTradeToDelete(null)}
+                disabled={isDeleting}
+                className="px-4 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 text-xs font-semibold text-slate-300 light:text-slate-700 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteTrade}
+                disabled={isDeleting}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md shadow-rose-600/30 transition-all disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

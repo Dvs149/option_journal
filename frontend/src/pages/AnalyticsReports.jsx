@@ -212,6 +212,19 @@ export default function AnalyticsReports() {
     }
   };
 
+  if (loading && !data) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-slate-400 font-medium tracking-wide">
+            Loading analytics & reports...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-12 animate-fadeIn text-slate-100">
       {/* Top Header Bar */}
@@ -968,7 +981,7 @@ export default function AnalyticsReports() {
                     </td>
                   </tr>
                 ) : (
-                  data.dashboard.charts.monthly_pnl.map((r) => (
+                  (data?.dashboard?.charts?.monthly_pnl || []).map((r) => (
                     <tr key={r.month} className="hover:bg-[#162033]/50">
                       <td className="py-2 px-2 font-sans text-slate-300 light:text-slate-700">{r.month}</td>
                       <td className="py-2 px-2 text-center text-slate-300">{r.trade_count || 1}</td>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Plus,
   Search,
@@ -74,6 +74,7 @@ const getLegPrices = (trade) => {
 
 export default function AllTrades() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { lotSizes = {}, getLotSize } = useLotSizes();
 
   // Primary state
@@ -201,8 +202,16 @@ export default function AllTrades() {
         per_page: res.data?.per_page || perPage,
       });
 
-      // Default select the first trade for the drawer on wide screens
-      if (list.length > 0 && !selectedTrade) {
+      // If URL contains editTradeId, automatically trigger edit modal
+      const editId = searchParams.get('editTradeId');
+      if (editId) {
+        const found = list.find((t) => t.id.toString() === editId.toString());
+        if (found) {
+          handleOpenEdit(found);
+          setSelectedTrade(found);
+        }
+      } else if (list.length > 0 && !selectedTrade) {
+        // Default select the first trade for the drawer on wide screens
         setSelectedTrade(list[0]);
       }
     } catch (err) {
@@ -649,6 +658,7 @@ export default function AllTrades() {
 
   const handleDrawerDeleteSingleScreenshot = async (screenshotId) => {
     if (!selectedTrade) return;
+    if (!window.confirm('Are you sure you want to permanently remove this screenshot?')) return;
     try {
       setUploadingDrawerScreenshot(true);
       let res;
@@ -2118,8 +2128,10 @@ export default function AllTrades() {
                         <span
                           className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                             t.option_type === 'CE'
-                              ? 'bg-emerald-500/10 text-emerald-400'
-                              : 'bg-rose-500/10 text-rose-400'
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                              : t.option_type === 'PE'
+                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                              : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                           }`}
                         >
                           {t.option_type}

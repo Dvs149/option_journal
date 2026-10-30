@@ -103,7 +103,11 @@ export default function Dashboard() {
   const risk = data?.risk_management || {};
 
   // Dynamically calculate percentage badges relative to capital
-  const hasTrades = (stats.total_trades || 0) > 0;
+  const hasTrades = (stats.total_trades || 0) > 0
+    || (stats.total_trading_days || 0) > 0
+    || (stats.total_gross_profit || 0) > 0
+    || (stats.total_gross_loss || 0) > 0
+    || (stats.total_net_profit || 0) !== 0;
   const investedCap = stats.invested_capital || stats.initial_capital || 500000;
 
   const netProfitPct = stats.period_roi !== undefined && stats.period_roi !== null
@@ -132,7 +136,7 @@ export default function Dashboard() {
 
   // Custom colors for Donut charts
   const indexColors = ['#3b82f6', '#06b6d4', '#8b5cf6', '#f97316', '#ec4899', '#10b981'];
-  const cePeColors = { CE: '#3b82f6', PE: '#ef4444', Both: '#f97316' };
+  const cePeColors = { CE: '#10b981', PE: '#ef4444', Both: '#3b82f6' };
 
   // Calendar rendering calculation
   const renderCalendarDays = () => {
@@ -883,10 +887,10 @@ export default function Dashboard() {
                         <span
                           className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                             t.option_type === 'CE'
-                              ? 'bg-blue-500/15 text-blue-400'
+                              ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                               : t.option_type === 'PE'
-                              ? 'bg-rose-500/15 text-rose-400'
-                              : 'bg-amber-500/15 text-amber-400'
+                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                              : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                           }`}
                         >
                           {t.option_type}

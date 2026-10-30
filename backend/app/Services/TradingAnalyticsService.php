@@ -124,7 +124,7 @@ class TradingAnalyticsService
 
         // Today's, Week's, Month's P&L
         $todayStr = Carbon::today('Asia/Kolkata')->toDateString();
-        $todaysTrades = $allTrades->where('trade_date', $todayStr);
+        $todaysTrades = $allTrades->filter(fn($t) => Carbon::parse($t->trade_date)->toDateString() === $todayStr);
         $todayPnl = (float) $todaysTrades->sum('net_pnl');
 
         $weekStart = Carbon::today('Asia/Kolkata')->startOfWeek()->toDateString();
@@ -173,13 +173,15 @@ class TradingAnalyticsService
 
         // Daily P&L Series for Chart
         $dailyChartData = $dailyGrouped->map(function ($day) {
+            $dateClean = Carbon::parse($day['date'])->format('Y-m-d');
             return [
-                'date' => $day['date'],
+                'date' => $dateClean,
                 'displayDate' => Carbon::parse($day['date'])->format('d M'),
-                'pnl' => $day['net_pnl'],
-                'grossProfit' => $day['gross_profit'],
-                'grossLoss' => $day['gross_loss'],
-                'trades' => $day['trades_count'],
+                'pnl' => (float) $day['net_pnl'],
+                'net_pnl' => (float) $day['net_pnl'],
+                'grossProfit' => (float) $day['gross_profit'],
+                'grossLoss' => (float) $day['gross_loss'],
+                'trades' => (int) $day['trades_count'],
             ];
         })->values();
 
@@ -281,6 +283,7 @@ class TradingAnalyticsService
             'charts' => [
                 'daily_pnl' => $dailyChartData,
                 'equity_curve' => $equityCurveData,
+                'drawdown_curve' => $equityCurveData,
                 'monthly_pnl' => $monthlyChartData,
                 'index_performance' => $indexPerformance,
                 'ce_pe_performance' => $cePePerformance,

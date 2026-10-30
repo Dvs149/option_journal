@@ -36,10 +36,13 @@ import {
 import api from '../api/client';
 import { formatINR, formatDate } from '../utils/formatters';
 import { useFilter } from '../context/FilterContext';
+import { useToast } from '../context/ToastContext';
+import EditTradeModal from '../components/trades/EditTradeModal';
 
 export default function TradingJournal() {
   const navigate = useNavigate();
   const { dateRangeDisplay } = useFilter();
+  const { showToast } = useToast();
 
   // Search & Filters
   const [search, setSearch] = useState('');
@@ -47,14 +50,29 @@ export default function TradingJournal() {
   const [selectedStrategy, setSelectedStrategy] = useState('ALL');
   const [journalEntries, setJournalEntries] = useState([]);
   const [selectedEntry, setSelectedEntry] = useState(null);
+  const [entryToDelete, setEntryToDelete] = useState(null);
+  const [entryToEdit, setEntryToEdit] = useState(null);
+  const [isDeletingEntry, setIsDeletingEntry] = useState(false);
   const [loading, setLoading] = useState(true);
   const [drawerTab, setDrawerTab] = useState('journal_notes');
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0 });
+  const [perPage, setPerPage] = useState(10);
+  const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0, from: 0, to: 0 });
+  const [summaryStats, setSummaryStats] = useState(null);
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
 
   useEffect(() => {
     fetchJournal();
-  }, [selectedType, selectedStrategy, page]);
+  }, [selectedType, selectedStrategy, page, perPage, debouncedSearch]);
 
   const fetchJournal = async () => {
     try {
@@ -62,8 +80,10 @@ export default function TradingJournal() {
       const res = await api.get('/journal', {
         params: {
           strategy_name: selectedStrategy === 'ALL' ? undefined : selectedStrategy,
-          outcome: selectedType === 'ALL' ? undefined : (selectedType === 'WIN' ? 'win' : 'loss'),
+          option_type: selectedType === 'ALL' ? undefined : selectedType,
+          search: debouncedSearch ? debouncedSearch.trim() : undefined,
           page,
+          per_page: perPage,
         },
       });
       const data = res.data?.data || [];
@@ -90,11 +110,20 @@ export default function TradingJournal() {
         };
       });
       setJournalEntries(formatted);
+
+      if (res.data?.summary_stats) {
+        setSummaryStats(res.data.summary_stats);
+      }
+
       setPagination({
         current_page: res.data?.current_page || 1,
         last_page: res.data?.last_page || 1,
-        total: res.data?.total || formatted.length,
+        total: res.data?.total !== undefined ? res.data.total : formatted.length,
+        from: res.data?.from || (formatted.length > 0 ? (page - 1) * perPage + 1 : 0),
+        to: res.data?.to || (formatted.length > 0 ? (page - 1) * perPage + formatted.length : 0),
+        per_page: res.data?.per_page || perPage,
       });
+
       if (formatted.length > 0) {
         setSelectedEntry(formatted[0]);
       } else {
@@ -107,8 +136,42 @@ export default function TradingJournal() {
     }
   };
 
+  const handleDeleteEntry = async () => {
+    if (!entryToDelete) return;
+    try {
+      setIsDeletingEntry(true);
+      await api.delete(`/trades/${entryToDelete.id}`);
+      showToast('Trade & journal record deleted successfully');
+      setEntryToDelete(null);
+      if (selectedEntry?.id === entryToDelete.id) {
+        setSelectedEntry(null);
+      }
+      fetchJournal();
+    } catch (e) {
+      console.error('Failed to delete trade', e);
+      showToast(e.response?.data?.message || 'Failed to delete trade', 'error');
+    } finally {
+      setIsDeletingEntry(false);
+    }
+  };
+
   // Top Metrics derived from real data
   const stats = useMemo(() => {
+    if (summaryStats) {
+      return {
+        total_entries: summaryStats.total_entries,
+        total_entries_pct: '0.0%',
+        successful_trades: summaryStats.successful_trades,
+        win_rate: `${summaryStats.win_rate}%`,
+        failed_trades: summaryStats.failed_trades,
+        failed_pct: `${summaryStats.failed_pct}%`,
+        best_trade_pnl: summaryStats.best_trade_pnl,
+        best_trade_date: summaryStats.best_trade_date,
+        worst_trade_pnl: summaryStats.worst_trade_pnl,
+        worst_trade_date: summaryStats.worst_trade_date,
+      };
+    }
+
     const total = pagination.total || journalEntries.length;
     const wins = journalEntries.filter((e) => e.net_pnl > 0).length;
     const losses = journalEntries.filter((e) => e.net_pnl < 0).length;
@@ -134,7 +197,7 @@ export default function TradingJournal() {
       worst_trade_pnl: worst && worst.net_pnl < 0 ? worst.net_pnl : 0,
       worst_trade_date: worst && worst.net_pnl < 0 ? worst.date : '-',
     };
-  }, [journalEntries, pagination.total]);
+  }, [journalEntries, pagination.total, summaryStats]);
 
   // Sentiment Donut Data derived from real entries
   const sentimentPieData = useMemo(() => {
@@ -319,12 +382,16 @@ export default function TradingJournal() {
 
               <select
                 value={selectedType}
-                onChange={(e) => setSelectedType(e.target.value)}
+                onChange={(e) => {
+                  setSelectedType(e.target.value);
+                  setPage(1);
+                }}
                 className="px-2.5 py-1.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-xs text-white light:text-slate-900 focus:outline-none"
               >
                 <option value="ALL">All Types</option>
                 <option value="CE">CE</option>
                 <option value="PE">PE</option>
+                <option value="Both">Both</option>
               </select>
 
               <button
@@ -386,7 +453,9 @@ export default function TradingJournal() {
                           className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
                             entry.option_type === 'CE'
                               ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                              : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                              : entry.option_type === 'PE'
+                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                              : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                           }`}
                         >
                           {entry.option_type}
@@ -443,15 +512,96 @@ export default function TradingJournal() {
             </table>
           </div>
 
-          {/* Pagination */}
-          <div className="pt-2 border-t border-[#1e293b] flex items-center justify-between text-xs text-slate-400">
-            <span>Showing 1 to 10 of 123 entries</span>
-            <div className="flex items-center gap-1">
-              <button className="p-1 rounded bg-[#0e1626] border border-[#1e293b]"><ChevronLeft className="w-3 h-3" /></button>
-              <button className="px-2 py-0.5 rounded bg-blue-600 text-white font-bold text-xs">1</button>
-              <button className="px-2 py-0.5 rounded bg-[#0e1626] border border-[#1e293b] text-xs">2</button>
-              <button className="px-2 py-0.5 rounded bg-[#0e1626] border border-[#1e293b] text-xs">3</button>
-              <button className="p-1 rounded bg-[#0e1626] border border-[#1e293b]"><ChevronRight className="w-3 h-3" /></button>
+          {/* Dynamic Pagination */}
+          <div className="pt-3 border-t border-[#1e293b] light:border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-400">
+            <div>
+              {pagination.total > 0 ? (
+                <span>
+                  Showing <strong className="text-white light:text-slate-900 font-mono-numbers">{pagination.from || 1}</strong> to{' '}
+                  <strong className="text-white light:text-slate-900 font-mono-numbers">{pagination.to || journalEntries.length}</strong> of{' '}
+                  <strong className="text-white light:text-slate-900 font-mono-numbers">{pagination.total}</strong> entries
+                </span>
+              ) : (
+                <span>No entries recorded</span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {/* Prev Button */}
+              <button
+                type="button"
+                disabled={pagination.current_page <= 1 || loading}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="p-1.5 rounded-lg bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-slate-400 hover:text-white light:hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Previous page"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Page Number Buttons */}
+              {Array.from({ length: pagination.last_page }, (_, i) => i + 1)
+                .filter((p) => {
+                  if (p === 1 || p === pagination.last_page) return true;
+                  if (Math.abs(p - pagination.current_page) <= 1) return true;
+                  return false;
+                })
+                .reduce((acc, p, idx, arr) => {
+                  if (idx > 0 && p - arr[idx - 1] > 1) {
+                    acc.push('ellipsis-' + p);
+                  }
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((item) => {
+                  if (typeof item === 'string') {
+                    return (
+                      <span key={item} className="px-1 text-slate-600">
+                        ...
+                      </span>
+                    );
+                  }
+                  const isCurrent = pagination.current_page === item;
+                  return (
+                    <button
+                      key={item}
+                      type="button"
+                      disabled={loading}
+                      onClick={() => setPage(item)}
+                      className={`min-w-[28px] h-7 px-2 rounded-lg text-xs font-semibold font-mono-numbers transition-all ${
+                        isCurrent
+                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                          : 'bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-slate-400 hover:text-white light:hover:text-slate-900'
+                      }`}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+
+              {/* Next Button */}
+              <button
+                type="button"
+                disabled={pagination.current_page >= pagination.last_page || loading}
+                onClick={() => setPage((p) => Math.min(pagination.last_page, p + 1))}
+                className="p-1.5 rounded-lg bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-slate-400 hover:text-white light:hover:text-slate-900 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Next page"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+
+              {/* Per Page Selector */}
+              <select
+                value={perPage}
+                onChange={(e) => {
+                  setPerPage(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="ml-2 px-2.5 py-1 rounded-lg bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-slate-300 light:text-slate-700 text-xs focus:outline-none"
+              >
+                <option value={10}>10 / page</option>
+                <option value={20}>20 / page</option>
+                <option value={50}>50 / page</option>
+              </select>
             </div>
           </div>
         </div>
@@ -470,13 +620,17 @@ export default function TradingJournal() {
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  className="px-2.5 py-1 rounded-lg bg-[#0e1626] border border-[#1e293b] text-[11px] text-slate-300 hover:text-white flex items-center gap-1"
+                  onClick={() => setEntryToEdit(selectedEntry)}
+                  className="px-2.5 py-1 rounded-lg bg-[#0e1626] border border-[#1e293b] text-[11px] text-slate-300 hover:text-white flex items-center gap-1 transition-colors"
+                  title="Edit Trade Record"
                 >
                   <Edit2 className="w-3 h-3" /> Edit
                 </button>
                 <button
                   type="button"
-                  className="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-[11px] text-rose-400 hover:bg-rose-500/20 flex items-center gap-1"
+                  onClick={() => setEntryToDelete(selectedEntry)}
+                  className="px-2.5 py-1 rounded-lg bg-rose-500/10 border border-rose-500/30 text-[11px] text-rose-400 hover:bg-rose-500/20 flex items-center gap-1 transition-colors"
+                  title="Delete Trade Record"
                 >
                   <Trash2 className="w-3 h-3" /> Delete
                 </button>
@@ -686,6 +840,61 @@ export default function TradingJournal() {
           </div>
         </div>
       </div>
+
+      {/* Edit Trade Modal */}
+      {entryToEdit && (
+        <EditTradeModal
+          trade={entryToEdit}
+          isOpen={!!entryToEdit}
+          onClose={() => setEntryToEdit(null)}
+          onSaved={(updated) => {
+            fetchJournal();
+            setSelectedEntry(updated);
+            setEntryToEdit(null);
+          }}
+        />
+      )}
+
+      {/* Delete Entry Confirmation Modal */}
+      {entryToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-rose-400">
+              <div className="p-2 rounded-2xl bg-rose-500/10">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-white light:text-slate-900">
+                Delete Trade Record?
+              </h3>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Are you sure you want to permanently delete this trade record and its journal notes for{' '}
+              <strong className="text-white light:text-slate-900">
+                {entryToDelete.index_name} ({entryToDelete.date})
+              </strong>
+              ? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setEntryToDelete(null)}
+                disabled={isDeletingEntry}
+                className="px-4 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 text-xs font-semibold text-slate-300 light:text-slate-700 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteEntry}
+                disabled={isDeletingEntry}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md shadow-rose-600/30 transition-all disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {isDeletingEntry ? 'Deleting...' : 'Yes, Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

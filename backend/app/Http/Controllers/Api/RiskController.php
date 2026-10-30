@@ -48,7 +48,7 @@ class RiskController extends Controller
         );
 
         $todayStr = Carbon::today('Asia/Kolkata')->toDateString();
-        $todaysTrades = $allTrades->where('trade_date', $todayStr);
+        $todaysTrades = $allTrades->filter(fn($t) => Carbon::parse($t->trade_date)->toDateString() === $todayStr);
 
         $riskSummary = $this->analyticsService->calculateRiskSummary(
             $account,

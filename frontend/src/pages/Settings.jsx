@@ -77,6 +77,40 @@ export default function Settings() {
   const [defaultOrderType, setDefaultOrderType] = useState('Options');
   const [defaultStrategy, setDefaultStrategy] = useState('Long Straddle');
   const [defaultBrokerCharges, setDefaultBrokerCharges] = useState('₹20');
+  const [initialCapitalInput, setInitialCapitalInput] = useState('500000');
+  const [savingInitialCap, setSavingInitialCap] = useState(false);
+
+  useEffect(() => {
+    fetchInitialCapital();
+  }, []);
+
+  const fetchInitialCapital = async () => {
+    try {
+      const res = await api.get('/capital');
+      if (res.data?.initial_capital !== undefined) {
+        setInitialCapitalInput(res.data.initial_capital.toString());
+      }
+    } catch (e) {
+      console.warn('Could not load initial capital in settings', e);
+    }
+  };
+
+  const handleSaveInitialCapital = async () => {
+    const val = parseFloat(initialCapitalInput);
+    if (isNaN(val) || val < 0) {
+      triggerToast('Please enter a valid positive capital amount', 'error');
+      return;
+    }
+    try {
+      setSavingInitialCap(true);
+      await api.put('/capital/initial', { initial_capital: val });
+      triggerToast(`✓ Starting capital updated to ₹${val.toLocaleString('en-IN')}! Saved to database.`);
+    } catch (err) {
+      triggerToast(err.response?.data?.message || 'Failed to update initial capital', 'error');
+    } finally {
+      setSavingInitialCap(false);
+    }
+  };
 
   // Dynamic lot size test counter
   const [testLots, setTestLots] = useState(2);
@@ -409,6 +443,36 @@ export default function Settings() {
 
             <div className="space-y-3 text-xs">
               <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] text-slate-400 font-medium">Initial Trading Capital (₹)</label>
+                  <span className="text-[10px] text-emerald-400 font-mono-numbers">Account Base</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-mono-numbers">₹</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="any"
+                      value={initialCapitalInput}
+                      onChange={(e) => setInitialCapitalInput(e.target.value)}
+                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                      placeholder="500000"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleSaveInitialCapital}
+                    disabled={savingInitialCap}
+                    className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shrink-0 transition-all disabled:opacity-50"
+                  >
+                    {savingInitialCap ? 'Saving...' : 'Save Capital'}
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1">Starting balance used to calculate ROI, drawdowns, and capital growth.</p>
+              </div>
+
+              <div>
                 <label className="text-[11px] text-slate-400 block mb-1">Default Index</label>
                 <select
                   value={defaultIndex}
@@ -571,6 +635,7 @@ export default function Settings() {
                           <button
                             type="button"
                             onClick={() => {
+                              if (!window.confirm(`Are you sure you want to remove custom index ${idxKey}?`)) return;
                               removeCustomIndex(idxKey);
                               triggerToast(`Removed custom index ${idxKey}`);
                             }}

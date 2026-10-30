@@ -39,7 +39,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import api from '../api/client';
-import { formatINR, formatCompactINR } from '../utils/formatters';
+import { formatINR, formatCompactINR, formatDate } from '../utils/formatters';
 import { useFilter } from '../context/FilterContext';
 import { useToast } from '../context/ToastContext';
 
@@ -141,21 +141,103 @@ export default function RiskManagement() {
 
   // Daily P&L vs limits data for chart
   const dailyPnLLimitsData = useMemo(() => {
-    const rawDaily = dashboardData?.charts?.daily_pnl || [];
-    return rawDaily.map((d) => ({
-      day: d.date ? d.date.split('-').slice(1).join('/') : d.day,
-      pnl: d.net_pnl || 0,
-    }));
-  }, [dashboardData]);
+    let list = dashboardData?.charts?.daily_pnl || [];
+    if (list.length === 0 && tradesList.length > 0) {
+      const grouped = {};
+      tradesList.forEach((t) => {
+        const d = (t.trade_date || '').split('T')[0].split(' ')[0];
+        if (!grouped[d]) grouped[d] = { date: d, pnl: 0, trades: 0 };
+        grouped[d].pnl += parseFloat(t.net_pnl || 0);
+        grouped[d].trades += 1;
+      });
+      list = Object.keys(grouped).sort().map((d) => ({
+        date: d,
+        displayDate: formatDate(d),
+        pnl: grouped[d].pnl,
+        trades: grouped[d].trades,
+      }));
+    }
+
+    return list.map((d) => {
+      const pnlVal = parseFloat(d.pnl !== undefined ? d.pnl : (d.net_pnl !== undefined ? d.net_pnl : 0));
+      let dayLabel = d.displayDate;
+      if (!dayLabel && d.date) {
+        dayLabel = formatDate(d.date.split(' ')[0]);
+      }
+      return {
+        day: dayLabel || d.day || 'Day',
+        date: d.date ? d.date.split(' ')[0] : '',
+        pnl: Math.round(pnlVal),
+        trades: d.trades || 0,
+      };
+    });
+  }, [dashboardData, tradesList]);
+
+  // Compute clean Y-axis domain with human-friendly outward rounding
+  const chartYDomain = useMemo(() => {
+    if (dailyPnLLimitsData.length === 0) return [-25000, 25000];
+    const pnls = dailyPnLLimitsData.map((d) => d.pnl);
+    const target = Number(accountLimits.daily_profit_target || 20000);
+    const maxLoss = Number(accountLimits.daily_max_loss || 25000);
+    const minRaw = Math.min(0, ...pnls, -maxLoss);
+    const maxRaw = Math.max(0, ...pnls, target);
+
+    const roundOutward = (num, isUpper) => {
+      if (num === 0) return 0;
+      const abs = Math.abs(num);
+      let step = 10000;
+      if (abs >= 500000) step = 100000;
+      else if (abs >= 100000) step = 50000;
+      else if (abs >= 50000) step = 25000;
+      else step = 10000;
+
+      return isUpper
+        ? Math.ceil((num * 1.05) / step) * step
+        : Math.floor((num * 1.05) / step) * step;
+    };
+
+    return [roundOutward(minRaw, false), roundOutward(maxRaw, true)];
+  }, [dailyPnLLimitsData, accountLimits]);
 
   // Drawdown curve data for chart
   const drawdownCurveData = useMemo(() => {
-    const rawDd = dashboardData?.charts?.drawdown_curve || [];
-    return rawDd.map((d) => ({
-      day: d.date ? d.date.split('-').slice(1).join('/') : d.date,
-      dd: -Math.abs(d.drawdown || 0),
-    }));
-  }, [dashboardData]);
+    let rawDd = dashboardData?.charts?.drawdown_curve || dashboardData?.charts?.equity_curve || [];
+    if (rawDd.length === 0 && tradesList.length > 0) {
+      const initCap = parseFloat(stats.initial_capital || 500000);
+      let running = initCap;
+      let peak = initCap;
+      const grouped = {};
+      tradesList.forEach((t) => {
+        const d = (t.trade_date || '').split('T')[0].split(' ')[0];
+        if (!grouped[d]) grouped[d] = 0;
+        grouped[d] += parseFloat(t.net_pnl || 0);
+      });
+      rawDd = Object.keys(grouped).sort().map((d) => {
+        running += grouped[d];
+        if (running > peak) peak = running;
+        const dd = peak - running;
+        return {
+          date: d,
+          displayDate: formatDate(d),
+          drawdown: dd,
+        };
+      });
+    }
+
+    return rawDd.map((d) => {
+      let dayLabel = d.displayDate;
+      if (!dayLabel && d.date) {
+        dayLabel = formatDate(d.date.split(' ')[0]);
+      }
+      const ddVal = parseFloat(d.drawdown !== undefined ? d.drawdown : 0);
+      return {
+        day: dayLabel || d.day || 'Day',
+        date: d.date ? d.date.split(' ')[0] : '',
+        dd: -Math.abs(ddVal),
+        drawdownAbs: ddVal,
+      };
+    });
+  }, [dashboardData, tradesList, stats]);
 
   // Scatter points: Risk vs Reward per trade
   const scatterPoints = useMemo(() => {
@@ -369,44 +451,94 @@ export default function RiskManagement() {
       {/* Row 2: Daily P&L vs Risk Limits (6 cols) & Drawdown Chart (6 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Daily P&L vs Risk Limits */}
-        <div className="lg:col-span-6 p-5 md:p-6 rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <h2 className="text-sm font-bold text-white light:text-slate-900">
-              Daily P&L vs Risk Limits
-            </h2>
-            <div className="flex items-center gap-3 text-[11px]">
-              <div className="flex items-center gap-1">
+        <div className="lg:col-span-6 p-5 md:p-6 rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div>
+              <h2 className="text-sm font-bold text-white light:text-slate-900">
+                Daily P&L vs Risk Limits
+              </h2>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Target: <span className="text-emerald-400 font-semibold font-mono-numbers">+{formatCompactINR(accountLimits.daily_profit_target)}</span> | Limit: <span className="text-rose-400 font-semibold font-mono-numbers">-{formatCompactINR(accountLimits.daily_max_loss)}</span>
+              </p>
+            </div>
+            <div className="flex items-center gap-2.5 text-[11px] flex-wrap">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#162033] border border-[#1e293b]">
                 <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                <span className="text-slate-400">Profit</span>
+                <span className="text-slate-300">Profit</span>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#162033] border border-[#1e293b]">
                 <span className="w-2 h-2 rounded-full bg-rose-500" />
-                <span className="text-slate-400">Loss</span>
+                <span className="text-slate-300">Loss</span>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-rose-500/10 border border-rose-500/20 text-rose-400 font-medium">
                 <span className="w-3 border-b-2 border-dashed border-rose-500" />
-                <span className="text-slate-400">Loss Limit</span>
+                <span>Loss Limit (-{formatCompactINR(accountLimits.daily_max_loss)})</span>
               </div>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-medium">
                 <span className="w-3 border-b-2 border-dashed border-emerald-400" />
-                <span className="text-slate-400">Target</span>
+                <span>Target (+{formatCompactINR(accountLimits.daily_profit_target)})</span>
               </div>
             </div>
           </div>
 
-          <div className="h-48 w-full flex items-center justify-center">
+          <div className="h-56 w-full flex items-center justify-center">
             {dailyPnLLimitsData.length === 0 ? (
               <p className="text-xs text-slate-500">No trading activity recorded for chart display</p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={dailyPnLLimitsData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                <BarChart data={dailyPnLLimitsData} margin={{ top: 15, right: 15, left: 10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} vertical={false} />
                   <XAxis dataKey="day" stroke="#64748b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => formatCompactINR(v)} />
+                  <YAxis
+                    domain={chartYDomain}
+                    stroke="#64748b"
+                    fontSize={10}
+                    tickLine={false}
+                    width={56}
+                    tickFormatter={(v) => formatCompactINR(v)}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const d = payload[0].payload;
+                        const isProfit = d.pnl >= 0;
+                        return (
+                          <div className="bg-[#162033] light:bg-white p-3 rounded-xl border border-[#1e293b] light:border-slate-200 shadow-xl text-xs font-mono-numbers space-y-1.5">
+                            <p className="text-slate-400 font-sans font-medium">{d.day} ({d.date})</p>
+                            <div className="flex items-center justify-between gap-4">
+                              <span className="text-slate-400 font-sans">Net P&L:</span>
+                              <span className={`font-bold ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                {isProfit ? '+' : ''}{formatINR(d.pnl)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4 text-[11px] pt-1.5 border-t border-slate-700/50">
+                              <span className="text-slate-400 font-sans">Daily Target:</span>
+                              <span className="text-emerald-400 font-bold">+{formatINR(accountLimits.daily_profit_target)}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-4 text-[11px]">
+                              <span className="text-slate-400 font-sans">Loss Limit:</span>
+                              <span className="text-rose-400 font-bold">-{formatINR(accountLimits.daily_max_loss)}</span>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
                   <ReferenceLine y={0} stroke="#334155" />
-                  <ReferenceLine y={accountLimits.daily_profit_target} stroke="#10b981" strokeDasharray="3 3" strokeWidth={1.5} />
-                  <ReferenceLine y={-accountLimits.daily_max_loss} stroke="#ef4444" strokeDasharray="3 3" strokeWidth={1.5} />
-                  <Bar dataKey="pnl" radius={[2, 2, 0, 0]}>
+                  <ReferenceLine
+                    y={accountLimits.daily_profit_target}
+                    stroke="#10b981"
+                    strokeDasharray="4 4"
+                    strokeWidth={1.5}
+                  />
+                  <ReferenceLine
+                    y={-accountLimits.daily_max_loss}
+                    stroke="#ef4444"
+                    strokeDasharray="4 4"
+                    strokeWidth={1.5}
+                  />
+                  <Bar dataKey="pnl" radius={[4, 4, 0, 0]} maxBarSize={44} minPointSize={4}>
                     {dailyPnLLimitsData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.pnl >= 0 ? '#10b981' : '#f43f5e'} />
                     ))}
@@ -418,29 +550,59 @@ export default function RiskManagement() {
         </div>
 
         {/* Drawdown Chart */}
-        <div className="lg:col-span-6 p-5 md:p-6 rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-3">
+        <div className="lg:col-span-6 p-5 md:p-6 rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-white light:text-slate-900">
-              Drawdown Curve
-            </h2>
-            <span className="text-xs text-slate-400">{dateRangeDisplay || 'All Time'}</span>
+            <div>
+              <h2 className="text-sm font-bold text-white light:text-slate-900">
+                Drawdown Curve
+              </h2>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Maximum portfolio dip from highest peak
+              </p>
+            </div>
+            <span className="text-xs text-slate-400 bg-[#162033] px-2.5 py-1 rounded-lg border border-[#1e293b]">{dateRangeDisplay || 'All Time'}</span>
           </div>
 
-          <div className="h-48 w-full flex items-center justify-center">
+          <div className="h-56 w-full flex items-center justify-center">
             {drawdownCurveData.length === 0 ? (
               <p className="text-xs text-slate-500">No drawdown curve data available</p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={drawdownCurveData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                <AreaChart data={drawdownCurveData} margin={{ top: 15, right: 15, left: 10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="riskDdGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#ef4444" stopOpacity={0.6} />
-                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1} />
+                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0.05} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} vertical={false} />
                   <XAxis dataKey="day" stroke="#64748b" fontSize={10} tickLine={false} />
-                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => formatCompactINR(v)} />
+                  <YAxis
+                    stroke="#64748b"
+                    fontSize={10}
+                    tickLine={false}
+                    width={56}
+                    tickFormatter={(v) => formatCompactINR(v)}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const d = payload[0].payload;
+                        return (
+                          <div className="bg-[#162033] light:bg-white p-2.5 rounded-xl border border-[#1e293b] light:border-slate-200 shadow-xl text-xs font-mono-numbers space-y-1">
+                            <p className="text-slate-400 font-sans font-medium">{d.day} ({d.date})</p>
+                            <div className="flex items-center justify-between gap-4">
+                              <span className="text-slate-400 font-sans">Drawdown:</span>
+                              <span className={`font-bold ${d.drawdownAbs > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                                {d.drawdownAbs > 0 ? `-${formatINR(d.drawdownAbs)}` : '₹0 (Peak Capital)'}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
                   <Area type="monotone" dataKey="dd" stroke="#ef4444" strokeWidth={2} fill="url(#riskDdGrad)" />
                 </AreaChart>
               </ResponsiveContainer>

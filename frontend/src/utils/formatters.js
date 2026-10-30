@@ -23,13 +23,16 @@ export function formatCompactINR(val) {
   const abs = Math.abs(num);
 
   if (abs >= 10000000) {
-    return `${isNegative ? '-' : ''}₹${(abs / 10000000).toFixed(2)}Cr`;
+    const cr = parseFloat((abs / 10000000).toFixed(2));
+    return `${isNegative ? '-' : ''}₹${cr}Cr`;
   }
   if (abs >= 100000) {
-    return `${isNegative ? '-' : ''}₹${(abs / 100000).toFixed(2)}L`;
+    const l = parseFloat((abs / 100000).toFixed(2));
+    return `${isNegative ? '-' : ''}₹${l}L`;
   }
   if (abs >= 1000) {
-    return `${isNegative ? '-' : ''}₹${(abs / 1000).toFixed(1)}K`;
+    const k = parseFloat((abs / 1000).toFixed(1));
+    return `${isNegative ? '-' : ''}₹${k}K`;
   }
   return `${isNegative ? '-' : ''}₹${abs.toFixed(0)}`;
 }

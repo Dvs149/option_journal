@@ -19,6 +19,9 @@ import {
   PieChart as PieIcon,
   Calculator,
   ShieldAlert,
+  X,
+  Target,
+  Award,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -36,14 +39,29 @@ import api from '../api/client';
 import { formatINR, formatCompactINR, formatDate } from '../utils/formatters';
 import { useLotSizes } from '../context/LotSizeContext';
 import { useFilter } from '../context/FilterContext';
+import { useToast } from '../context/ToastContext';
 
 export default function CapitalManagement() {
   const navigate = useNavigate();
   const { dateRangeDisplay } = useFilter();
+  const { showToast } = useToast();
 
   // Timeframe
   const [timeRange, setTimeRange] = useState('1Y');
   const [txTab, setTxTab] = useState('all');
+
+  // Initial Capital & Transaction Modals State
+  const [showEditCapitalModal, setShowEditCapitalModal] = useState(false);
+  const [newInitialCapital, setNewInitialCapital] = useState('');
+  const [savingCapital, setSavingCapital] = useState(false);
+  const [showAddTxModal, setShowAddTxModal] = useState(false);
+  const [txType, setTxType] = useState('deposit');
+  const [txAmount, setTxAmount] = useState('');
+  const [txDate, setTxDate] = useState(new Date().toISOString().split('T')[0]);
+  const [txNotes, setTxNotes] = useState('');
+  const [savingTx, setSavingTx] = useState(false);
+  const [txToDelete, setTxToDelete] = useState(null);
+  const [isDeletingTx, setIsDeletingTx] = useState(false);
 
   const { getLotSize, lotSizes } = useLotSizes();
 
@@ -100,6 +118,68 @@ export default function CapitalManagement() {
       console.warn('Failed to load capital data', e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateInitialCapital = async (e) => {
+    e.preventDefault();
+    const val = parseFloat(newInitialCapital);
+    if (isNaN(val) || val < 0) {
+      showToast('Please enter a valid capital amount', 'error');
+      return;
+    }
+    try {
+      setSavingCapital(true);
+      await api.put('/capital/initial', { initial_capital: val });
+      showToast(`Initial capital updated to ${formatINR(val)}!`);
+      setShowEditCapitalModal(false);
+      fetchCapital();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to update initial capital', 'error');
+    } finally {
+      setSavingCapital(false);
+    }
+  };
+
+  const handleAddTransaction = async (e) => {
+    e.preventDefault();
+    const amt = parseFloat(txAmount);
+    if (isNaN(amt) || amt <= 0) {
+      showToast('Please enter a valid positive amount', 'error');
+      return;
+    }
+    try {
+      setSavingTx(true);
+      await api.post('/capital/transactions', {
+        transaction_type: txType,
+        amount: amt,
+        transaction_date: txDate,
+        notes: txNotes,
+      });
+      showToast(`${txType === 'deposit' ? 'Deposit' : 'Withdrawal'} of ${formatINR(amt)} recorded!`);
+      setShowAddTxModal(false);
+      setTxAmount('');
+      setTxNotes('');
+      fetchCapital();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to record transaction', 'error');
+    } finally {
+      setSavingTx(false);
+    }
+  };
+
+  const confirmDeleteTransaction = async () => {
+    if (!txToDelete) return;
+    try {
+      setIsDeletingTx(true);
+      await api.delete(`/capital/transactions/${txToDelete.id}`);
+      showToast('Transaction removed');
+      setTxToDelete(null);
+      fetchCapital();
+    } catch (err) {
+      showToast(err.response?.data?.message || 'Failed to remove transaction', 'error');
+    } finally {
+      setIsDeletingTx(false);
     }
   };
 
@@ -166,6 +246,119 @@ export default function CapitalManagement() {
     }));
   }, [capitalData]);
 
+  const formatMilestoneINR = (val) => {
+    const num = Number(val);
+    if (isNaN(num)) return '₹0';
+    const abs = Math.abs(num);
+    const isNegative = num < 0;
+    if (abs >= 10000000) {
+      const cr = parseFloat((abs / 10000000).toFixed(2));
+      return `${isNegative ? '-' : ''}₹${cr}Cr`;
+    }
+    if (abs >= 100000) {
+      const l = parseFloat((abs / 100000).toFixed(2));
+      return `${isNegative ? '-' : ''}₹${l}L`;
+    }
+    if (abs >= 1000) {
+      const k = parseFloat((abs / 1000).toFixed(1));
+      return `${isNegative ? '-' : ''}₹${k}K`;
+    }
+    return `${isNegative ? '-' : ''}₹${abs}`;
+  };
+
+  const milestonesData = useMemo(() => {
+    const init = Number(stats.initial_capital) || 500000;
+    const curr = Number(stats.current_capital) || init;
+
+    // Define growth milestones relative to starting capital
+    // If user has already doubled initial capital, dynamically scale to higher tiers
+    let tiers = [
+      { mult: 1.0, sublabel: 'Base Capital', tag: '0%' },
+      { mult: 1.1, sublabel: '+10% Growth', tag: '+10%' },
+      { mult: 1.25, sublabel: '+25% Growth', tag: '+25%' },
+      { mult: 1.5, sublabel: '+50% Growth', tag: '+50%' },
+      { mult: 2.0, sublabel: '2x Double', tag: '+100%' },
+    ];
+
+    if (curr >= init * 2) {
+      tiers = [
+        { mult: 2.0, sublabel: '2x Capital', tag: '+100%' },
+        { mult: 2.5, sublabel: '2.5x Capital', tag: '+150%' },
+        { mult: 3.0, sublabel: '3x Capital', tag: '+200%' },
+        { mult: 5.0, sublabel: '5x Capital', tag: '+400%' },
+        { mult: 10.0, sublabel: '10x Goal', tag: '+900%' },
+      ];
+    }
+
+    const steps = tiers.map((tier) => {
+      const target = Math.round(init * tier.mult);
+      return {
+        target,
+        mult: tier.mult,
+        label: formatMilestoneINR(target),
+        fullLabel: formatINR(target),
+        sublabel: tier.sublabel,
+        tag: tier.tag,
+      };
+    });
+
+    const nextIndex = steps.findIndex((s) => curr < s.target);
+    const allAchieved = nextIndex === -1;
+    const nextMilestone = !allAchieved ? steps[nextIndex] : null;
+    const isBelowBase = curr < init;
+    const baseDeficit = isBelowBase ? init - curr : 0;
+    const amountToGo = nextMilestone ? Math.max(0, nextMilestone.target - curr) : 0;
+
+    // Progress toward the next milestone
+    const prevTarget = nextIndex > 0 ? steps[nextIndex - 1].target : steps[0].target;
+    const pctToNext = nextMilestone && nextMilestone.target > prevTarget
+      ? Math.min(100, Math.max(0, Math.round(((curr - prevTarget) / (nextMilestone.target - prevTarget)) * 100)))
+      : allAchieved
+      ? 100
+      : 0;
+
+    // Visual progress line spanning the 5 evenly-spaced nodes (0%, 25%, 50%, 75%, 100%)
+    let visualProgress = 0;
+    if (curr <= steps[0].target) {
+      visualProgress = 0;
+    } else if (allAchieved) {
+      visualProgress = 100;
+    } else {
+      const segmentIdx = Math.max(0, Math.min(steps.length - 2, nextIndex - 1));
+      const currentStep = steps[segmentIdx];
+      const nextStep = steps[segmentIdx + 1] || currentStep;
+      const segmentSpan = nextStep.target - currentStep.target;
+      const progressInSegment = segmentSpan > 0 ? (curr - currentStep.target) / segmentSpan : 0;
+      visualProgress = (segmentIdx * 25) + (progressInSegment * 25);
+    }
+
+    return {
+      steps: steps.map((s, idx) => {
+        const isAchieved = curr >= s.target;
+        const isNext = idx === nextIndex;
+        let statusLabel = 'Target';
+        if (isAchieved) {
+          statusLabel = idx === 0 && !isBelowBase ? 'Base' : 'Achieved';
+        } else if (isNext) {
+          statusLabel = 'Next Target';
+        }
+        return {
+          ...s,
+          isAchieved,
+          isNext,
+          statusLabel,
+        };
+      }),
+      nextMilestone,
+      amountToGo,
+      pctToNext,
+      visualProgress: Math.min(100, Math.max(0, visualProgress)),
+      isBelowBase,
+      baseDeficit,
+      allAchieved,
+    };
+  }, [stats]);
+
   return (
     <div className="space-y-6 pb-24 md:pb-12 text-slate-100 light:text-slate-800">
       {/* Header & Controls */}
@@ -208,17 +401,52 @@ export default function CapitalManagement() {
       {/* Row 1: Top 7 Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
         {/* Initial Capital */}
-        <div className="p-3.5 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-1">
-          <span className="text-[10px] text-slate-400 font-medium block">Initial Capital</span>
+        <div className="p-3.5 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-1 group relative">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-slate-400 font-medium block">Initial Capital</span>
+            <button
+              type="button"
+              onClick={() => {
+                setNewInitialCapital(stats.initial_capital);
+                setShowEditCapitalModal(true);
+              }}
+              className="text-slate-400 hover:text-blue-400 transition-colors p-1 rounded-lg hover:bg-slate-800"
+              title="Edit Starting Capital"
+            >
+              <Edit2 className="w-3 h-3" />
+            </button>
+          </div>
           <span className="text-base font-bold text-white light:text-slate-900 font-mono-numbers block tracking-tight">
             {formatINR(stats.initial_capital)}
           </span>
-          <span className="text-[10px] text-slate-500 block">-</span>
+          <button
+            type="button"
+            onClick={() => {
+              setNewInitialCapital(stats.initial_capital);
+              setShowEditCapitalModal(true);
+            }}
+            className="text-[10px] text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 mt-0.5"
+          >
+            <span>Edit Capital</span> &rarr;
+          </button>
         </div>
 
         {/* Total Deposits */}
         <div className="p-3.5 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-1">
-          <span className="text-[10px] text-slate-400 font-medium block">Total Deposits</span>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-slate-400 font-medium block">Total Deposits</span>
+            <button
+              type="button"
+              onClick={() => {
+                setTxType('deposit');
+                setShowAddTxModal(true);
+              }}
+              className="text-slate-400 hover:text-emerald-400 transition-colors p-1 rounded-lg hover:bg-slate-800"
+              title="Add Deposit"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          </div>
           <span className="text-base font-bold text-white light:text-slate-900 font-mono-numbers block tracking-tight">
             {formatINR(stats.total_deposits)}
           </span>
@@ -227,7 +455,20 @@ export default function CapitalManagement() {
 
         {/* Total Withdrawals */}
         <div className="p-3.5 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-1">
-          <span className="text-[10px] text-slate-400 font-medium block">Total Withdrawals</span>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-slate-400 font-medium block">Total Withdrawals</span>
+            <button
+              type="button"
+              onClick={() => {
+                setTxType('withdrawal');
+                setShowAddTxModal(true);
+              }}
+              className="text-slate-400 hover:text-rose-400 transition-colors p-1 rounded-lg hover:bg-slate-800"
+              title="Record Withdrawal"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          </div>
           <span className="text-base font-bold text-white light:text-slate-900 font-mono-numbers block tracking-tight">
             {formatINR(stats.total_withdrawals)}
           </span>
@@ -578,7 +819,11 @@ export default function CapitalManagement() {
               </div>
               <button
                 type="button"
-                className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1"
+                onClick={() => {
+                  setTxType('deposit');
+                  setShowAddTxModal(true);
+                }}
+                className="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs flex items-center gap-1 transition-all"
               >
                 <Plus className="w-3 h-3" /> Add Transaction
               </button>
@@ -598,14 +843,26 @@ export default function CapitalManagement() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e293b]/60">
-                {transactions.length === 0 ? (
+                {transactions
+                  .filter((tx) => {
+                    if (txTab === 'deposits') return tx.type === 'Deposit';
+                    if (txTab === 'withdrawals') return tx.type === 'Withdrawal';
+                    return true;
+                  })
+                  .length === 0 ? (
                   <tr>
                     <td colSpan="6" className="py-8 text-center text-slate-500 text-xs">
-                      No capital transactions recorded yet.
+                      No capital transactions found.
                     </td>
                   </tr>
                 ) : (
-                  transactions.map((tx) => (
+                  transactions
+                    .filter((tx) => {
+                      if (txTab === 'deposits') return tx.type === 'Deposit';
+                      if (txTab === 'withdrawals') return tx.type === 'Withdrawal';
+                      return true;
+                    })
+                    .map((tx) => (
                     <tr key={tx.id} className="hover:bg-[#162033]/50">
                       <td className="py-2.5 text-slate-300">{tx.date}</td>
                       <td className="py-2.5">
@@ -628,8 +885,14 @@ export default function CapitalManagement() {
                       <td className="py-2.5 pl-3 text-slate-400 text-[11px]">{tx.notes}</td>
                       <td className="py-2.5 text-center">
                         <div className="flex items-center justify-center gap-1">
-                          <button className="p-1 rounded text-slate-400 hover:text-blue-400"><Edit2 className="w-3 h-3" /></button>
-                          <button className="p-1 rounded text-slate-400 hover:text-rose-400"><Trash2 className="w-3 h-3" /></button>
+                          <button
+                            type="button"
+                            onClick={() => setTxToDelete(tx)}
+                            className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors"
+                            title="Delete transaction"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -671,7 +934,11 @@ export default function CapitalManagement() {
                     <td className="py-2.5 font-semibold text-white">{pos.symbol}</td>
                     <td className="py-2.5">
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                        pos.type === 'CE' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                        pos.type === 'CE'
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                          : pos.type === 'PE'
+                          ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                          : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
                       }`}>
                         {pos.type}
                       </span>
@@ -702,88 +969,444 @@ export default function CapitalManagement() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Capital Milestones (7 cols) */}
         <div className="lg:col-span-7 p-5 md:p-6 rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-4">
-          <h2 className="text-sm font-bold text-white light:text-slate-900 border-b border-[#1e293b] pb-2">
-            Capital Milestones
-          </h2>
-
-          <div className="relative py-4 px-2">
-            <div className="absolute top-1/2 left-4 right-4 h-1 bg-[#1e293b] -translate-y-1/2 z-0" />
-            <div className="absolute top-1/2 left-4 w-3/5 h-1 bg-gradient-to-r from-emerald-400 to-blue-500 -translate-y-1/2 z-0" />
-
-            <div className="relative z-10 flex items-center justify-between text-center">
-              <div>
-                <div className="w-5 h-5 rounded-full bg-emerald-400 mx-auto mb-1 ring-4 ring-[#121b2d]" />
-                <span className="text-xs font-bold text-white block">₹50K</span>
-                <span className="text-[10px] text-slate-400">Initial</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#1e293b] pb-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <Target className="w-4 h-4 text-blue-400" />
+                <h2 className="text-sm font-bold text-white light:text-slate-900">Capital Milestones</h2>
               </div>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Dynamic growth tracking based on {formatINR(stats.initial_capital)} initial capital
+              </p>
+            </div>
+            {milestonesData.isBelowBase ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                <AlertCircle className="w-3.5 h-3.5" />
+                {formatINR(milestonesData.baseDeficit)} to recover base
+              </span>
+            ) : milestonesData.allAchieved ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <Award className="w-3.5 h-3.5" />
+                All Milestones Achieved!
+              </span>
+            ) : milestonesData.nextMilestone ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                <Target className="w-3.5 h-3.5" />
+                Next: {milestonesData.nextMilestone.label} ({formatINR(milestonesData.amountToGo)} to go)
+              </span>
+            ) : null}
+          </div>
 
-              <div>
-                <div className={`w-5 h-5 rounded-full mx-auto mb-1 ring-4 ring-[#121b2d] ${(stats.current_capital || 0) >= 100000 ? 'bg-emerald-400' : 'bg-[#1e293b]'}`} />
-                <span className="text-xs font-bold text-slate-300 block">₹1L</span>
-                <span className="text-[9px] text-slate-400">{(stats.current_capital || 0) >= 100000 ? 'Achieved' : 'Milestone'}</span>
-              </div>
+          <div className="relative pt-6 pb-2 px-1">
+            {/* Base background line */}
+            <div className="absolute top-[34px] left-[18px] right-[18px] h-1.5 bg-[#1e293b] -translate-y-1/2 z-0 rounded-full" />
 
-              <div>
-                <div className={`w-5 h-5 rounded-full mx-auto mb-1 ring-4 ring-[#121b2d] ${(stats.current_capital || 0) >= 200000 ? 'bg-emerald-400' : 'bg-[#1e293b]'}`} />
-                <span className="text-xs font-bold text-slate-300 block">₹2L</span>
-                <span className="text-[9px] text-slate-400">{(stats.current_capital || 0) >= 200000 ? 'Achieved' : 'Milestone'}</span>
-              </div>
+            {/* Dynamic Progress fill line */}
+            <div
+              className="absolute top-[34px] left-[18px] h-1.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-blue-500 -translate-y-1/2 z-0 rounded-full transition-all duration-700 shadow-[0_0_12px_rgba(59,130,246,0.5)]"
+              style={{
+                width: `calc(${milestonesData.visualProgress}% * (100% - 36px) / 100)`,
+              }}
+            />
 
-              <div>
-                <div className={`w-5 h-5 rounded-full mx-auto mb-1 ring-4 ring-[#121b2d] ${(stats.current_capital || 0) >= 500000 ? 'bg-emerald-400' : 'bg-blue-500 animate-pulse'}`} />
-                <span className="text-xs font-bold text-blue-400 block">₹5L</span>
-                <span className="text-[9px] text-blue-300 font-semibold">{(stats.current_capital || 0) >= 500000 ? 'Achieved' : 'Target'}</span>
-              </div>
+            {/* Milestone Nodes */}
+            <div className="relative z-10 flex items-start justify-between text-center">
+              {milestonesData.steps.map((step, idx) => {
+                const isAchieved = step.isAchieved;
+                const isNext = step.isNext;
 
-              <div>
-                <div className="w-5 h-5 rounded-full bg-[#1e293b] mx-auto mb-1 ring-4 ring-[#121b2d]" />
-                <span className="text-xs font-bold text-slate-400 block">₹5L</span>
-                <span className="text-[10px] text-slate-500">Target</span>
-              </div>
+                return (
+                  <div key={idx} className="flex flex-col items-center group relative min-w-[58px]">
+                    {/* Node Circle */}
+                    <div
+                      className={`w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ring-4 ring-[#121b2d] ${
+                        isAchieved
+                          ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'
+                          : isNext
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/40 ring-blue-500/30'
+                          : 'bg-[#162033] border border-[#23324d] text-slate-500'
+                      }`}
+                    >
+                      {isAchieved ? (
+                        <CheckCircle2 className="w-4 h-4 text-white" />
+                      ) : isNext ? (
+                        <div className="relative flex items-center justify-center">
+                          <span className="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-blue-300 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                        </div>
+                      ) : (
+                        <div className="w-2 h-2 rounded-full bg-slate-600" />
+                      )}
+                    </div>
 
-              <div>
-                <div className="w-5 h-5 rounded-full bg-[#1e293b] mx-auto mb-1 ring-4 ring-[#121b2d]" />
-                <span className="text-xs font-bold text-slate-400 block">₹10L</span>
-                <span className="text-[10px] text-slate-500">Target</span>
-              </div>
+                    {/* Amount Label */}
+                    <span
+                      className={`text-xs font-bold font-mono-numbers mt-2 block tracking-tight ${
+                        isAchieved
+                          ? 'text-white'
+                          : isNext
+                          ? 'text-blue-400 font-extrabold'
+                          : 'text-slate-400'
+                      }`}
+                    >
+                      {step.label}
+                    </span>
+
+                    {/* Sublabel / Multiplier */}
+                    <span
+                      className={`text-[10px] block mt-0.5 font-medium ${
+                        isAchieved
+                          ? 'text-emerald-400'
+                          : isNext
+                          ? 'text-blue-300 font-semibold'
+                          : 'text-slate-500'
+                      }`}
+                    >
+                      {step.sublabel}
+                    </span>
+
+                    {/* Status Pill Badge */}
+                    <span
+                      className={`text-[9px] px-1.5 py-0.5 rounded-md mt-1 inline-block ${
+                        isAchieved
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium'
+                          : isNext
+                          ? 'bg-blue-500/20 text-blue-300 border border-blue-400/30 font-semibold'
+                          : 'bg-slate-800/60 text-slate-500 border border-slate-700/40'
+                      }`}
+                    >
+                      {step.statusLabel}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
+
+          {/* Bottom Info Banner */}
+          <div className="p-3 rounded-2xl bg-[#0e1626] border border-[#1e293b] flex flex-col sm:flex-row items-center justify-between gap-2 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400">Current Capital:</span>
+              <span className="font-bold text-white font-mono-numbers">{formatINR(stats.current_capital)}</span>
+            </div>
+
+            {milestonesData.nextMilestone ? (
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400">Remaining to {milestonesData.nextMilestone.label}:</span>
+                <span className="font-bold text-blue-400 font-mono-numbers">{formatINR(milestonesData.amountToGo)}</span>
+                <span className="text-[11px] text-slate-500">
+                  ({Math.max(0, 100 - milestonesData.pctToNext)}% left)
+                </span>
+              </div>
+            ) : (
+              <span className="text-emerald-400 font-semibold text-xs">
+                🏆 Double capital goal achieved!
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] text-slate-500 italic">
+            💡 Milestones automatically scale relative to your base capital ({formatINR(stats.initial_capital)}) and update live as your trade balance changes.
+          </p>
         </div>
 
         {/* Key Insights (5 cols) */}
         <div className="lg:col-span-5 p-5 md:p-6 rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-3">
-          <h2 className="text-sm font-bold text-white light:text-slate-900 border-b border-[#1e293b] pb-2">
-            Key Insights
-          </h2>
+          <div className="flex items-center justify-between border-b border-[#1e293b] pb-2">
+            <h2 className="text-sm font-bold text-white light:text-slate-900">
+              Key Insights
+            </h2>
+            <span className="text-[10px] text-slate-400">Live Diagnostics</span>
+          </div>
 
-          <div className="space-y-2 text-xs">
-            <div className="flex items-start gap-2">
+          <div className="space-y-2.5 text-xs">
+            <div className="flex items-start gap-2.5 p-2 rounded-xl bg-slate-900/40 border border-slate-800/40">
               <TrendingUp className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <p className="text-slate-300">Your capital has grown by <strong className="text-emerald-400">{stats.roi}</strong> this year.</p>
+              <p className="text-slate-300">
+                Overall capital ROI is <strong className={parseFloat(stats.roi) >= 0 ? "text-emerald-400" : "text-rose-400"}>{stats.roi}</strong> since inception.
+              </p>
             </div>
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-2.5 p-2 rounded-xl bg-slate-900/40 border border-slate-800/40">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <p className="text-slate-300">You have added <strong className="text-white">{formatINR(stats.total_deposits)}</strong> in deposits ({stats.deposit_count} transactions).</p>
+              <p className="text-slate-300">
+                Net capital inflow: <strong className="text-white">{formatINR(stats.total_deposits - stats.total_withdrawals)}</strong> across <strong className="text-white">{stats.deposit_count + stats.withdrawal_count}</strong> recorded transactions.
+              </p>
             </div>
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-2.5 p-2 rounded-xl bg-slate-900/40 border border-slate-800/40">
               <ShieldAlert className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-              <p className="text-slate-300">Keep at least <strong className="text-blue-400">10% cash reserve</strong> for risk management.</p>
+              <p className="text-slate-300">
+                Available trading balance: <strong className="text-cyan-400">{formatINR(availableCapital)}</strong> ({Math.max(0, 100 - parseFloat(utilizationPct)).toFixed(1)}% uncommitted).
+              </p>
             </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <p className="text-slate-300">Current position size is within recommended risk limit.</p>
+            <div className="flex items-start gap-2.5 p-2 rounded-xl bg-slate-900/40 border border-slate-800/40">
+              <Target className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <p className="text-slate-300">
+                {milestonesData.nextMilestone ? (
+                  <>Next account milestone: <strong className="text-blue-400">{milestonesData.nextMilestone.label}</strong> ({milestonesData.nextMilestone.sublabel}). Need <strong className="text-white">{formatINR(milestonesData.amountToGo)}</strong> in net profit.</>
+                ) : (
+                  <>All standard milestones achieved! You have doubled your starting capital.</>
+                )}
+              </p>
             </div>
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-              <p className="text-slate-300">Avoid over-leveraging. Current utilization is 15%.</p>
-            </div>
-            <div className="flex items-start gap-2">
+            <div className="flex items-start gap-2.5 p-2 rounded-xl bg-slate-900/40 border border-slate-800/40">
               <Lightbulb className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
-              <p className="text-slate-300">Consider increasing capital after 3 consecutive profitable months.</p>
+              <p className="text-slate-300">
+                Recommended risk rule: Never risk more than <strong>1-2%</strong> of your current capital ({formatINR(Math.round(stats.current_capital * 0.015))}) on a single trade.
+              </p>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Edit Initial Capital Modal */}
+      {showEditCapitalModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#121b2d] border border-[#1e293b] rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#1e293b] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                  <Wallet className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Edit Initial Capital</h3>
+                  <p className="text-xs text-slate-400">Set starting account balance for ROI & milestones</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditCapitalModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateInitialCapital} className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                  Initial Capital Amount (₹)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-mono-numbers">
+                    ₹
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={newInitialCapital}
+                    onChange={(e) => setNewInitialCapital(e.target.value)}
+                    className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white text-sm font-mono-numbers focus:outline-none focus:border-blue-500"
+                    placeholder="500000"
+                    required
+                    autoFocus
+                  />
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1.5">
+                  This sets your initial principal for calculating drawdowns, total ROI, and dynamic milestones.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#1e293b]">
+                <button
+                  type="button"
+                  onClick={() => setShowEditCapitalModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingCapital}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 transition-all shadow-md shadow-blue-600/30 disabled:opacity-50"
+                >
+                  {savingCapital ? 'Saving...' : 'Update Capital'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add / Record Capital Transaction Modal */}
+      {showAddTxModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#121b2d] border border-[#1e293b] rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-[#1e293b] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                    txType === 'deposit'
+                      ? 'bg-emerald-500/10 text-emerald-400'
+                      : 'bg-rose-500/10 text-rose-400'
+                  }`}
+                >
+                  {txType === 'deposit' ? (
+                    <ArrowUpRight className="w-5 h-5" />
+                  ) : (
+                    <ArrowDownRight className="w-5 h-5" />
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Record Capital Transaction</h3>
+                  <p className="text-xs text-slate-400">Add funds or record profit withdrawals</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddTxModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddTransaction} className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                  Transaction Type
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setTxType('deposit')}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                      txType === 'deposit'
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 shadow-sm'
+                        : 'bg-[#0e1626] text-slate-400 border border-[#1e293b] hover:text-slate-200'
+                    }`}
+                  >
+                    <ArrowUpRight className="w-4 h-4" /> Deposit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTxType('withdrawal')}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                      txType === 'withdrawal'
+                        ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40 shadow-sm'
+                        : 'bg-[#0e1626] text-slate-400 border border-[#1e293b] hover:text-slate-200'
+                    }`}
+                  >
+                    <ArrowDownRight className="w-4 h-4" /> Withdrawal
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                  Amount (₹)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm font-mono-numbers">
+                    ₹
+                  </span>
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="any"
+                    value={txAmount}
+                    onChange={(e) => setTxAmount(e.target.value)}
+                    className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white text-sm font-mono-numbers focus:outline-none focus:border-blue-500"
+                    placeholder="1000.00"
+                    required
+                    autoFocus
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                  Date
+                </label>
+                <input
+                  type="date"
+                  value={txDate}
+                  onChange={(e) => setTxDate(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1.5">
+                  Notes (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={txNotes}
+                  onChange={(e) => setTxNotes(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white text-xs focus:outline-none focus:border-blue-500"
+                  placeholder="e.g. Added monthly trading funds"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#1e293b]">
+                <button
+                  type="button"
+                  onClick={() => setShowAddTxModal(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingTx}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-md disabled:opacity-50 ${
+                    txType === 'deposit'
+                      ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-600/30'
+                      : 'bg-rose-600 hover:bg-rose-500 shadow-rose-600/30'
+                  }`}
+                >
+                  {savingTx
+                    ? 'Recording...'
+                    : txType === 'deposit'
+                    ? 'Add Deposit'
+                    : 'Record Withdrawal'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Delete Capital Transaction Confirmation Modal */}
+      {txToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-[#121b2d] border border-[#1e293b] rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-rose-400">
+              <div className="p-2 rounded-2xl bg-rose-500/10">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <h3 className="text-base font-bold text-white">
+                Delete Transaction?
+              </h3>
+            </div>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Are you sure you want to remove this{' '}
+              <strong className="text-white">
+                {txToDelete.type} of {formatINR(Math.abs(txToDelete.amount))}
+              </strong>
+              ? Your capital balance will be recalculated accordingly.
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setTxToDelete(null)}
+                disabled={isDeletingTx}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteTransaction}
+                disabled={isDeletingTx}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md shadow-rose-600/30 transition-all disabled:opacity-50 flex items-center gap-1.5"
+              >
+                {isDeletingTx ? 'Removing...' : 'Yes, Remove'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

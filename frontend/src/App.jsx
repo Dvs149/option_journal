@@ -6,6 +6,7 @@ import { FilterProvider } from './context/FilterContext';
 import { LotSizeProvider } from './context/LotSizeContext';
 import { ToastProvider } from './context/ToastContext';
 import { ModuleProvider } from './context/ModuleContext';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import AppLayout from './components/layout/AppLayout';
 
 import Dashboard from './pages/Dashboard';
@@ -48,43 +49,45 @@ export default function App() {
           <LotSizeProvider>
             <ToastProvider>
               <ModuleProvider>
-                <BrowserRouter>
-              <Routes>
-              {/* Public Authentication */}
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+                <ErrorBoundary>
+                  <BrowserRouter>
+                    <Routes>
+                      {/* Public Authentication */}
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/register" element={<Register />} />
 
-              {/* Protected Trading Workspace */}
-              <Route
-                path="/"
-                element={
-                  <ProtectedRoute>
-                    <AppLayout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route index element={<Dashboard />} />
-                <Route path="add-trade" element={<AddTrade />} />
-                <Route path="trades" element={<AllTrades />} />
-                <Route path="calendar" element={<TradingCalendar />} />
-                <Route path="equity-curve" element={<EquityCurve />} />
-                <Route path="risk-management" element={<RiskManagement />} />
-                <Route path="journal" element={<TradingJournal />} />
-                <Route path="strategy-analysis" element={<StrategyAnalysis />} />
-                <Route path="analytics" element={<AnalyticsReports />} />
-                <Route path="capital-management" element={<CapitalManagement />} />
-                <Route path="settings" element={<Settings />} />
-              </Route>
+                      {/* Protected Trading Workspace */}
+                      <Route
+                        path="/"
+                        element={
+                          <ProtectedRoute>
+                            <AppLayout />
+                          </ProtectedRoute>
+                        }
+                      >
+                        <Route index element={<Dashboard />} />
+                        <Route path="add-trade" element={<AddTrade />} />
+                        <Route path="trades" element={<AllTrades />} />
+                        <Route path="calendar" element={<TradingCalendar />} />
+                        <Route path="equity-curve" element={<EquityCurve />} />
+                        <Route path="risk-management" element={<RiskManagement />} />
+                        <Route path="journal" element={<TradingJournal />} />
+                        <Route path="strategy-analysis" element={<StrategyAnalysis />} />
+                        <Route path="analytics" element={<AnalyticsReports />} />
+                        <Route path="capital-management" element={<CapitalManagement />} />
+                        <Route path="settings" element={<Settings />} />
+                      </Route>
 
-              {/* Catch-all */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </BrowserRouter>
-          </ModuleProvider>
-        </ToastProvider>
-        </LotSizeProvider>
-      </FilterProvider>
-    </AuthProvider>
+                      {/* Catch-all */}
+                      <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                  </BrowserRouter>
+                </ErrorBoundary>
+              </ModuleProvider>
+            </ToastProvider>
+          </LotSizeProvider>
+        </FilterProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
