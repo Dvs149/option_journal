@@ -7,6 +7,7 @@ import { LotSizeProvider } from './context/LotSizeContext';
 import { ToastProvider } from './context/ToastContext';
 import { ModuleProvider } from './context/ModuleContext';
 import { BrokerageProvider } from './context/BrokerageContext';
+import { DropdownProvider } from './context/DropdownContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import AppLayout from './components/layout/AppLayout';
 
@@ -20,6 +21,7 @@ import TradingJournal from './pages/TradingJournal';
 import StrategyAnalysis from './pages/StrategyAnalysis';
 import AnalyticsReports from './pages/AnalyticsReports';
 import CapitalManagement from './pages/CapitalManagement';
+import DropdownManager from './pages/DropdownManager';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -51,40 +53,44 @@ export default function App() {
             <ToastProvider>
               <ModuleProvider>
                 <BrokerageProvider>
-                  <ErrorBoundary>
-                    <BrowserRouter>
-                    <Routes>
-                      {/* Public Authentication */}
-                      <Route path="/login" element={<Login />} />
-                      <Route path="/register" element={<Register />} />
+                  <DropdownProvider>
+                    <ErrorBoundary>
+                      <BrowserRouter>
+                      <Routes>
+                        {/* Public Authentication */}
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
 
-                      {/* Protected Trading Workspace */}
-                      <Route
-                        path="/"
-                        element={
-                          <ProtectedRoute>
-                            <AppLayout />
-                          </ProtectedRoute>
-                        }
-                      >
-                        <Route index element={<Dashboard />} />
-                        <Route path="add-trade" element={<AddTrade />} />
-                        <Route path="trades" element={<AllTrades />} />
-                        <Route path="calendar" element={<TradingCalendar />} />
-                        <Route path="equity-curve" element={<EquityCurve />} />
-                        <Route path="risk-management" element={<RiskManagement />} />
-                        <Route path="journal" element={<TradingJournal />} />
-                        <Route path="strategy-analysis" element={<StrategyAnalysis />} />
-                        <Route path="analytics" element={<AnalyticsReports />} />
-                        <Route path="capital-management" element={<CapitalManagement />} />
-                        <Route path="settings" element={<Settings />} />
-                      </Route>
+                        {/* Protected Trading Workspace */}
+                        <Route
+                          path="/"
+                          element={
+                            <ProtectedRoute>
+                              <AppLayout />
+                            </ProtectedRoute>
+                          }
+                        >
+                          <Route index element={<Dashboard />} />
+                          <Route path="add-trade" element={<AddTrade />} />
+                          <Route path="trades" element={<AllTrades />} />
+                          <Route path="calendar" element={<TradingCalendar />} />
+                          <Route path="equity-curve" element={<EquityCurve />} />
+                          <Route path="risk-management" element={<RiskManagement />} />
+                          <Route path="journal" element={<TradingJournal />} />
+                          <Route path="strategy-analysis" element={<StrategyAnalysis />} />
+                          <Route path="analytics" element={<AnalyticsReports />} />
+                          <Route path="capital-management" element={<CapitalManagement />} />
+                          <Route path="dropdown-manager" element={<DropdownManager />} />
+                          <Route path="dropdowns" element={<Navigate to="/dropdown-manager" replace />} />
+                          <Route path="settings" element={<Settings />} />
+                        </Route>
 
-                      {/* Catch-all */}
-                      <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                  </BrowserRouter>
-                </ErrorBoundary>
+                        {/* Catch-all */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                      </Routes>
+                    </BrowserRouter>
+                  </ErrorBoundary>
+                </DropdownProvider>
               </BrokerageProvider>
             </ModuleProvider>
             </ToastProvider>

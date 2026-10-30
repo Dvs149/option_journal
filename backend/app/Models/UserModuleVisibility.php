@@ -34,6 +34,7 @@ class UserModuleVisibility extends Model
         ['module_key' => 'strategy-analysis', 'sort_order' => 7],
         ['module_key' => 'analytics', 'sort_order' => 8],
         ['module_key' => 'capital-management', 'sort_order' => 9],
+        ['module_key' => 'dropdown-manager', 'sort_order' => 10],
     ];
 
     public static function seedDefaultsForUser(int $userId): void

@@ -68,4 +68,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(IndexLotSize::class);
     }
+
+    public function dropdownOptions(): HasMany
+    {
+        return $this->hasMany(DropdownOption::class);
+    }
 }

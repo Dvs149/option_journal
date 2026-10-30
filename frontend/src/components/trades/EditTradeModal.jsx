@@ -15,6 +15,7 @@ import api from '../../api/client';
 import { useLotSizes } from '../../context/LotSizeContext';
 import { useToast } from '../../context/ToastContext';
 import { useBrokerage } from '../../context/BrokerageContext';
+import { useDropdown } from '../../context/DropdownContext';
 import { formatINR } from '../../utils/formatters';
 
 const getLegPrices = (trade) => {
@@ -64,6 +65,14 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
   const { getLotSize, lotSizes } = useLotSizes();
   const { showToast } = useToast();
   const { calculateCharges } = useBrokerage();
+  const { getActiveOptions } = useDropdown();
+
+  const activeIndices = useMemo(() => getActiveOptions('add-trade', 'index_name'), [getActiveOptions]);
+  const activeTradingTypes = useMemo(() => getActiveOptions('add-trade', 'trading_type'), [getActiveOptions]);
+  const activeOptionTypes = useMemo(() => getActiveOptions('add-trade', 'option_type'), [getActiveOptions]);
+  const activeStrategies = useMemo(() => getActiveOptions('add-trade', 'strategy_name'), [getActiveOptions]);
+  const activeMarketConditions = useMemo(() => getActiveOptions('add-trade', 'market_conditions'), [getActiveOptions]);
+
   const [modalTab, setModalTab] = useState('details'); // 'details' | 'charges' | 'journal' | 'screenshots'
   const [editForm, setEditForm] = useState({});
   const [savingEdit, setSavingEdit] = useState(false);
@@ -544,7 +553,14 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white focus:outline-none focus:border-blue-500"
                   >
                     {Object.keys(lotSizes)
-                      .filter((idx) => idx !== 'BANK NIFTY')
+                      .filter((idx) => {
+                        if (idx === 'BANK NIFTY') return false;
+                        if (editForm.index_name === idx) return true;
+                        if (activeIndices && activeIndices.length > 0) {
+                          return activeIndices.some((opt) => opt.option_value === idx);
+                        }
+                        return true;
+                      })
                       .map((idx) => (
                         <option key={idx} value={idx}>
                           {idx === 'STOCK' ? 'Individual Stock' : idx} (Lot: {lotSizes[idx]})
@@ -559,9 +575,19 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
                     onChange={(e) => setEditForm({ ...editForm, trading_type: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white focus:outline-none focus:border-blue-500"
                   >
-                    <option value="Intraday">Intraday</option>
-                    <option value="BTST">BTST</option>
-                    <option value="Overnight">Overnight</option>
+                    {activeTradingTypes && activeTradingTypes.length > 0 ? (
+                      activeTradingTypes.map((opt) => (
+                        <option key={opt.option_value} value={opt.option_value}>
+                          {opt.option_label}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="Intraday">Intraday</option>
+                        <option value="BTST">BTST</option>
+                        <option value="Overnight">Overnight</option>
+                      </>
+                    )}
                   </select>
                 </div>
               </div>
@@ -822,17 +848,32 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
                     onChange={(e) => setEditForm({ ...editForm, strategy_name: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white focus:outline-none focus:border-blue-500"
                   >
-                    <option value="Long Straddle">Long Straddle</option>
-                    <option value="Long Strangle">Long Strangle</option>
-                    <option value="Directional CE">Directional CE</option>
-                    <option value="Directional PE">Directional PE</option>
-                    <option value="Bull Call Spread">Bull Call Spread</option>
-                    <option value="Bear Put Spread">Bear Put Spread</option>
-                    <option value="Iron Condor">Iron Condor</option>
-                    <option value="Short Straddle">Short Straddle</option>
-                    <option value="Short Strangle">Short Strangle</option>
-                    <option value="BTST">BTST</option>
-                    <option value="Intraday Options">Intraday Options</option>
+                    {activeStrategies && activeStrategies.length > 0 ? (
+                      activeStrategies.map((opt) => (
+                        <option key={opt.option_value} value={opt.option_value}>
+                          {opt.option_label}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="Long Straddle">Long Straddle</option>
+                        <option value="Long Strangle">Long Strangle</option>
+                        <option value="Directional CE">Directional CE</option>
+                        <option value="Directional PE">Directional PE</option>
+                        <option value="Bull Call Spread">Bull Call Spread</option>
+                        <option value="Bear Put Spread">Bear Put Spread</option>
+                        <option value="Iron Condor">Iron Condor</option>
+                        <option value="Short Straddle">Short Straddle</option>
+                        <option value="Short Strangle">Short Strangle</option>
+                        <option value="BTST">BTST</option>
+                        <option value="Intraday Options">Intraday Options</option>
+                      </>
+                    )}
+                    {editForm.strategy_name &&
+                      activeStrategies &&
+                      !activeStrategies.some((s) => s.option_value === editForm.strategy_name) && (
+                        <option value={editForm.strategy_name}>{editForm.strategy_name} (Current)</option>
+                      )}
                     <option value="CUSTOM">Custom Strategy...</option>
                   </select>
                 </div>
@@ -844,12 +885,27 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
                     onChange={(e) => setEditForm({ ...editForm, market_conditions: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white focus:outline-none focus:border-blue-500"
                   >
-                    <option value="Rangebound">Rangebound</option>
-                    <option value="Bullish Trend">Bullish Trend</option>
-                    <option value="Bearish Trend">Bearish Trend</option>
-                    <option value="High Volatility">High Volatility</option>
-                    <option value="Consolidation">Consolidation</option>
-                    <option value="Expiry Day Volatility">Expiry Day Volatility</option>
+                    {activeMarketConditions && activeMarketConditions.length > 0 ? (
+                      activeMarketConditions.map((opt) => (
+                        <option key={opt.option_value} value={opt.option_value}>
+                          {opt.option_label}
+                        </option>
+                      ))
+                    ) : (
+                      <>
+                        <option value="Rangebound">Rangebound</option>
+                        <option value="Bullish Trend">Bullish Trend</option>
+                        <option value="Bearish Trend">Bearish Trend</option>
+                        <option value="High Volatility">High Volatility</option>
+                        <option value="Consolidation">Consolidation</option>
+                        <option value="Expiry Day Volatility">Expiry Day Volatility</option>
+                      </>
+                    )}
+                    {editForm.market_conditions &&
+                      activeMarketConditions &&
+                      !activeMarketConditions.some((m) => m.option_value === editForm.market_conditions) && (
+                        <option value={editForm.market_conditions}>{editForm.market_conditions} (Current)</option>
+                      )}
                   </select>
                 </div>
               </div>

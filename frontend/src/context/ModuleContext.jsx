@@ -9,6 +9,7 @@ import {
   PieChart,
   BarChart3,
   Wallet,
+  SlidersHorizontal,
 } from 'lucide-react';
 import api from '../api/client';
 
@@ -84,6 +85,14 @@ export const APP_MODULES = [
     icon: Wallet,
     desc: 'Manage account deposits, withdrawals, ROI calculations, and live net capital balance',
     category: 'Account',
+  },
+  {
+    id: 'dropdown-manager',
+    name: 'Dropdown Manager',
+    path: '/dropdown-manager',
+    icon: SlidersHorizontal,
+    desc: 'Manage, activate & deactivate dropdown options module-wise across Add Trade, All Trades, etc.',
+    category: 'Settings',
   },
 ];
 

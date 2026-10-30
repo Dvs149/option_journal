@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Sliders,
   TrendingUp,
@@ -30,6 +31,8 @@ import {
   Sparkles,
   LayoutGrid,
   Receipt,
+  SlidersHorizontal,
+  ChevronRight,
 } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -38,6 +41,7 @@ import { useLotSizes, STANDARD_INDICES } from '../context/LotSizeContext';
 import { useToast } from '../context/ToastContext';
 import { useModules } from '../context/ModuleContext';
 import { useBrokerage } from '../context/BrokerageContext';
+import { useDropdown } from '../context/DropdownContext';
 
 export default function Settings() {
   const { user, updateUser } = useAuth();
@@ -61,6 +65,13 @@ export default function Settings() {
     resetAllModules,
     setAllModulesVisible,
   } = useModules();
+
+  const {
+    options: dropdownOptions,
+    grouped: dropdownGrouped,
+    toggleOptionStatus,
+    loading: dropdownsLoading,
+  } = useDropdown();
 
   // Active Tab
   const [activeTab, setActiveTab] = useState('All');
@@ -1847,8 +1858,132 @@ export default function Settings() {
               </span>
             </div>
           </div>
-
   );
+
+  const renderDropdownsCard = () => {
+    const totalCount = dropdownOptions?.length || 0;
+    const activeCount = dropdownOptions?.filter((o) => o.is_active).length || 0;
+    const inactiveCount = totalCount - activeCount;
+
+    return (
+      <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-xl space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-3 border-b border-[#1e293b] light:border-slate-200">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400">
+              <SlidersHorizontal className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-white light:text-slate-900">
+                  Dropdown Options Manager
+                </h2>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  Module-Wise
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-400">
+                Activate or deactivate dropdown options across modules
+              </p>
+            </div>
+          </div>
+
+          <Link
+            to="/dropdown-manager"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/20 transition-all"
+          >
+            <span>Manage All</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+
+        {/* Stats Chips */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className="p-2.5 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-center">
+            <div className="text-[10px] text-slate-400 font-medium">Total Options</div>
+            <div className="text-base font-bold text-white light:text-slate-900 font-mono-numbers mt-0.5">
+              {totalCount}
+            </div>
+          </div>
+          <div className="p-2.5 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-center">
+            <div className="text-[10px] text-emerald-400 font-medium">Active</div>
+            <div className="text-base font-bold text-emerald-400 font-mono-numbers mt-0.5">
+              {activeCount}
+            </div>
+          </div>
+          <div className="p-2.5 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-center">
+            <div className="text-[10px] text-amber-400 font-medium">Inactive</div>
+            <div className="text-base font-bold text-amber-400 font-mono-numbers mt-0.5">
+              {inactiveCount}
+            </div>
+          </div>
+        </div>
+
+        {/* Modules Breakdown */}
+        <div className="space-y-2 text-xs">
+          {[
+            {
+              moduleKey: 'add-trade',
+              name: 'Add Trade',
+              desc: 'Indices, Trading Types, Strategies, Market Conditions, Option Types',
+              color: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+            },
+            {
+              moduleKey: 'trades',
+              name: 'All Trades Filters',
+              desc: 'Filter by Index, Trading Type, Option Type, Strategy',
+              color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+            },
+            {
+              moduleKey: 'journal',
+              name: 'Trading Journal',
+              desc: 'Moods, Emotional state tags, and Journal setup types',
+              color: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
+            },
+          ].map((m) => {
+            const modOptions = dropdownOptions?.filter((o) => o.module_key === m.moduleKey) || [];
+            const modActive = modOptions.filter((o) => o.is_active).length;
+            return (
+              <div
+                key={m.moduleKey}
+                className="p-3 rounded-2xl bg-[#0e1626]/70 light:bg-slate-50 border border-[#1e293b] light:border-slate-200 flex items-center justify-between gap-3"
+              >
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-white light:text-slate-900">{m.name}</span>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${m.color}`}>
+                      {modActive}/{modOptions.length} Active
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 truncate mt-0.5">{m.desc}</p>
+                </div>
+
+                <Link
+                  to={`/dropdown-manager?module=${m.moduleKey}`}
+                  className="p-2 rounded-xl bg-[#162033] hover:bg-blue-600 text-slate-400 hover:text-white transition-colors"
+                  title={`Configure ${m.name}`}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Quick Footer Action */}
+        <div className="pt-2 border-t border-[#1e293b]/60 flex items-center justify-between text-[11px] text-slate-400">
+          <span>Deactivated options are hidden from form dropdowns immediately</span>
+          <Link
+            to="/dropdown-manager"
+            className="text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1"
+          >
+            Open Manager
+            <ChevronRight className="w-3 h-3" />
+          </Link>
+        </div>
+      </div>
+    );
+  };
 
   // Definition array for search filtering
   const cardDefinitions = [
@@ -1856,6 +1991,7 @@ export default function Settings() {
     { id: 'Trading', name: 'Trading Settings', keywords: 'trading capital initial capital default index expiry order type strategy lot size shares', render: renderTradingCard },
     { id: 'Lot Sizes', name: 'Manage All Index Lot Sizes', keywords: 'lot sizes index nifty banknifty finnifty midcpnifty sensex bankex shares quantities', render: renderLotSizesCard },
     { id: 'Brokerage', name: 'Brokerage & Regulatory Charges', keywords: 'brokerage charges stt gst sebi stamp duty transaction turnover rates zerodha regulatory flat order simulator', render: renderBrokerageCard },
+    { id: 'Dropdowns', name: 'Dropdown Options Manager', keywords: 'dropdown options active inactive module add trade all trades strategy index trading type condition mood', render: renderDropdownsCard },
     { id: 'Risk Management', name: 'Risk Management Settings', keywords: 'risk management daily loss limit profit target monthly risk trade max risk alerts', render: renderRiskCard },
     { id: 'Notifications', name: 'Notification Settings', keywords: 'notifications daily pnl summary risk alerts trade reminders weekly report monthly report', render: renderNotificationsCard },
     { id: 'Appearance', name: 'Appearance Settings', keywords: 'appearance theme light dark system primary color font size compact mode animations', render: renderAppearanceCard },
@@ -1939,6 +2075,10 @@ export default function Settings() {
       return <div className="max-w-3xl mx-auto w-full">{renderBrokerageCard()}</div>;
     }
 
+    if (activeTab === 'Dropdowns') {
+      return <div className="max-w-4xl mx-auto w-full">{renderDropdownsCard()}</div>;
+    }
+
     if (activeTab === 'Lot Sizes') {
       return <div className="max-w-3xl mx-auto w-full">{renderLotSizesCard()}</div>;
     }
@@ -1990,9 +2130,10 @@ export default function Settings() {
           {renderModulesCard()}
         </div>
 
-        {/* Column 3: Lot Sizes (520px) + Notifications (360px) + Data & Backup (380px) + Integrations (280px) */}
+        {/* Column 3: Lot Sizes (520px) + Dropdowns (380px) + Notifications (360px) + Data & Backup (380px) + Integrations (280px) */}
         <div className="flex flex-col gap-5">
           {renderLotSizesCard()}
+          {renderDropdownsCard()}
           {renderNotificationsCard()}
           {renderDataBackupCard()}
           {renderIntegrationsCard()}
@@ -2047,6 +2188,7 @@ export default function Settings() {
           { id: 'General', label: 'General', icon: CogIcon },
           { id: 'Trading', label: 'Trading Settings', icon: TrendingUp },
           { id: 'Brokerage', label: 'Brokerage & Charges', icon: Receipt },
+          { id: 'Dropdowns', label: 'Dropdown Options', icon: SlidersHorizontal },
           { id: 'Lot Sizes', label: 'Index Lot Sizes', icon: Layers },
           { id: 'Risk Management', label: 'Risk Management', icon: Shield },
           { id: 'Notifications', label: 'Notifications', icon: Bell },

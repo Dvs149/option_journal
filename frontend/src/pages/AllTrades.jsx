@@ -49,6 +49,7 @@ import { useLotSizes } from '../context/LotSizeContext';
 import { useToast } from '../context/ToastContext';
 import { useFilter } from '../context/FilterContext';
 import { useBrokerage } from '../context/BrokerageContext';
+import { useDropdown } from '../context/DropdownContext';
 
 // Helper to resolve individual CE and PE leg prices
 const getLegPrices = (trade) => {
@@ -99,6 +100,12 @@ export default function AllTrades() {
 
   // Filters
   const { dateRangeDisplay } = useFilter();
+  const { getActiveOptions } = useDropdown();
+  const tradeIndices = useMemo(() => getActiveOptions('trades', 'index_name'), [getActiveOptions]);
+  const tradeTradingTypes = useMemo(() => getActiveOptions('trades', 'trading_type'), [getActiveOptions]);
+  const tradeOptionTypes = useMemo(() => getActiveOptions('trades', 'option_type'), [getActiveOptions]);
+  const tradeStrategies = useMemo(() => getActiveOptions('trades', 'strategy_name'), [getActiveOptions]);
+
   const [selectedIndex, setSelectedIndex] = useState('ALL');
   const [selectedTradingType, setSelectedTradingType] = useState('ALL');
   const [selectedOption, setSelectedOption] = useState('ALL');
@@ -1094,7 +1101,13 @@ export default function AllTrades() {
             >
               <option value="ALL">All Indices</option>
               {Object.keys(lotSizes)
-                .filter((idx) => idx !== 'BANK NIFTY')
+                .filter((idx) => {
+                  if (idx === 'BANK NIFTY') return false;
+                  if (tradeIndices && tradeIndices.length > 0) {
+                    return tradeIndices.some((opt) => opt.option_value === idx);
+                  }
+                  return true;
+                })
                 .map((idx) => (
                   <option key={idx} value={idx}>
                     {idx === 'BANKNIFTY' ? 'BANK NIFTY' : idx}
@@ -1115,9 +1128,19 @@ export default function AllTrades() {
               className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none"
             >
               <option value="ALL">All Types</option>
-              <option value="Intraday">Intraday</option>
-              <option value="BTST">BTST</option>
-              <option value="Overnight">Overnight</option>
+              {tradeTradingTypes && tradeTradingTypes.length > 0 ? (
+                tradeTradingTypes.map((opt) => (
+                  <option key={opt.option_value} value={opt.option_value}>
+                    {opt.option_label}
+                  </option>
+                ))
+              ) : (
+                <>
+                  <option value="Intraday">Intraday</option>
+                  <option value="BTST">BTST</option>
+                  <option value="Overnight">Overnight</option>
+                </>
+              )}
             </select>
           </div>
 
@@ -1133,9 +1156,19 @@ export default function AllTrades() {
               className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none"
             >
               <option value="ALL">All Options</option>
-              <option value="CE">CE (Calls)</option>
-              <option value="PE">PE (Puts)</option>
-              <option value="Both">Both (Spreads)</option>
+              {tradeOptionTypes && tradeOptionTypes.length > 0 ? (
+                tradeOptionTypes.map((opt) => (
+                  <option key={opt.option_value} value={opt.option_value}>
+                    {opt.option_label}
+                  </option>
+                ))
+              ) : (
+                <>
+                  <option value="CE">CE (Calls)</option>
+                  <option value="PE">PE (Puts)</option>
+                  <option value="Both">Both (Spreads)</option>
+                </>
+              )}
             </select>
           </div>
 
@@ -1151,15 +1184,25 @@ export default function AllTrades() {
               className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none"
             >
               <option value="ALL">All Strategies</option>
-              <option value="Long Straddle">Long Straddle</option>
-              <option value="Long Strangle">Long Strangle</option>
-              <option value="Directional CE">Directional CE</option>
-              <option value="Directional PE">Directional PE</option>
-              <option value="Bull Call Spread">Bull Call Spread</option>
-              <option value="Bear Put Spread">Bear Put Spread</option>
-              <option value="Iron Condor">Iron Condor</option>
-              <option value="Rangebound">Rangebound</option>
-              <option value="BTST">BTST</option>
+              {tradeStrategies && tradeStrategies.length > 0 ? (
+                tradeStrategies.map((opt) => (
+                  <option key={opt.option_value} value={opt.option_value}>
+                    {opt.option_label}
+                  </option>
+                ))
+              ) : (
+                <>
+                  <option value="Long Straddle">Long Straddle</option>
+                  <option value="Long Strangle">Long Strangle</option>
+                  <option value="Directional CE">Directional CE</option>
+                  <option value="Directional PE">Directional PE</option>
+                  <option value="Bull Call Spread">Bull Call Spread</option>
+                  <option value="Bear Put Spread">Bear Put Spread</option>
+                  <option value="Iron Condor">Iron Condor</option>
+                  <option value="Short Straddle">Short Straddle</option>
+                  <option value="Short Strangle">Short Strangle</option>
+                </>
+              )}
             </select>
           </div>
         </div>

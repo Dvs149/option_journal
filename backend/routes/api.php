@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\BrokerageSettingController;
 use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\CapitalController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\DropdownOptionController;
 use App\Http\Controllers\Api\ExportController;
 use App\Http\Controllers\Api\JournalController;
 use App\Http\Controllers\Api\LotSizeController;
@@ -97,6 +98,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/brokerage-settings', [BrokerageSettingController::class, 'show']);
     Route::put('/brokerage-settings', [BrokerageSettingController::class, 'update']);
     Route::post('/brokerage-settings/reset', [BrokerageSettingController::class, 'reset']);
+
+    // Module-wise Dropdown & Options Management
+    Route::get('/dropdown-options', [DropdownOptionController::class, 'index']);
+    Route::post('/dropdown-options', [DropdownOptionController::class, 'store']);
+    Route::put('/dropdown-options/{id}/status', [DropdownOptionController::class, 'toggleStatus']);
+    Route::put('/dropdown-options/{id}', [DropdownOptionController::class, 'update']);
+    Route::delete('/dropdown-options/{id}', [DropdownOptionController::class, 'destroy']);
+    Route::post('/dropdown-options/bulk-status', [DropdownOptionController::class, 'bulkStatus']);
+    Route::post('/dropdown-options/reset', [DropdownOptionController::class, 'reset']);
 
     // Export, Reports, Backup & Restore
     Route::get('/export/csv', [ExportController::class, 'csv']);

@@ -19,6 +19,7 @@ import {
   Activity,
   User as UserIcon,
   TrendingUp,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -42,6 +43,7 @@ export default function Sidebar({ onCloseMobile }) {
     { name: 'Strategy Analysis', path: '/strategy-analysis', icon: PieChart },
     { name: 'Analytics & Reports', path: '/analytics', icon: BarChart3 },
     { name: 'Capital Management', path: '/capital-management', icon: Wallet },
+    { name: 'Dropdown Manager', path: '/dropdown-manager', icon: SlidersHorizontal },
     { name: 'Settings', path: '/settings', icon: Settings },
   ];
 

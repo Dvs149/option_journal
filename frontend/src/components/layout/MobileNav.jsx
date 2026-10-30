@@ -13,6 +13,7 @@ import {
   PieChart,
   Wallet,
   Settings,
+  SlidersHorizontal,
   X,
   Moon,
   Sun,
@@ -43,6 +44,7 @@ export default function MobileNav() {
     { name: 'Trading Journal', path: '/journal', icon: BookOpen },
     { name: 'Strategy Analysis', path: '/strategy-analysis', icon: PieChart },
     { name: 'Capital Management', path: '/capital-management', icon: Wallet },
+    { name: 'Dropdown Manager', path: '/dropdown-manager', icon: SlidersHorizontal },
     { name: 'Settings', path: '/settings', icon: Settings },
   ].filter((item) => isModuleVisible(item.path));
 
