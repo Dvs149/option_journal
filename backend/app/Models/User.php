@@ -58,4 +58,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(CapitalTransaction::class);
     }
+
+    public function indexLotSizes(): HasMany
+    {
+        return $this->hasMany(IndexLotSize::class);
+    }
 }

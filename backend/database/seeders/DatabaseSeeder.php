@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\CapitalTransaction;
+use App\Models\IndexLotSize;
 use App\Models\Trade;
 use App\Models\TradeJournal;
 use App\Models\TradingAccount;
@@ -56,6 +57,9 @@ class DatabaseSeeder extends Seeder
                 'description' => $desc,
             ]);
         }
+
+        // Seed default index lot sizes for the user in DB
+        IndexLotSize::seedDefaultsForUser($user->id);
 
         // Add initial deposit capital transaction
         CapitalTransaction::create([

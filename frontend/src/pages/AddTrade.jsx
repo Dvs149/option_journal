@@ -18,16 +18,7 @@ import {
 } from 'lucide-react';
 import api from '../api/client';
 import { formatINR } from '../utils/formatters';
-
-const LOT_SIZES = {
-  'NIFTY': 50,
-  'BANK NIFTY': 15,
-  'SENSEX': 10,
-  'BANKEX': 15,
-  'FINNIFTY': 25,
-  'MIDCPNIFTY': 50,
-  'STOCK': 1,
-};
+import { useLotSizes } from '../context/LotSizeContext';
 
 export default function AddTrade() {
   const navigate = useNavigate();
@@ -79,12 +70,23 @@ export default function AddTrade() {
     personal_notes: 'N/A',
   });
 
-  const currentLotSize = LOT_SIZES[form.index_name] || 50;
+  const { getLotSize, calculateQuantity, calculateLots, lotSizes } = useLotSizes();
+
+  const currentLotSize = getLotSize(form.index_name);
+
+  // Sync quantity automatically whenever index or lots or dynamic lot size changes
+  useEffect(() => {
+    const numLots = parseInt(form.lots, 10) || 1;
+    setForm((prev) => ({
+      ...prev,
+      quantity: (numLots * currentLotSize).toString(),
+    }));
+  }, [form.index_name, currentLotSize]);
 
   // Handle Index Change
   const handleIndexChange = (e) => {
     const newIndex = e.target.value;
-    const lotSize = LOT_SIZES[newIndex] || 50;
+    const lotSize = getLotSize(newIndex);
     const currentLots = parseInt(form.lots, 10) || 1;
     setForm((prev) => ({
       ...prev,
@@ -93,7 +95,7 @@ export default function AddTrade() {
     }));
   };
 
-  // Handle Lots Change
+  // Handle Lots Change - automatically calculates Quantity
   const handleLotsChange = (e) => {
     const val = e.target.value;
     const numLots = parseInt(val, 10) || 0;
@@ -104,7 +106,7 @@ export default function AddTrade() {
     }));
   };
 
-  // Handle Quantity Change
+  // Handle Quantity Change - automatically calculates Lots
   const handleQuantityChange = (e) => {
     const val = e.target.value;
     const numQty = parseInt(val, 10) || 0;
@@ -532,13 +534,14 @@ export default function AddTrade() {
                     onChange={handleIndexChange}
                     className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 transition-colors"
                   >
-                    <option value="NIFTY">NIFTY</option>
-                    <option value="BANK NIFTY">BANK NIFTY</option>
-                    <option value="SENSEX">SENSEX</option>
-                    <option value="BANKEX">BANKEX</option>
-                    <option value="FINNIFTY">FINNIFTY</option>
-                    <option value="MIDCPNIFTY">MIDCPNIFTY</option>
-                    <option value="STOCK">Individual Stock</option>
+                    {/* Dynamic indices list with lot size indicator */}
+                    {Object.keys(lotSizes)
+                      .filter((idx) => idx !== 'BANK NIFTY')
+                      .map((idx) => (
+                        <option key={idx} value={idx}>
+                          {idx === 'STOCK' ? 'Individual Stock' : idx} (Lot: {lotSizes[idx]})
+                        </option>
+                      ))}
                   </select>
                 </div>
 

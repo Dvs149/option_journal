@@ -33,6 +33,7 @@ import {
   CartesianGrid,
 } from 'recharts';
 import { formatINR } from '../utils/formatters';
+import { useLotSizes } from '../context/LotSizeContext';
 
 export default function CapitalManagement() {
   const navigate = useNavigate();
@@ -41,13 +42,26 @@ export default function CapitalManagement() {
   const [timeRange, setTimeRange] = useState('1Y');
   const [txTab, setTxTab] = useState('all');
 
+  const { getLotSize, lotSizes } = useLotSizes();
+
   // Calculator inputs
+  const [calcIndex, setCalcIndex] = useState('NIFTY');
   const [calcForm, setCalcForm] = useState({
     account_capital: '208450',
     risk_pct: '1.0',
     stop_loss: '50',
-    lot_size: '65',
+    lot_size: getLotSize('NIFTY').toString(),
   });
+
+  // Keep lot size in sync if index changes
+  const handleCalcIndexChange = (idx) => {
+    setCalcIndex(idx);
+    const size = getLotSize(idx);
+    setCalcForm((prev) => ({
+      ...prev,
+      lot_size: size.toString(),
+    }));
+  };
 
   const calcResults = useMemo(() => {
     const cap = parseFloat(calcForm.account_capital) || 0;
@@ -58,10 +72,12 @@ export default function CapitalManagement() {
     const riskAmt = (cap * pct) / 100;
     const lossPerLot = sl * lotSize;
     const recLots = lossPerLot > 0 ? (riskAmt / lossPerLot).toFixed(1) : '0';
+    const totalQty = Math.round(parseFloat(recLots) * lotSize) || 0;
 
     return {
       riskAmt: Math.round(riskAmt),
       recLots,
+      totalQty,
     };
   }, [calcForm]);
 
@@ -394,7 +410,18 @@ export default function CapitalManagement() {
                 />
               </div>
               <div>
-                <label className="block text-slate-400 mb-1">Lot Size</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-slate-400">Lot Size</label>
+                  <select
+                    value={calcIndex}
+                    onChange={(e) => handleCalcIndexChange(e.target.value)}
+                    className="bg-transparent text-[10px] text-blue-400 font-bold border-none outline-none cursor-pointer"
+                  >
+                    {Object.keys(lotSizes).filter(k => k !== 'BANK NIFTY').map(idx => (
+                      <option key={idx} value={idx} className="bg-[#121b2d] text-white">{idx}</option>
+                    ))}
+                  </select>
+                </div>
                 <input
                   type="number"
                   value={calcForm.lot_size}
@@ -406,7 +433,9 @@ export default function CapitalManagement() {
 
             <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] flex items-center gap-2">
               <Info className="w-4 h-4 flex-shrink-0" />
-              <span>You can risk ₹{calcResults.riskAmt} per trade. With {calcForm.stop_loss} points SL, you can take {calcResults.recLots} lots (≈ 1 lot).</span>
+              <span>
+                Risk: ₹{calcResults.riskAmt.toLocaleString('en-IN')}. With {calcForm.stop_loss} pts SL ({calcIndex}), take <strong>{calcResults.recLots} lots</strong> (<strong>{calcResults.totalQty} Qty</strong>).
+              </span>
             </div>
           </div>
         </div>

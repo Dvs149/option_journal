@@ -42,9 +42,11 @@ import {
 } from 'recharts';
 import api from '../api/client';
 import { formatINR, formatDate } from '../utils/formatters';
+import { useLotSizes } from '../context/LotSizeContext';
 
 export default function AllTrades() {
   const navigate = useNavigate();
+  const { getLotSize } = useLotSizes();
 
   // Primary state
   const [trades, setTrades] = useState([]);
@@ -1367,13 +1369,30 @@ export default function AllTrades() {
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-400 mb-1">Lots</label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-slate-400">Lots</label>
+                    <span className="text-[10px] text-slate-500 font-mono-numbers">
+                      Lot size: {getLotSize(editForm.index_name || 'NIFTY')}
+                    </span>
+                  </div>
                   <input
                     type="number"
                     value={editForm.lots || 1}
-                    onChange={(e) => setEditForm({ ...editForm, lots: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const l = parseInt(val, 10) || 1;
+                      const ls = getLotSize(editForm.index_name || 'NIFTY');
+                      setEditForm({
+                        ...editForm,
+                        lots: val,
+                        quantity: (l * ls).toString(),
+                      });
+                    }}
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers"
                   />
+                  <span className="text-[10px] text-blue-400 block mt-1 font-mono-numbers">
+                    Auto-calculated Qty: {(parseInt(editForm.lots, 10) || 1) * getLotSize(editForm.index_name || 'NIFTY')}
+                  </span>
                 </div>
               </div>
 

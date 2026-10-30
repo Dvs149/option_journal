@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\CapitalController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ExportController;
 use App\Http\Controllers\Api\JournalController;
+use App\Http\Controllers\Api\LotSizeController;
 use App\Http\Controllers\Api\RiskController;
 use App\Http\Controllers\Api\StrategyController;
 use App\Http\Controllers\Api\TradeController;
@@ -69,6 +70,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Analytics & Comparison Reports
     Route::get('/analytics', [AnalyticsController::class, 'index']);
+
+    // Dynamic Lot Size Management
+    Route::get('/lot-sizes', [LotSizeController::class, 'index']);
+    Route::post('/lot-sizes', [LotSizeController::class, 'store']);
+    Route::put('/lot-sizes/batch', [LotSizeController::class, 'batchUpdate']);
+    Route::post('/lot-sizes/reset', [LotSizeController::class, 'reset']);
+    Route::delete('/lot-sizes/{index_name}', [LotSizeController::class, 'destroy']);
 
     // Export, Reports, Backup & Restore
     Route::get('/export/csv', [ExportController::class, 'csv']);

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { FilterProvider } from './context/FilterContext';
+import { LotSizeProvider } from './context/LotSizeContext';
 import AppLayout from './components/layout/AppLayout';
 
 import Dashboard from './pages/Dashboard';
@@ -42,7 +43,8 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <FilterProvider>
-          <BrowserRouter>
+          <LotSizeProvider>
+            <BrowserRouter>
             <Routes>
               {/* Public Authentication */}
               <Route path="/login" element={<Login />} />
@@ -74,8 +76,9 @@ export default function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </BrowserRouter>
-        </FilterProvider>
-      </AuthProvider>
+        </LotSizeProvider>
+      </FilterProvider>
+    </AuthProvider>
     </ThemeProvider>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Sliders,
   TrendingUp,
@@ -22,15 +22,30 @@ import {
   Mail,
   Send,
   Zap,
-  RotateCcw
+  RotateCcw,
+  Plus,
+  Trash2,
+  Calculator,
+  Layers,
+  Sparkles
 } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLotSizes, STANDARD_INDICES } from '../context/LotSizeContext';
 
 export default function Settings() {
   const { user, updateUser } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const {
+    lotSizes,
+    getLotSize,
+    updateLotSize,
+    updateAllLotSizes,
+    addCustomIndex,
+    removeCustomIndex,
+    resetToDefaults,
+  } = useLotSizes();
 
   // Active Tab
   const [activeTab, setActiveTab] = useState('General');
@@ -48,8 +63,13 @@ export default function Settings() {
   const [defaultExpiryType, setDefaultExpiryType] = useState('Current Week');
   const [defaultOrderType, setDefaultOrderType] = useState('Options');
   const [defaultStrategy, setDefaultStrategy] = useState('Long Straddle');
-  const [defaultLotSize, setDefaultLotSize] = useState('65');
   const [defaultBrokerCharges, setDefaultBrokerCharges] = useState('₹20');
+
+  // Dynamic lot size test counter
+  const [testLots, setTestLots] = useState(2);
+  const [showAddIndexModal, setShowAddIndexModal] = useState(false);
+  const [newIndexName, setNewIndexName] = useState('');
+  const [newIndexLotSize, setNewIndexLotSize] = useState('50');
 
   // Risk Management State
   const [dailyLossLimit, setDailyLossLimit] = useState('₹25,000');
@@ -115,6 +135,18 @@ export default function Settings() {
     setTimeout(() => setToastMessage(''), 3000);
   };
 
+  const handleAddIndex = (e) => {
+    e.preventDefault();
+    if (!newIndexName.trim()) return;
+    const cleanName = newIndexName.trim().toUpperCase();
+    const size = parseInt(newIndexLotSize, 10) || 1;
+    addCustomIndex(cleanName, size);
+    setNewIndexName('');
+    setNewIndexLotSize('50');
+    setShowAddIndexModal(false);
+    triggerToast(`Added ${cleanName} with Lot Size ${size}! Available across all trade forms.`);
+  };
+
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     setPasswordMessage('');
@@ -175,6 +207,14 @@ export default function Settings() {
     }
   };
 
+  const isVisible = (sectionName) => {
+    if (searchQuery.trim() !== '') {
+      return sectionName.toLowerCase().includes(searchQuery.toLowerCase());
+    }
+    if (activeTab === 'General') return true; // Show all 9 cards in default overview
+    return activeTab.toLowerCase().includes(sectionName.toLowerCase()) || sectionName.toLowerCase().includes(activeTab.toLowerCase());
+  };
+
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto pb-12 animate-fadeIn text-slate-100">
       {/* Top Header Bar */}
@@ -184,7 +224,7 @@ export default function Settings() {
             Settings
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Manage your preferences, account, and application settings
+            Manage your preferences, account, dynamic lot sizes, and application settings
           </p>
         </div>
 
@@ -226,7 +266,7 @@ export default function Settings() {
       <div className="flex items-center gap-1.5 overflow-x-auto border-b border-[#1e293b] light:border-slate-200 pb-3 text-xs font-semibold whitespace-nowrap scrollbar-none">
         {[
           { id: 'General', label: 'General', icon: Sliders },
-          { id: 'Trading', label: 'Trading', icon: TrendingUp },
+          { id: 'Trading', label: 'Trading & Lot Sizes', icon: TrendingUp },
           { id: 'Risk Management', label: 'Risk Management', icon: Shield },
           { id: 'Notifications', label: 'Notifications', icon: Bell },
           { id: 'Appearance', label: 'Appearance', icon: Palette },
@@ -256,805 +296,469 @@ export default function Settings() {
       {/* 3x3 Grid of Settings Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {/* Card 1: General Settings */}
-        <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
-              <Sliders className="w-4 h-4" />
+        {isVisible('General') && (
+          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
+                <Sliders className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-white light:text-slate-900">General Settings</h2>
+                <p className="text-[11px] text-slate-400">Basic application preferences</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-sm font-bold text-white light:text-slate-900">General Settings</h2>
-              <p className="text-[11px] text-slate-400">Basic application preferences</p>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Currency</label>
+                <select
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                >
+                  <option>INR (₹) - Indian Rupee</option>
+                  <option>USD ($) - US Dollar</option>
+                  <option>EUR (€) - Euro</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Date Format</label>
+                <select
+                  value={dateFormat}
+                  onChange={(e) => setDateFormat(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                >
+                  <option>DD MMM YYYY (31 Aug 2025)</option>
+                  <option>YYYY-MM-DD (2025-08-31)</option>
+                  <option>MM/DD/YYYY (08/31/2025)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Time Format</label>
+                <select
+                  value={timeFormat}
+                  onChange={(e) => setTimeFormat(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                >
+                  <option>24 Hour (14:30)</option>
+                  <option>12 Hour (02:30 PM)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Timezone</label>
+                <select
+                  value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                >
+                  <option>Asia/Kolkata (GMT+5:30)</option>
+                  <option>UTC (GMT+0:00)</option>
+                  <option>America/New_York (EST)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Language</label>
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                >
+                  <option>English</option>
+                  <option>Hindi (हिंदी)</option>
+                  <option>Gujarati (ગુજરાતી)</option>
+                </select>
+              </div>
             </div>
           </div>
+        )}
 
-          <div className="space-y-3 text-xs">
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Currency</label>
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
-              >
-                <option>INR (₹) - Indian Rupee</option>
-                <option>USD ($) - US Dollar</option>
-                <option>EUR (€) - Euro</option>
-              </select>
+        {/* Card 2: Trading Settings with DYNAMIC LOT SIZE MANAGEMENT */}
+        {isVisible('Trading') && (
+          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-white light:text-slate-900">Trading Settings</h2>
+                  <p className="text-[11px] text-slate-400">Default values & dynamic database lot sizes</p>
+                </div>
+              </div>
+
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1 font-mono-numbers">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                DB Stored
+              </span>
             </div>
 
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Date Format</label>
-              <select
-                value={dateFormat}
-                onChange={(e) => setDateFormat(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
-              >
-                <option>DD MMM YYYY (31 Aug 2025)</option>
-                <option>YYYY-MM-DD (2025-08-31)</option>
-                <option>MM/DD/YYYY (08/31/2025)</option>
-              </select>
-            </div>
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Default Index</label>
+                <select
+                  value={defaultIndex}
+                  onChange={(e) => setDefaultIndex(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                >
+                  {Object.keys(lotSizes)
+                    .filter((k) => k !== 'BANK NIFTY')
+                    .map((idxKey) => (
+                      <option key={idxKey} value={idxKey}>
+                        {idxKey} (Lot: {lotSizes[idxKey]})
+                      </option>
+                    ))}
+                </select>
+              </div>
 
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Time Format</label>
-              <select
-                value={timeFormat}
-                onChange={(e) => setTimeFormat(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
-              >
-                <option>24 Hour (14:30)</option>
-                <option>12 Hour (02:30 PM)</option>
-              </select>
-            </div>
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Default Expiry Type</label>
+                <select
+                  value={defaultExpiryType}
+                  onChange={(e) => setDefaultExpiryType(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                >
+                  <option>Current Week</option>
+                  <option>Next Week</option>
+                  <option>Monthly Expiry</option>
+                </select>
+              </div>
 
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Timezone</label>
-              <select
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
-              >
-                <option>Asia/Kolkata (GMT+5:30)</option>
-                <option>UTC (GMT+0:00)</option>
-                <option>America/New_York (EST)</option>
-              </select>
-            </div>
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Default Order Type</label>
+                <select
+                  value={defaultOrderType}
+                  onChange={(e) => setDefaultOrderType(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                >
+                  <option>Options</option>
+                  <option>Futures</option>
+                  <option>Equity Intraday</option>
+                </select>
+              </div>
 
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Language</label>
-              <select
-                value={language}
-                onChange={(e) => setLanguage(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
-              >
-                <option>English</option>
-                <option>Hindi (हिंदी)</option>
-                <option>Gujarati (ગુજરાતી)</option>
-              </select>
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Default Strategy</label>
+                <select
+                  value={defaultStrategy}
+                  onChange={(e) => setDefaultStrategy(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                >
+                  <option>Long Straddle</option>
+                  <option>Directional</option>
+                  <option>Rangebound</option>
+                  <option>Scalping</option>
+                </select>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] text-slate-400">Default Lot Size ({defaultIndex})</label>
+                  <span className="text-[10px] text-blue-400 font-mono-numbers">
+                    Auto-calculates Qty
+                  </span>
+                </div>
+                <input
+                  type="number"
+                  min="1"
+                  value={getLotSize(defaultIndex)}
+                  onChange={(e) => {
+                    updateLotSize(defaultIndex, e.target.value);
+                    triggerToast(`✓ Saved ${defaultIndex} lot size (${e.target.value}) to Database!`);
+                  }}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Default Broker Charges (per order)</label>
+                <input
+                  type="text"
+                  value={defaultBrokerCharges}
+                  onChange={(e) => setDefaultBrokerCharges(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none"
+                />
+              </div>
+
+              {/* DYNAMIC LOT SIZES MANAGEMENT ACCORDION / LIST */}
+              <div className="pt-3 border-t border-[#1e293b]/60 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-xs font-bold text-white light:text-slate-900 block">
+                      Manage All Index Lot Sizes
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      Changes immediately reflect in Add Trade & Calculators
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        resetToDefaults();
+                        triggerToast('Reset lot sizes to standard exchange defaults (NIFTY: 50, BN: 15, SENSEX: 10, etc.)');
+                      }}
+                      className="p-1.5 rounded-lg bg-[#0e1626] light:bg-slate-100 hover:bg-[#162033] text-slate-400 hover:text-white border border-[#1e293b]"
+                      title="Reset to Exchange Defaults"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddIndexModal(true)}
+                      className="px-2 py-1 rounded-lg bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white text-[10px] font-bold border border-blue-500/30 transition-all"
+                    >
+                      + Add Index
+                    </button>
+                  </div>
+                </div>
+
+                {/* Index Lot Size List */}
+                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
+                  {Object.keys(lotSizes)
+                    .filter((k) => k !== 'BANK NIFTY')
+                    .map((idxKey) => {
+                      const size = lotSizes[idxKey] || 1;
+                      const isStandard = ['NIFTY', 'BANKNIFTY', 'SENSEX', 'FINNIFTY', 'MIDCPNIFTY', 'BANKEX', 'STOCK'].includes(idxKey);
+                      return (
+                        <div
+                          key={idxKey}
+                          className="px-2.5 py-1.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 flex items-center justify-between gap-2"
+                        >
+                          <div className="min-w-0">
+                            <span className="font-bold text-white light:text-slate-900 text-[11px] block truncate">
+                              {idxKey}
+                            </span>
+                            <span className="text-[9px] text-slate-400 font-mono-numbers">
+                              1 Lot = <strong className="text-emerald-400">{size} Qty</strong>
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1 shrink-0">
+                            <input
+                              type="number"
+                              min="1"
+                              value={size}
+                              onChange={(e) => {
+                                updateLotSize(idxKey, e.target.value);
+                                triggerToast(`✓ Saved ${idxKey} lot size (${e.target.value}) to Database!`);
+                              }}
+                              className="w-16 px-1.5 py-1 rounded-lg bg-[#121b2d] border border-[#1e293b] text-right text-xs font-mono-numbers text-white font-bold focus:outline-none"
+                            />
+                            {!isStandard && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  removeCustomIndex(idxKey);
+                                  triggerToast(`Removed custom index ${idxKey}`);
+                                }}
+                                className="p-1 rounded text-rose-400 hover:bg-rose-500/20 text-xs"
+                                title="Remove custom index"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                {/* Live Preview Calculation */}
+                <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px] flex items-center justify-between font-mono-numbers">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-slate-300 font-sans">Preview:</span>
+                    <select
+                      value={testLots}
+                      onChange={(e) => setTestLots(parseInt(e.target.value, 10) || 1)}
+                      className="bg-[#0e1626] px-1.5 py-0.5 rounded text-white border border-[#1e293b] text-xs font-bold"
+                    >
+                      <option value="1">1 Lot</option>
+                      <option value="2">2 Lots</option>
+                      <option value="3">3 Lots</option>
+                      <option value="5">5 Lots</option>
+                      <option value="10">10 Lots</option>
+                    </select>
+                    <span>of {defaultIndex}</span>
+                  </div>
+                  <strong className="text-white">
+                    = {testLots * getLotSize(defaultIndex)} Shares (Qty)
+                  </strong>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Card 2: Trading Settings */}
-        <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
-              <TrendingUp className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-white light:text-slate-900">Trading Settings</h2>
-              <p className="text-[11px] text-slate-400">Default values for new trades</p>
-            </div>
-          </div>
-
-          <div className="space-y-3 text-xs">
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Default Index</label>
-              <select
-                value={defaultIndex}
-                onChange={(e) => setDefaultIndex(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
-              >
-                <option>NIFTY</option>
-                <option>BANKNIFTY</option>
-                <option>SENSEX</option>
-                <option>FINNIFTY</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Default Expiry Type</label>
-              <select
-                value={defaultExpiryType}
-                onChange={(e) => setDefaultExpiryType(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
-              >
-                <option>Current Week</option>
-                <option>Next Week</option>
-                <option>Monthly Expiry</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Default Order Type</label>
-              <select
-                value={defaultOrderType}
-                onChange={(e) => setDefaultOrderType(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
-              >
-                <option>Options</option>
-                <option>Futures</option>
-                <option>Equity Intraday</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Default Strategy</label>
-              <select
-                value={defaultStrategy}
-                onChange={(e) => setDefaultStrategy(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
-              >
-                <option>Long Straddle</option>
-                <option>Directional</option>
-                <option>Rangebound</option>
-                <option>Scalping</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Default Lot Size (NIFTY)</label>
-              <input
-                type="text"
-                value={defaultLotSize}
-                onChange={(e) => setDefaultLotSize(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Default Broker Charges (per order)</label>
-              <input
-                type="text"
-                value={defaultBrokerCharges}
-                onChange={(e) => setDefaultBrokerCharges(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none"
-              />
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* Card 3: Risk Management Settings */}
-        <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center shrink-0">
-              <Shield className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-white light:text-slate-900">Risk Management Settings</h2>
-              <p className="text-[11px] text-slate-400">Set your risk limits and alerts</p>
-            </div>
-          </div>
-
-          <div className="space-y-3 text-xs">
-            {/* Daily Loss Limit */}
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] text-slate-400 w-32">Daily Loss Limit</span>
-              <div className="flex items-center gap-1.5 flex-1 justify-end font-mono-numbers">
-                <input
-                  type="text"
-                  value={dailyLossLimit}
-                  onChange={(e) => setDailyLossLimit(e.target.value)}
-                  className="w-24 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-white"
-                />
-                <input
-                  type="text"
-                  value={dailyLossPct + ' %'}
-                  onChange={(e) => setDailyLossPct(e.target.value.replace('%', '').trim())}
-                  className="w-14 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-slate-400"
-                />
+        {isVisible('Risk Management') && (
+          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center shrink-0">
+                <Shield className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-white light:text-slate-900">Risk Management Settings</h2>
+                <p className="text-[11px] text-slate-400">Set your risk limits and alerts</p>
               </div>
             </div>
 
-            {/* Daily Profit Target */}
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] text-slate-400 w-32">Daily Profit Target</span>
-              <div className="flex items-center gap-1.5 flex-1 justify-end font-mono-numbers">
-                <input
-                  type="text"
-                  value={dailyProfitTarget}
-                  onChange={(e) => setDailyProfitTarget(e.target.value)}
-                  className="w-24 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-white"
-                />
-                <input
-                  type="text"
-                  value={dailyProfitPct + ' %'}
-                  onChange={(e) => setDailyProfitPct(e.target.value.replace('%', '').trim())}
-                  className="w-14 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-slate-400"
-                />
-              </div>
-            </div>
-
-            {/* Monthly Loss Limit */}
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] text-slate-400 w-32">Monthly Loss Limit</span>
-              <div className="flex items-center gap-1.5 flex-1 justify-end font-mono-numbers">
-                <input
-                  type="text"
-                  value={monthlyLossLimit}
-                  onChange={(e) => setMonthlyLossLimit(e.target.value)}
-                  className="w-24 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-white"
-                />
-                <input
-                  type="text"
-                  value={monthlyLossPct + ' %'}
-                  onChange={(e) => setMonthlyLossPct(e.target.value.replace('%', '').trim())}
-                  className="w-14 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-slate-400"
-                />
-              </div>
-            </div>
-
-            {/* Monthly Profit Target */}
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] text-slate-400 w-32">Monthly Profit Target</span>
-              <div className="flex items-center gap-1.5 flex-1 justify-end font-mono-numbers">
-                <input
-                  type="text"
-                  value={monthlyProfitTarget}
-                  onChange={(e) => setMonthlyProfitTarget(e.target.value)}
-                  className="w-24 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-white"
-                />
-                <input
-                  type="text"
-                  value={monthlyProfitPct + ' %'}
-                  onChange={(e) => setMonthlyProfitPct(e.target.value.replace('%', '').trim())}
-                  className="w-14 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-slate-400"
-                />
-              </div>
-            </div>
-
-            {/* Max Risk Per Trade */}
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[11px] text-slate-400 w-32">Max Risk Per Trade</span>
-              <div className="flex items-center gap-1.5 flex-1 justify-end font-mono-numbers">
-                <input
-                  type="text"
-                  value={maxRiskPerTrade}
-                  onChange={(e) => setMaxRiskPerTrade(e.target.value)}
-                  className="w-24 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-white"
-                />
-                <input
-                  type="text"
-                  value={maxRiskPct + ' %'}
-                  onChange={(e) => setMaxRiskPct(e.target.value.replace('%', '').trim())}
-                  className="w-14 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-slate-400"
-                />
-              </div>
-            </div>
-
-            {/* Enable Risk Alerts Toggle */}
-            <div className="flex items-center justify-between pt-2 border-t border-[#1e293b]/50">
-              <span className="text-[11px] text-slate-300">Enable Risk Alerts</span>
-              <button
-                type="button"
-                onClick={() => setEnableRiskAlerts(!enableRiskAlerts)}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  enableRiskAlerts ? 'bg-blue-600' : 'bg-[#1e293b]'
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    enableRiskAlerts ? 'translate-x-4' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 4: Notification Settings */}
-        <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0">
-              <Bell className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-white light:text-slate-900">Notification Settings</h2>
-              <p className="text-[11px] text-slate-400">Get notified about important events</p>
-            </div>
-          </div>
-
-          <div className="space-y-3.5 text-xs">
-            {[
-              { id: 'dailyPnl', title: 'Daily P&L Summary', desc: 'Receive daily P&L report at market close' },
-              { id: 'riskAlerts', title: 'Risk Limit Alerts', desc: 'Get notified when you reach risk limits' },
-              { id: 'tradeReminders', title: 'Trade Reminders', desc: 'Remind about open positions' },
-              { id: 'weeklyReport', title: 'Weekly Performance Report', desc: 'Get weekly summary every Sunday' },
-              { id: 'monthlyReport', title: 'Monthly Performance Report', desc: 'Get monthly summary on 1st day' },
-            ].map((n) => (
-              <div key={n.id} className="flex items-center justify-between gap-3">
-                <div>
-                  <div className="text-xs font-semibold text-slate-200 light:text-slate-800">{n.title}</div>
-                  <div className="text-[10px] text-slate-400">{n.desc}</div>
+            <div className="space-y-3 text-xs">
+              {/* Daily Loss Limit */}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] text-slate-400 w-32">Daily Loss Limit</span>
+                <div className="flex items-center gap-1.5 flex-1 justify-end font-mono-numbers">
+                  <input
+                    type="text"
+                    value={dailyLossLimit}
+                    onChange={(e) => setDailyLossLimit(e.target.value)}
+                    className="w-24 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-white"
+                  />
+                  <input
+                    type="text"
+                    value={dailyLossPct + ' %'}
+                    onChange={(e) => setDailyLossPct(e.target.value.replace('%', '').trim())}
+                    className="w-14 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-slate-400"
+                  />
                 </div>
+              </div>
+
+              {/* Daily Profit Target */}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] text-slate-400 w-32">Daily Profit Target</span>
+                <div className="flex items-center gap-1.5 flex-1 justify-end font-mono-numbers">
+                  <input
+                    type="text"
+                    value={dailyProfitTarget}
+                    onChange={(e) => setDailyProfitTarget(e.target.value)}
+                    className="w-24 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-white"
+                  />
+                  <input
+                    type="text"
+                    value={dailyProfitPct + ' %'}
+                    onChange={(e) => setDailyProfitPct(e.target.value.replace('%', '').trim())}
+                    className="w-14 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-slate-400"
+                  />
+                </div>
+              </div>
+
+              {/* Monthly Loss Limit */}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] text-slate-400 w-32">Monthly Loss Limit</span>
+                <div className="flex items-center gap-1.5 flex-1 justify-end font-mono-numbers">
+                  <input
+                    type="text"
+                    value={monthlyLossLimit}
+                    onChange={(e) => setMonthlyLossLimit(e.target.value)}
+                    className="w-24 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-white"
+                  />
+                  <input
+                    type="text"
+                    value={monthlyLossPct + ' %'}
+                    onChange={(e) => setMonthlyLossPct(e.target.value.replace('%', '').trim())}
+                    className="w-14 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-slate-400"
+                  />
+                </div>
+              </div>
+
+              {/* Monthly Profit Target */}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] text-slate-400 w-32">Monthly Profit Target</span>
+                <div className="flex items-center gap-1.5 flex-1 justify-end font-mono-numbers">
+                  <input
+                    type="text"
+                    value={monthlyProfitTarget}
+                    onChange={(e) => setMonthlyProfitTarget(e.target.value)}
+                    className="w-24 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-white"
+                  />
+                  <input
+                    type="text"
+                    value={monthlyProfitPct + ' %'}
+                    onChange={(e) => setMonthlyProfitPct(e.target.value.replace('%', '').trim())}
+                    className="w-14 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-slate-400"
+                  />
+                </div>
+              </div>
+
+              {/* Max Risk Per Trade */}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] text-slate-400 w-32">Max Risk Per Trade</span>
+                <div className="flex items-center gap-1.5 flex-1 justify-end font-mono-numbers">
+                  <input
+                    type="text"
+                    value={maxRiskPerTrade}
+                    onChange={(e) => setMaxRiskPerTrade(e.target.value)}
+                    className="w-24 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-white"
+                  />
+                  <input
+                    type="text"
+                    value={maxRiskPct + ' %'}
+                    onChange={(e) => setMaxRiskPct(e.target.value.replace('%', '').trim())}
+                    className="w-14 px-2 py-1 rounded-lg bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-right text-xs text-slate-400"
+                  />
+                </div>
+              </div>
+
+              {/* Enable Risk Alerts Toggle */}
+              <div className="flex items-center justify-between pt-2 border-t border-[#1e293b]/50">
+                <span className="text-[11px] text-slate-300">Enable Risk Alerts</span>
                 <button
                   type="button"
-                  onClick={() => setNotifications((prev) => ({ ...prev, [n.id]: !prev[n.id] }))}
+                  onClick={() => setEnableRiskAlerts(!enableRiskAlerts)}
                   className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    notifications[n.id] ? 'bg-blue-600' : 'bg-[#1e293b]'
+                    enableRiskAlerts ? 'bg-blue-600' : 'bg-[#1e293b]'
                   }`}
                 >
                   <span
                     className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      notifications[n.id] ? 'translate-x-4' : 'translate-x-0'
+                      enableRiskAlerts ? 'translate-x-4' : 'translate-x-0'
                     }`}
                   />
                 </button>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Card 5: Appearance Settings */}
-        <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center shrink-0">
-              <Palette className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-white light:text-slate-900">Appearance Settings</h2>
-              <p className="text-[11px] text-slate-400">Customize the look and feel</p>
             </div>
           </div>
+        )}
 
-          <div className="space-y-3.5 text-xs">
-            {/* Theme Selectors */}
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1.5">Theme</label>
-              <div className="grid grid-cols-3 gap-2.5">
-                {/* Light */}
-                <button
-                  onClick={() => {
-                    setSelectedTheme('light');
-                    if (isDark) toggleTheme();
-                  }}
-                  className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
-                    selectedTheme === 'light'
-                      ? 'border-blue-500 bg-blue-500/10 text-white'
-                      : 'border-[#1e293b] bg-[#0e1626] text-slate-400'
-                  }`}
-                >
-                  <div className="w-full h-8 rounded bg-slate-200 border border-slate-300"></div>
-                  <span className="text-[10px] font-semibold">Light</span>
-                </button>
-
-                {/* Dark */}
-                <button
-                  onClick={() => {
-                    setSelectedTheme('dark');
-                    if (!isDark) toggleTheme();
-                  }}
-                  className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
-                    selectedTheme === 'dark'
-                      ? 'border-blue-500 bg-blue-500/10 text-white'
-                      : 'border-[#1e293b] bg-[#0e1626] text-slate-400'
-                  }`}
-                >
-                  <div className="w-full h-8 rounded bg-[#0b111e] border border-blue-500/50"></div>
-                  <span className="text-[10px] font-semibold">Dark</span>
-                </button>
-
-                {/* System */}
-                <button
-                  onClick={() => setSelectedTheme('system')}
-                  className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
-                    selectedTheme === 'system'
-                      ? 'border-blue-500 bg-blue-500/10 text-white'
-                      : 'border-[#1e293b] bg-[#0e1626] text-slate-400'
-                  }`}
-                >
-                  <div className="w-full h-8 rounded bg-gradient-to-r from-slate-200 to-[#0b111e] border border-[#1e293b]"></div>
-                  <span className="text-[10px] font-semibold">System</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Primary Color Palette */}
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1.5">Primary Color</label>
-              <div className="flex items-center gap-3">
-                {[
-                  { color: '#3b82f6', name: 'Blue' },
-                  { color: '#14b8a6', name: 'Teal' },
-                  { color: '#8b5cf6', name: 'Purple' },
-                  { color: '#f43f5e', name: 'Coral' },
-                  { color: '#f59e0b', name: 'Orange' },
-                  { color: '#ec4899', name: 'Pink' },
-                ].map((c) => (
-                  <button
-                    key={c.color}
-                    onClick={() => setPrimaryColor(c.color)}
-                    className="w-5 h-5 rounded-full flex items-center justify-center transition-transform hover:scale-110"
-                    style={{ backgroundColor: c.color }}
-                  >
-                    {primaryColor === c.color && <Check className="w-3 h-3 text-white stroke-[3]" />}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Font Size */}
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Font Size</label>
-              <select
-                value={fontSize}
-                onChange={(e) => setFontSize(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
-              >
-                <option>Small</option>
-                <option>Medium</option>
-                <option>Large</option>
-              </select>
-            </div>
-
-            {/* Compact Mode */}
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] text-slate-300">Compact Mode</span>
-              <button
-                type="button"
-                onClick={() => setCompactMode(!compactMode)}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  compactMode ? 'bg-blue-600' : 'bg-[#1e293b]'
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    compactMode ? 'translate-x-4' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
-
-            {/* Show Animations */}
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] text-slate-300">Show Animations</span>
-              <button
-                type="button"
-                onClick={() => setShowAnimations(!showAnimations)}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  showAnimations ? 'bg-blue-600' : 'bg-[#1e293b]'
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    showAnimations ? 'translate-x-4' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 6: Data & Backup */}
-        <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
-              <Database className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-white light:text-slate-900">Data & Backup</h2>
-              <p className="text-[11px] text-slate-400">Manage your data and backups</p>
-            </div>
-          </div>
-
-          <div className="space-y-3 text-xs">
-            {/* Auto Backup Toggle */}
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-xs font-semibold text-slate-200 block">Auto Backup</span>
-                <span className="text-[10px] text-slate-400">Automatically backup your data</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAutoBackup(!autoBackup)}
-                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  autoBackup ? 'bg-blue-600' : 'bg-[#1e293b]'
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    autoBackup ? 'translate-x-4' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
-
-            {/* Backup Frequency */}
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Backup Frequency</label>
-              <select
-                value={backupFrequency}
-                onChange={(e) => setBackupFrequency(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
-              >
-                <option>Daily</option>
-                <option>Weekly</option>
-                <option>Monthly</option>
-              </select>
-            </div>
-
-            {/* Last Backup with Success Pill */}
-            <div className="flex items-center justify-between text-xs py-1">
-              <span className="text-slate-400 text-[11px]">Last Backup</span>
-              <div className="flex items-center gap-1.5">
-                <span className="text-slate-300 font-mono-numbers text-[11px]">{backupStatus}</span>
-                <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
-                  ✓ Success
-                </span>
-              </div>
-            </div>
-
-            {/* Backup Buttons */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => {
-                  setBackupStatus(new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-                  triggerToast('Backup completed successfully!');
-                }}
-                className="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white shadow-md shadow-blue-600/30 text-center transition-all"
-              >
-                Backup Now
-              </button>
-              <button
-                onClick={handleDownloadBackup}
-                className="flex-1 py-2 px-3 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-xs font-semibold text-slate-300 hover:text-white text-center transition-all"
-              >
-                Download Backup
-              </button>
-            </div>
-
-            {/* Data Export */}
-            <div className="pt-2 border-t border-[#1e293b]/50">
-              <label className="text-[11px] text-slate-400 block mb-1">Data Export</label>
-              <div className="flex items-center gap-2">
-                <select
-                  value={exportType}
-                  onChange={(e) => setExportType(e.target.value)}
-                  className="flex-1 px-3 py-1.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-white text-xs"
-                >
-                  <option>All Data</option>
-                  <option>Trades Only</option>
-                  <option>Journal Entries</option>
-                </select>
-                <button
-                  onClick={handleExportCSV}
-                  className="px-3 py-1.5 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-slate-300 hover:text-white text-xs flex items-center gap-1"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Export (CSV)</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Data Import */}
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Data Import</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="file"
-                  id="backupUpload"
-                  onChange={(e) => setSelectedBackupFile(e.target.files?.[0])}
-                  className="hidden"
-                />
-                <label
-                  htmlFor="backupUpload"
-                  className="flex-1 px-3 py-1.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-slate-400 text-xs truncate cursor-pointer hover:border-slate-500"
-                >
-                  {selectedBackupFile ? selectedBackupFile.name : 'Choose File No file selected'}
-                </label>
-                <button
-                  onClick={() => {
-                    if (selectedBackupFile) {
-                      triggerToast('Data imported successfully!');
-                      setSelectedBackupFile(null);
-                    } else {
-                      triggerToast('Please choose a file to import');
-                    }
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-slate-300 hover:text-white text-xs"
-                >
-                  Import
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 7: Integrations */}
-        <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
-              <LinkIcon className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-white light:text-slate-900">Integrations</h2>
-              <p className="text-[11px] text-slate-400">Connect with external services</p>
-            </div>
-          </div>
-
-          <div className="space-y-4 text-xs">
-            {/* Broker Integration */}
-            <div>
-              <div className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider mb-2">
-                Broker Integration
-              </div>
-              <div className="flex items-center justify-between p-2.5 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b]">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-orange-600/20 text-orange-500 font-bold flex items-center justify-center text-xs">
-                    ▲
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-white light:text-slate-900 block">Zerodha Kite Connect</span>
-                    <span className="text-[10px] text-rose-400 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Not Connected
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => triggerToast('Zerodha Kite Connect integration opened!')}
-                  className="px-3 py-1 rounded-xl bg-[#162033] light:bg-slate-200 hover:bg-blue-600 hover:text-white text-slate-300 text-[11px] font-semibold transition-all border border-[#1e293b]"
-                >
-                  Connect
-                </button>
-              </div>
-            </div>
-
-            {/* Alert Notifications */}
-            <div>
-              <div className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider mb-2">
-                Alert Notifications
-              </div>
-              <div className="space-y-2">
-                {/* Telegram */}
-                <div className="flex items-center justify-between p-2.5 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b]">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
-                      <Send className="w-3.5 h-3.5" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-semibold text-white light:text-slate-900 block">Telegram</span>
-                      <span className="text-[10px] text-rose-400 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Not Connected
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => triggerToast('Telegram bot setup link generated!')}
-                    className="px-3 py-1 rounded-xl bg-[#162033] light:bg-slate-200 hover:bg-blue-600 hover:text-white text-slate-300 text-[11px] font-semibold transition-all border border-[#1e293b]"
-                  >
-                    Connect
-                  </button>
-                </div>
-
-                {/* Email (SMTP) */}
-                <div className="flex items-center justify-between p-2.5 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b]">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
-                      <Mail className="w-3.5 h-3.5" />
-                    </div>
-                    <div>
-                      <span className="text-xs font-semibold text-white light:text-slate-900 block">Email (SMTP)</span>
-                      <span className="text-[10px] text-rose-400 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Not Configured
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => triggerToast('SMTP configuration settings modal opened!')}
-                    className="px-3 py-1 rounded-xl bg-[#162033] light:bg-slate-200 hover:bg-blue-600 hover:text-white text-slate-300 text-[11px] font-semibold transition-all border border-[#1e293b]"
-                  >
-                    Configure
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 8: Account Settings */}
-        <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
-              <User className="w-4 h-4" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-white light:text-slate-900">Account Settings</h2>
-              <p className="text-[11px] text-slate-400">Manage your account information</p>
-            </div>
-          </div>
-
-          <div className="space-y-3 text-xs">
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Name</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="text-[11px] text-slate-400 block mb-1">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
-              />
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <button
-                type="button"
-                onClick={() => setShowPasswordModal(true)}
-                className="px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-xs font-semibold text-slate-300 hover:text-white"
-              >
-                Change Password
-              </button>
-
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-md">
-                  D
-                </div>
-                <div>
-                  <span className="text-[10px] text-slate-400 block">Profile Picture</span>
-                  <button
-                    onClick={() => triggerToast('Avatar uploaded successfully!')}
-                    className="text-[11px] text-blue-400 hover:underline font-semibold"
-                  >
-                    Change
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Card 9: Application Settings */}
-        <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col justify-between space-y-4">
-          <div className="space-y-4">
+        {/* Card 4: Notification Settings */}
+        {isVisible('Notifications') && (
+          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0">
-                <CogIcon className="w-4 h-4" />
+                <Bell className="w-4 h-4" />
               </div>
               <div>
-                <h2 className="text-sm font-bold text-white light:text-slate-900">Application Settings</h2>
-                <p className="text-[11px] text-slate-400">Other application preferences</p>
+                <h2 className="text-sm font-bold text-white light:text-slate-900">Notification Settings</h2>
+                <p className="text-[11px] text-slate-400">Get notified about important events</p>
               </div>
             </div>
 
             <div className="space-y-3.5 text-xs">
               {[
-                { id: 'autoSaveDrafts', title: 'Auto Save Drafts', desc: 'Save trade drafts automatically' },
-                { id: 'confirmDelete', title: 'Confirm Delete', desc: 'Show confirmation before deleting' },
-                { id: 'playSoundAlerts', title: 'Play Sound Alerts', desc: 'Play sound for notifications' },
-                { id: 'showWelcomeTips', title: 'Show Welcome Tips', desc: 'Show helpful tips for new features' },
-              ].map((s) => (
-                <div key={s.id} className="flex items-center justify-between gap-3">
+                { id: 'dailyPnl', title: 'Daily P&L Summary', desc: 'Receive daily P&L report at market close' },
+                { id: 'riskAlerts', title: 'Risk Limit Alerts', desc: 'Get notified when you reach risk limits' },
+                { id: 'tradeReminders', title: 'Trade Reminders', desc: 'Remind about open positions' },
+                { id: 'weeklyReport', title: 'Weekly Performance Report', desc: 'Get weekly summary every Sunday' },
+                { id: 'monthlyReport', title: 'Monthly Performance Report', desc: 'Get monthly summary on 1st day' },
+              ].map((n) => (
+                <div key={n.id} className="flex items-center justify-between gap-3">
                   <div>
-                    <div className="text-xs font-semibold text-slate-200 light:text-slate-800">{s.title}</div>
-                    <div className="text-[10px] text-slate-400">{s.desc}</div>
+                    <div className="text-xs font-semibold text-slate-200 light:text-slate-800">{n.title}</div>
+                    <div className="text-[10px] text-slate-400">{n.desc}</div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setAppSettings((prev) => ({ ...prev, [s.id]: !prev[s.id] }))}
+                    onClick={() => setNotifications((prev) => ({ ...prev, [n.id]: !prev[n.id] }))}
                     className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      appSettings[s.id] ? 'bg-blue-600' : 'bg-[#1e293b]'
+                      notifications[n.id] ? 'bg-blue-600' : 'bg-[#1e293b]'
                     }`}
                   >
                     <span
                       className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        appSettings[s.id] ? 'translate-x-4' : 'translate-x-0'
+                        notifications[n.id] ? 'translate-x-4' : 'translate-x-0'
                       }`}
                     />
                   </button>
@@ -1062,18 +766,563 @@ export default function Settings() {
               ))}
             </div>
           </div>
+        )}
 
-          {/* Reset to Default Settings Button */}
-          <div className="pt-4">
-            <button
-              onClick={() => triggerToast('Settings reset to system defaults!')}
-              className="w-full py-2.5 px-4 rounded-xl bg-rose-600/90 hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-600/20 transition-all text-center"
-            >
-              Reset to Default Settings
-            </button>
+        {/* Card 5: Appearance Settings */}
+        {isVisible('Appearance') && (
+          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center shrink-0">
+                <Palette className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-white light:text-slate-900">Appearance Settings</h2>
+                <p className="text-[11px] text-slate-400">Customize the look and feel</p>
+              </div>
+            </div>
+
+            <div className="space-y-3.5 text-xs">
+              {/* Theme Selectors */}
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1.5">Theme</label>
+                <div className="grid grid-cols-3 gap-2.5">
+                  <button
+                    onClick={() => {
+                      setSelectedTheme('light');
+                      if (isDark) toggleTheme();
+                    }}
+                    className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
+                      selectedTheme === 'light'
+                        ? 'border-blue-500 bg-blue-500/10 text-white'
+                        : 'border-[#1e293b] bg-[#0e1626] text-slate-400'
+                    }`}
+                  >
+                    <div className="w-full h-8 rounded bg-slate-200 border border-slate-300"></div>
+                    <span className="text-[10px] font-semibold">Light</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedTheme('dark');
+                      if (!isDark) toggleTheme();
+                    }}
+                    className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
+                      selectedTheme === 'dark'
+                        ? 'border-blue-500 bg-blue-500/10 text-white'
+                        : 'border-[#1e293b] bg-[#0e1626] text-slate-400'
+                    }`}
+                  >
+                    <div className="w-full h-8 rounded bg-[#0b111e] border border-blue-500/50"></div>
+                    <span className="text-[10px] font-semibold">Dark</span>
+                  </button>
+
+                  <button
+                    onClick={() => setSelectedTheme('system')}
+                    className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
+                      selectedTheme === 'system'
+                        ? 'border-blue-500 bg-blue-500/10 text-white'
+                        : 'border-[#1e293b] bg-[#0e1626] text-slate-400'
+                    }`}
+                  >
+                    <div className="w-full h-8 rounded bg-gradient-to-r from-slate-200 to-[#0b111e] border border-[#1e293b]"></div>
+                    <span className="text-[10px] font-semibold">System</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Primary Color Palette */}
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1.5">Primary Color</label>
+                <div className="flex items-center gap-3">
+                  {[
+                    { color: '#3b82f6', name: 'Blue' },
+                    { color: '#14b8a6', name: 'Teal' },
+                    { color: '#8b5cf6', name: 'Purple' },
+                    { color: '#f43f5e', name: 'Coral' },
+                    { color: '#f59e0b', name: 'Orange' },
+                    { color: '#ec4899', name: 'Pink' },
+                  ].map((c) => (
+                    <button
+                      key={c.color}
+                      onClick={() => setPrimaryColor(c.color)}
+                      className="w-5 h-5 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                      style={{ backgroundColor: c.color }}
+                    >
+                      {primaryColor === c.color && <Check className="w-3 h-3 text-white stroke-[3]" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Font Size */}
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Font Size</label>
+                <select
+                  value={fontSize}
+                  onChange={(e) => setFontSize(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                >
+                  <option>Small</option>
+                  <option>Medium</option>
+                  <option>Large</option>
+                </select>
+              </div>
+
+              {/* Compact Mode */}
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-slate-300">Compact Mode</span>
+                <button
+                  type="button"
+                  onClick={() => setCompactMode(!compactMode)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    compactMode ? 'bg-blue-600' : 'bg-[#1e293b]'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      compactMode ? 'translate-x-4' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Show Animations */}
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-slate-300">Show Animations</span>
+                <button
+                  type="button"
+                  onClick={() => setShowAnimations(!showAnimations)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    showAnimations ? 'bg-blue-600' : 'bg-[#1e293b]'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      showAnimations ? 'translate-x-4' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Card 6: Data & Backup */}
+        {isVisible('Data & Backup') && (
+          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
+                <Database className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-white light:text-slate-900">Data & Backup</h2>
+                <p className="text-[11px] text-slate-400">Manage your data and backups</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              {/* Auto Backup Toggle */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-slate-200 block">Auto Backup</span>
+                  <span className="text-[10px] text-slate-400">Automatically backup your data</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAutoBackup(!autoBackup)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    autoBackup ? 'bg-blue-600' : 'bg-[#1e293b]'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      autoBackup ? 'translate-x-4' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Backup Frequency */}
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Backup Frequency</label>
+                <select
+                  value={backupFrequency}
+                  onChange={(e) => setBackupFrequency(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                >
+                  <option>Daily</option>
+                  <option>Weekly</option>
+                  <option>Monthly</option>
+                </select>
+              </div>
+
+              {/* Last Backup with Success Pill */}
+              <div className="flex items-center justify-between text-xs py-1">
+                <span className="text-slate-400 text-[11px]">Last Backup</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-300 font-mono-numbers text-[11px]">{backupStatus}</span>
+                  <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
+                    ✓ Success
+                  </span>
+                </div>
+              </div>
+
+              {/* Backup Buttons */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setBackupStatus(new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ', ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+                    triggerToast('Backup completed successfully!');
+                  }}
+                  className="flex-1 py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white shadow-md shadow-blue-600/30 text-center transition-all"
+                >
+                  Backup Now
+                </button>
+                <button
+                  onClick={handleDownloadBackup}
+                  className="flex-1 py-2 px-3 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-xs font-semibold text-slate-300 hover:text-white text-center transition-all"
+                >
+                  Download Backup
+                </button>
+              </div>
+
+              {/* Data Export */}
+              <div className="pt-2 border-t border-[#1e293b]/50">
+                <label className="text-[11px] text-slate-400 block mb-1">Data Export</label>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={exportType}
+                    onChange={(e) => setExportType(e.target.value)}
+                    className="flex-1 px-3 py-1.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-white text-xs"
+                  >
+                    <option>All Data</option>
+                    <option>Trades Only</option>
+                    <option>Journal Entries</option>
+                  </select>
+                  <button
+                    onClick={handleExportCSV}
+                    className="px-3 py-1.5 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-slate-300 hover:text-white text-xs flex items-center gap-1"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Export (CSV)</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Data Import */}
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Data Import</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    id="backupUpload"
+                    onChange={(e) => setSelectedBackupFile(e.target.files?.[0])}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="backupUpload"
+                    className="flex-1 px-3 py-1.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] text-slate-400 text-xs truncate cursor-pointer hover:border-slate-500"
+                  >
+                    {selectedBackupFile ? selectedBackupFile.name : 'Choose File No file selected'}
+                  </label>
+                  <button
+                    onClick={() => {
+                      if (selectedBackupFile) {
+                        triggerToast('Data imported successfully!');
+                        setSelectedBackupFile(null);
+                      } else {
+                        triggerToast('Please choose a file to import');
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-slate-300 hover:text-white text-xs"
+                  >
+                    Import
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Card 7: Integrations */}
+        {isVisible('Integrations') && (
+          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                <LinkIcon className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-white light:text-slate-900">Integrations</h2>
+                <p className="text-[11px] text-slate-400">Connect with external services</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              {/* Broker Integration */}
+              <div>
+                <div className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider mb-2">
+                  Broker Integration
+                </div>
+                <div className="flex items-center justify-between p-2.5 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b]">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-orange-600/20 text-orange-500 font-bold flex items-center justify-center text-xs">
+                      ▲
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold text-white light:text-slate-900 block">Zerodha Kite Connect</span>
+                      <span className="text-[10px] text-rose-400 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Not Connected
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => triggerToast('Zerodha Kite Connect integration opened!')}
+                    className="px-3 py-1 rounded-xl bg-[#162033] light:bg-slate-200 hover:bg-blue-600 hover:text-white text-slate-300 text-[11px] font-semibold transition-all border border-[#1e293b]"
+                  >
+                    Connect
+                  </button>
+                </div>
+              </div>
+
+              {/* Alert Notifications */}
+              <div>
+                <div className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider mb-2">
+                  Alert Notifications
+                </div>
+                <div className="space-y-2">
+                  {/* Telegram */}
+                  <div className="flex items-center justify-between p-2.5 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b]">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                        <Send className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-semibold text-white light:text-slate-900 block">Telegram</span>
+                        <span className="text-[10px] text-rose-400 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Not Connected
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => triggerToast('Telegram bot setup link generated!')}
+                      className="px-3 py-1 rounded-xl bg-[#162033] light:bg-slate-200 hover:bg-blue-600 hover:text-white text-slate-300 text-[11px] font-semibold transition-all border border-[#1e293b]"
+                    >
+                      Connect
+                    </button>
+                  </div>
+
+                  {/* Email (SMTP) */}
+                  <div className="flex items-center justify-between p-2.5 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b]">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                        <Mail className="w-3.5 h-3.5" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-semibold text-white light:text-slate-900 block">Email (SMTP)</span>
+                        <span className="text-[10px] text-rose-400 flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Not Configured
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => triggerToast('SMTP configuration settings modal opened!')}
+                      className="px-3 py-1 rounded-xl bg-[#162033] light:bg-slate-200 hover:bg-blue-600 hover:text-white text-slate-300 text-[11px] font-semibold transition-all border border-[#1e293b]"
+                    >
+                      Configure
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Card 8: Account Settings */}
+        {isVisible('Account') && (
+          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
+                <User className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-white light:text-slate-900">Account Settings</h2>
+                <p className="text-[11px] text-slate-400">Manage your account information</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Name</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(true)}
+                  className="px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-xs font-semibold text-slate-300 hover:text-white"
+                >
+                  Change Password
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-md">
+                    D
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Profile Picture</span>
+                    <button
+                      onClick={() => triggerToast('Avatar uploaded successfully!')}
+                      className="text-[11px] text-blue-400 hover:underline font-semibold"
+                    >
+                      Change
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Card 9: Application Settings */}
+        {isVisible('Application') && (
+          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col justify-between space-y-4">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0">
+                  <CogIcon className="w-4 h-4" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-white light:text-slate-900">Application Settings</h2>
+                  <p className="text-[11px] text-slate-400">Other application preferences</p>
+                </div>
+              </div>
+
+              <div className="space-y-3.5 text-xs">
+                {[
+                  { id: 'autoSaveDrafts', title: 'Auto Save Drafts', desc: 'Save trade drafts automatically' },
+                  { id: 'confirmDelete', title: 'Confirm Delete', desc: 'Show confirmation before deleting' },
+                  { id: 'playSoundAlerts', title: 'Play Sound Alerts', desc: 'Play sound for notifications' },
+                  { id: 'showWelcomeTips', title: 'Show Welcome Tips', desc: 'Show helpful tips for new features' },
+                ].map((s) => (
+                  <div key={s.id} className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-xs font-semibold text-slate-200 light:text-slate-800">{s.title}</div>
+                      <div className="text-[10px] text-slate-400">{s.desc}</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setAppSettings((prev) => ({ ...prev, [s.id]: !prev[s.id] }))}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        appSettings[s.id] ? 'bg-blue-600' : 'bg-[#1e293b]'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          appSettings[s.id] ? 'translate-x-4' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Reset to Default Settings Button */}
+            <div className="pt-4">
+              <button
+                onClick={() => triggerToast('Settings reset to system defaults!')}
+                className="w-full py-2.5 px-4 rounded-xl bg-rose-600/90 hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-600/20 transition-all text-center"
+              >
+                Reset to Default Settings
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Add Custom Index Modal */}
+      {showAddIndexModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="w-full max-w-sm bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-[#1e293b] light:border-slate-200">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-blue-400" />
+                <h3 className="text-sm font-bold text-white light:text-slate-900">
+                  Add Custom Index / Symbol
+                </h3>
+              </div>
+              <button
+                onClick={() => setShowAddIndexModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleAddIndex} className="space-y-4 text-xs">
+              <div>
+                <label className="text-slate-400 block mb-1">Index / Symbol Name *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. CRUDEOIL, GOLD, SILVER"
+                  value={newIndexName}
+                  onChange={(e) => setNewIndexName(e.target.value.toUpperCase())}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-white light:text-slate-900 uppercase focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-400 block mb-1">Lot Size (Quantity per lot) *</label>
+                <input
+                  type="number"
+                  min="1"
+                  required
+                  value={newIndexLotSize}
+                  onChange={(e) => setNewIndexLotSize(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[11px]">
+                When logging trades for <strong>{newIndexName || 'CUSTOM'}</strong>, 1 lot will auto-calculate to <strong>{newIndexLotSize || 0} shares/units</strong>.
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddIndexModal(false)}
+                  className="px-4 py-2 text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold shadow-md shadow-blue-600/30"
+                >
+                  Add Index
+                </button>
+              </div>
+            </form>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Password Change Modal with View Password Functionality */}
       {showPasswordModal && (
