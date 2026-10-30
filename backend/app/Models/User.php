@@ -59,6 +59,11 @@ class User extends Authenticatable
         return $this->hasMany(CapitalTransaction::class);
     }
 
+    public function brokerageSetting(): HasOne
+    {
+        return $this->hasOne(BrokerageSetting::class);
+    }
+
     public function indexLotSizes(): HasMany
     {
         return $this->hasMany(IndexLotSize::class);

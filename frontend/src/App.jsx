@@ -6,6 +6,7 @@ import { FilterProvider } from './context/FilterContext';
 import { LotSizeProvider } from './context/LotSizeContext';
 import { ToastProvider } from './context/ToastContext';
 import { ModuleProvider } from './context/ModuleContext';
+import { BrokerageProvider } from './context/BrokerageContext';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import AppLayout from './components/layout/AppLayout';
 
@@ -49,8 +50,9 @@ export default function App() {
           <LotSizeProvider>
             <ToastProvider>
               <ModuleProvider>
-                <ErrorBoundary>
-                  <BrowserRouter>
+                <BrokerageProvider>
+                  <ErrorBoundary>
+                    <BrowserRouter>
                     <Routes>
                       {/* Public Authentication */}
                       <Route path="/login" element={<Login />} />
@@ -83,7 +85,8 @@ export default function App() {
                     </Routes>
                   </BrowserRouter>
                 </ErrorBoundary>
-              </ModuleProvider>
+              </BrokerageProvider>
+            </ModuleProvider>
             </ToastProvider>
           </LotSizeProvider>
         </FilterProvider>

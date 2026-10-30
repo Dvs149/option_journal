@@ -605,11 +605,50 @@ class TradeController extends Controller
 
     public function estimateCharges(Request $request): JsonResponse
     {
+        $user = $request->user();
+        $rates = \App\Models\BrokerageSetting::forUser($user?->id);
+
         $entry = (float) $request->input('entry_premium', 0);
         $exit = (float) $request->input('exit_premium', 0);
         $qty = (int) $request->input('quantity', 0);
+        $optionType = $request->input('option_type', 'CE');
+        $indexName = strtoupper((string) $request->input('index_name', ''));
 
-        $estimated = $this->calcService->estimateIndianCharges($entry, $exit, $qty);
+        // If legs for Both are provided, combine them
+        if ($optionType === 'Both') {
+            $ceEntry = (float) $request->input('ce_entry_price', 0);
+            $peEntry = (float) $request->input('pe_entry_price', 0);
+            $ceExit = (float) $request->input('ce_exit_price', 0);
+            $peExit = (float) $request->input('pe_exit_price', 0);
+
+            if (($ceEntry > 0 || $peEntry > 0) && ($ceExit > 0 || $peExit > 0)) {
+                $entry = $ceEntry + $peEntry;
+                $exit = $ceExit + $peExit;
+            }
+        }
+
+        // Executed orders: Default 2 orders for single leg (Buy + Sell); 4 orders for Both (CE buy/sell + PE buy/sell)
+        $defaultOrders = ($optionType === 'Both') ? 4 : 2;
+        $orders = (int) $request->input('executed_orders', $defaultOrders);
+
+        // Exchange: SENSEX & BANKEX are BSE; NIFTY, BANKNIFTY, FINNIFTY, etc. are NSE
+        $exchange = $request->input('exchange');
+        if (!$exchange) {
+            if (in_array($indexName, ['SENSEX', 'BANKEX'])) {
+                $exchange = 'BSE';
+            } else {
+                $exchange = $rates['default_exchange'] ?? 'NSE';
+            }
+        }
+
+        $estimated = $this->calcService->estimateIndianCharges(
+            $entry,
+            $exit,
+            $qty,
+            $orders,
+            $exchange,
+            $rates
+        );
 
         return response()->json($estimated);
     }

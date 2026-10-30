@@ -29,6 +29,7 @@ import {
   Layers,
   Sparkles,
   LayoutGrid,
+  Receipt,
 } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -36,6 +37,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useLotSizes, STANDARD_INDICES } from '../context/LotSizeContext';
 import { useToast } from '../context/ToastContext';
 import { useModules } from '../context/ModuleContext';
+import { useBrokerage } from '../context/BrokerageContext';
 
 export default function Settings() {
   const { user, updateUser } = useAuth();
@@ -109,6 +111,51 @@ export default function Settings() {
       triggerToast(err.response?.data?.message || 'Failed to update initial capital', 'error');
     } finally {
       setSavingInitialCap(false);
+    }
+  };
+
+  // Dynamic Brokerage & Regulatory Charges State
+  const {
+    rates: brokerageRates,
+    updateRates: updateBrokerageRates,
+    resetRates: resetBrokerageRates,
+    calculateCharges,
+    isCustom: isCustomBrokerage,
+  } = useBrokerage();
+
+  const [brokerageForm, setBrokerageForm] = useState(brokerageRates);
+  const [savingBrokerage, setSavingBrokerage] = useState(false);
+
+  // Live Simulator State in Settings
+  const [simEntry, setSimEntry] = useState('100');
+  const [simExit, setSimExit] = useState('120');
+  const [simLots, setSimLots] = useState(1);
+  const [simIndex, setSimIndex] = useState('NIFTY');
+
+  useEffect(() => {
+    if (brokerageRates) {
+      setBrokerageForm(brokerageRates);
+    }
+  }, [brokerageRates]);
+
+  const handleSaveBrokerage = async (e) => {
+    e?.preventDefault();
+    setSavingBrokerage(true);
+    const res = await updateBrokerageRates(brokerageForm);
+    setSavingBrokerage(false);
+    if (res.success) {
+      triggerToast('✓ Brokerage & regulatory schedule saved to Database!');
+    } else {
+      triggerToast(res.error || 'Failed to update brokerage settings', 'error');
+    }
+  };
+
+  const handleResetBrokerage = async () => {
+    setSavingBrokerage(true);
+    const res = await resetBrokerageRates();
+    setSavingBrokerage(false);
+    if (res.success) {
+      triggerToast('✓ Reset to official Zerodha / SEBI regulatory defaults!');
     }
   };
 
@@ -260,9 +307,13 @@ export default function Settings() {
       if (sectionName === 'Modules') {
         return modules.some((m) => m.name.toLowerCase().includes(q) || m.desc.toLowerCase().includes(q));
       }
+      if (sectionName === 'Brokerage') {
+        return 'brokerage charges stt gst sebi stamp duty transaction turnover rates zerodha regulatory'.includes(q);
+      }
       return false;
     }
     if (activeTab === 'General') return true; // Show all cards in default overview
+    if (activeTab === 'Trading' && (sectionName === 'Trading' || sectionName === 'Lot Sizes' || sectionName === 'Brokerage')) return true;
     return activeTab.toLowerCase().includes(sectionName.toLowerCase()) || sectionName.toLowerCase().includes(activeTab.toLowerCase());
   };
 
@@ -311,6 +362,7 @@ export default function Settings() {
           { id: 'General', label: 'General', icon: Sliders },
           { id: 'Modules', label: 'Sidebar Modules', icon: LayoutGrid },
           { id: 'Trading', label: 'Trading Settings', icon: TrendingUp },
+          { id: 'Brokerage', label: 'Brokerage & Charges', icon: Receipt },
           { id: 'Lot Sizes', label: 'Index Lot Sizes', icon: Layers },
           { id: 'Risk Management', label: 'Risk Management', icon: Shield },
           { id: 'Notifications', label: 'Notifications', icon: Bell },
@@ -677,6 +729,407 @@ export default function Settings() {
               <div className="text-white light:text-slate-900 font-bold text-xs tracking-wider">
                 = {testLots * getLotSize(defaultIndex)} Shares (Qty)
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Card: Dynamic Brokerage & Regulatory Charges Schedule */}
+        {(isVisible('Trading') || isVisible('Brokerage')) && (
+          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
+                  <Receipt className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-white light:text-slate-900">
+                      Brokerage & Regulatory Charges
+                    </h2>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1 font-mono-numbers">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      DB Stored
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Official Zerodha & regulatory schedule (auto-calculates in trades)
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleResetBrokerage}
+                  disabled={savingBrokerage}
+                  className="p-2 rounded-xl bg-[#0e1626] light:bg-slate-100 hover:bg-[#162033] text-slate-400 hover:text-white border border-[#1e293b] light:border-slate-300 transition-all shadow-sm"
+                  title="Reset to Official Zerodha / Regulatory Defaults"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveBrokerage}
+                  disabled={savingBrokerage}
+                  className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{savingBrokerage ? 'Saving...' : 'Save Schedule'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Form Fields Grid */}
+            <div className="space-y-3 text-xs">
+              {/* Row 1: Brokerage per executed order */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] text-slate-400 font-medium">
+                    Brokerage per Executed Order (₹)
+                  </label>
+                  <span className="text-[10px] text-blue-400 font-mono-numbers font-semibold">
+                    Flat ₹20 / order
+                  </span>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono-numbers">₹</span>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    value={brokerageForm.brokerage_per_order ?? 20}
+                    onChange={(e) =>
+                      setBrokerageForm((prev) => ({
+                        ...prev,
+                        brokerage_per_order: e.target.value,
+                      }))
+                    }
+                    className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                    placeholder="20.00"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Single round-trip = 2 executed orders (₹40); Both (Straddle/Strangle) = 4 executed orders (₹80).
+                </p>
+              </div>
+
+              {/* Row 2: STT / CTT & GST */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] text-slate-400 font-medium">
+                      STT / CTT Rate (%)
+                    </label>
+                    <span className="text-[10px] text-emerald-400 font-mono-numbers">
+                      0.15% (Sell Side)
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={brokerageForm.stt_rate_percent ?? 0.15}
+                      onChange={(e) =>
+                        setBrokerageForm((prev) => ({
+                          ...prev,
+                          stt_rate_percent: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                      placeholder="0.15000"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">Levied on sell side premium turnover.</p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] text-slate-400 font-medium">
+                      GST on Charges (%)
+                    </label>
+                    <span className="text-[10px] text-purple-400 font-mono-numbers">
+                      18.0%
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={brokerageForm.gst_rate_percent ?? 18}
+                      onChange={(e) =>
+                        setBrokerageForm((prev) => ({
+                          ...prev,
+                          gst_rate_percent: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                      placeholder="18.00"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">18% on (Brokerage + SEBI + Exchange charges).</p>
+                </div>
+              </div>
+
+              {/* Row 3: Exchange Transaction Charges (NSE vs BSE) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] text-slate-400 font-medium">
+                      NSE Txn Charge (%)
+                    </label>
+                    <span className="text-[10px] text-cyan-400 font-mono-numbers">
+                      0.03553%
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={brokerageForm.nse_txn_rate_percent ?? 0.03553}
+                      onChange={(e) =>
+                        setBrokerageForm((prev) => ({
+                          ...prev,
+                          nse_txn_rate_percent: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                      placeholder="0.03553"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">NSE premium turnover charge.</p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] text-slate-400 font-medium">
+                      BSE Txn Charge (%)
+                    </label>
+                    <span className="text-[10px] text-amber-400 font-mono-numbers">
+                      0.03250%
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={brokerageForm.bse_txn_rate_percent ?? 0.0325}
+                      onChange={(e) =>
+                        setBrokerageForm((prev) => ({
+                          ...prev,
+                          bse_txn_rate_percent: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                      placeholder="0.03250"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">BSE premium turnover charge.</p>
+                </div>
+              </div>
+
+              {/* Row 4: SEBI Charges & Stamp Duty */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] text-slate-400 font-medium">
+                      SEBI Charges (₹/Crore)
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-mono-numbers">
+                      ₹10 / Crore
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono-numbers">₹</span>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={brokerageForm.sebi_per_crore ?? 10}
+                      onChange={(e) =>
+                        setBrokerageForm((prev) => ({
+                          ...prev,
+                          sebi_per_crore: e.target.value,
+                        }))
+                      }
+                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                      placeholder="10.00"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">₹10 per crore (plus 18% GST).</p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] text-slate-400 font-medium">
+                      Stamp Duty Rate (%)
+                    </label>
+                    <span className="text-[10px] text-rose-400 font-mono-numbers">
+                      0.003% (Buy Side)
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={brokerageForm.stamp_duty_rate_percent ?? 0.003}
+                      onChange={(e) =>
+                        setBrokerageForm((prev) => ({
+                          ...prev,
+                          stamp_duty_rate_percent: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                      placeholder="0.00300"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">₹300 per crore on buy premium turnover.</p>
+                </div>
+              </div>
+
+              {/* Row 5: Default Exchange */}
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Default Exchange</label>
+                <select
+                  value={brokerageForm.default_exchange ?? 'NSE'}
+                  onChange={(e) =>
+                    setBrokerageForm((prev) => ({
+                      ...prev,
+                      default_exchange: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                >
+                  <option value="NSE">NSE (National Stock Exchange - 0.03553%)</option>
+                  <option value="BSE">BSE (Bombay Stock Exchange - 0.03250%)</option>
+                </select>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  SENSEX & BANKEX automatically select BSE rate; NIFTY & BANKNIFTY select NSE.
+                </p>
+              </div>
+
+              {/* Live Interactive Calculation Preview Box */}
+              {(() => {
+                const q = simLots * (getLotSize(simIndex) || 50);
+                const simCalc = calculateCharges({
+                  entry: simEntry,
+                  exit: simExit,
+                  quantity: q,
+                  optionType: 'CE',
+                  indexName: simIndex,
+                });
+
+                return (
+                  <div className="p-3.5 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 space-y-2.5">
+                    <div className="flex items-center justify-between pb-1.5 border-b border-[#1e293b] light:border-slate-200">
+                      <span className="text-[11px] font-bold text-white light:text-slate-900 flex items-center gap-1.5">
+                        <Calculator className="w-3.5 h-3.5 text-blue-400" />
+                        Live Regulatory Charges Simulator
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono-numbers">
+                        {simIndex} ({q} Qty)
+                      </span>
+                    </div>
+
+                    {/* Simulator Inputs */}
+                    <div className="grid grid-cols-4 gap-1.5 text-[10px]">
+                      <div>
+                        <span className="text-slate-500 block mb-0.5">Index</span>
+                        <select
+                          value={simIndex}
+                          onChange={(e) => setSimIndex(e.target.value)}
+                          className="w-full px-1.5 py-1 rounded-lg bg-[#121b2d] light:bg-white border border-[#1e293b] text-white light:text-slate-900 text-[10px]"
+                        >
+                          {['NIFTY', 'BANKNIFTY', 'SENSEX', 'FINNIFTY'].map((idx) => (
+                            <option key={idx} value={idx}>{idx}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block mb-0.5">Lots</span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={simLots}
+                          onChange={(e) => setSimLots(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                          className="w-full px-1.5 py-1 rounded-lg bg-[#121b2d] light:bg-white border border-[#1e293b] text-white light:text-slate-900 font-mono-numbers text-[10px]"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block mb-0.5">Entry (₹)</span>
+                        <input
+                          type="number"
+                          value={simEntry}
+                          onChange={(e) => setSimEntry(e.target.value)}
+                          className="w-full px-1.5 py-1 rounded-lg bg-[#121b2d] light:bg-white border border-[#1e293b] text-white light:text-slate-900 font-mono-numbers text-[10px]"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block mb-0.5">Exit (₹)</span>
+                        <input
+                          type="number"
+                          value={simExit}
+                          onChange={(e) => setSimExit(e.target.value)}
+                          className="w-full px-1.5 py-1 rounded-lg bg-[#121b2d] light:bg-white border border-[#1e293b] text-white light:text-slate-900 font-mono-numbers text-[10px]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Breakdown Chips */}
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 pt-1 text-center font-mono-numbers">
+                      <div className="p-1 rounded bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200">
+                        <span className="text-[9px] text-slate-500 block">Brokerage</span>
+                        <span className="text-[10px] font-bold text-slate-200 light:text-slate-800">₹{simCalc.brokerage.toFixed(2)}</span>
+                      </div>
+                      <div className="p-1 rounded bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200">
+                        <span className="text-[9px] text-slate-500 block">STT</span>
+                        <span className="text-[10px] font-bold text-emerald-400">₹{simCalc.stt.toFixed(2)}</span>
+                      </div>
+                      <div className="p-1 rounded bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200">
+                        <span className="text-[9px] text-slate-500 block">Exchange</span>
+                        <span className="text-[10px] font-bold text-cyan-400">₹{simCalc.exchange_charges.toFixed(2)}</span>
+                      </div>
+                      <div className="p-1 rounded bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200">
+                        <span className="text-[9px] text-slate-500 block">GST (18%)</span>
+                        <span className="text-[10px] font-bold text-purple-400">₹{simCalc.gst.toFixed(2)}</span>
+                      </div>
+                      <div className="p-1 rounded bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200">
+                        <span className="text-[9px] text-slate-500 block">SEBI</span>
+                        <span className="text-[10px] font-bold text-slate-400">₹{simCalc.sebi_charges.toFixed(2)}</span>
+                      </div>
+                      <div className="p-1 rounded bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200">
+                        <span className="text-[9px] text-slate-500 block">Stamp</span>
+                        <span className="text-[10px] font-bold text-rose-400">₹{simCalc.stamp_duty.toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    {/* Summary row */}
+                    <div className="flex items-center justify-between pt-1 border-t border-[#1e293b] light:border-slate-200 text-xs font-semibold">
+                      <span className="text-slate-400 text-[11px]">
+                        Turnover: ₹{simCalc.total_turnover.toLocaleString('en-IN')}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-amber-400 text-[11px]">
+                          Charges: ₹{simCalc.total_charges.toFixed(2)}
+                        </span>
+                        <span className={`text-[11px] font-bold ${simCalc.net_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          Net P&L: {simCalc.net_pnl >= 0 ? '+' : ''}₹{simCalc.net_pnl.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AnalyticsController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BrokerageSettingController;
 use App\Http\Controllers\Api\CalendarController;
 use App\Http\Controllers\Api\CapitalController;
 use App\Http\Controllers\Api\DashboardController;
@@ -91,6 +92,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/module-visibility', [ModuleVisibilityController::class, 'update']);
     Route::put('/module-visibility/batch', [ModuleVisibilityController::class, 'batchUpdate']);
     Route::post('/module-visibility/reset', [ModuleVisibilityController::class, 'reset']);
+
+    // Dynamic Brokerage & Regulatory Charges Management
+    Route::get('/brokerage-settings', [BrokerageSettingController::class, 'show']);
+    Route::put('/brokerage-settings', [BrokerageSettingController::class, 'update']);
+    Route::post('/brokerage-settings/reset', [BrokerageSettingController::class, 'reset']);
 
     // Export, Reports, Backup & Restore
     Route::get('/export/csv', [ExportController::class, 'csv']);
