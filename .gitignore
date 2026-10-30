@@ -1,0 +1,17 @@
+.DS_Store
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+
+# Dependencies and generated output
+**/node_modules/
+**/vendor/
+frontend/dist/
+backend/public/build/
+
+# Local databases and runtime files
+backend/database/*.sqlite
+backend/database/*.sqlite-*
+backend/storage/logs/*.log
