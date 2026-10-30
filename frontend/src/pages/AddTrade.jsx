@@ -20,10 +20,12 @@ import api from '../api/client';
 import { formatINR } from '../utils/formatters';
 import { useLotSizes } from '../context/LotSizeContext';
 import { useToast } from '../context/ToastContext';
+import { useBrokerage } from '../context/BrokerageContext';
 
 export default function AddTrade() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const { calculateCharges } = useBrokerage();
 
   // Active section tab: 'trade_details' | 'pnl_charges' | 'strategy_journal' | 'preview'
   const [activeTab, setActiveTab] = useState('trade_details');
@@ -140,22 +142,95 @@ export default function AddTrade() {
       if (name === 'ce_entry_price' || name === 'pe_entry_price') {
         const ce = parseFloat(name === 'ce_entry_price' ? value : next.ce_entry_price) || 0;
         const pe = parseFloat(name === 'pe_entry_price' ? value : next.pe_entry_price) || 0;
-        if (ce > 0 || pe > 0) {
-          next.entry_premium = (ce + pe).toFixed(2);
-        }
+        next.entry_premium = (ce + pe).toFixed(2);
       }
 
       if (name === 'ce_exit_price' || name === 'pe_exit_price') {
         const ce = parseFloat(name === 'ce_exit_price' ? value : next.ce_exit_price) || 0;
         const pe = parseFloat(name === 'pe_exit_price' ? value : next.pe_exit_price) || 0;
-        if (ce > 0 || pe > 0) {
-          next.exit_premium = (ce + pe).toFixed(2);
-        }
+        next.exit_premium = (ce + pe).toFixed(2);
       }
 
       return next;
     });
   };
+
+  // Automatically calculate P&L and trading charges whenever any trade input field changes
+  useEffect(() => {
+    let entry = parseFloat(form.entry_premium) || 0;
+    let exit = parseFloat(form.exit_premium) || 0;
+
+    // For Both, prioritize leg prices sum if populated
+    if (form.option_type === 'Both') {
+      const ceEn = parseFloat(form.ce_entry_price) || 0;
+      const peEn = parseFloat(form.pe_entry_price) || 0;
+      const ceEx = parseFloat(form.ce_exit_price) || 0;
+      const peEx = parseFloat(form.pe_exit_price) || 0;
+      if (ceEn > 0 || peEn > 0) entry = ceEn + peEn;
+      if (ceEx > 0 || peEx > 0) exit = ceEx + peEx;
+    }
+
+    const qty = parseInt(form.quantity, 10) || 0;
+
+    if (qty > 0 && (entry > 0 || exit > 0)) {
+      const est = calculateCharges({
+        entry,
+        exit,
+        quantity: qty,
+        optionType: form.option_type,
+        indexName: form.index_name,
+        ceEntry: form.ce_entry_price,
+        peEntry: form.pe_entry_price,
+        ceExit: form.ce_exit_price,
+        peExit: form.pe_exit_price,
+      });
+
+      setForm((prev) => {
+        const other = parseFloat(prev.other_charges) || 0;
+        const total = (est.total_charges + other).toFixed(2);
+
+        // Guard against redundant state updates to avoid unnecessary renders
+        if (
+          prev.brokerage === est.brokerage.toFixed(2) &&
+          prev.stt === est.stt.toFixed(2) &&
+          prev.exchange_charges === est.exchange_charges.toFixed(2) &&
+          prev.gst === est.gst.toFixed(2) &&
+          prev.sebi_charges === est.sebi_charges.toFixed(2) &&
+          prev.stamp_duty === est.stamp_duty.toFixed(2) &&
+          prev.total_charges === total &&
+          prev.gross_profit === (est.gross_profit > 0 ? est.gross_profit.toFixed(2) : '0.00') &&
+          prev.gross_loss === (est.gross_loss > 0 ? est.gross_loss.toFixed(2) : '0.00')
+        ) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          brokerage: est.brokerage.toFixed(2),
+          stt: est.stt.toFixed(2),
+          exchange_charges: est.exchange_charges.toFixed(2),
+          gst: est.gst.toFixed(2),
+          sebi_charges: est.sebi_charges.toFixed(2),
+          stamp_duty: est.stamp_duty.toFixed(2),
+          total_charges: total,
+          gross_profit: est.gross_profit > 0 ? est.gross_profit.toFixed(2) : '0.00',
+          gross_loss: est.gross_loss > 0 ? est.gross_loss.toFixed(2) : '0.00',
+        };
+      });
+    }
+  }, [
+    form.entry_premium,
+    form.exit_premium,
+    form.quantity,
+    form.lots,
+    form.option_type,
+    form.index_name,
+    form.ce_entry_price,
+    form.pe_entry_price,
+    form.ce_exit_price,
+    form.pe_exit_price,
+    calculateCharges,
+  ]);
 
   // Total Charges Computed
   const computedTotalCharges = useMemo(() => {
@@ -208,7 +283,7 @@ export default function AddTrade() {
     return (gp - gl - ch).toFixed(2);
   }, [computedGrossProfit, computedGrossLoss, computedTotalCharges]);
 
-  // Auto Calculate Charges & P&L
+  // Auto Calculate Charges & P&L dynamically based on Brokerage & Regulatory settings
   const handleAutoCalculate = async () => {
     const entry = parseFloat(form.entry_premium) || 0;
     const exit = parseFloat(form.exit_premium) || 0;
@@ -232,6 +307,12 @@ export default function AddTrade() {
         entry_premium: entry,
         exit_premium: exit,
         quantity: qty,
+        option_type: form.option_type,
+        index_name: form.index_name,
+        ce_entry_price: form.ce_entry_price,
+        pe_entry_price: form.pe_entry_price,
+        ce_exit_price: form.ce_exit_price,
+        pe_exit_price: form.pe_exit_price,
       });
 
       if (res.data) {
@@ -240,42 +321,46 @@ export default function AddTrade() {
           ...prev,
           gross_profit: gp,
           gross_loss: gl,
-          brokerage: est.brokerage.toFixed(2),
-          stt: est.stt.toFixed(2),
-          exchange_charges: est.exchange_charges.toFixed(2),
-          gst: est.gst.toFixed(2),
-          sebi_charges: est.sebi_charges.toFixed(2),
-          stamp_duty: est.stamp_duty.toFixed(2),
-          other_charges: est.other_charges.toFixed(2),
-          total_charges: est.total_charges.toFixed(2),
+          brokerage: Number(est.brokerage).toFixed(2),
+          stt: Number(est.stt).toFixed(2),
+          exchange_charges: Number(est.exchange_charges).toFixed(2),
+          gst: Number(est.gst).toFixed(2),
+          sebi_charges: Number(est.sebi_charges).toFixed(2),
+          stamp_duty: Number(est.stamp_duty).toFixed(2),
+          other_charges: Number(est.other_charges || 0).toFixed(2),
+          total_charges: Number(est.total_charges).toFixed(2),
         }));
+        showToast(`Charges calculated using dynamic regulatory rates (${est.exchange || 'NSE'})`);
         return;
       }
-    } catch (e) {
-      // Local estimation fallback
-      const turnover = (entry + exit) * qty;
-      const brokerage = 40.00;
-      const stt = turnover * 0.000625;
-      const exchangeCharges = turnover * 0.000505;
-      const gst = (brokerage + exchangeCharges) * 0.18;
-      const sebiCharges = turnover * 0.000001;
-      const stampDuty = entry * qty * 0.00003;
-      const otherCharges = 0;
-      const total = brokerage + stt + exchangeCharges + gst + sebiCharges + stampDuty + otherCharges;
+    } catch {
+      // Local estimation fallback using active BrokerageContext rates
+      const localEst = calculateCharges({
+        entry,
+        exit,
+        quantity: qty,
+        optionType: form.option_type,
+        indexName: form.index_name,
+        ceEntry: form.ce_entry_price,
+        peEntry: form.pe_entry_price,
+        ceExit: form.ce_exit_price,
+        peExit: form.pe_exit_price,
+      });
 
       setForm((prev) => ({
         ...prev,
         gross_profit: gp,
         gross_loss: gl,
-        brokerage: brokerage.toFixed(2),
-        stt: stt.toFixed(2),
-        exchange_charges: exchangeCharges.toFixed(2),
-        gst: gst.toFixed(2),
-        sebi_charges: sebiCharges.toFixed(2),
-        stamp_duty: stampDuty.toFixed(2),
-        other_charges: otherCharges.toFixed(2),
-        total_charges: total.toFixed(2),
+        brokerage: localEst.brokerage.toFixed(2),
+        stt: localEst.stt.toFixed(2),
+        exchange_charges: localEst.exchange_charges.toFixed(2),
+        gst: localEst.gst.toFixed(2),
+        sebi_charges: localEst.sebi_charges.toFixed(2),
+        stamp_duty: localEst.stamp_duty.toFixed(2),
+        other_charges: '0.00',
+        total_charges: localEst.total_charges.toFixed(2),
       }));
+      showToast(`Charges auto-calculated via active brokerage schedule`);
     }
   };
 

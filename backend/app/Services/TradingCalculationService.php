@@ -66,31 +66,57 @@ class TradingCalculationService
     }
 
     /**
-     * Helper to estimate standard Indian option trade charges
+     * Helper to estimate standard Indian option trade charges dynamically based on Zerodha / SEBI regulatory schedule
+     *
+     * @param float $entryPremium Buy premium per share
+     * @param float $exitPremium Sell premium per share
+     * @param int $quantity Total quantity (lots * lot_size)
+     * @param int $orders Number of executed orders (default 2 for round-trip buy + sell; 4 for Both CE+PE)
+     * @param string $exchange Exchange: 'NSE' or 'BSE'
+     * @param array|null $rates Custom or user-configured rates
+     * @return array Breakdown of charges and turnovers
      */
-    public function estimateIndianCharges(float $entryPremium, float $exitPremium, int $quantity, int $trades = 1): array
-    {
+    public function estimateIndianCharges(
+        float $entryPremium,
+        float $exitPremium,
+        int $quantity,
+        int $orders = 2,
+        string $exchange = 'NSE',
+        ?array $rates = null
+    ): array {
+        // Fallback to official defaults
+        $brokeragePerOrder = (float) ($rates['brokerage_per_order'] ?? 20.00);
+        $sttRatePercent = (float) ($rates['stt_rate_percent'] ?? 0.15000);
+        $nseRatePercent = (float) ($rates['nse_txn_rate_percent'] ?? 0.03553);
+        $bseRatePercent = (float) ($rates['bse_txn_rate_percent'] ?? 0.03250);
+        $gstRatePercent = (float) ($rates['gst_rate_percent'] ?? 18.00);
+        $sebiPerCrore = (float) ($rates['sebi_per_crore'] ?? 10.00);
+        $stampDutyRatePercent = (float) ($rates['stamp_duty_rate_percent'] ?? 0.00300);
+
         $turnoverBuy = $entryPremium * $quantity;
         $turnoverSell = $exitPremium * $quantity;
         $totalTurnover = $turnoverBuy + $turnoverSell;
 
-        // Brokerage: ₹20 per order (buy + sell = ₹40 per completed trade)
-        $brokerage = 20.00 * 2 * $trades;
+        // 1. Brokerage: Flat ₹20 per executed order (default 2 orders for round-trip)
+        $numOrders = max(1, $orders);
+        $brokerage = round($brokeragePerOrder * $numOrders, 2);
 
-        // STT: 0.0625% on sell side premium turnover
-        $stt = round($turnoverSell * 0.000625, 2);
+        // 2. STT: 0.15% on sell side premium turnover
+        $stt = round($turnoverSell * ($sttRatePercent / 100), 2);
 
-        // Exchange transaction charges: ~0.05% on total premium turnover
-        $exchangeCharges = round($totalTurnover * 0.0005, 2);
+        // 3. Exchange transaction charges: NSE 0.03553% or BSE 0.0325% on total premium turnover
+        $isBse = strtoupper(trim($exchange)) === 'BSE';
+        $exchangeRatePercent = $isBse ? $bseRatePercent : $nseRatePercent;
+        $exchangeCharges = round($totalTurnover * ($exchangeRatePercent / 100), 2);
 
-        // SEBI turnover charges: ₹10 per crore (0.0001%)
-        $sebiCharges = round($totalTurnover * 0.000001, 2);
+        // 4. SEBI turnover charges: ₹10 per crore (0.0001%)
+        $sebiCharges = round($totalTurnover * ($sebiPerCrore / 10000000), 2);
 
-        // Stamp Duty: 0.003% on buy premium turnover
-        $stampDuty = round($turnoverBuy * 0.00003, 2);
+        // 5. Stamp Duty: 0.003% (₹300/crore) on buy premium turnover
+        $stampDuty = round($turnoverBuy * ($stampDutyRatePercent / 100), 2);
 
-        // GST: 18% on (brokerage + exchange charges + sebi charges)
-        $gst = round(($brokerage + $exchangeCharges + $sebiCharges) * 0.18, 2);
+        // 6. GST: 18% on (brokerage + SEBI charges + exchange transaction charges)
+        $gst = round(($brokerage + $exchangeCharges + $sebiCharges) * ($gstRatePercent / 100), 2);
 
         $totalCharges = round($brokerage + $stt + $exchangeCharges + $sebiCharges + $stampDuty + $gst, 2);
 
@@ -103,6 +129,19 @@ class TradingCalculationService
             'stamp_duty' => $stampDuty,
             'other_charges' => 0.00,
             'total_charges' => $totalCharges,
+            'turnover_buy' => round($turnoverBuy, 2),
+            'turnover_sell' => round($turnoverSell, 2),
+            'total_turnover' => round($totalTurnover, 2),
+            'exchange' => $isBse ? 'BSE' : 'NSE',
+            'orders' => $numOrders,
+            'rates' => [
+                'brokerage_per_order' => $brokeragePerOrder,
+                'stt_rate_percent' => $sttRatePercent,
+                'exchange_rate_percent' => $exchangeRatePercent,
+                'gst_rate_percent' => $gstRatePercent,
+                'sebi_per_crore' => $sebiPerCrore,
+                'stamp_duty_rate_percent' => $stampDutyRatePercent,
+            ],
         ];
     }
 }

@@ -29,6 +29,7 @@ import {
   Layers,
   Sparkles,
   LayoutGrid,
+  Receipt,
 } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -36,6 +37,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useLotSizes, STANDARD_INDICES } from '../context/LotSizeContext';
 import { useToast } from '../context/ToastContext';
 import { useModules } from '../context/ModuleContext';
+import { useBrokerage } from '../context/BrokerageContext';
 
 export default function Settings() {
   const { user, updateUser } = useAuth();
@@ -61,7 +63,7 @@ export default function Settings() {
   } = useModules();
 
   // Active Tab
-  const [activeTab, setActiveTab] = useState('General');
+  const [activeTab, setActiveTab] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
   // General Settings State
@@ -109,6 +111,51 @@ export default function Settings() {
       triggerToast(err.response?.data?.message || 'Failed to update initial capital', 'error');
     } finally {
       setSavingInitialCap(false);
+    }
+  };
+
+  // Dynamic Brokerage & Regulatory Charges State
+  const {
+    rates: brokerageRates,
+    updateRates: updateBrokerageRates,
+    resetRates: resetBrokerageRates,
+    calculateCharges,
+    isCustom: isCustomBrokerage,
+  } = useBrokerage();
+
+  const [brokerageForm, setBrokerageForm] = useState(brokerageRates);
+  const [savingBrokerage, setSavingBrokerage] = useState(false);
+
+  // Live Simulator State in Settings
+  const [simEntry, setSimEntry] = useState('100');
+  const [simExit, setSimExit] = useState('120');
+  const [simLots, setSimLots] = useState(1);
+  const [simIndex, setSimIndex] = useState('NIFTY');
+
+  useEffect(() => {
+    if (brokerageRates) {
+      setBrokerageForm(brokerageRates);
+    }
+  }, [brokerageRates]);
+
+  const handleSaveBrokerage = async (e) => {
+    e?.preventDefault();
+    setSavingBrokerage(true);
+    const res = await updateBrokerageRates(brokerageForm);
+    setSavingBrokerage(false);
+    if (res.success) {
+      triggerToast('✓ Brokerage & regulatory schedule saved to Database!');
+    } else {
+      triggerToast(res.error || 'Failed to update brokerage settings', 'error');
+    }
+  };
+
+  const handleResetBrokerage = async () => {
+    setSavingBrokerage(true);
+    const res = await resetBrokerageRates();
+    setSavingBrokerage(false);
+    if (res.success) {
+      triggerToast('✓ Reset to official Zerodha / SEBI regulatory defaults!');
     }
   };
 
@@ -253,95 +300,9 @@ export default function Settings() {
     }
   };
 
-  const isVisible = (sectionName) => {
-    if (searchQuery.trim() !== '') {
-      const q = searchQuery.toLowerCase();
-      if (sectionName.toLowerCase().includes(q)) return true;
-      if (sectionName === 'Modules') {
-        return modules.some((m) => m.name.toLowerCase().includes(q) || m.desc.toLowerCase().includes(q));
-      }
-      return false;
-    }
-    if (activeTab === 'General') return true; // Show all cards in default overview
-    return activeTab.toLowerCase().includes(sectionName.toLowerCase()) || sectionName.toLowerCase().includes(activeTab.toLowerCase());
-  };
 
-  return (
-    <div className="space-y-6 max-w-[1600px] mx-auto pb-12 animate-fadeIn text-slate-100">
-      {/* Top Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-white light:text-slate-900 tracking-tight">
-            Settings
-          </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Manage your preferences, account, dynamic lot sizes, and application settings
-          </p>
-        </div>
-
-        {/* Right Search, Bell, Profile */}
-        <div className="flex items-center gap-3 self-end md:self-auto flex-wrap">
-          {/* Search settings input */}
-          <div className="relative">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search settings..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-3 py-1.5 rounded-lg bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-xs text-slate-300 light:text-slate-700 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 w-48"
-            />
-          </div>
-
-          {/* Bell Icon */}
-          <button className="p-2 rounded-lg bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-slate-400 hover:text-white light:hover:text-slate-900 transition-colors">
-            <Bell className="w-4 h-4" />
-          </button>
-
-          {/* Profile Circle */}
-          <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-md">
-            D
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation Sub-Tabs */}
-      <div className="flex items-center gap-1.5 overflow-x-auto border-b border-[#1e293b] light:border-slate-200 pb-3 text-xs font-semibold whitespace-nowrap scrollbar-none">
-        {[
-          { id: 'General', label: 'General', icon: Sliders },
-          { id: 'Modules', label: 'Sidebar Modules', icon: LayoutGrid },
-          { id: 'Trading', label: 'Trading Settings', icon: TrendingUp },
-          { id: 'Lot Sizes', label: 'Index Lot Sizes', icon: Layers },
-          { id: 'Risk Management', label: 'Risk Management', icon: Shield },
-          { id: 'Notifications', label: 'Notifications', icon: Bell },
-          { id: 'Appearance', label: 'Appearance', icon: Palette },
-          { id: 'Data & Backup', label: 'Data & Backup', icon: Database },
-          { id: 'Integrations', label: 'Integrations', icon: LinkIcon },
-          { id: 'Account', label: 'Account', icon: User },
-        ].map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all ${
-                isActive
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white light:hover:text-slate-900 hover:bg-[#121b2d]/50'
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 3x3 Grid of Settings Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
-        {/* Card 1: General Settings */}
-        {isVisible('General') && (
+  // --- Individual Card Render Functions ---
+  const renderGeneralCard = () => (
           <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
@@ -419,10 +380,10 @@ export default function Settings() {
               </div>
             </div>
           </div>
-        )}
 
-        {/* Card 2: Trading Settings */}
-        {isVisible('Trading') && (
+  );
+
+  const renderTradingCard = () => (
           <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -529,40 +490,45 @@ export default function Settings() {
                 </select>
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="text-[11px] text-slate-400">Default Lot Size ({defaultIndex})</label>
-                  <span className="text-[10px] text-blue-400 font-mono-numbers">
-                    Auto-calculates Qty
+              <div className="p-3 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] text-slate-400 block">{defaultIndex} Lot Size</span>
+                  <span className="text-xs font-bold text-white light:text-slate-900 font-mono-numbers">
+                    1 Lot = <span className="text-emerald-400 font-bold">{getLotSize(defaultIndex)}</span> Shares (Qty)
                   </span>
                 </div>
-                <input
-                  type="number"
-                  min="1"
-                  value={getLotSize(defaultIndex)}
-                  onChange={(e) => {
-                    updateLotSize(defaultIndex, e.target.value);
-                    triggerToast(`✓ Saved ${defaultIndex} lot size (${e.target.value}) to Database!`);
-                  }}
-                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none"
-                />
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('Lot Sizes')}
+                  className="px-2.5 py-1 rounded-lg bg-[#162033] hover:bg-blue-600 text-blue-400 hover:text-white text-[11px] font-semibold transition-all border border-[#1e293b] flex items-center gap-1"
+                >
+                  Manage All
+                  <Layers className="w-3 h-3" />
+                </button>
               </div>
 
-              <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Default Broker Charges (per order)</label>
-                <input
-                  type="text"
-                  value={defaultBrokerCharges}
-                  onChange={(e) => setDefaultBrokerCharges(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none"
-                />
+              <div className="p-3 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] text-slate-400 block">Brokerage & Charges</span>
+                  <span className="text-xs font-bold text-white light:text-slate-900 font-mono-numbers">
+                    Flat ₹{brokerageRates?.brokerage_per_order ?? 20} / order + Taxes
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('Brokerage')}
+                  className="px-2.5 py-1 rounded-lg bg-[#162033] hover:bg-blue-600 text-blue-400 hover:text-white text-[11px] font-semibold transition-all border border-[#1e293b] flex items-center gap-1"
+                >
+                  Configure
+                  <Receipt className="w-3 h-3" />
+                </button>
               </div>
             </div>
           </div>
-        )}
 
-        {/* Card: Manage All Index Lot Sizes (SEPARATE DEDICATED BOX) */}
-        {(isVisible('Trading') || isVisible('Lot Sizes')) && (
+  );
+
+  const renderLotSizesCard = () => (
           <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
             {/* Header matching user image */}
             <div className="flex items-start justify-between gap-3">
@@ -679,10 +645,411 @@ export default function Settings() {
               </div>
             </div>
           </div>
-        )}
 
-        {/* Card 3: Risk Management Settings */}
-        {isVisible('Risk Management') && (
+  );
+
+  const renderBrokerageCard = () => (
+          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
+                  <Receipt className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-white light:text-slate-900">
+                      Brokerage & Regulatory Charges
+                    </h2>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1 font-mono-numbers">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                      DB Stored
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Official Zerodha & regulatory schedule (auto-calculates in trades)
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleResetBrokerage}
+                  disabled={savingBrokerage}
+                  className="p-2 rounded-xl bg-[#0e1626] light:bg-slate-100 hover:bg-[#162033] text-slate-400 hover:text-white border border-[#1e293b] light:border-slate-300 transition-all shadow-sm"
+                  title="Reset to Official Zerodha / Regulatory Defaults"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveBrokerage}
+                  disabled={savingBrokerage}
+                  className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md shadow-blue-600/30 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{savingBrokerage ? 'Saving...' : 'Save Schedule'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Form Fields Grid */}
+            <div className="space-y-3 text-xs">
+              {/* Row 1: Brokerage per executed order */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-[11px] text-slate-400 font-medium">
+                    Brokerage per Executed Order (₹)
+                  </label>
+                  <span className="text-[10px] text-blue-400 font-mono-numbers font-semibold">
+                    Flat ₹20 / order
+                  </span>
+                </div>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono-numbers">₹</span>
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    value={brokerageForm.brokerage_per_order ?? 20}
+                    onChange={(e) =>
+                      setBrokerageForm((prev) => ({
+                        ...prev,
+                        brokerage_per_order: e.target.value,
+                      }))
+                    }
+                    className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                    placeholder="20.00"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  Single round-trip = 2 executed orders (₹40); Both (Straddle/Strangle) = 4 executed orders (₹80).
+                </p>
+              </div>
+
+              {/* Row 2: STT / CTT & GST */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] text-slate-400 font-medium">
+                      STT / CTT Rate (%)
+                    </label>
+                    <span className="text-[10px] text-emerald-400 font-mono-numbers">
+                      0.15% (Sell Side)
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={brokerageForm.stt_rate_percent ?? 0.15}
+                      onChange={(e) =>
+                        setBrokerageForm((prev) => ({
+                          ...prev,
+                          stt_rate_percent: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                      placeholder="0.15000"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">Levied on sell side premium turnover.</p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] text-slate-400 font-medium">
+                      GST on Charges (%)
+                    </label>
+                    <span className="text-[10px] text-purple-400 font-mono-numbers">
+                      18.0%
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={brokerageForm.gst_rate_percent ?? 18}
+                      onChange={(e) =>
+                        setBrokerageForm((prev) => ({
+                          ...prev,
+                          gst_rate_percent: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                      placeholder="18.00"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">18% on (Brokerage + SEBI + Exchange charges).</p>
+                </div>
+              </div>
+
+              {/* Row 3: Exchange Transaction Charges (NSE vs BSE) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] text-slate-400 font-medium">
+                      NSE Txn Charge (%)
+                    </label>
+                    <span className="text-[10px] text-cyan-400 font-mono-numbers">
+                      0.03553%
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={brokerageForm.nse_txn_rate_percent ?? 0.03553}
+                      onChange={(e) =>
+                        setBrokerageForm((prev) => ({
+                          ...prev,
+                          nse_txn_rate_percent: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                      placeholder="0.03553"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">NSE premium turnover charge.</p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] text-slate-400 font-medium">
+                      BSE Txn Charge (%)
+                    </label>
+                    <span className="text-[10px] text-amber-400 font-mono-numbers">
+                      0.03250%
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={brokerageForm.bse_txn_rate_percent ?? 0.0325}
+                      onChange={(e) =>
+                        setBrokerageForm((prev) => ({
+                          ...prev,
+                          bse_txn_rate_percent: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                      placeholder="0.03250"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">BSE premium turnover charge.</p>
+                </div>
+              </div>
+
+              {/* Row 4: SEBI Charges & Stamp Duty */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] text-slate-400 font-medium">
+                      SEBI Charges (₹/Crore)
+                    </label>
+                    <span className="text-[10px] text-slate-400 font-mono-numbers">
+                      ₹10 / Crore
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono-numbers">₹</span>
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={brokerageForm.sebi_per_crore ?? 10}
+                      onChange={(e) =>
+                        setBrokerageForm((prev) => ({
+                          ...prev,
+                          sebi_per_crore: e.target.value,
+                        }))
+                      }
+                      className="w-full pl-7 pr-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                      placeholder="10.00"
+                    />
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">₹10 per crore (plus 18% GST).</p>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-[11px] text-slate-400 font-medium">
+                      Stamp Duty Rate (%)
+                    </label>
+                    <span className="text-[10px] text-rose-400 font-mono-numbers">
+                      0.003% (Buy Side)
+                    </span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      step="any"
+                      min="0"
+                      value={brokerageForm.stamp_duty_rate_percent ?? 0.003}
+                      onChange={(e) =>
+                        setBrokerageForm((prev) => ({
+                          ...prev,
+                          stamp_duty_rate_percent: e.target.value,
+                        }))
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                      placeholder="0.00300"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-[11px]">%</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">₹300 per crore on buy premium turnover.</p>
+                </div>
+              </div>
+
+              {/* Row 5: Default Exchange */}
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Default Exchange</label>
+                <select
+                  value={brokerageForm.default_exchange ?? 'NSE'}
+                  onChange={(e) =>
+                    setBrokerageForm((prev) => ({
+                      ...prev,
+                      default_exchange: e.target.value,
+                    }))
+                  }
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                >
+                  <option value="NSE">NSE (National Stock Exchange - 0.03553%)</option>
+                  <option value="BSE">BSE (Bombay Stock Exchange - 0.03250%)</option>
+                </select>
+                <p className="text-[10px] text-slate-500 mt-1">
+                  SENSEX & BANKEX automatically select BSE rate; NIFTY & BANKNIFTY select NSE.
+                </p>
+              </div>
+
+              {/* Live Interactive Calculation Preview Box */}
+              {(() => {
+                const q = simLots * (getLotSize(simIndex) || 50);
+                const simCalc = calculateCharges({
+                  entry: simEntry,
+                  exit: simExit,
+                  quantity: q,
+                  optionType: 'CE',
+                  indexName: simIndex,
+                });
+
+                return (
+                  <div className="p-3.5 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 space-y-2.5">
+                    <div className="flex items-center justify-between pb-1.5 border-b border-[#1e293b] light:border-slate-200">
+                      <span className="text-[11px] font-bold text-white light:text-slate-900 flex items-center gap-1.5">
+                        <Calculator className="w-3.5 h-3.5 text-blue-400" />
+                        Live Regulatory Charges Simulator
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono-numbers">
+                        {simIndex} ({q} Qty)
+                      </span>
+                    </div>
+
+                    {/* Simulator Inputs */}
+                    <div className="grid grid-cols-4 gap-1.5 text-[10px]">
+                      <div>
+                        <span className="text-slate-500 block mb-0.5">Index</span>
+                        <select
+                          value={simIndex}
+                          onChange={(e) => setSimIndex(e.target.value)}
+                          className="w-full px-1.5 py-1 rounded-lg bg-[#121b2d] light:bg-white border border-[#1e293b] text-white light:text-slate-900 text-[10px]"
+                        >
+                          {['NIFTY', 'BANKNIFTY', 'SENSEX', 'FINNIFTY'].map((idx) => (
+                            <option key={idx} value={idx}>{idx}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block mb-0.5">Lots</span>
+                        <input
+                          type="number"
+                          min="1"
+                          value={simLots}
+                          onChange={(e) => setSimLots(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                          className="w-full px-1.5 py-1 rounded-lg bg-[#121b2d] light:bg-white border border-[#1e293b] text-white light:text-slate-900 font-mono-numbers text-[10px]"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block mb-0.5">Entry (₹)</span>
+                        <input
+                          type="number"
+                          value={simEntry}
+                          onChange={(e) => setSimEntry(e.target.value)}
+                          className="w-full px-1.5 py-1 rounded-lg bg-[#121b2d] light:bg-white border border-[#1e293b] text-white light:text-slate-900 font-mono-numbers text-[10px]"
+                        />
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block mb-0.5">Exit (₹)</span>
+                        <input
+                          type="number"
+                          value={simExit}
+                          onChange={(e) => setSimExit(e.target.value)}
+                          className="w-full px-1.5 py-1 rounded-lg bg-[#121b2d] light:bg-white border border-[#1e293b] text-white light:text-slate-900 font-mono-numbers text-[10px]"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Breakdown Chips */}
+                    <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 pt-1 text-center font-mono-numbers">
+                      <div className="p-1 rounded bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200">
+                        <span className="text-[9px] text-slate-500 block">Brokerage</span>
+                        <span className="text-[10px] font-bold text-slate-200 light:text-slate-800">₹{simCalc.brokerage.toFixed(2)}</span>
+                      </div>
+                      <div className="p-1 rounded bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200">
+                        <span className="text-[9px] text-slate-500 block">STT</span>
+                        <span className="text-[10px] font-bold text-emerald-400">₹{simCalc.stt.toFixed(2)}</span>
+                      </div>
+                      <div className="p-1 rounded bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200">
+                        <span className="text-[9px] text-slate-500 block">Exchange</span>
+                        <span className="text-[10px] font-bold text-cyan-400">₹{simCalc.exchange_charges.toFixed(2)}</span>
+                      </div>
+                      <div className="p-1 rounded bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200">
+                        <span className="text-[9px] text-slate-500 block">GST (18%)</span>
+                        <span className="text-[10px] font-bold text-purple-400">₹{simCalc.gst.toFixed(2)}</span>
+                      </div>
+                      <div className="p-1 rounded bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200">
+                        <span className="text-[9px] text-slate-500 block">SEBI</span>
+                        <span className="text-[10px] font-bold text-slate-400">₹{simCalc.sebi_charges.toFixed(2)}</span>
+                      </div>
+                      <div className="p-1 rounded bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200">
+                        <span className="text-[9px] text-slate-500 block">Stamp</span>
+                        <span className="text-[10px] font-bold text-rose-400">₹{simCalc.stamp_duty.toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    {/* Summary row */}
+                    <div className="flex items-center justify-between pt-1 border-t border-[#1e293b] light:border-slate-200 text-xs font-semibold">
+                      <span className="text-slate-400 text-[11px]">
+                        Turnover: ₹{simCalc.total_turnover.toLocaleString('en-IN')}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-amber-400 text-[11px]">
+                          Charges: ₹{simCalc.total_charges.toFixed(2)}
+                        </span>
+                        <span className={`text-[11px] font-bold ${simCalc.net_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          Net P&L: {simCalc.net_pnl >= 0 ? '+' : ''}₹{simCalc.net_pnl.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+
+  );
+
+  const renderRiskCard = () => (
           <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center shrink-0">
@@ -809,10 +1176,10 @@ export default function Settings() {
               </div>
             </div>
           </div>
-        )}
 
-        {/* Card 4: Notification Settings */}
-        {isVisible('Notifications') && (
+  );
+
+  const renderNotificationsCard = () => (
           <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center shrink-0">
@@ -854,10 +1221,10 @@ export default function Settings() {
               ))}
             </div>
           </div>
-        )}
 
-        {/* Card 5: Appearance Settings */}
-        {isVisible('Appearance') && (
+  );
+
+  const renderAppearanceCard = () => (
           <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center shrink-0">
@@ -993,10 +1360,10 @@ export default function Settings() {
               </div>
             </div>
           </div>
-        )}
 
-        {/* Card 6: Data & Backup */}
-        {isVisible('Data & Backup') && (
+  );
+
+  const renderDataBackupCard = () => (
           <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center shrink-0">
@@ -1130,10 +1497,10 @@ export default function Settings() {
               </div>
             </div>
           </div>
-        )}
 
-        {/* Card 7: Integrations */}
-        {isVisible('Integrations') && (
+  );
+
+  const renderIntegrationsCard = () => (
           <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
@@ -1223,10 +1590,10 @@ export default function Settings() {
               </div>
             </div>
           </div>
-        )}
 
-        {/* Card 8: Account Settings */}
-        {isVisible('Account') && (
+  );
+
+  const renderAccountCard = () => (
           <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center shrink-0">
@@ -1285,10 +1652,10 @@ export default function Settings() {
               </div>
             </div>
           </div>
-        )}
 
-        {/* Card 9: Application Settings */}
-        {isVisible('Application') && (
+  );
+
+  const renderApplicationCard = () => (
           <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col justify-between space-y-4">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -1341,10 +1708,10 @@ export default function Settings() {
               </button>
             </div>
           </div>
-        )}
 
-        {/* Card 10: Sidebar Modules & Visibility */}
-        {isVisible('Modules') && (
+  );
+
+  const renderModulesCard = () => (
           <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
             {/* Header */}
             <div className="flex items-center justify-between">
@@ -1480,8 +1847,238 @@ export default function Settings() {
               </span>
             </div>
           </div>
-        )}
+
+  );
+
+  // Definition array for search filtering
+  const cardDefinitions = [
+    { id: 'General', name: 'General Settings', keywords: 'general currency inr usd date format time format timezone language', render: renderGeneralCard },
+    { id: 'Trading', name: 'Trading Settings', keywords: 'trading capital initial capital default index expiry order type strategy lot size shares', render: renderTradingCard },
+    { id: 'Lot Sizes', name: 'Manage All Index Lot Sizes', keywords: 'lot sizes index nifty banknifty finnifty midcpnifty sensex bankex shares quantities', render: renderLotSizesCard },
+    { id: 'Brokerage', name: 'Brokerage & Regulatory Charges', keywords: 'brokerage charges stt gst sebi stamp duty transaction turnover rates zerodha regulatory flat order simulator', render: renderBrokerageCard },
+    { id: 'Risk Management', name: 'Risk Management Settings', keywords: 'risk management daily loss limit profit target monthly risk trade max risk alerts', render: renderRiskCard },
+    { id: 'Notifications', name: 'Notification Settings', keywords: 'notifications daily pnl summary risk alerts trade reminders weekly report monthly report', render: renderNotificationsCard },
+    { id: 'Appearance', name: 'Appearance Settings', keywords: 'appearance theme light dark system primary color font size compact mode animations', render: renderAppearanceCard },
+    { id: 'Data & Backup', name: 'Data & Backup', keywords: 'data backup auto backup export csv import json download restore file', render: renderDataBackupCard },
+    { id: 'Integrations', name: 'Integrations', keywords: 'integrations zerodha kite connect telegram alert email smtp broker notifications', render: renderIntegrationsCard },
+    { id: 'Account', name: 'Account Settings', keywords: 'account name email password change profile picture avatar user credentials', render: renderAccountCard },
+    { id: 'Application', name: 'Application Settings', keywords: 'application auto save drafts confirm delete play sound alerts show welcome tips reset defaults', render: renderApplicationCard },
+    { id: 'Modules', name: 'Sidebar Modules', keywords: 'sidebar modules visibility dynamic navigation menu show hide dashboard calendar journal', render: renderModulesCard },
+  ];
+
+  const renderContent = () => {
+    // 1. Search Query Filter
+    if (searchQuery.trim() !== '') {
+      const q = searchQuery.toLowerCase().trim();
+      const matches = cardDefinitions.filter(
+        (c) => c.name.toLowerCase().includes(q) || c.keywords.toLowerCase().includes(q)
+      );
+
+      if (matches.length === 0) {
+        return (
+          <div className="py-16 text-center bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-8 max-w-xl mx-auto space-y-3">
+            <Search className="w-10 h-10 text-slate-500 mx-auto opacity-60" />
+            <h3 className="text-base font-bold text-white light:text-slate-900">
+              No settings match "{searchQuery}"
+            </h3>
+            <p className="text-xs text-slate-400">
+              Try searching with keywords like 'capital', 'brokerage', 'lot size', 'risk', or 'theme'.
+            </p>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-all"
+            >
+              Clear Search
+            </button>
+          </div>
+        );
+      }
+
+      if (matches.length === 1) {
+        return <div className="max-w-3xl mx-auto w-full">{matches[0].render()}</div>;
+      }
+      if (matches.length === 2) {
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl mx-auto w-full items-start">
+            {matches.map((c) => (
+              <div key={c.id}>{c.render()}</div>
+            ))}
+          </div>
+        );
+      }
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
+          {matches.map((c) => (
+            <div key={c.id}>{c.render()}</div>
+          ))}
+        </div>
+      );
+    }
+
+    // 2. Specific Active Tab Views
+    if (activeTab === 'General') {
+      return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-5xl mx-auto w-full items-start">
+          <div className="flex flex-col gap-5">{renderGeneralCard()}</div>
+          <div className="flex flex-col gap-5">{renderApplicationCard()}</div>
+        </div>
+      );
+    }
+
+    if (activeTab === 'Trading') {
+      return (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+          <div className="flex flex-col gap-5">{renderTradingCard()}</div>
+          <div className="flex flex-col gap-5">{renderLotSizesCard()}</div>
+          <div className="flex flex-col gap-5">{renderBrokerageCard()}</div>
+        </div>
+      );
+    }
+
+    if (activeTab === 'Brokerage') {
+      return <div className="max-w-3xl mx-auto w-full">{renderBrokerageCard()}</div>;
+    }
+
+    if (activeTab === 'Lot Sizes') {
+      return <div className="max-w-3xl mx-auto w-full">{renderLotSizesCard()}</div>;
+    }
+
+    if (activeTab === 'Risk Management') {
+      return <div className="max-w-2xl mx-auto w-full">{renderRiskCard()}</div>;
+    }
+
+    if (activeTab === 'Notifications') {
+      return <div className="max-w-2xl mx-auto w-full">{renderNotificationsCard()}</div>;
+    }
+
+    if (activeTab === 'Appearance') {
+      return <div className="max-w-2xl mx-auto w-full">{renderAppearanceCard()}</div>;
+    }
+
+    if (activeTab === 'Data & Backup') {
+      return <div className="max-w-2xl mx-auto w-full">{renderDataBackupCard()}</div>;
+    }
+
+    if (activeTab === 'Integrations') {
+      return <div className="max-w-2xl mx-auto w-full">{renderIntegrationsCard()}</div>;
+    }
+
+    if (activeTab === 'Account') {
+      return <div className="max-w-2xl mx-auto w-full">{renderAccountCard()}</div>;
+    }
+
+    if (activeTab === 'Modules') {
+      return <div className="max-w-3xl mx-auto w-full">{renderModulesCard()}</div>;
+    }
+
+    // 3. Default: 'All' Settings - Balanced 3-column vertical flow with ZERO empty space!
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
+        {/* Column 1: General (380px) + Brokerage (850px) + Account (250px) + Application (240px) */}
+        <div className="flex flex-col gap-5">
+          {renderGeneralCard()}
+          {renderBrokerageCard()}
+          {renderAccountCard()}
+          {renderApplicationCard()}
+        </div>
+
+        {/* Column 2: Trading (440px) + Risk (420px) + Appearance (390px) + Modules (380px) */}
+        <div className="flex flex-col gap-5">
+          {renderTradingCard()}
+          {renderRiskCard()}
+          {renderAppearanceCard()}
+          {renderModulesCard()}
+        </div>
+
+        {/* Column 3: Lot Sizes (520px) + Notifications (360px) + Data & Backup (380px) + Integrations (280px) */}
+        <div className="flex flex-col gap-5">
+          {renderLotSizesCard()}
+          {renderNotificationsCard()}
+          {renderDataBackupCard()}
+          {renderIntegrationsCard()}
+        </div>
       </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6 max-w-[1600px] mx-auto pb-12 animate-fadeIn text-slate-100">
+      {/* Top Header Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold text-white light:text-slate-900 tracking-tight">
+            Settings
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Manage your preferences, account, dynamic lot sizes, and application settings
+          </p>
+        </div>
+
+        {/* Right Search, Bell, Profile */}
+        <div className="flex items-center gap-3 self-end md:self-auto flex-wrap">
+          {/* Search settings input */}
+          <div className="relative">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search settings..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-8 pr-3 py-1.5 rounded-lg bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-xs text-slate-300 light:text-slate-700 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 w-48"
+            />
+          </div>
+
+          {/* Bell Icon */}
+          <button className="p-2 rounded-lg bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-slate-400 hover:text-white light:hover:text-slate-900 transition-colors">
+            <Bell className="w-4 h-4" />
+          </button>
+
+          {/* Profile Circle */}
+          <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-md">
+            D
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Sub-Tabs */}
+      <div className="flex items-center gap-1.5 overflow-x-auto border-b border-[#1e293b] light:border-slate-200 pb-3 text-xs font-semibold whitespace-nowrap scrollbar-none">
+        {[
+          { id: 'All', label: 'All Settings', icon: Sliders },
+          { id: 'General', label: 'General', icon: CogIcon },
+          { id: 'Trading', label: 'Trading Settings', icon: TrendingUp },
+          { id: 'Brokerage', label: 'Brokerage & Charges', icon: Receipt },
+          { id: 'Lot Sizes', label: 'Index Lot Sizes', icon: Layers },
+          { id: 'Risk Management', label: 'Risk Management', icon: Shield },
+          { id: 'Notifications', label: 'Notifications', icon: Bell },
+          { id: 'Appearance', label: 'Appearance', icon: Palette },
+          { id: 'Data & Backup', label: 'Data & Backup', icon: Database },
+          { id: 'Integrations', label: 'Integrations', icon: LinkIcon },
+          { id: 'Account', label: 'Account', icon: User },
+          { id: 'Modules', label: 'Sidebar Modules', icon: LayoutGrid },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setActiveTab(tab.id);
+                setSearchQuery('');
+              }}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all ${
+                isActive
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-white light:hover:text-slate-900 hover:bg-[#121b2d]/50'
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {renderContent()}
 
       {/* Add Custom Index Modal */}
       {showAddIndexModal && (
