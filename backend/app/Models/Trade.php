@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -22,7 +23,11 @@ class Trade extends Model
         'option_type',
         'strike_price',
         'expiry_date',
+        'ce_entry_price',
+        'pe_entry_price',
         'entry_premium',
+        'ce_exit_price',
+        'pe_exit_price',
         'exit_premium',
         'quantity',
         'lots',
@@ -49,7 +54,11 @@ class Trade extends Model
             'trade_date' => 'date:Y-m-d',
             'expiry_date' => 'date:Y-m-d',
             'strike_price' => 'decimal:2',
+            'ce_entry_price' => 'decimal:2',
+            'pe_entry_price' => 'decimal:2',
             'entry_premium' => 'decimal:2',
+            'ce_exit_price' => 'decimal:2',
+            'pe_exit_price' => 'decimal:2',
             'exit_premium' => 'decimal:2',
             'quantity' => 'integer',
             'lots' => 'integer',
@@ -65,6 +74,58 @@ class Trade extends Model
             'total_charges' => 'decimal:2',
             'net_pnl' => 'decimal:2',
         ];
+    }
+
+    protected $appends = ['screenshot_url', 'screenshots_list'];
+
+    public function getScreenshotUrlAttribute(): ?string
+    {
+        if ($this->relationLoaded('screenshots') && $this->screenshots->isNotEmpty()) {
+            return $this->screenshots->first()->url;
+        }
+
+        if (!$this->screenshot_path) {
+            return null;
+        }
+
+        if (filter_var($this->screenshot_path, FILTER_VALIDATE_URL)) {
+            return $this->screenshot_path;
+        }
+
+        return url('storage/' . ltrim($this->screenshot_path, '/'));
+    }
+
+    public function getScreenshotsListAttribute(): array
+    {
+        $collection = $this->relationLoaded('screenshots') ? $this->screenshots : $this->screenshots()->get();
+        if ($collection && $collection->isNotEmpty()) {
+            return $collection->map(function ($s) {
+                return [
+                    'id' => $s->id,
+                    'url' => $s->url,
+                    'path' => $s->path,
+                    'filename' => $s->filename ?: basename($s->path),
+                    'caption' => $s->caption,
+                ];
+            })->values()->toArray();
+        }
+
+        if ($this->screenshot_path) {
+            return [[
+                'id' => null,
+                'url' => $this->screenshot_url,
+                'path' => $this->screenshot_path,
+                'filename' => basename($this->screenshot_path),
+                'caption' => 'Chart Screenshot',
+            ]];
+        }
+
+        return [];
+    }
+
+    public function screenshots(): HasMany
+    {
+        return $this->hasMany(TradeScreenshot::class)->orderBy('sort_order')->orderBy('id');
     }
 
     public function user(): BelongsTo

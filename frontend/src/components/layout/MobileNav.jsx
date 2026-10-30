@@ -20,11 +20,13 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useModules } from '../../context/ModuleContext';
 
 export default function MobileNav() {
   const [showMoreDrawer, setShowMoreDrawer] = useState(false);
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { isModuleVisible } = useModules();
   const navigate = useNavigate();
 
   const primaryItems = [
@@ -32,7 +34,7 @@ export default function MobileNav() {
     { name: 'Add Trade', path: '/add-trade', icon: PlusSquare },
     { name: 'All Trades', path: '/trades', icon: ListFilter },
     { name: 'Analytics', path: '/analytics', icon: BarChart3 },
-  ];
+  ].filter((item) => isModuleVisible(item.path));
 
   const secondaryItems = [
     { name: 'Trading Calendar', path: '/calendar', icon: CalendarDays },
@@ -42,7 +44,7 @@ export default function MobileNav() {
     { name: 'Strategy Analysis', path: '/strategy-analysis', icon: PieChart },
     { name: 'Capital Management', path: '/capital-management', icon: Wallet },
     { name: 'Settings', path: '/settings', icon: Settings },
-  ];
+  ].filter((item) => isModuleVisible(item.path));
 
   return (
     <>

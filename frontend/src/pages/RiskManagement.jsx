@@ -19,6 +19,8 @@ import {
   Database,
   ArrowUpRight,
   ArrowDownRight,
+  X,
+  Plus,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -37,83 +39,184 @@ import {
   ReferenceLine,
 } from 'recharts';
 import api from '../api/client';
-import { formatINR } from '../utils/formatters';
+import { formatINR, formatCompactINR } from '../utils/formatters';
+import { useFilter } from '../context/FilterContext';
+import { useToast } from '../context/ToastContext';
 
 export default function RiskManagement() {
   const navigate = useNavigate();
+  const { dateRangeDisplay } = useFilter();
+  const { showToast } = useToast();
 
-  // Range button: 'Today' | 'This Week' | 'This Month' | 'This Year' | 'All'
-  const [timeRange, setTimeRange] = useState('This Month');
+  const [loading, setLoading] = useState(true);
+  const [riskData, setRiskData] = useState(null);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [tradesList, setTradesList] = useState([]);
   const [showConfigModal, setShowConfigModal] = useState(false);
+  const [savingLimits, setSavingLimits] = useState(false);
 
-  // Daily P&L vs Risk limits chart data (August 2025)
-  const dailyPnLLimitsData = [
-    { day: '1 Aug', pnl: 12.3 },
-    { day: '4 Aug', pnl: -8.2 },
-    { day: '5 Aug', pnl: 15.4 },
-    { day: '6 Aug', pnl: 6.8 },
-    { day: '7 Aug', pnl: -12.1 },
-    { day: '8 Aug', pnl: 18.6 },
-    { day: '11 Aug', pnl: 9.3 },
-    { day: '12 Aug', pnl: 18.65 },
-    { day: '13 Aug', pnl: -5.7 },
-    { day: '14 Aug', pnl: 11.2 },
-    { day: '15 Aug', pnl: 7.6 },
-    { day: '18 Aug', pnl: -14.8 },
-    { day: '19 Aug', pnl: 13.2 },
-    { day: '20 Aug', pnl: 8.9 },
-    { day: '21 Aug', pnl: -9.1 },
-    { day: '22 Aug', pnl: 6.4 },
-    { day: '25 Aug', pnl: 10.7 },
-    { day: '26 Aug', pnl: -6.2 },
-    { day: '27 Aug', pnl: 12.3 },
-    { day: '28 Aug', pnl: 9.8 },
-    { day: '29 Aug', pnl: -4.1 },
-    { day: '31 Aug', pnl: 5.2 },
-  ];
+  const [limitsForm, setLimitsForm] = useState({
+    daily_max_loss: 25000,
+    daily_profit_target: 20000,
+    monthly_max_loss: 100000,
+    monthly_profit_target: 150000,
+  });
 
-  // Drawdown curve data (August 2025)
-  const drawdownCurveData = [
-    { day: '1 Aug', dd: 0 },
-    { day: '5 Aug', dd: -3200 },
-    { day: '8 Aug', dd: -1200 },
-    { day: '12 Aug', dd: 0 },
-    { day: '15 Aug', dd: -5700 },
-    { day: '18 Aug', dd: -24800 },
-    { day: '20 Aug', dd: -18200 },
-    { day: '22 Aug', dd: -28400 },
-    { day: '25 Aug', dd: -14200 },
-    { day: '28 Aug', dd: -32100 },
-    { day: '31 Aug', dd: -42380 },
-  ];
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [riskRes, dashRes, tradesRes] = await Promise.all([
+        api.get('/risk'),
+        api.get('/dashboard', { params: { filter: 'all' } }),
+        api.get('/trades', { params: { per_page: 100 } }),
+      ]);
 
-  // Risk vs Reward Scatter Points
-  const scatterPoints = [
-    { risk: 3200, reward: 8400, type: 'win' },
-    { risk: 2800, reward: 6200, type: 'win' },
-    { risk: 4500, reward: 12500, type: 'win' },
-    { risk: 1800, reward: 4200, type: 'win' },
-    { risk: 5000, reward: 18600, type: 'win' },
-    { risk: 3500, reward: 7800, type: 'win' },
-    { risk: 2400, reward: 5600, type: 'win' },
-    { risk: 4100, reward: 9400, type: 'win' },
-    { risk: 3800, reward: -3800, type: 'loss' },
-    { risk: 5200, reward: -5200, type: 'loss' },
-    { risk: 2900, reward: -2900, type: 'loss' },
-    { risk: 4800, reward: -7200, type: 'loss' },
-    { risk: 6500, reward: -14800, type: 'loss' },
-    { risk: 3100, reward: -3100, type: 'loss' },
-    { risk: 4400, reward: -4400, type: 'loss' },
-  ];
+      setRiskData(riskRes.data);
+      setDashboardData(dashRes.data);
+      setTradesList(tradesRes.data?.data || []);
 
-  // Daily Risk Summary Table Rows
-  const dailyRiskRows = [
-    { date: '31 Aug 2025', trades: 4, pnl: 12350, maxLoss: -4800, maxProfit: 8200, riskUsed: '4,800 (19%)', status: 'Normal' },
-    { date: '30 Aug 2025', trades: 3, pnl: -8420, maxLoss: -8420, maxProfit: 6100, riskUsed: '8,420 (34%)', status: 'Normal' },
-    { date: '29 Aug 2025', trades: 5, pnl: 9020, maxLoss: -3200, maxProfit: 5600, riskUsed: '3,200 (13%)', status: 'Normal' },
-    { date: '28 Aug 2025', trades: 4, pnl: -4990, maxLoss: -4990, maxProfit: 2600, riskUsed: '4,990 (20%)', status: 'Normal' },
-    { date: '27 Aug 2025', trades: 6, pnl: 18650, maxLoss: -2100, maxProfit: 18650, riskUsed: '2,100 (8%)', status: 'Target Hit' },
-  ];
+      if (riskRes.data?.account_limits) {
+        setLimitsForm({
+          daily_max_loss: riskRes.data.account_limits.daily_max_loss,
+          daily_profit_target: riskRes.data.account_limits.daily_profit_target,
+          monthly_max_loss: riskRes.data.account_limits.monthly_max_loss,
+          monthly_profit_target: riskRes.data.account_limits.monthly_profit_target,
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load risk management data', err);
+      showToast('Could not load risk limits', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const handleSaveLimits = async (e) => {
+    e.preventDefault();
+    try {
+      setSavingLimits(true);
+      await api.put('/risk/limits', limitsForm);
+      showToast('Risk limits updated successfully', 'success');
+      setShowConfigModal(false);
+      fetchData();
+    } catch (err) {
+      console.error('Failed to save risk limits', err);
+      showToast('Failed to update limits', 'error');
+    } finally {
+      setSavingLimits(false);
+    }
+  };
+
+  const accountLimits = riskData?.account_limits || {
+    daily_max_loss: 25000,
+    daily_profit_target: 20000,
+    monthly_max_loss: 100000,
+    monthly_profit_target: 150000,
+  };
+
+  const metrics = riskData?.metrics || {
+    largest_single_day_profit: 0,
+    largest_single_day_loss: 0,
+    avg_risk_to_reward: 0,
+    max_drawdown: 0,
+    max_drawdown_pct: 0,
+    current_drawdown: 0,
+    consecutive_losing_days: 0,
+    consecutive_winning_days: 0,
+    daily_current_loss: 0,
+    daily_current_profit: 0,
+  };
+
+  const stats = dashboardData?.stats || {
+    total_trades: 0,
+    total_net_profit: 0,
+    this_month_pnl: 0,
+    win_rate: 0,
+    current_capital: 500000,
+  };
+
+  // Daily P&L vs limits data for chart
+  const dailyPnLLimitsData = useMemo(() => {
+    const rawDaily = dashboardData?.charts?.daily_pnl || [];
+    return rawDaily.map((d) => ({
+      day: d.date ? d.date.split('-').slice(1).join('/') : d.day,
+      pnl: d.net_pnl || 0,
+    }));
+  }, [dashboardData]);
+
+  // Drawdown curve data for chart
+  const drawdownCurveData = useMemo(() => {
+    const rawDd = dashboardData?.charts?.drawdown_curve || [];
+    return rawDd.map((d) => ({
+      day: d.date ? d.date.split('-').slice(1).join('/') : d.date,
+      dd: -Math.abs(d.drawdown || 0),
+    }));
+  }, [dashboardData]);
+
+  // Scatter points: Risk vs Reward per trade
+  const scatterPoints = useMemo(() => {
+    return tradesList.map((t) => {
+      const net = parseFloat(t.net_pnl) || 0;
+      const charges = parseFloat(t.total_charges) || 0;
+      const risk = charges > 0 ? charges * 5 : 2000;
+      return {
+        risk: Math.round(risk),
+        reward: Math.round(net),
+        type: net >= 0 ? 'win' : 'loss',
+      };
+    });
+  }, [tradesList]);
+
+  // Daily risk rows
+  const dailyRiskRows = useMemo(() => {
+    const grouped = {};
+    tradesList.forEach((t) => {
+      const d = t.trade_date;
+      if (!grouped[d]) {
+        grouped[d] = {
+          date: d,
+          trades: 0,
+          pnl: 0,
+          maxLoss: 0,
+          maxProfit: 0,
+        };
+      }
+      grouped[d].trades += 1;
+      const pnl = parseFloat(t.net_pnl) || 0;
+      grouped[d].pnl += pnl;
+      if (pnl < 0) grouped[d].maxLoss = Math.min(grouped[d].maxLoss, pnl);
+      if (pnl > 0) grouped[d].maxProfit = Math.max(grouped[d].maxProfit, pnl);
+    });
+
+    return Object.values(grouped).map((row) => ({
+      ...row,
+      riskUsed: `${formatINR(Math.abs(row.maxLoss))} (${accountLimits.daily_max_loss > 0 ? Math.round((Math.abs(row.maxLoss) / accountLimits.daily_max_loss) * 100) : 0}%)`,
+      status: row.pnl >= accountLimits.daily_profit_target ? 'Target Hit' : row.pnl < 0 ? 'Drawdown' : 'Normal',
+    }));
+  }, [tradesList, accountLimits]);
+
+  // Progress Calculations
+  const dailyLossPct = accountLimits.daily_max_loss > 0
+    ? Math.min(100, Math.round((metrics.daily_current_loss / accountLimits.daily_max_loss) * 100))
+    : 0;
+
+  const dailyProfitPct = accountLimits.daily_profit_target > 0
+    ? Math.min(100, Math.round((metrics.daily_current_profit / accountLimits.daily_profit_target) * 100))
+    : 0;
+
+  const monthlyLossValue = stats.this_month_pnl < 0 ? Math.abs(stats.this_month_pnl) : 0;
+  const monthlyLossPct = accountLimits.monthly_max_loss > 0
+    ? Math.min(100, Math.round((monthlyLossValue / accountLimits.monthly_max_loss) * 100))
+    : 0;
+
+  const monthlyProfitValue = stats.this_month_pnl > 0 ? stats.this_month_pnl : 0;
+  const monthlyProfitPct = accountLimits.monthly_profit_target > 0
+    ? Math.min(100, Math.round((monthlyProfitValue / accountLimits.monthly_profit_target) * 100))
+    : 0;
 
   return (
     <div className="space-y-6 pb-24 md:pb-12 text-slate-100 light:text-slate-800">
@@ -128,30 +231,21 @@ export default function RiskManagement() {
           </p>
         </div>
 
-        {/* Date Filter & Quick Range Buttons */}
+        {/* Date Filter & Edit Limits Button */}
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900">
             <Calendar className="w-3.5 h-3.5 text-blue-400" />
-            <span>01 Aug 2025 - 31 Aug 2025</span>
-            <ChevronDown className="w-3 h-3 text-slate-400 ml-1" />
+            <span>{dateRangeDisplay || 'All Time'}</span>
           </div>
 
-          <div className="flex items-center gap-1 p-1 rounded-xl bg-[#121b2d] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs">
-            {['Today', 'This Week', 'This Month', 'This Year', 'All'].map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTimeRange(t)}
-                className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
-                  timeRange === t
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white light:hover:text-slate-900'
-                }`}
-              >
-                {t}
-              </button>
-            ))}
-          </div>
+          <button
+            type="button"
+            onClick={() => setShowConfigModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white transition-colors shadow-sm"
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>Configure Limits</span>
+          </button>
         </div>
       </div>
 
@@ -167,13 +261,16 @@ export default function RiskManagement() {
           </div>
           <div>
             <span className="text-xl font-bold text-white light:text-slate-900 font-mono-numbers block">
-              ₹25,000
+              {formatINR(accountLimits.daily_max_loss)}
             </span>
             <div className="w-full bg-[#0e1626] light:bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-rose-500 h-full rounded-full" style={{ width: '50.6%' }} />
+              <div
+                className="bg-rose-500 h-full rounded-full transition-all duration-500"
+                style={{ width: `${dailyLossPct}%` }}
+              />
             </div>
             <span className="text-[10px] text-slate-400 font-mono-numbers block mt-1">
-              12,650 / 25,000 (50.6%)
+              {metrics.daily_current_loss > 0 ? formatINR(metrics.daily_current_loss) : '0'} / {formatINR(accountLimits.daily_max_loss)} ({dailyLossPct}%)
             </span>
           </div>
         </div>
@@ -188,13 +285,16 @@ export default function RiskManagement() {
           </div>
           <div>
             <span className="text-xl font-bold text-white light:text-slate-900 font-mono-numbers block">
-              ₹20,000
+              {formatINR(accountLimits.daily_profit_target)}
             </span>
             <div className="w-full bg-[#0e1626] light:bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-emerald-400 h-full rounded-full" style={{ width: '91.8%' }} />
+              <div
+                className="bg-emerald-400 h-full rounded-full transition-all duration-500"
+                style={{ width: `${dailyProfitPct}%` }}
+              />
             </div>
             <span className="text-[10px] text-slate-400 font-mono-numbers block mt-1">
-              18,350 / 20,000 (91.8%)
+              {metrics.daily_current_profit > 0 ? formatINR(metrics.daily_current_profit) : '0'} / {formatINR(accountLimits.daily_profit_target)} ({dailyProfitPct}%)
             </span>
           </div>
         </div>
@@ -209,13 +309,16 @@ export default function RiskManagement() {
           </div>
           <div>
             <span className="text-xl font-bold text-white light:text-slate-900 font-mono-numbers block">
-              ₹1,00,000
+              {formatINR(accountLimits.monthly_max_loss)}
             </span>
             <div className="w-full bg-[#0e1626] light:bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-rose-500 h-full rounded-full" style={{ width: '42.4%' }} />
+              <div
+                className="bg-rose-500 h-full rounded-full transition-all duration-500"
+                style={{ width: `${monthlyLossPct}%` }}
+              />
             </div>
             <span className="text-[10px] text-slate-400 font-mono-numbers block mt-1">
-              42,380 / 1,00,000 (42.4%)
+              {monthlyLossValue > 0 ? formatINR(monthlyLossValue) : '0'} / {formatINR(accountLimits.monthly_max_loss)} ({monthlyLossPct}%)
             </span>
           </div>
         </div>
@@ -230,13 +333,16 @@ export default function RiskManagement() {
           </div>
           <div>
             <span className="text-xl font-bold text-white light:text-slate-900 font-mono-numbers block">
-              ₹1,50,000
+              {formatINR(accountLimits.monthly_profit_target)}
             </span>
             <div className="w-full bg-[#0e1626] light:bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
-              <div className="bg-emerald-400 h-full rounded-full" style={{ width: '85.6%' }} />
+              <div
+                className="bg-emerald-400 h-full rounded-full transition-all duration-500"
+                style={{ width: `${monthlyProfitPct}%` }}
+              />
             </div>
             <span className="text-[10px] text-slate-400 font-mono-numbers block mt-1">
-              1,28,450 / 1,50,000 (85.6%)
+              {monthlyProfitValue > 0 ? formatINR(monthlyProfitValue) : '0'} / {formatINR(accountLimits.monthly_profit_target)} ({monthlyProfitPct}%)
             </span>
           </div>
         </div>
@@ -244,17 +350,17 @@ export default function RiskManagement() {
         {/* Max Risk Per Trade */}
         <div className="p-4 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] text-slate-400 font-medium">Max Risk Per Trade</span>
+            <span className="text-[11px] text-slate-400 font-medium">Account Capital</span>
             <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
               <Database className="w-4 h-4" />
             </div>
           </div>
           <div>
             <span className="text-xl font-bold text-white light:text-slate-900 font-mono-numbers block">
-              ₹5,000
+              {formatINR(stats.current_capital)}
             </span>
             <span className="text-[11px] text-slate-400 font-mono-numbers block mt-2">
-              Current Avg Risk: ₹3,250
+              Trades Logged: {stats.total_trades}
             </span>
           </div>
         </div>
@@ -288,22 +394,26 @@ export default function RiskManagement() {
             </div>
           </div>
 
-          <div className="h-48 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dailyPnLLimitsData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} vertical={false} />
-                <XAxis dataKey="day" stroke="#64748b" fontSize={10} tickLine={false} interval={4} />
-                <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => `${v}K`} domain={[-30, 30]} />
-                <ReferenceLine y={0} stroke="#334155" />
-                <ReferenceLine y={20} stroke="#10b981" strokeDasharray="3 3" strokeWidth={1.5} />
-                <ReferenceLine y={-25} stroke="#ef4444" strokeDasharray="3 3" strokeWidth={1.5} />
-                <Bar dataKey="pnl" radius={[2, 2, 0, 0]}>
-                  {dailyPnLLimitsData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.pnl >= 0 ? '#10b981' : '#f43f5e'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="h-48 w-full flex items-center justify-center">
+            {dailyPnLLimitsData.length === 0 ? (
+              <p className="text-xs text-slate-500">No trading activity recorded for chart display</p>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dailyPnLLimitsData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} vertical={false} />
+                  <XAxis dataKey="day" stroke="#64748b" fontSize={10} tickLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => formatCompactINR(v)} />
+                  <ReferenceLine y={0} stroke="#334155" />
+                  <ReferenceLine y={accountLimits.daily_profit_target} stroke="#10b981" strokeDasharray="3 3" strokeWidth={1.5} />
+                  <ReferenceLine y={-accountLimits.daily_max_loss} stroke="#ef4444" strokeDasharray="3 3" strokeWidth={1.5} />
+                  <Bar dataKey="pnl" radius={[2, 2, 0, 0]}>
+                    {dailyPnLLimitsData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.pnl >= 0 ? '#10b981' : '#f43f5e'} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -311,26 +421,30 @@ export default function RiskManagement() {
         <div className="lg:col-span-6 p-5 md:p-6 rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-white light:text-slate-900">
-              Drawdown Chart
+              Drawdown Curve
             </h2>
-            <span className="text-xs text-slate-400">This Month</span>
+            <span className="text-xs text-slate-400">{dateRangeDisplay || 'All Time'}</span>
           </div>
 
-          <div className="h-48 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={drawdownCurveData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="riskDdGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.6} />
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} vertical={false} />
-                <XAxis dataKey="day" stroke="#64748b" fontSize={10} tickLine={false} interval={2} />
-                <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} domain={[-50000, 0]} />
-                <Area type="monotone" dataKey="dd" stroke="#ef4444" strokeWidth={2} fill="url(#riskDdGrad)" />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="h-48 w-full flex items-center justify-center">
+            {drawdownCurveData.length === 0 ? (
+              <p className="text-xs text-slate-500">No drawdown curve data available</p>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={drawdownCurveData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="riskDdGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ef4444" stopOpacity={0.6} />
+                      <stop offset="95%" stopColor="#ef4444" stopOpacity={0.1} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} vertical={false} />
+                  <XAxis dataKey="day" stroke="#64748b" fontSize={10} tickLine={false} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => formatCompactINR(v)} />
+                  <Area type="monotone" dataKey="dd" stroke="#ef4444" strokeWidth={2} fill="url(#riskDdGrad)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
       </div>
@@ -339,37 +453,49 @@ export default function RiskManagement() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="p-3.5 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] shadow-sm space-y-1">
           <span className="text-[10px] text-slate-400 font-medium block">Maximum Drawdown</span>
-          <span className="text-base font-bold text-rose-400 font-mono-numbers block tracking-tight">₹42,380</span>
-          <span className="text-[10px] text-rose-400 font-semibold">(6.8%)</span>
+          <span className="text-base font-bold text-rose-400 font-mono-numbers block tracking-tight">
+            {formatINR(metrics.max_drawdown)}
+          </span>
+          <span className="text-[10px] text-rose-400 font-semibold">({metrics.max_drawdown_pct}%)</span>
         </div>
         <div className="p-3.5 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] shadow-sm space-y-1">
           <span className="text-[10px] text-slate-400 font-medium block">Current Drawdown</span>
-          <span className="text-base font-bold text-white font-mono-numbers block tracking-tight">₹18,200</span>
-          <span className="text-[10px] text-slate-400">(2.9%)</span>
+          <span className="text-base font-bold text-white font-mono-numbers block tracking-tight">
+            {formatINR(metrics.current_drawdown)}
+          </span>
+          <span className="text-[10px] text-slate-400">Peak recovery active</span>
         </div>
         <div className="p-3.5 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] shadow-sm space-y-1">
           <span className="text-[10px] text-slate-400 font-medium block">Consecutive Losing Days</span>
-          <span className="text-base font-bold text-rose-400 font-mono-numbers block tracking-tight">3</span>
-          <span className="text-[10px] text-slate-400">Max: 4 days</span>
+          <span className="text-base font-bold text-rose-400 font-mono-numbers block tracking-tight">
+            {metrics.consecutive_losing_days}
+          </span>
+          <span className="text-[10px] text-slate-400">Streak count</span>
         </div>
         <div className="p-3.5 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] shadow-sm space-y-1">
           <span className="text-[10px] text-slate-400 font-medium block">Consecutive Winning Days</span>
-          <span className="text-base font-bold text-emerald-400 font-mono-numbers block tracking-tight">5</span>
-          <span className="text-[10px] text-slate-400">Max: 7 days</span>
+          <span className="text-base font-bold text-emerald-400 font-mono-numbers block tracking-tight">
+            {metrics.consecutive_winning_days}
+          </span>
+          <span className="text-[10px] text-slate-400">Streak count</span>
         </div>
         <div className="p-3.5 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] shadow-sm space-y-1">
           <span className="text-[10px] text-slate-400 font-medium block">Largest Single-Day Loss</span>
-          <span className="text-base font-bold text-rose-400 font-mono-numbers block tracking-tight">₹14,800</span>
-          <span className="text-[10px] text-slate-400">18 Aug 2025</span>
+          <span className="text-base font-bold text-rose-400 font-mono-numbers block tracking-tight">
+            {formatINR(metrics.largest_single_day_loss)}
+          </span>
+          <span className="text-[10px] text-slate-400">Max day risk</span>
         </div>
         <div className="p-3.5 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] shadow-sm space-y-1">
           <span className="text-[10px] text-slate-400 font-medium block">Largest Single-Day Profit</span>
-          <span className="text-base font-bold text-emerald-400 font-mono-numbers block tracking-tight">₹18,650</span>
-          <span className="text-[10px] text-slate-400">12 Aug 2025</span>
+          <span className="text-base font-bold text-emerald-400 font-mono-numbers block tracking-tight">
+            {formatINR(metrics.largest_single_day_profit)}
+          </span>
+          <span className="text-[10px] text-slate-400">Best day return</span>
         </div>
       </div>
 
-      {/* Row 4: Risk Limit Alerts (4 cols), Risk vs Reward (4 cols), Risk Metrics (4 cols) */}
+      {/* Row 4: Risk Limit Alerts, Risk vs Reward, Risk Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         {/* Risk Limit Alerts */}
         <div className="p-5 rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-3">
@@ -377,79 +503,38 @@ export default function RiskManagement() {
             <h2 className="text-sm font-bold text-white light:text-slate-900">
               Risk Limit Alerts
             </h2>
-            <button className="text-xs text-blue-400 hover:text-blue-300 font-semibold">View All</button>
+            <span className="text-xs text-slate-500 font-semibold">Live Monitoring</span>
           </div>
 
-          <div className="space-y-2.5 text-xs">
-            {/* Alert 1 */}
-            <div className="p-2.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-start gap-2.5">
-              <ShieldAlert className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-rose-400">Daily loss limit reached 80%</span>
-                  <span className="text-[10px] text-slate-500">10:25 AM</span>
-                </div>
-                <p className="text-[11px] text-slate-300 mt-0.5">
-                  You have used 80% of your daily loss limit (₹20,000 / ₹25,000)
+          <div className="space-y-2.5 text-xs min-h-[140px] flex flex-col justify-center">
+            {(!riskData?.alerts || riskData.alerts.length === 0) ? (
+              <div className="p-4 rounded-2xl bg-[#0e1626] border border-[#1e293b] text-center space-y-1">
+                <ShieldCheck className="w-6 h-6 text-emerald-400 mx-auto" />
+                <p className="font-semibold text-slate-200">All Risk Parameters Healthy</p>
+                <p className="text-[11px] text-slate-400">
+                  No risk threshold breaches or drawdown warnings.
                 </p>
               </div>
-            </div>
-
-            {/* Alert 2 */}
-            <div className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-2.5">
-              <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-amber-400">3 consecutive losing days</span>
-                  <span className="text-[10px] text-slate-500">Yesterday</span>
+            ) : (
+              riskData.alerts.map((alt, idx) => (
+                <div
+                  key={idx}
+                  className={`p-2.5 rounded-2xl border flex items-start gap-2.5 ${
+                    alt.type === 'danger'
+                      ? 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                      : alt.type === 'warning'
+                      ? 'bg-amber-500/10 border-amber-500/20 text-amber-400'
+                      : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                  }`}
+                >
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold">{alt.title || 'Risk Alert'}</p>
+                    <p className="text-[11px] text-slate-300 mt-0.5">{alt.message}</p>
+                  </div>
                 </div>
-                <p className="text-[11px] text-slate-300 mt-0.5">
-                  You have 3 consecutive losing days. Stay disciplined.
-                </p>
-              </div>
-            </div>
-
-            {/* Alert 3 */}
-            <div className="p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-start gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-emerald-400">Monthly profit target 85%</span>
-                  <span className="text-[10px] text-slate-500">26 Aug 2025</span>
-                </div>
-                <p className="text-[11px] text-slate-300 mt-0.5">
-                  You have achieved 85% of your monthly profit target
-                </p>
-              </div>
-            </div>
-
-            {/* Alert 4 */}
-            <div className="p-2.5 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-start gap-2.5">
-              <Info className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-blue-400">High drawdown alert</span>
-                  <span className="text-[10px] text-slate-500">18 Aug 2025</span>
-                </div>
-                <p className="text-[11px] text-slate-300 mt-0.5">
-                  Current drawdown is 5.8% of capital
-                </p>
-              </div>
-            </div>
-
-            {/* Alert 5 */}
-            <div className="p-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-start gap-2.5">
-              <Target className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-emerald-400">Daily profit target achieved</span>
-                  <span className="text-[10px] text-slate-500">12 Aug 2025</span>
-                </div>
-                <p className="text-[11px] text-slate-300 mt-0.5">
-                  You have achieved your daily profit target
-                </p>
-              </div>
-            </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -459,29 +544,34 @@ export default function RiskManagement() {
             <h2 className="text-sm font-bold text-white light:text-slate-900">
               Risk vs Reward Analysis
             </h2>
-            <span className="text-xs text-slate-400">This Month</span>
+            <span className="text-xs text-slate-400">Trade Spread</span>
           </div>
 
           <div className="p-2 rounded-xl bg-[#0e1626] border border-[#1e293b] flex items-center justify-between text-[10px] text-slate-300">
-            <span>Avg Risk: ₹3,250</span>
-            <span>Avg Reward: ₹6,780</span>
-            <span className="font-bold text-emerald-400">R:R Ratio: 1:2.08</span>
+            <span>Win Rate: {stats.win_rate || 0}%</span>
+            <span className="font-bold text-emerald-400">
+              R:R Ratio: 1 : {metrics.avg_risk_to_reward || 0}
+            </span>
           </div>
 
-          <div className="h-52 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <ScatterChart margin={{ top: 10, right: 10, bottom: 5, left: -25 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} />
-                <XAxis type="number" dataKey="risk" stroke="#64748b" fontSize={9} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} domain={[0, 20000]} />
-                <YAxis type="number" dataKey="reward" stroke="#64748b" fontSize={9} tickLine={false} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} domain={[-20000, 20000]} />
-                <ReferenceLine y={0} stroke="#334155" />
-                <Scatter data={scatterPoints}>
-                  {scatterPoints.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.type === 'win' ? '#10b981' : '#f43f5e'} />
-                  ))}
-                </Scatter>
-              </ScatterChart>
-            </ResponsiveContainer>
+          <div className="h-52 w-full flex items-center justify-center">
+            {scatterPoints.length === 0 ? (
+              <p className="text-xs text-slate-500">No trades recorded yet</p>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <ScatterChart margin={{ top: 10, right: 10, bottom: 5, left: -25 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} />
+                  <XAxis type="number" dataKey="risk" stroke="#64748b" fontSize={9} tickLine={false} tickFormatter={(v) => formatCompactINR(v)} />
+                  <YAxis type="number" dataKey="reward" stroke="#64748b" fontSize={9} tickLine={false} tickFormatter={(v) => formatCompactINR(v)} />
+                  <ReferenceLine y={0} stroke="#334155" />
+                  <Scatter data={scatterPoints}>
+                    {scatterPoints.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.type === 'win' ? '#10b981' : '#f43f5e'} />
+                    ))}
+                  </Scatter>
+                </ScatterChart>
+              </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -491,51 +581,45 @@ export default function RiskManagement() {
             <h2 className="text-sm font-bold text-white light:text-slate-900">
               Risk Metrics
             </h2>
-            <span className="text-xs text-slate-400">This Month</span>
+            <span className="text-xs text-slate-400">Account Live</span>
           </div>
 
           <div className="space-y-2 text-xs">
             <div className="flex justify-between text-slate-400">
-              <span>Average Risk per Trade</span>
-              <span className="font-semibold text-white font-mono-numbers">₹3,250</span>
-            </div>
-            <div className="flex justify-between text-slate-400">
-              <span>Average Reward per Trade</span>
-              <span className="font-semibold text-emerald-400 font-mono-numbers">₹6,780</span>
-            </div>
-            <div className="flex justify-between text-slate-400">
               <span>Risk to Reward Ratio</span>
-              <span className="font-bold text-white font-mono-numbers">1 : 2.08</span>
+              <span className="font-bold text-white font-mono-numbers">1 : {metrics.avg_risk_to_reward || 0}</span>
             </div>
             <div className="flex justify-between text-slate-400">
               <span>Total Trades</span>
-              <span className="font-semibold text-white font-mono-numbers">123</span>
+              <span className="font-semibold text-white font-mono-numbers">{stats.total_trades}</span>
             </div>
             <div className="flex justify-between text-slate-400">
-              <span>Profitable Trades</span>
-              <span className="font-semibold text-emerald-400 font-mono-numbers">82</span>
+              <span>Net P&L</span>
+              <span className={`font-bold font-mono-numbers ${stats.total_net_profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                {stats.total_net_profit >= 0 ? '+' : ''}{formatINR(stats.total_net_profit)}
+              </span>
             </div>
             <div className="flex justify-between text-slate-400">
-              <span>Losing Trades</span>
-              <span className="font-semibold text-rose-400 font-mono-numbers">41</span>
+              <span>Trade Win Rate</span>
+              <span className="font-bold text-emerald-400 font-mono-numbers">{stats.win_rate}%</span>
             </div>
             <div className="flex justify-between text-slate-400">
-              <span>Win Rate</span>
-              <span className="font-bold text-emerald-400 font-mono-numbers">66.7%</span>
+              <span>Current Drawdown</span>
+              <span className="font-semibold text-rose-400 font-mono-numbers">{formatINR(metrics.current_drawdown)}</span>
             </div>
             <div className="flex justify-between text-slate-400">
-              <span>Trades with &gt; 2R</span>
-              <span className="font-semibold text-white font-mono-numbers">48 (39.0%)</span>
+              <span>Daily Loss Used Today</span>
+              <span className="font-semibold text-slate-200 font-mono-numbers">{formatINR(metrics.daily_current_loss)}</span>
             </div>
             <div className="flex justify-between text-slate-400">
-              <span>High Risk Trades (&gt; ₹5K)</span>
-              <span className="font-semibold text-rose-400 font-mono-numbers">12 (9.8%)</span>
+              <span>Daily Profit Today</span>
+              <span className="font-semibold text-emerald-400 font-mono-numbers">+{formatINR(metrics.daily_current_profit)}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Row 5: Daily Risk Summary (8 cols) & Monthly Risk Overview (4 cols) */}
+      {/* Row 5: Daily Risk Summary & Monthly Risk Overview */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Daily Risk Summary */}
         <div className="lg:col-span-8 p-5 md:p-6 rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-3">
@@ -548,7 +632,7 @@ export default function RiskManagement() {
               <thead className="text-[10px] text-slate-400 uppercase font-semibold">
                 <tr>
                   <th className="py-2">Date</th>
-                  <th className="py-2 text-right">Total Trades</th>
+                  <th className="py-2 text-right">Trades</th>
                   <th className="py-2 text-right">Net P&L</th>
                   <th className="py-2 text-right">Max Loss</th>
                   <th className="py-2 text-right">Max Profit</th>
@@ -557,33 +641,43 @@ export default function RiskManagement() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e293b]/60 light:divide-slate-100">
-                {dailyRiskRows.map((row) => (
-                  <tr key={row.date} className="hover:bg-[#162033]/50">
-                    <td className="py-2.5 text-slate-300 light:text-slate-700">{row.date}</td>
-                    <td className="py-2.5 text-right font-mono-numbers text-slate-400">{row.trades}</td>
-                    <td
-                      className={`py-2.5 text-right font-mono-numbers font-bold ${
-                        row.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                      }`}
-                    >
-                      {row.pnl >= 0 ? '+' : ''}{formatINR(row.pnl)}
-                    </td>
-                    <td className="py-2.5 text-right font-mono-numbers text-rose-400">{formatINR(row.maxLoss)}</td>
-                    <td className="py-2.5 text-right font-mono-numbers text-emerald-400">+{formatINR(row.maxProfit)}</td>
-                    <td className="py-2.5 text-right font-mono-numbers text-slate-300">{row.riskUsed}</td>
-                    <td className="py-2.5 text-center">
-                      <span
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          row.status === 'Target Hit'
-                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
-                            : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
-                        }`}
-                      >
-                        {row.status}
-                      </span>
+                {dailyRiskRows.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-8 text-center text-slate-500">
+                      No trading days recorded yet. Add your trades to monitor daily risk.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  dailyRiskRows.map((row) => (
+                    <tr key={row.date} className="hover:bg-[#162033]/50">
+                      <td className="py-2.5 text-slate-300 light:text-slate-700">{row.date}</td>
+                      <td className="py-2.5 text-right font-mono-numbers text-slate-400">{row.trades}</td>
+                      <td
+                        className={`py-2.5 text-right font-mono-numbers font-bold ${
+                          row.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                        }`}
+                      >
+                        {row.pnl >= 0 ? '+' : ''}{formatINR(row.pnl)}
+                      </td>
+                      <td className="py-2.5 text-right font-mono-numbers text-rose-400">{formatINR(row.maxLoss)}</td>
+                      <td className="py-2.5 text-right font-mono-numbers text-emerald-400">+{formatINR(row.maxProfit)}</td>
+                      <td className="py-2.5 text-right font-mono-numbers text-slate-300">{row.riskUsed}</td>
+                      <td className="py-2.5 text-center">
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            row.status === 'Target Hit'
+                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/30'
+                              : row.status === 'Drawdown'
+                              ? 'bg-rose-500/10 text-rose-400 border border-rose-500/30'
+                              : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                          }`}
+                        >
+                          {row.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -600,10 +694,12 @@ export default function RiskManagement() {
             <div>
               <div className="flex justify-between text-slate-400 mb-1">
                 <span>Monthly Loss Limit</span>
-                <span className="font-mono-numbers text-slate-300">₹42,380 / ₹1,00,000 (42.4%)</span>
+                <span className="font-mono-numbers text-slate-300">
+                  {monthlyLossValue > 0 ? formatINR(monthlyLossValue) : '₹0'} / {formatINR(accountLimits.monthly_max_loss)} ({monthlyLossPct}%)
+                </span>
               </div>
               <div className="w-full bg-[#0e1626] h-2 rounded-full overflow-hidden">
-                <div className="bg-rose-500 h-full rounded-full" style={{ width: '42.4%' }} />
+                <div className="bg-rose-500 h-full rounded-full transition-all duration-500" style={{ width: `${monthlyLossPct}%` }} />
               </div>
             </div>
 
@@ -611,32 +707,114 @@ export default function RiskManagement() {
             <div>
               <div className="flex justify-between text-slate-400 mb-1">
                 <span>Monthly Profit Target</span>
-                <span className="font-mono-numbers text-emerald-400">₹1,28,450 / ₹1,50,000 (85.6%)</span>
+                <span className="font-mono-numbers text-emerald-400">
+                  {monthlyProfitValue > 0 ? formatINR(monthlyProfitValue) : '₹0'} / {formatINR(accountLimits.monthly_profit_target)} ({monthlyProfitPct}%)
+                </span>
               </div>
               <div className="w-full bg-[#0e1626] h-2 rounded-full overflow-hidden">
-                <div className="bg-emerald-400 h-full rounded-full" style={{ width: '85.6%' }} />
+                <div className="bg-emerald-400 h-full rounded-full transition-all duration-500" style={{ width: `${monthlyProfitPct}%` }} />
               </div>
             </div>
 
-            {/* Total Risk Used */}
-            <div>
-              <div className="flex justify-between text-slate-400 mb-1">
-                <span>Total Risk Used</span>
-                <span className="font-mono-numbers text-slate-300">₹42,380 / ₹1,00,000 (42.4%)</span>
-              </div>
-              <div className="w-full bg-[#0e1626] h-2 rounded-full overflow-hidden">
-                <div className="bg-blue-500 h-full rounded-full" style={{ width: '42.4%' }} />
-              </div>
-            </div>
-
-            {/* Bottom Large Total */}
+            {/* Bottom Current Capital */}
             <div className="pt-2 border-t border-[#1e293b] flex items-center justify-between">
-              <span className="text-slate-400 text-xs">Total Capital Protected</span>
-              <span className="text-lg font-bold text-white font-mono-numbers">₹1,70,830</span>
+              <span className="text-slate-400 text-xs">Total Capital</span>
+              <span className="text-lg font-bold text-white font-mono-numbers">{formatINR(stats.current_capital)}</span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Configure Limits Modal */}
+      {showConfigModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="w-full max-w-md rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-2xl p-6">
+            <div className="flex items-center justify-between pb-3 border-b border-[#1e293b] light:border-slate-200 mb-4">
+              <h3 className="text-base font-bold text-white light:text-slate-900">
+                Configure Account Risk Limits
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowConfigModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveLimits} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-400 mb-1 font-medium">Daily Max Loss (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  required
+                  value={limitsForm.daily_max_loss}
+                  onChange={(e) => setLimitsForm({ ...limitsForm, daily_max_loss: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-white light:text-slate-900 focus:outline-none focus:border-blue-500 font-mono-numbers"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1 font-medium">Daily Profit Target (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1000"
+                  required
+                  value={limitsForm.daily_profit_target}
+                  onChange={(e) => setLimitsForm({ ...limitsForm, daily_profit_target: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-white light:text-slate-900 focus:outline-none focus:border-blue-500 font-mono-numbers"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1 font-medium">Monthly Max Loss (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="5000"
+                  required
+                  value={limitsForm.monthly_max_loss}
+                  onChange={(e) => setLimitsForm({ ...limitsForm, monthly_max_loss: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-white light:text-slate-900 focus:outline-none focus:border-blue-500 font-mono-numbers"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-400 mb-1 font-medium">Monthly Profit Target (₹)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="5000"
+                  required
+                  value={limitsForm.monthly_profit_target}
+                  onChange={(e) => setLimitsForm({ ...limitsForm, monthly_profit_target: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-white light:text-slate-900 focus:outline-none focus:border-blue-500 font-mono-numbers"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowConfigModal(false)}
+                  className="px-4 py-2 rounded-xl bg-[#1e293b] hover:bg-[#283850] text-slate-300 font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingLimits}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-lg shadow-blue-600/30"
+                >
+                  {savingLimits ? 'Saving...' : 'Save Limits'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -222,6 +222,10 @@ class TradingAnalyticsService
         $investedCapital = (float) $account->initial_capital + max(0, $netCapitalInflow);
         $overallRoi = $investedCapital > 0 ? round(($allLifetimeNetPnl / $investedCapital) * 100, 2) : 0.0;
         $periodRoi = $investedCapital > 0 ? round(($totalNetProfit / $investedCapital) * 100, 2) : 0.0;
+        $grossProfitPct = $investedCapital > 0 ? round(($totalGrossProfit / $investedCapital) * 100, 2) : 0.0;
+        $grossLossPct = $investedCapital > 0 ? round(($totalGrossLoss / $investedCapital) * 100, 2) : 0.0;
+        $todayPnlPct = $investedCapital > 0 ? round(($todayPnl / $investedCapital) * 100, 2) : 0.0;
+        $thisMonthPnlPct = $investedCapital > 0 ? round(($thisMonthPnl / $investedCapital) * 100, 2) : 0.0;
 
         return [
             'account' => [
@@ -266,6 +270,12 @@ class TradingAnalyticsService
                 'profit_factor' => $profitFactor,
                 'overall_roi' => $overallRoi,
                 'period_roi' => $periodRoi,
+                'gross_profit_pct' => $grossProfitPct,
+                'gross_loss_pct' => $grossLossPct,
+                'today_pnl_pct' => $todayPnlPct,
+                'this_month_pnl_pct' => $thisMonthPnlPct,
+                'invested_capital' => round($investedCapital, 2),
+                'initial_capital' => round((float) $account->initial_capital, 2),
                 'highest_capital' => round($drawdownStats['highest_capital'], 2),
             ],
             'charts' => [

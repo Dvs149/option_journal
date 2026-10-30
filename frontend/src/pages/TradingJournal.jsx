@@ -35,205 +35,152 @@ import {
 } from 'recharts';
 import api from '../api/client';
 import { formatINR, formatDate } from '../utils/formatters';
-
-// Sample curated journal entries matching the exact design
-const SAMPLE_JOURNAL_ENTRIES = [
-  {
-    id: 1,
-    date: '31 Aug 2025',
-    index_name: 'NIFTY',
-    option_type: 'CE',
-    strategy: 'Long Straddle',
-    net_pnl: 6335,
-    mood: 'happy',
-    rating: 4,
-    tags: ['Breakout', 'Good Entry'],
-    notes: 'Good trade. Entered after breakout above resistance. Market showing strong momentum with volume. Held for target and exited as planned. This confirms my strategy is working in trending market.',
-    what_went_right: ['Good entry timing', 'Followed plan', 'Held for target', 'Managed risk properly'],
-    what_went_wrong: ['Could have booked partial profit', 'Got bit greedy at the end'],
-  },
-  {
-    id: 2,
-    date: '31 Aug 2025',
-    index_name: 'BANKNIFTY',
-    option_type: 'PE',
-    strategy: 'Directional',
-    net_pnl: -8010,
-    mood: 'sad',
-    rating: 2,
-    tags: ['Overtrading', 'Wrong Timing'],
-    notes: 'Entered too early. No clear setup was formed. Market reversed immediately and stopped out.',
-    what_went_right: ['Maintained stop loss discipline'],
-    what_went_wrong: ['FOMO entry', 'Traded against higher timeframe trend'],
-  },
-  {
-    id: 3,
-    date: '30 Aug 2025',
-    index_name: 'NIFTY',
-    option_type: 'CE',
-    strategy: 'BTST',
-    net_pnl: 8145,
-    mood: 'happy',
-    rating: 5,
-    tags: ['Good Entry', 'Held for Target'],
-    notes: 'Strong momentum. Clean trade setup before weekend expiry. Gap up open captured perfectly.',
-    what_went_right: ['Gap up captured', 'Patient exit at target'],
-    what_went_wrong: [],
-  },
-  {
-    id: 4,
-    date: '30 Aug 2025',
-    index_name: 'SENSEX',
-    option_type: 'PE',
-    strategy: 'Rangebound',
-    net_pnl: -4990,
-    mood: 'neutral',
-    rating: 2,
-    tags: ['Wrong Timing', 'Chop Market'],
-    notes: 'Market was sideways in a tight range. Theta decay ate premiums rapidly.',
-    what_went_right: ['Controlled position sizing'],
-    what_went_wrong: ['Should have avoided trading in chop'],
-  },
-  {
-    id: 5,
-    date: '29 Aug 2025',
-    index_name: 'NIFTY',
-    option_type: 'CE',
-    strategy: 'Long Straddle',
-    net_pnl: 9020,
-    mood: 'happy',
-    rating: 4,
-    tags: ['News Based', 'Good Trade'],
-    notes: 'News event worked well. High volatility expansion gave quick target achievement.',
-    what_went_right: ['Executed on event volatility', 'Quick profit taking'],
-    what_went_wrong: [],
-  },
-  {
-    id: 6,
-    date: '29 Aug 2025',
-    index_name: 'BANKNIFTY',
-    option_type: 'PE',
-    strategy: 'Directional',
-    net_pnl: -1495,
-    mood: 'neutral',
-    rating: 3,
-    tags: ['Patience Issue'],
-    notes: 'Exited too early on small noise before market resumed in original direction.',
-    what_went_right: ['Small controlled loss'],
-    what_went_wrong: ['Panicked on pullback'],
-  },
-  {
-    id: 7,
-    date: '28 Aug 2025',
-    index_name: 'SENSEX',
-    option_type: 'CE',
-    strategy: 'Event Based',
-    net_pnl: 2515,
-    mood: 'happy',
-    rating: 4,
-    tags: ['Fed News'],
-    notes: 'Traded Fed policy outcome. Directional momentum came after initial reaction.',
-    what_went_right: ['Waited for post-announcement reaction'],
-    what_went_wrong: [],
-  },
-  {
-    id: 8,
-    date: '28 Aug 2025',
-    index_name: 'BANKNIFTY',
-    option_type: 'PE',
-    strategy: 'Scalping',
-    net_pnl: -920,
-    mood: 'neutral',
-    rating: 2,
-    tags: ['Chop Market'],
-    notes: 'Quick scalping trade cut short due to low volume.',
-    what_went_right: ['Quick cut'],
-    what_went_wrong: ['Overtraded'],
-  },
-  {
-    id: 9,
-    date: '27 Aug 2025',
-    index_name: 'NIFTY',
-    option_type: 'CE',
-    strategy: 'Morning Breakout',
-    net_pnl: 5050,
-    mood: 'happy',
-    rating: 5,
-    tags: ['Clean Trade'],
-    notes: '15-minute opening range breakout trade executed with textbook accuracy.',
-    what_went_right: ['Textbook ORB breakout', 'High volume confirmation'],
-    what_went_wrong: [],
-  },
-  {
-    id: 10,
-    date: '27 Aug 2025',
-    index_name: 'SENSEX',
-    option_type: 'PE',
-    strategy: 'Rangebound',
-    net_pnl: -2710,
-    mood: 'neutral',
-    rating: 3,
-    tags: ['Exit Late'],
-    notes: 'Was in profit of 2,000 but waited too long and turned into loss.',
-    what_went_right: ['Initial entry was good'],
-    what_went_wrong: ['Greed prevented trailing stop execution'],
-  },
-];
+import { useFilter } from '../context/FilterContext';
 
 export default function TradingJournal() {
   const navigate = useNavigate();
+  const { dateRangeDisplay } = useFilter();
 
   // Search & Filters
   const [search, setSearch] = useState('');
   const [selectedType, setSelectedType] = useState('ALL');
   const [selectedStrategy, setSelectedStrategy] = useState('ALL');
-  const [selectedEntry, setSelectedEntry] = useState(SAMPLE_JOURNAL_ENTRIES[0]);
-  const [drawerTab, setDrawerTab] = useState('journal_notes'); // 'trade_details' | 'journal_notes' | 'screenshots' | 'lessons'
+  const [journalEntries, setJournalEntries] = useState([]);
+  const [selectedEntry, setSelectedEntry] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [drawerTab, setDrawerTab] = useState('journal_notes');
   const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0 });
 
-  // Top Metrics
-  const stats = {
-    total_entries: 123,
-    total_entries_pct: '+12.8%',
-    successful_trades: 82,
-    win_rate: '66.7%',
-    failed_trades: 41,
-    failed_pct: '33.3%',
-    best_trade_pnl: 18650,
-    best_trade_date: '12 Aug 2025',
-    worst_trade_pnl: -14800,
-    worst_trade_date: '18 Aug 2025',
+  useEffect(() => {
+    fetchJournal();
+  }, [selectedType, selectedStrategy, page]);
+
+  const fetchJournal = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/journal', {
+        params: {
+          strategy_name: selectedStrategy === 'ALL' ? undefined : selectedStrategy,
+          outcome: selectedType === 'ALL' ? undefined : (selectedType === 'WIN' ? 'win' : 'loss'),
+          page,
+        },
+      });
+      const data = res.data?.data || [];
+      const formatted = data.map((t) => {
+        const net = parseFloat(t.net_pnl) || 0;
+        const j = t.journal || {};
+        return {
+          id: t.id,
+          trade_id: t.id,
+          date: formatDate(t.trade_date),
+          index_name: t.index_name,
+          option_type: t.option_type,
+          strategy: t.strategy_name,
+          net_pnl: net,
+          mood: net > 0 ? 'happy' : (net < 0 ? 'sad' : 'neutral'),
+          rating: net > 0 ? 4 : 2,
+          tags: [t.index_name, t.strategy_name].filter(Boolean),
+          notes: j.personal_notes || j.trade_setup || t.notes || 'No journal notes logged.',
+          what_went_right: j.what_went_right ? [j.what_went_right] : [],
+          what_went_wrong: j.what_went_wrong ? [j.what_went_wrong] : [],
+          lessons_learned: j.lessons_learned,
+          market_conditions: j.market_conditions,
+          raw: t,
+        };
+      });
+      setJournalEntries(formatted);
+      setPagination({
+        current_page: res.data?.current_page || 1,
+        last_page: res.data?.last_page || 1,
+        total: res.data?.total || formatted.length,
+      });
+      if (formatted.length > 0) {
+        setSelectedEntry(formatted[0]);
+      } else {
+        setSelectedEntry(null);
+      }
+    } catch (e) {
+      console.warn('Failed to load journal entries', e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Sentiment Donut Data
-  const sentimentPieData = [
-    { name: 'Positive', value: 48, pct: '39.0%', color: '#10b981' },
-    { name: 'Neutral', value: 52, pct: '42.3%', color: '#3b82f6' },
-    { name: 'Negative', value: 23, pct: '18.7%', color: '#f43f5e' },
-  ];
+  // Top Metrics derived from real data
+  const stats = useMemo(() => {
+    const total = pagination.total || journalEntries.length;
+    const wins = journalEntries.filter((e) => e.net_pnl > 0).length;
+    const losses = journalEntries.filter((e) => e.net_pnl < 0).length;
+    const winRate = total > 0 ? ((wins / total) * 100).toFixed(1) : '0.0';
+    const lossRate = total > 0 ? ((losses / total) * 100).toFixed(1) : '0.0';
+
+    let best = null;
+    let worst = null;
+    journalEntries.forEach((e) => {
+      if (best === null || e.net_pnl > best.net_pnl) best = e;
+      if (worst === null || e.net_pnl < worst.net_pnl) worst = e;
+    });
+
+    return {
+      total_entries: total,
+      total_entries_pct: '0.0%',
+      successful_trades: wins,
+      win_rate: `${winRate}%`,
+      failed_trades: losses,
+      failed_pct: `${lossRate}%`,
+      best_trade_pnl: best && best.net_pnl > 0 ? best.net_pnl : 0,
+      best_trade_date: best && best.net_pnl > 0 ? best.date : '-',
+      worst_trade_pnl: worst && worst.net_pnl < 0 ? worst.net_pnl : 0,
+      worst_trade_date: worst && worst.net_pnl < 0 ? worst.date : '-',
+    };
+  }, [journalEntries, pagination.total]);
+
+  // Sentiment Donut Data derived from real entries
+  const sentimentPieData = useMemo(() => {
+    const happy = journalEntries.filter((e) => e.mood === 'happy').length;
+    const neutral = journalEntries.filter((e) => e.mood === 'neutral').length;
+    const sad = journalEntries.filter((e) => e.mood === 'sad').length;
+    const tot = happy + neutral + sad || 1;
+    return [
+      { name: 'Positive', value: happy, pct: `${((happy / tot) * 100).toFixed(1)}%`, color: '#10b981' },
+      { name: 'Neutral', value: neutral, pct: `${((neutral / tot) * 100).toFixed(1)}%`, color: '#3b82f6' },
+      { name: 'Negative', value: sad, pct: `${((sad / tot) * 100).toFixed(1)}%`, color: '#f43f5e' },
+    ];
+  }, [journalEntries]);
 
   // Strategy Performance List (From Journal)
-  const strategyPerfList = [
-    { name: 'Long Straddle', count: 18, winRate: 72.2, color: '#06b6d4' },
-    { name: 'Directional', count: 25, winRate: 56.0, color: '#3b82f6' },
-    { name: 'Rangebound', count: 15, winRate: 46.7, color: '#f43f5e' },
-    { name: 'Scalping', count: 12, winRate: 75.0, color: '#06b6d4' },
-    { name: 'Event Based', count: 10, winRate: 70.0, color: '#3b82f6' },
-    { name: 'BTST', count: 8, winRate: 62.5, color: '#3b82f6' },
-    { name: 'Morning Breakout', count: 10, winRate: 80.0, color: '#10b981' },
-  ];
+  const strategyPerfList = useMemo(() => {
+    const map = {};
+    journalEntries.forEach((e) => {
+      const s = e.strategy || 'Other';
+      if (!map[s]) map[s] = { count: 0, wins: 0 };
+      map[s].count++;
+      if (e.net_pnl > 0) map[s].wins++;
+    });
+    return Object.entries(map).map(([name, data]) => ({
+      name,
+      count: data.count,
+      winRate: parseFloat(((data.wins / data.count) * 100).toFixed(1)),
+      color: '#06b6d4',
+    }));
+  }, [journalEntries]);
 
   // Common Tags List
-  const commonTagsList = [
-    { tag: 'Good Entry', count: 45, max: 45 },
-    { tag: 'Breakout', count: 38, max: 45 },
-    { tag: 'Wrong Timing', count: 32, max: 45 },
-    { tag: 'Overtrading', count: 28, max: 45 },
-    { tag: 'Patience Issue', count: 25, max: 45 },
-    { tag: 'News Based', count: 22, max: 45 },
-    { tag: 'Exit Late', count: 20, max: 45 },
-    { tag: 'Chop Market', count: 18, max: 45 },
-  ];
+  const commonTagsList = useMemo(() => {
+    const map = {};
+    journalEntries.forEach((e) => {
+      (e.tags || []).forEach((tag) => {
+        map[tag] = (map[tag] || 0) + 1;
+      });
+    });
+    const maxVal = Math.max(1, ...Object.values(map));
+    return Object.entries(map).map(([tag, count]) => ({
+      tag,
+      count,
+      max: maxVal,
+    }));
+  }, [journalEntries]);
 
   return (
     <div className="space-y-6 pb-24 md:pb-12 text-slate-100 light:text-slate-800">
@@ -251,8 +198,7 @@ export default function TradingJournal() {
         {/* Date Range Selector */}
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900">
           <Calendar className="w-3.5 h-3.5 text-blue-400" />
-          <span>01 Aug 2025 - 31 Aug 2025</span>
-          <ChevronDown className="w-3 h-3 text-slate-400 ml-1" />
+          <span>{dateRangeDisplay || 'All Time'}</span>
         </div>
       </div>
 
@@ -408,7 +354,20 @@ export default function TradingJournal() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e293b]/60 light:divide-slate-100">
-                {SAMPLE_JOURNAL_ENTRIES.map((entry) => {
+                {loading ? (
+                  <tr>
+                    <td colSpan="8" className="py-12 text-center text-slate-500 text-xs">
+                      Loading journal reflections...
+                    </td>
+                  </tr>
+                ) : journalEntries.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" className="py-12 text-center text-slate-500 text-xs">
+                      No journal entries recorded yet. Add your trades to document reflections here.
+                    </td>
+                  </tr>
+                ) : (
+                  journalEntries.map((entry) => {
                   const isSelected = selectedEntry?.id === entry.id;
                   return (
                     <tr
@@ -478,8 +437,9 @@ export default function TradingJournal() {
                       </td>
                     </tr>
                   );
-                })}
-              </tbody>
+                })
+              )}
+            </tbody>
             </table>
           </div>
 

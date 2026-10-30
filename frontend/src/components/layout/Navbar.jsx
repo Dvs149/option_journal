@@ -96,7 +96,7 @@ export default function Navbar({
         {/* Date Range Display Pill */}
         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#131c2e] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs font-mono-numbers text-slate-300 light:text-slate-600">
           <Calendar className="w-3.5 h-3.5 text-slate-400" />
-          <span>{dateRangeDisplay || '01 Aug 2025 - 31 Aug 2025'}</span>
+          <span>{dateRangeDisplay || 'All Time'}</span>
         </div>
       </div>
 
@@ -136,9 +136,9 @@ export default function Navbar({
                 <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-start gap-2">
                   <TrendingUp className="w-4 h-4 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold">Monthly Target In Reach</p>
+                    <p className="font-semibold">Trading Activity</p>
                     <p className="text-[11px] text-blue-300/80">
-                      ₹1,28,450 Net Profit recorded this month.
+                      System synchronized and journal ready.
                     </p>
                   </div>
                 </div>
@@ -165,7 +165,7 @@ export default function Navbar({
                 <label className="block text-xs text-slate-400 mb-1">From Date</label>
                 <input
                   type="date"
-                  defaultValue={customFrom || '2025-08-01'}
+                  defaultValue={customFrom}
                   id="custom_from_input"
                   className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500"
                 />
@@ -174,7 +174,7 @@ export default function Navbar({
                 <label className="block text-xs text-slate-400 mb-1">To Date</label>
                 <input
                   type="date"
-                  defaultValue={customTo || '2025-08-31'}
+                  defaultValue={customTo}
                   id="custom_to_input"
                   className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500"
                 />

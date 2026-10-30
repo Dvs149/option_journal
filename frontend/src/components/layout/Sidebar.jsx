@@ -22,10 +22,12 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useModules } from '../../context/ModuleContext';
 
 export default function Sidebar({ onCloseMobile }) {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { isModuleVisible } = useModules();
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
@@ -42,6 +44,8 @@ export default function Sidebar({ onCloseMobile }) {
     { name: 'Capital Management', path: '/capital-management', icon: Wallet },
     { name: 'Settings', path: '/settings', icon: Settings },
   ];
+
+  const visibleNavItems = navItems.filter((item) => isModuleVisible(item.path));
 
   const handleLogout = async () => {
     await logout();
@@ -67,7 +71,7 @@ export default function Sidebar({ onCloseMobile }) {
 
       {/* Nav Menu */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const Icon = item.icon;
           return (
             <NavLink

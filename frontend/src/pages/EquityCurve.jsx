@@ -37,9 +37,11 @@ import {
 } from 'recharts';
 import api from '../api/client';
 import { formatINR, formatCompactINR } from '../utils/formatters';
+import { useFilter } from '../context/FilterContext';
 
 export default function EquityCurve() {
   const navigate = useNavigate();
+  const { dateRangeDisplay } = useFilter();
 
   // Range button: '1M' | '3M' | '6M' | 'YTD' | '1Y' | 'All'
   const [selectedRange, setSelectedRange] = useState('1Y');
@@ -47,98 +49,142 @@ export default function EquityCurve() {
   const [txTab, setTxTab] = useState('all'); // 'all' | 'deposits' | 'withdrawals'
   const [showAddTxModal, setShowAddTxModal] = useState(false);
 
-  // Top Metrics (Matches mockup exactly)
-  const stats = {
-    initial_capital: 500000,
-    current_capital: 628450,
-    current_capital_pct: '+25.7%',
-    total_net_profit: 128450,
-    total_net_profit_pct: '+25.7%',
-    total_deposits: 0,
-    total_withdrawals: 0,
-    highest_capital: 645200,
-    highest_capital_date: '12 Aug 2025',
-    max_drawdown: 42380,
-    max_drawdown_pct: '6.8%',
-    roi: '25.7%',
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchEquityData();
+  }, [selectedRange]);
+
+  const fetchEquityData = async () => {
+    try {
+      setLoading(true);
+      const [capRes, dashRes] = await Promise.all([
+        api.get('/capital'),
+        api.get('/dashboard', { params: { filter: selectedRange.toLowerCase() } }),
+      ]);
+      setData({ capital: capRes.data, dashboard: dashRes.data });
+    } catch (e) {
+      console.warn('Failed to fetch equity data', e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // 1. Equity Curve Data (Jan to Aug 2025)
-  const equityCurveData = [
-    { date: 'Jan 2025', capital: 500000, deposit: null, withdrawal: null },
-    { date: 'Feb 2025', capital: 524300, deposit: null, withdrawal: null },
-    { date: 'Mar 2025', capital: 511700, deposit: 511700, withdrawal: null },
-    { date: 'Apr 2025', capital: 530300, deposit: null, withdrawal: null },
-    { date: 'May 2025', capital: 562700, deposit: null, withdrawal: null },
-    { date: 'Jun 2025', capital: 554600, deposit: null, withdrawal: null },
-    { date: 'Jul 2025', capital: 581300, deposit: 581300, withdrawal: null },
-    { date: 'Aug 2025', capital: 628450, deposit: null, withdrawal: null },
-  ];
+  // Top Metrics derived from live database
+  const stats = useMemo(() => {
+    const cap = data?.capital;
+    const dash = data?.dashboard;
+    const init = cap?.initial_capital || 500000;
+    const curr = cap?.current_capital || init;
+    const profit = cap?.total_profit ?? (dash?.stats?.total_net_profit ?? 0);
+    const roi = cap?.overall_roi || 0;
+    const maxDd = dash?.stats?.max_drawdown || 0;
+
+    return {
+      initial_capital: init,
+      current_capital: curr,
+      current_capital_pct: roi >= 0 ? `+${roi}%` : `${roi}%`,
+      total_net_profit: profit,
+      total_net_profit_pct: roi >= 0 ? `+${roi}%` : `${roi}%`,
+      total_deposits: cap?.total_deposits || 0,
+      total_withdrawals: cap?.total_withdrawals || 0,
+      highest_capital: cap?.highest_capital || init,
+      highest_capital_date: '-',
+      max_drawdown: maxDd,
+      max_drawdown_pct: '0.0%',
+      roi: `${roi}%`,
+    };
+  }, [data]);
+
+  // 1. Equity Curve Data
+  const equityCurveData = useMemo(() => {
+    const list = data?.dashboard?.charts?.equity_curve;
+    if (list && list.length > 0) {
+      return list.map((item) => ({
+        date: item.date || item.display_date,
+        capital: item.balance || item.capital || 500000,
+        deposit: null,
+        withdrawal: null,
+      }));
+    }
+    return [{ date: 'Today', capital: data?.capital?.current_capital || 500000, deposit: null, withdrawal: null }];
+  }, [data]);
 
   // 2. Capital Breakdown Donut Data
-  const breakdownPieData = [
-    { name: 'Initial Capital', value: 500000, color: '#06b6d4', pct: '79.6%' },
-    { name: 'Net Profit', value: 128450, color: '#10b981', pct: '20.4%' },
-    { name: 'Deposits', value: 0, color: '#3b82f6', pct: '0.0%' },
-    { name: 'Withdrawals', value: 0, color: '#f43f5e', pct: '0.0%' },
-  ];
+  const breakdownPieData = useMemo(() => {
+    const init = data?.capital?.initial_capital || 500000;
+    const profit = Math.max(0, data?.capital?.total_profit || 0);
+    const tot = init + profit || 1;
+    return [
+      { name: 'Initial Capital', value: init, color: '#06b6d4', pct: `${((init / tot) * 100).toFixed(1)}%` },
+      { name: 'Net Profit', value: profit, color: '#10b981', pct: `${((profit / tot) * 100).toFixed(1)}%` },
+      { name: 'Deposits', value: 0, color: '#3b82f6', pct: '0.0%' },
+      { name: 'Withdrawals', value: 0, color: '#f43f5e', pct: '0.0%' },
+    ];
+  }, [data]);
 
   // 3. Drawdown Underwater Data
-  const drawdownData = [
-    { date: 'Jan 2025', dd: 0 },
-    { date: 'Feb 2025', dd: -12600 },
-    { date: 'Mar 2025', dd: -5000 },
-    { date: 'Apr 2025', dd: -8100 },
-    { date: 'May 2025', dd: -3000 },
-    { date: 'Jun 2025', dd: -14800 },
-    { date: 'Jul 2025', dd: -42380 },
-    { date: 'Aug 2025', dd: 0 },
-  ];
+  const drawdownData = useMemo(() => {
+    return [];
+  }, []);
 
   // 4. Monthly Returns Bar Data
-  const monthlyReturns = [
-    { month: 'Jan', val: 24.3, pos: true },
-    { month: 'Feb', val: -12.6, pos: false },
-    { month: 'Mar', val: 18.6, pos: true },
-    { month: 'Apr', val: 32.4, pos: true },
-    { month: 'May', val: -8.1, pos: false },
-    { month: 'Jun', val: 26.7, pos: true },
-    { month: 'Jul', val: -14.8, pos: false },
-    { month: 'Aug', val: 62.1, pos: true },
-  ];
+  const monthlyReturns = useMemo(() => {
+    const list = data?.dashboard?.charts?.monthly_pnl;
+    if (list && list.length > 0) {
+      return list.map((m) => ({
+        month: m.month,
+        val: m.net_pnl,
+        pos: m.net_pnl >= 0,
+      }));
+    }
+    return [];
+  }, [data]);
 
   // 5. Yearly Performance
-  const yearlyData = [
-    { year: 2025, pnl: '₹1,28,450', roi: '25.7%', dd: '6.8%' },
-    { year: 2024, pnl: '₹2,45,300', roi: '96.2%', dd: '12.4%' },
-    { year: 2023, pnl: '₹1,12,600', roi: '80.4%', dd: '15.6%' },
-  ];
+  const yearlyData = useMemo(() => [], []);
 
   // 6. Capital Transactions
-  const [transactions, setTransactions] = useState([
-    { id: 1, date: '15 Aug 2025', type: 'Deposit', amount: 100000, balance: 628450, notes: 'Additional capital' },
-    { id: 2, date: '10 Apr 2025', type: 'Withdrawal', amount: -50000, balance: 528450, notes: 'Personal expense' },
-    { id: 3, date: '01 Jan 2025', type: 'Initial Capital', amount: 500000, balance: 500000, notes: 'Starting capital' },
-  ]);
+  const transactions = useMemo(() => {
+    return data?.capital?.transactions || [];
+  }, [data]);
 
   // 7. Capital Growth Monthly Bars
-  const capitalGrowthData = [
-    { month: 'Jan', val: 5.24 },
-    { month: 'Feb', val: 5.12 },
-    { month: 'Mar', val: 5.30 },
-    { month: 'Apr', val: 5.63 },
-    { month: 'May', val: 5.55 },
-    { month: 'Jun', val: 5.81 },
-    { month: 'Jul', val: 5.66 },
-    { month: 'Aug', val: 6.28 },
-  ];
+  const capitalGrowthData = useMemo(() => {
+    const list = data?.dashboard?.charts?.monthly_pnl || [];
+    return list.map((m) => ({
+      month: m.month,
+      val: +(m.net_pnl / 100000).toFixed(2),
+    }));
+  }, [data]);
 
   // 8. Daily Equity Progress
-  const dailyEquityRows = [
-    { date: '12 Aug 2025', opening: 608450, pnl: 18650, closing: 627100, dd: 0, notes: 'Strong expiry move' },
-    { date: '11 Aug 2025', opening: 589800, pnl: 12300, closing: 602100, dd: 12600, notes: 'Good trade execution' },
-    { date: '08 Aug 2025', opening: 577500, pnl: -4820, closing: 589800, dd: 25500, notes: 'Small loss' },
-  ];
+  const dailyEquityRows = useMemo(() => {
+    const curve = data?.dashboard?.charts?.equity_curve || [];
+    return curve.map((c) => ({
+      date: c.date,
+      opening: c.opening || c.capital,
+      pnl: c.net_pnl || 0,
+      closing: c.capital,
+      dd: c.drawdown || 0,
+      notes: '-',
+    }));
+  }, [data]);
+
+  const monthlyStats = useMemo(() => {
+    const list = monthlyReturns || [];
+    const profitable = list.filter((m) => m.val > 0).length;
+    const losing = list.filter((m) => m.val < 0).length;
+    const best = [...list].sort((a, b) => b.val - a.val)[0];
+    const worst = [...list].sort((a, b) => a.val - b.val)[0];
+    return {
+      profitableCount: `${profitable} / ${list.length || 0}`,
+      losingCount: `${losing} / ${list.length || 0}`,
+      bestMonth: best && best.val > 0 ? `${best.month} (+${formatINR(best.val)})` : '-',
+      worstMonth: worst && worst.val < 0 ? `${worst.month} (${formatINR(worst.val)})` : '-',
+    };
+  }, [monthlyReturns]);
 
   return (
     <div className="space-y-6 pb-24 md:pb-12 text-slate-100 light:text-slate-800">
@@ -157,8 +203,7 @@ export default function EquityCurve() {
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900">
             <Calendar className="w-3.5 h-3.5 text-blue-400" />
-            <span>01 Jan 2025 - 31 Aug 2025</span>
-            <ChevronDown className="w-3 h-3 text-slate-400 ml-1" />
+            <span>{dateRangeDisplay || 'All Time'}</span>
           </div>
 
           <div className="flex items-center gap-1 p-1 rounded-xl bg-[#121b2d] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs">
@@ -310,8 +355,8 @@ export default function EquityCurve() {
           <div className="relative h-64 w-full">
             {/* Highlight Milestone Pill */}
             <div className="absolute right-8 top-4 z-10 p-2 rounded-xl bg-[#0e1626]/90 border border-blue-500/40 text-right shadow-lg">
-              <span className="text-[10px] text-slate-400 block">12 Aug 2025</span>
-              <span className="text-xs font-bold text-white font-mono-numbers">₹6,45,200</span>
+              <span className="text-[10px] text-slate-400 block">Peak Balance</span>
+              <span className="text-xs font-bold text-white font-mono-numbers">{formatINR(stats.highest_capital)}</span>
             </div>
 
             <ResponsiveContainer width="100%" height="100%">
@@ -370,8 +415,12 @@ export default function EquityCurve() {
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                 <span className="text-[9px] text-slate-400">Current Capital</span>
-                <span className="text-xs font-bold text-white font-mono-numbers">₹6.28L</span>
-                <span className="text-[9px] text-emerald-400 font-semibold">+25.7%</span>
+                <span className="text-xs font-bold text-white font-mono-numbers">{formatCompactINR(stats.current_capital)}</span>
+                {stats.total_net_profit !== 0 && (
+                  <span className={`text-[9px] font-semibold ${stats.total_net_profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {stats.current_capital_pct}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -427,19 +476,11 @@ export default function EquityCurve() {
           <div className="pt-2 border-t border-[#1e293b] light:border-slate-200 space-y-1.5 text-xs">
             <div className="flex justify-between">
               <span className="text-slate-400">Maximum Drawdown</span>
-              <span className="font-bold text-rose-400 font-mono-numbers">₹42,380 (6.8%)</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Drawdown Period</span>
-              <span className="text-slate-300">15 Jul - 28 Jul 2025</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-400">Recovery Period</span>
-              <span className="text-slate-300">29 Jul - 12 Aug 2025</span>
+              <span className="font-bold text-rose-400 font-mono-numbers">{formatINR(stats.max_drawdown)} ({stats.max_drawdown_pct})</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400">Current Drawdown</span>
-              <span className="font-bold text-emerald-400 font-mono-numbers">₹0 (0%)</span>
+              <span className="font-bold text-slate-300 font-mono-numbers">{formatINR(data?.dashboard?.stats?.current_drawdown || 0)}</span>
             </div>
           </div>
         </div>
@@ -450,7 +491,7 @@ export default function EquityCurve() {
             <h2 className="text-sm font-bold text-white light:text-slate-900">
               Monthly Returns
             </h2>
-            <span className="text-xs text-slate-400">2025</span>
+            <span className="text-xs text-slate-400">{new Date().getFullYear()}</span>
           </div>
 
           <div className="h-44 w-full">
@@ -615,19 +656,19 @@ export default function EquityCurve() {
             </div>
             <div className="flex justify-between text-slate-400">
               <span>Profitable Months</span>
-              <span className="font-semibold text-emerald-400 font-mono-numbers">6 / 8 (75%)</span>
+              <span className="font-semibold text-emerald-400 font-mono-numbers">{monthlyStats.profitableCount}</span>
             </div>
             <div className="flex justify-between text-slate-400">
               <span>Losing Months</span>
-              <span className="font-semibold text-rose-400 font-mono-numbers">2 / 8 (25%)</span>
+              <span className="font-semibold text-rose-400 font-mono-numbers">{monthlyStats.losingCount}</span>
             </div>
             <div className="flex justify-between text-slate-400">
               <span>Best Month</span>
-              <span className="font-semibold text-emerald-400">Aug 2025 (+62,100)</span>
+              <span className="font-semibold text-emerald-400">{monthlyStats.bestMonth}</span>
             </div>
             <div className="flex justify-between text-slate-400">
               <span>Worst Month</span>
-              <span className="font-semibold text-rose-400">Jul 2025 (-14,800)</span>
+              <span className="font-semibold text-rose-400">{monthlyStats.worstMonth}</span>
             </div>
           </div>
         </div>
@@ -697,25 +738,25 @@ export default function EquityCurve() {
             <div className="flex items-start gap-2.5">
               <TrendingUp className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
               <p className="text-slate-300 light:text-slate-700">
-                Capital grew by <strong className="text-emerald-400">25.7%</strong> this year
+                Capital grew by <strong className="text-emerald-400">{stats.roi}</strong> this year
               </p>
             </div>
             <div className="flex items-start gap-2.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
               <p className="text-slate-300 light:text-slate-700">
-                You are in profit for <strong className="text-white light:text-slate-900">6 out of 8 months (75%)</strong>
+                Current Capital: <strong className="text-white light:text-slate-900">{formatINR(stats.current_capital)}</strong> ({stats.current_capital_pct} ROI)
               </p>
             </div>
             <div className="flex items-start gap-2.5">
               <ShieldAlert className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
               <p className="text-slate-300 light:text-slate-700">
-                Maximum drawdown of <strong className="text-rose-400">6.8%</strong> is within safe configured range
+                Maximum drawdown is <strong className="text-rose-400">{formatINR(stats.max_drawdown)}</strong>
               </p>
             </div>
             <div className="flex items-start gap-2.5">
               <Award className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
               <p className="text-slate-300 light:text-slate-700">
-                Best performing month: <strong className="text-emerald-400">August 2025 (+62,100)</strong>
+                Best performing month: <strong className="text-emerald-400">{monthlyStats.bestMonth}</strong>
               </p>
             </div>
             <div className="flex items-start gap-2.5">

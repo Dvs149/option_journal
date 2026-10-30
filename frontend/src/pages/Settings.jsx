@@ -27,13 +27,15 @@ import {
   Trash2,
   Calculator,
   Layers,
-  Sparkles
+  Sparkles,
+  LayoutGrid,
 } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useLotSizes, STANDARD_INDICES } from '../context/LotSizeContext';
 import { useToast } from '../context/ToastContext';
+import { useModules } from '../context/ModuleContext';
 
 export default function Settings() {
   const { user, updateUser } = useAuth();
@@ -47,6 +49,16 @@ export default function Settings() {
     removeCustomIndex,
     resetToDefaults,
   } = useLotSizes();
+
+  const {
+    modules,
+    moduleVisibility,
+    isModuleVisible,
+    toggleModule,
+    setModuleVisible,
+    resetAllModules,
+    setAllModulesVisible,
+  } = useModules();
 
   // Active Tab
   const [activeTab, setActiveTab] = useState('General');
@@ -106,7 +118,7 @@ export default function Settings() {
   const [backupFrequency, setBackupFrequency] = useState('Daily');
   const [exportType, setExportType] = useState('All Data');
   const [selectedBackupFile, setSelectedBackupFile] = useState(null);
-  const [backupStatus, setBackupStatus] = useState('31 Aug 2025, 10:30 PM');
+  const [backupStatus, setBackupStatus] = useState('Up to date');
 
   // Account Form
   const [name, setName] = useState(user?.name || 'Divyesh Lunagariya');
@@ -209,9 +221,14 @@ export default function Settings() {
 
   const isVisible = (sectionName) => {
     if (searchQuery.trim() !== '') {
-      return sectionName.toLowerCase().includes(searchQuery.toLowerCase());
+      const q = searchQuery.toLowerCase();
+      if (sectionName.toLowerCase().includes(q)) return true;
+      if (sectionName === 'Modules') {
+        return modules.some((m) => m.name.toLowerCase().includes(q) || m.desc.toLowerCase().includes(q));
+      }
+      return false;
     }
-    if (activeTab === 'General') return true; // Show all 9 cards in default overview
+    if (activeTab === 'General') return true; // Show all cards in default overview
     return activeTab.toLowerCase().includes(sectionName.toLowerCase()) || sectionName.toLowerCase().includes(activeTab.toLowerCase());
   };
 
@@ -258,6 +275,7 @@ export default function Settings() {
       <div className="flex items-center gap-1.5 overflow-x-auto border-b border-[#1e293b] light:border-slate-200 pb-3 text-xs font-semibold whitespace-nowrap scrollbar-none">
         {[
           { id: 'General', label: 'General', icon: Sliders },
+          { id: 'Modules', label: 'Sidebar Modules', icon: LayoutGrid },
           { id: 'Trading', label: 'Trading Settings', icon: TrendingUp },
           { id: 'Lot Sizes', label: 'Index Lot Sizes', icon: Layers },
           { id: 'Risk Management', label: 'Risk Management', icon: Shield },
@@ -1256,6 +1274,145 @@ export default function Settings() {
               >
                 Reset to Default Settings
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Card 10: Sidebar Modules & Visibility */}
+        {isVisible('Modules') && (
+          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 shadow-sm space-y-4">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-600/10 text-blue-400 flex items-center justify-center shrink-0">
+                  <LayoutGrid className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-sm font-bold text-white light:text-slate-900">
+                      Sidebar Modules
+                    </h2>
+                    <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-[10px] font-bold">
+                      {modules.filter((m) => isModuleVisible(m.id)).length} / {modules.length} Visible
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-bold flex items-center gap-1">
+                      <Database className="w-2.5 h-2.5" />
+                      DB Stored
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Live dynamic module visibility persisted directly in Database
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await setAllModulesVisible(true);
+                    triggerToast('✓ All modules enabled and saved to Database!');
+                  }}
+                  className="px-2.5 py-1 rounded-xl bg-[#0e1626] hover:bg-[#162033] text-[10px] font-semibold text-slate-300 hover:text-white transition-colors"
+                  title="Make all modules visible in DB"
+                >
+                  Show All
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await resetAllModules();
+                    triggerToast('✓ Reset module visibility defaults in Database!');
+                  }}
+                  className="p-1.5 rounded-xl bg-[#0e1626] hover:bg-[#162033] text-slate-400 hover:text-white transition-colors"
+                  title="Reset to default visibility in DB"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* List of Modules */}
+            <div className="space-y-2 text-xs">
+              {modules.map((mod) => {
+                const Icon = mod.icon || Sliders;
+                const visible = isModuleVisible(mod.id);
+                return (
+                  <div
+                    key={mod.id}
+                    className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                      visible
+                        ? 'bg-[#0e1626]/70 border-[#1e293b]'
+                        : 'bg-[#0a0f1d]/50 border-[#1e293b]/50 opacity-60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                          visible
+                            ? 'bg-blue-600/10 text-blue-400'
+                            : 'bg-slate-800 text-slate-500'
+                        }`}
+                      >
+                        {Icon ? <Icon className="w-4 h-4" /> : null}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-white light:text-slate-900 truncate">
+                            {mod.name}
+                          </span>
+                          <span
+                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md ${
+                              visible
+                                ? 'bg-emerald-500/15 text-emerald-400'
+                                : 'bg-slate-800 text-slate-500'
+                            }`}
+                          >
+                            {visible ? 'Visible' : 'Hidden'}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400 truncate max-w-[200px] sm:max-w-[250px]">
+                          {mod.desc}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Toggle Switch */}
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const willBeVisible = !visible;
+                        await toggleModule(mod.id);
+                        triggerToast(
+                          willBeVisible
+                            ? `✓ Saved "${mod.name}" (Visible) to Database!`
+                            : `✓ Saved "${mod.name}" (Hidden) to Database!`
+                        );
+                      }}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        visible ? 'bg-blue-600' : 'bg-[#1e293b]'
+                      }`}
+                      title={visible ? `Click to hide ${mod.name}` : `Click to show ${mod.name}`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          visible ? 'translate-x-4' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Bottom Note */}
+            <div className="pt-2 border-t border-[#1e293b]/60 flex items-center justify-between text-[11px] text-slate-400">
+              <span>Dashboard & Settings remain always accessible</span>
+              <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                Live Sync
+              </span>
             </div>
           </div>
         )}

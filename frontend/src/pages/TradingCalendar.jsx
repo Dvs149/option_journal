@@ -33,49 +33,16 @@ import api from '../api/client';
 import { formatINR, formatCompactINR, formatDate } from '../utils/formatters';
 import { useToast } from '../context/ToastContext';
 
-// Sample curated August 2025 dataset matching the reference design exactly
-const DEFAULT_AUGUST_DAYS = {
-  1: { net_pnl: 12300, trade_count: 3, status: 'profit' },
-  4: { net_pnl: -8200, trade_count: 2, status: 'loss' },
-  5: { net_pnl: 15400, trade_count: 4, status: 'profit' },
-  6: { net_pnl: 6800, trade_count: 3, status: 'profit' },
-  7: { net_pnl: -12100, trade_count: 3, status: 'loss' },
-  8: { net_pnl: 18600, trade_count: 5, status: 'profit' },
-  11: { net_pnl: 9300, trade_count: 2, status: 'profit' },
-  12: {
-    net_pnl: 18650,
-    trade_count: 4,
-    status: 'profit',
-    trades: [
-      { id: 101, time: '09:20', index_name: 'NIFTY', trading_type: 'Intraday', option_type: 'CE', strike_price: '24950', lots: 2, entry_premium: '120.00', exit_premium: '168.00', net_pnl: 9600 },
-      { id: 102, time: '10:15', index_name: 'BANKNIFTY', trading_type: 'Intraday', option_type: 'PE', strike_price: '51200', lots: 1, entry_premium: '95.00', exit_premium: '142.00', net_pnl: 4700 },
-      { id: 103, time: '11:30', index_name: 'NIFTY', trading_type: 'Intraday', option_type: 'CE', strike_price: '25000', lots: 2, entry_premium: '110.00', exit_premium: '138.00', net_pnl: 5600 },
-      { id: 104, time: '13:45', index_name: 'SENSEX', trading_type: 'Intraday', option_type: 'PE', strike_price: '81600', lots: 1, entry_premium: '176.00', exit_premium: '198.00', net_pnl: -1250 },
-    ],
-  },
-  13: { net_pnl: -5700, trade_count: 2, status: 'loss' },
-  14: { net_pnl: 11200, trade_count: 3, status: 'profit' },
-  15: { net_pnl: 7600, trade_count: 2, status: 'profit' },
-  18: { net_pnl: -14800, trade_count: 4, status: 'loss' },
-  19: { net_pnl: 13200, trade_count: 3, status: 'profit' },
-  20: { net_pnl: 8900, trade_count: 2, status: 'profit' },
-  21: { net_pnl: -9100, trade_count: 2, status: 'loss' },
-  22: { net_pnl: 6400, trade_count: 3, status: 'profit' },
-  25: { net_pnl: 10700, trade_count: 3, status: 'profit' },
-  26: { net_pnl: -6200, trade_count: 2, status: 'loss' },
-  27: { net_pnl: 12300, trade_count: 3, status: 'profit' },
-  28: { net_pnl: 9800, trade_count: 4, status: 'profit' },
-  29: { net_pnl: -4100, trade_count: 2, status: 'loss' },
-  31: { net_pnl: 5200, trade_count: 1, status: 'profit' },
-};
-
 export default function TradingCalendar() {
   const navigate = useNavigate();
 
-  // Current viewed month: default August 2025
-  const [currentDate, setCurrentDate] = useState({ year: 2025, month: 8 });
+  const today = new Date();
+  const [currentDate, setCurrentDate] = useState({
+    year: today.getFullYear(),
+    month: today.getMonth() + 1,
+  });
   const [calendarData, setCalendarData] = useState(null);
-  const [selectedDayNumber, setSelectedDayNumber] = useState(12);
+  const [selectedDayNumber, setSelectedDayNumber] = useState(today.getDate());
   const [loading, setLoading] = useState(false);
   const [tradeToDelete, setTradeToDelete] = useState(null);
   const { showToast } = useToast();
@@ -83,22 +50,69 @@ export default function TradingCalendar() {
     if (msg) showToast(msg, type);
   };
 
-  // Top Statistics state
-  const stats = {
-    monthly_pnl: 128450,
-    monthly_pnl_pct: '+12.6%',
-    total_trades: 123,
-    total_trades_pct: '+8.1%',
-    profitable_days: 12,
-    profitable_days_pct: '60.0%',
-    losing_days: 6,
-    losing_days_pct: '30.0%',
-    no_trade_days: 13,
-    best_day_pnl: 18650,
-    best_day_date: '12 Aug 2025',
-    worst_day_pnl: -14800,
-    worst_day_date: '18 Aug 2025',
-  };
+  // Top Statistics state computed dynamically from real calendarData
+  const stats = useMemo(() => {
+    if (!calendarData || !calendarData.days) {
+      return {
+        monthly_pnl: 0,
+        monthly_pnl_pct: '0.0%',
+        total_trades: 0,
+        total_trades_pct: '0.0%',
+        profitable_days: 0,
+        profitable_days_pct: '0.0%',
+        losing_days: 0,
+        losing_days_pct: '0.0%',
+        no_trade_days: 0,
+        best_day_pnl: 0,
+        best_day_date: '-',
+        worst_day_pnl: 0,
+        worst_day_date: '-',
+        gross_profit: 0,
+        gross_loss: 0,
+        total_charges: 0,
+        avg_daily_pnl: 0,
+      };
+    }
+    const days = calendarData.days || [];
+    const monthly_pnl = calendarData.total_net_pnl || 0;
+    const total_trades = days.reduce((sum, d) => sum + (d.trade_count || 0), 0);
+    const profitable_days = calendarData.winning_days || 0;
+    const losing_days = calendarData.losing_days || 0;
+    const total_trading_days = calendarData.total_trading_days || 0;
+    const winRate = total_trading_days > 0 ? ((profitable_days / total_trading_days) * 100).toFixed(1) : '0.0';
+    const lossRate = total_trading_days > 0 ? ((losing_days / total_trading_days) * 100).toFixed(1) : '0.0';
+    const gross_profit = days.reduce((sum, d) => sum + (d.gross_profit || 0), 0);
+    const gross_loss = days.reduce((sum, d) => sum + (d.gross_loss || 0), 0);
+    const total_charges = days.reduce((sum, d) => sum + (d.total_charges || 0), 0);
+    const avg_daily_pnl = total_trading_days > 0 ? (monthly_pnl / total_trading_days) : 0;
+
+    let bestDay = null;
+    let worstDay = null;
+    days.forEach((d) => {
+      if (bestDay === null || d.net_pnl > bestDay.net_pnl) bestDay = d;
+      if (worstDay === null || d.net_pnl < worstDay.net_pnl) worstDay = d;
+    });
+
+    return {
+      monthly_pnl,
+      monthly_pnl_pct: monthly_pnl >= 0 ? '+0.0%' : '-0.0%',
+      total_trades,
+      total_trades_pct: '0.0%',
+      profitable_days,
+      profitable_days_pct: `${winRate}%`,
+      losing_days,
+      losing_days_pct: `${lossRate}%`,
+      no_trade_days: Math.max(0, 30 - total_trading_days),
+      best_day_pnl: bestDay && bestDay.net_pnl > 0 ? bestDay.net_pnl : 0,
+      best_day_date: bestDay && bestDay.net_pnl > 0 ? formatDate(bestDay.date) : '-',
+      worst_day_pnl: worstDay && worstDay.net_pnl < 0 ? worstDay.net_pnl : 0,
+      worst_day_date: worstDay && worstDay.net_pnl < 0 ? formatDate(worstDay.date) : '-',
+      gross_profit,
+      gross_loss,
+      total_charges,
+      avg_daily_pnl,
+    };
+  }, [calendarData]);
 
   useEffect(() => {
     fetchCalendar(currentDate.year, currentDate.month);
@@ -144,27 +158,16 @@ export default function TradingCalendar() {
   // Calendar Day Map
   const dayMap = useMemo(() => {
     const map = {};
-    // Seed default august days
-    if (currentDate.year === 2025 && currentDate.month === 8) {
-      Object.entries(DEFAULT_AUGUST_DAYS).forEach(([d, val]) => {
-        map[Number(d)] = {
-          day: Number(d),
-          ...val,
-        };
-      });
-    }
-
-    // Merge backend real days if any exist
     if (calendarData?.days) {
       calendarData.days.forEach((d) => {
         map[d.day] = {
           ...d,
-          trades: d.trades || map[d.day]?.trades || [],
+          trades: d.trades || [],
         };
       });
     }
     return map;
-  }, [calendarData, currentDate]);
+  }, [calendarData]);
 
   // Selected Day Data
   const selectedDayData = useMemo(() => {
@@ -284,7 +287,11 @@ export default function TradingCalendar() {
           </div>
 
           <button
-            onClick={() => setCurrentDate({ year: 2025, month: 8 })}
+            onClick={() => {
+              const now = new Date();
+              setCurrentDate({ year: now.getFullYear(), month: now.getMonth() + 1 });
+              setSelectedDayNumber(now.getDate());
+            }}
             className="px-3.5 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 text-xs font-medium text-slate-300 light:text-slate-700 hover:text-white"
           >
             Today
@@ -405,10 +412,16 @@ export default function TradingCalendar() {
                   }}
                   className="px-2.5 py-1 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-xs text-white light:text-slate-900 focus:outline-none"
                 >
-                  <option value="2025-8">August 2025</option>
-                  <option value="2025-7">July 2025</option>
-                  <option value="2025-6">June 2025</option>
-                  <option value="2026-10">October 2026</option>
+                  {Array.from({ length: 24 }).map((_, i) => {
+                    const d = new Date(today.getFullYear(), today.getMonth() - 12 + i, 1);
+                    const y = d.getFullYear();
+                    const m = d.getMonth() + 1;
+                    return (
+                      <option key={`${y}-${m}`} value={`${y}-${m}`}>
+                        {d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                      </option>
+                    );
+                  })}
                 </select>
 
                 <div className="hidden sm:block px-2.5 py-1 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-xs text-slate-300 light:text-slate-700">
@@ -782,31 +795,31 @@ export default function TradingCalendar() {
                 <div className="flex justify-between text-slate-400">
                   <span>Gross Profit</span>
                   <span className="font-semibold text-emerald-400 font-mono-numbers">
-                    ₹2,34,800
+                    {formatINR(stats.gross_profit)}
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>Gross Loss</span>
                   <span className="font-semibold text-rose-400 font-mono-numbers">
-                    -₹1,06,350
+                    {stats.gross_loss > 0 ? `-${formatINR(stats.gross_loss)}` : formatINR(0)}
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>Total Charges</span>
                   <span className="font-semibold text-slate-300 light:text-slate-700 font-mono-numbers">
-                    ₹16,450
+                    {formatINR(stats.total_charges)}
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>Net P&L</span>
-                  <span className="font-bold text-emerald-400 font-mono-numbers">
-                    ₹1,28,450
+                  <span className={`font-bold font-mono-numbers ${stats.monthly_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {formatINR(stats.monthly_pnl)}
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-400">
                   <span>Average Daily P&L</span>
-                  <span className="font-semibold text-emerald-400 font-mono-numbers">
-                    ₹4,143
+                  <span className={`font-semibold font-mono-numbers ${stats.avg_daily_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {formatINR(stats.avg_daily_pnl)}
                   </span>
                 </div>
               </div>

@@ -7,10 +7,12 @@ use App\Http\Requests\StoreTradeRequest;
 use App\Http\Requests\UpdateTradeRequest;
 use App\Models\Trade;
 use App\Models\TradeJournal;
+use App\Models\TradeScreenshot;
 use App\Services\TradingCalculationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class TradeController extends Controller
 {
@@ -24,7 +26,7 @@ class TradeController extends Controller
         $account = $user->defaultAccount;
 
         $query = Trade::where('user_id', $user->id)
-            ->with('journal');
+            ->with(['journal', 'screenshots']);
 
         if ($request->filled('trading_account_id')) {
             $query->where('trading_account_id', $request->trading_account_id);
@@ -89,7 +91,7 @@ class TradeController extends Controller
         }
 
         $perPage = min((int) $request->input('per_page', 15), 100);
-        $trades = $query->paginate($perPage);
+        $trades = $query->with('journal')->paginate($perPage);
 
         return response()->json($trades);
     }
@@ -119,7 +121,11 @@ class TradeController extends Controller
                 'option_type' => $data['option_type'],
                 'strike_price' => $data['strike_price'] ?? null,
                 'expiry_date' => $data['expiry_date'] ?? null,
+                'ce_entry_price' => $data['ce_entry_price'] ?? null,
+                'pe_entry_price' => $data['pe_entry_price'] ?? null,
                 'entry_premium' => $data['entry_premium'] ?? null,
+                'ce_exit_price' => $data['ce_exit_price'] ?? null,
+                'pe_exit_price' => $data['pe_exit_price'] ?? null,
                 'exit_premium' => $data['exit_premium'] ?? null,
                 'quantity' => $data['quantity'] ?? null,
                 'lots' => $data['lots'] ?? 1,
@@ -164,9 +170,44 @@ class TradeController extends Controller
             return $trade;
         });
 
+        if ($request->hasFile('screenshots')) {
+            $files = $request->file('screenshots');
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+            $captions = $request->input('captions', []);
+            foreach ($files as $idx => $file) {
+                if ($file && $file->isValid()) {
+                    $path = $file->store('screenshots', 'public');
+                    $caption = is_array($captions) && isset($captions[$idx]) ? $captions[$idx] : null;
+                    $trade->screenshots()->create([
+                        'path' => $path,
+                        'filename' => $file->getClientOriginalName(),
+                        'caption' => $caption,
+                        'sort_order' => $idx,
+                    ]);
+                    if (!$trade->screenshot_path) {
+                        $trade->screenshot_path = $path;
+                        $trade->save();
+                    }
+                }
+            }
+        } elseif ($request->hasFile('screenshot')) {
+            $file = $request->file('screenshot');
+            $path = $file->store('screenshots', 'public');
+            $trade->screenshot_path = $path;
+            $trade->save();
+            $trade->screenshots()->create([
+                'path' => $path,
+                'filename' => $file->getClientOriginalName(),
+                'caption' => $request->input('caption'),
+                'sort_order' => 0,
+            ]);
+        }
+
         return response()->json([
             'message' => 'Trade recorded successfully',
-            'trade' => $trade->load('journal'),
+            'trade' => $trade->fresh()->load(['journal', 'screenshots']),
         ], 201);
     }
 
@@ -174,7 +215,7 @@ class TradeController extends Controller
     {
         $this->authorizeTrade($request->user(), $trade);
 
-        return response()->json($trade->load('journal'));
+        return response()->json($trade->load(['journal', 'screenshots']));
     }
 
     public function update(UpdateTradeRequest $request, Trade $trade): JsonResponse
@@ -220,9 +261,179 @@ class TradeController extends Controller
             }
         });
 
+        // Handle deletion of specific screenshots
+        if ($request->has('deleted_screenshot_ids')) {
+            $ids = (array) $request->input('deleted_screenshot_ids');
+            $toDelete = $trade->screenshots()->whereIn('id', $ids)->get();
+            foreach ($toDelete as $s) {
+                if ($s->path && Storage::disk('public')->exists($s->path)) {
+                    Storage::disk('public')->delete($s->path);
+                }
+                $s->delete();
+            }
+        }
+
+        // Handle newly uploaded screenshots
+        if ($request->hasFile('screenshots')) {
+            $files = $request->file('screenshots');
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+            $captions = $request->input('captions', []);
+            $currentMaxOrder = (int) $trade->screenshots()->max('sort_order');
+            foreach ($files as $idx => $file) {
+                if ($file && $file->isValid()) {
+                    $path = $file->store('screenshots', 'public');
+                    $caption = is_array($captions) && isset($captions[$idx]) ? $captions[$idx] : null;
+                    $trade->screenshots()->create([
+                        'path' => $path,
+                        'filename' => $file->getClientOriginalName(),
+                        'caption' => $caption,
+                        'sort_order' => $currentMaxOrder + $idx + 1,
+                    ]);
+                    if (!$trade->screenshot_path) {
+                        $trade->screenshot_path = $path;
+                        $trade->save();
+                    }
+                }
+            }
+        } elseif ($request->hasFile('screenshot')) {
+            $file = $request->file('screenshot');
+            $path = $file->store('screenshots', 'public');
+            $trade->screenshot_path = $path;
+            $trade->save();
+            $trade->screenshots()->create([
+                'path' => $path,
+                'filename' => $file->getClientOriginalName(),
+                'caption' => $request->input('caption'),
+                'sort_order' => ((int) $trade->screenshots()->max('sort_order')) + 1,
+            ]);
+        } elseif ($request->boolean('remove_screenshot')) {
+            foreach ($trade->screenshots as $s) {
+                if ($s->path && Storage::disk('public')->exists($s->path)) {
+                    Storage::disk('public')->delete($s->path);
+                }
+                $s->delete();
+            }
+            $trade->screenshot_path = null;
+            $trade->save();
+        }
+
+        // Synchronize primary screenshot_path with first available screenshot
+        $first = $trade->screenshots()->first();
+        $trade->screenshot_path = $first ? $first->path : null;
+        $trade->save();
+
         return response()->json([
             'message' => 'Trade updated successfully',
-            'trade' => $trade->fresh()->load('journal'),
+            'trade' => $trade->fresh()->load(['journal', 'screenshots']),
+        ]);
+    }
+
+    public function uploadScreenshots(Request $request, Trade $trade): JsonResponse
+    {
+        $this->authorizeTrade($request->user(), $trade);
+
+        $request->validate([
+            'screenshots' => ['nullable', 'array'],
+            'screenshots.*' => ['file', 'image', 'max:10240'],
+            'screenshot' => ['nullable', 'file', 'image', 'max:10240'],
+            'captions' => ['nullable', 'array'],
+        ]);
+
+        $files = [];
+        if ($request->hasFile('screenshots')) {
+            $files = $request->file('screenshots');
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+        } elseif ($request->hasFile('screenshot')) {
+            $files = [$request->file('screenshot')];
+        }
+
+        $captions = $request->input('captions', []);
+        $currentMaxOrder = (int) $trade->screenshots()->max('sort_order');
+        $createdList = [];
+
+        foreach ($files as $idx => $file) {
+            if ($file && $file->isValid()) {
+                $path = $file->store('screenshots', 'public');
+                $caption = is_array($captions) && isset($captions[$idx]) ? $captions[$idx] : null;
+                $item = $trade->screenshots()->create([
+                    'path' => $path,
+                    'filename' => $file->getClientOriginalName(),
+                    'caption' => $caption,
+                    'sort_order' => $currentMaxOrder + $idx + 1,
+                ]);
+                $createdList[] = $item;
+
+                if (!$trade->screenshot_path) {
+                    $trade->screenshot_path = $path;
+                    $trade->save();
+                }
+            }
+        }
+
+        return response()->json([
+            'message' => count($createdList) . ' screenshot(s) uploaded successfully',
+            'trade' => $trade->fresh()->load(['journal', 'screenshots']),
+            'screenshots' => $trade->fresh()->screenshots,
+        ]);
+    }
+
+    public function uploadScreenshot(Request $request, Trade $trade): JsonResponse
+    {
+        return $this->uploadScreenshots($request, $trade);
+    }
+
+    public function deleteSingleScreenshot(Request $request, Trade $trade, TradeScreenshot $screenshot): JsonResponse
+    {
+        $this->authorizeTrade($request->user(), $trade);
+
+        if ($screenshot->trade_id !== $trade->id) {
+            return response()->json(['message' => 'Unauthorized screenshot access'], 403);
+        }
+
+        if ($screenshot->path && Storage::disk('public')->exists($screenshot->path)) {
+            Storage::disk('public')->delete($screenshot->path);
+        }
+
+        $wasMain = ($trade->screenshot_path === $screenshot->path);
+        $screenshot->delete();
+
+        if ($wasMain) {
+            $next = $trade->screenshots()->first();
+            $trade->screenshot_path = $next ? $next->path : null;
+            $trade->save();
+        }
+
+        return response()->json([
+            'message' => 'Screenshot deleted successfully',
+            'trade' => $trade->fresh()->load(['journal', 'screenshots']),
+        ]);
+    }
+
+    public function deleteScreenshot(Request $request, Trade $trade): JsonResponse
+    {
+        $this->authorizeTrade($request->user(), $trade);
+
+        foreach ($trade->screenshots as $s) {
+            if ($s->path && Storage::disk('public')->exists($s->path)) {
+                Storage::disk('public')->delete($s->path);
+            }
+            $s->delete();
+        }
+
+        if ($trade->screenshot_path && Storage::disk('public')->exists($trade->screenshot_path)) {
+            Storage::disk('public')->delete($trade->screenshot_path);
+        }
+
+        $trade->screenshot_path = null;
+        $trade->save();
+
+        return response()->json([
+            'message' => 'Screenshots removed successfully',
+            'trade' => $trade->fresh()->load(['journal', 'screenshots']),
         ]);
     }
 
@@ -230,10 +441,136 @@ class TradeController extends Controller
     {
         $this->authorizeTrade($request->user(), $trade);
 
-        $trade->delete();
+        DB::transaction(function () use ($trade) {
+            foreach ($trade->screenshots as $s) {
+                if ($s->path && Storage::disk('public')->exists($s->path)) {
+                    Storage::disk('public')->delete($s->path);
+                }
+                $s->delete();
+            }
+
+            if ($trade->screenshot_path && Storage::disk('public')->exists($trade->screenshot_path)) {
+                Storage::disk('public')->delete($trade->screenshot_path);
+            }
+
+            if ($trade->journal) {
+                $trade->journal->delete();
+            }
+
+            $trade->delete();
+        });
 
         return response()->json([
             'message' => 'Trade deleted successfully',
+        ]);
+    }
+
+    public function allIds(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $account = $user->defaultAccount;
+
+        $query = Trade::where('user_id', $user->id);
+
+        if ($request->filled('trading_account_id')) {
+            $query->where('trading_account_id', $request->trading_account_id);
+        } elseif ($account) {
+            $query->where('trading_account_id', $account->id);
+        }
+
+        if ($request->filled('index_name') && $request->index_name !== 'ALL') {
+            $query->where('index_name', $request->index_name);
+        }
+
+        if ($request->filled('strategy_name') && $request->strategy_name !== 'ALL') {
+            $query->where('strategy_name', $request->strategy_name);
+        }
+
+        if ($request->filled('option_type') && $request->option_type !== 'ALL') {
+            $query->where('option_type', $request->option_type);
+        }
+
+        if ($request->filled('trading_type') && $request->trading_type !== 'ALL') {
+            $query->where('trading_type', $request->trading_type);
+        }
+
+        if ($request->filled('from_date')) {
+            $query->where('trade_date', '>=', $request->from_date);
+        }
+
+        if ($request->filled('to_date')) {
+            $query->where('trade_date', '<=', $request->to_date);
+        }
+
+        if ($request->filled('search')) {
+            $search = '%' . $request->search . '%';
+            $query->where(function ($q) use ($search) {
+                $q->where('strategy_name', 'like', $search)
+                  ->orWhere('index_name', 'like', $search)
+                  ->orWhere('entry_reason', 'like', $search)
+                  ->orWhere('exit_reason', 'like', $search)
+                  ->orWhere('notes', 'like', $search)
+                  ->orWhere('strike_price', 'like', $search);
+            });
+        }
+
+        $ids = $query->pluck('id');
+
+        return response()->json([
+            'ids' => $ids,
+            'count' => count($ids),
+        ]);
+    }
+
+    public function bulkDestroy(Request $request): JsonResponse
+    {
+        $request->validate([
+            'trade_ids' => ['required', 'array', 'min:1'],
+            'trade_ids.*' => ['integer'],
+        ]);
+
+        $user = $request->user();
+        $tradeIds = $request->input('trade_ids');
+
+        $trades = Trade::where('user_id', $user->id)
+            ->whereIn('id', $tradeIds)
+            ->with(['screenshots', 'journal'])
+            ->get();
+
+        if ($trades->isEmpty()) {
+            return response()->json([
+                'message' => 'No matching trades found to delete',
+                'deleted_count' => 0,
+            ], 404);
+        }
+
+        $deletedCount = 0;
+
+        DB::transaction(function () use ($trades, &$deletedCount) {
+            foreach ($trades as $trade) {
+                foreach ($trade->screenshots as $s) {
+                    if ($s->path && Storage::disk('public')->exists($s->path)) {
+                        Storage::disk('public')->delete($s->path);
+                    }
+                    $s->delete();
+                }
+
+                if ($trade->screenshot_path && Storage::disk('public')->exists($trade->screenshot_path)) {
+                    Storage::disk('public')->delete($trade->screenshot_path);
+                }
+
+                if ($trade->journal) {
+                    $trade->journal->delete();
+                }
+
+                $trade->delete();
+                $deletedCount++;
+            }
+        });
+
+        return response()->json([
+            'message' => "Successfully deleted {$deletedCount} trade(s)",
+            'deleted_count' => $deletedCount,
         ]);
     }
 
@@ -275,6 +612,54 @@ class TradeController extends Controller
         $estimated = $this->calcService->estimateIndianCharges($entry, $exit, $qty);
 
         return response()->json($estimated);
+    }
+
+    public function resetAllData(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        DB::transaction(function () use ($user) {
+            // Delete user screenshots from disk
+            $trades = Trade::where('user_id', $user->id)->with('screenshots')->get();
+            foreach ($trades as $trade) {
+                foreach ($trade->screenshots as $s) {
+                    if ($s->path && Storage::disk('public')->exists($s->path)) {
+                        Storage::disk('public')->delete($s->path);
+                    }
+                }
+                if ($trade->screenshot_path && Storage::disk('public')->exists($trade->screenshot_path)) {
+                    Storage::disk('public')->delete($trade->screenshot_path);
+                }
+            }
+
+            TradeScreenshot::whereHas('trade', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })->delete();
+
+            TradeJournal::whereHas('trade', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })->delete();
+
+            Trade::where('user_id', $user->id)->delete();
+
+            \App\Models\CapitalTransaction::where('user_id', $user->id)->delete();
+
+            $account = $user->defaultAccount ?: $user->tradingAccounts()->first();
+            if ($account) {
+                \App\Models\CapitalTransaction::create([
+                    'user_id' => $user->id,
+                    'trading_account_id' => $account->id,
+                    'transaction_type' => 'deposit',
+                    'amount' => $account->initial_capital ?: 500000.00,
+                    'transaction_date' => now('Asia/Kolkata')->toDateString(),
+                    'notes' => 'Initial capital funding',
+                ]);
+            }
+        });
+
+        return response()->json([
+            'message' => 'All trade entries and dummy data deleted successfully. Ready for manual testing.',
+        ]);
     }
 
     protected function authorizeTrade($user, Trade $trade): void

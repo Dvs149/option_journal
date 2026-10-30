@@ -32,8 +32,8 @@ export default function AddTrade() {
   const { showToast } = useToast();
   const setSuccessMessage = (msg) => { if (msg) showToast(msg, 'success'); };
   const setErrorMessage = (msg) => { if (msg) showToast(msg, 'error'); };
-  const [selectedScreenshot, setSelectedScreenshot] = useState(null);
-  const [screenshotPreview, setScreenshotPreview] = useState(null);
+  const [selectedScreenshots, setSelectedScreenshots] = useState([]);
+  const [viewingLightboxUrl, setViewingLightboxUrl] = useState(null);
 
   // Form State
   const [form, setForm] = useState({
@@ -318,21 +318,46 @@ export default function AddTrade() {
       lessons_learned: '',
       personal_notes: '',
     });
-    setSelectedScreenshot(null);
-    setScreenshotPreview(null);
+    setSelectedScreenshots([]);
   };
 
-  // Handle Screenshot file
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setErrorMessage('Screenshot exceeds 5MB limit.');
-        return;
+  // Handle multiple Screenshot files
+  const handleScreenshotFilesChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+
+    const validNewItems = [];
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) {
+        setErrorMessage(`"${file.name}" exceeds the 10MB limit.`);
+        continue;
       }
-      setSelectedScreenshot(file);
-      setScreenshotPreview(URL.createObjectURL(file));
+      validNewItems.push({
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        file,
+        preview: URL.createObjectURL(file),
+        name: file.name,
+        size: (file.size / 1024).toFixed(1) + ' KB',
+      });
     }
+
+    if (validNewItems.length > 0) {
+      setSelectedScreenshots((prev) => [...prev, ...validNewItems]);
+    }
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveScreenshotItem = (idToRemove) => {
+    setSelectedScreenshots((prev) => {
+      const item = prev.find((it) => it.id === idToRemove);
+      if (item?.preview?.startsWith('blob:')) {
+        URL.revokeObjectURL(item.preview);
+      }
+      return prev.filter((it) => it.id !== idToRemove);
+    });
   };
 
   // Handle Submit
@@ -350,7 +375,11 @@ export default function AddTrade() {
         option_type: form.option_type,
         strike_price: form.strike_price || null,
         expiry_date: form.expiry_date || null,
+        ce_entry_price: form.option_type === 'Both' && form.ce_entry_price ? parseFloat(form.ce_entry_price) : null,
+        pe_entry_price: form.option_type === 'Both' && form.pe_entry_price ? parseFloat(form.pe_entry_price) : null,
         entry_premium: form.entry_premium || null,
+        ce_exit_price: form.option_type === 'Both' && form.ce_exit_price ? parseFloat(form.ce_exit_price) : null,
+        pe_exit_price: form.option_type === 'Both' && form.pe_exit_price ? parseFloat(form.pe_exit_price) : null,
         exit_premium: form.exit_premium || null,
         quantity: parseInt(form.quantity, 10) || null,
         lots: parseInt(form.lots, 10) || 1,
@@ -381,7 +410,21 @@ export default function AddTrade() {
         payload.trade_setup = payload.trade_setup ? `${payload.trade_setup} | ${legDetails}` : legDetails;
       }
 
-      await api.post('/trades', payload);
+      const res = await api.post('/trades', payload);
+      const createdTrade = res.data?.trade;
+      if (selectedScreenshots.length > 0 && createdTrade?.id) {
+        try {
+          const formData = new FormData();
+          selectedScreenshots.forEach((item) => {
+            formData.append('screenshots[]', item.file);
+          });
+          await api.post(`/trades/${createdTrade.id}/screenshots`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+        } catch (uploadErr) {
+          console.error('Screenshots upload failed', uploadErr);
+        }
+      }
       setSuccessMessage('Trade successfully saved and recorded in journal!');
 
       if (keepOpen) {
@@ -402,8 +445,7 @@ export default function AddTrade() {
           what_went_right: '',
           what_went_wrong: '',
         }));
-        setSelectedScreenshot(null);
-        setScreenshotPreview(null);
+        setSelectedScreenshots([]);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         setTimeout(() => {
@@ -1188,15 +1230,17 @@ export default function AddTrade() {
                 </div>
               </div>
 
-              {/* Row 3: Screenshot Upload Section */}
-              <div className="pt-2">
+              {/* Row 3: Multiple Screenshot Upload Section */}
+              <div className="pt-2 space-y-3">
                 <input
                   type="file"
                   ref={fileInputRef}
+                  multiple
                   accept="image/png,image/jpeg,image/webp"
-                  onChange={handleFileChange}
+                  onChange={handleScreenshotFilesChange}
                   className="hidden"
                 />
+
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   className="p-4 rounded-2xl border-2 border-dashed border-[#1e293b] light:border-slate-300 hover:border-blue-500/50 light:hover:border-blue-500 cursor-pointer transition-colors bg-[#0e1626]/50 light:bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left"
@@ -1207,41 +1251,78 @@ export default function AddTrade() {
                     </div>
                     <div>
                       <span className="text-xs font-semibold text-slate-200 light:text-slate-800 block">
-                        {selectedScreenshot ? selectedScreenshot.name : 'Upload Screenshot (Optional)'}
+                        {selectedScreenshots.length > 0
+                          ? `${selectedScreenshots.length} Screenshot${selectedScreenshots.length > 1 ? 's' : ''} Selected`
+                          : 'Upload Chart Screenshots (Optional)'}
                       </span>
                       <span className="text-[11px] text-slate-400">
-                        {selectedScreenshot
-                          ? `${(selectedScreenshot.size / 1024).toFixed(1)} KB selected`
-                          : 'Click to upload or drag and drop PNG, JPG up to 5MB'}
+                        {selectedScreenshots.length > 0
+                          ? 'Click to add more screenshots (PNG, JPG up to 10MB each)'
+                          : 'Select or drag & drop multiple chart screenshots (PNG, JPG up to 10MB each)'}
                       </span>
                     </div>
                   </div>
 
                   <button
                     type="button"
-                    className="px-3 py-1.5 rounded-xl bg-[#162033] light:bg-slate-200 text-slate-300 light:text-slate-700 text-xs font-medium hover:text-white"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current?.click();
+                    }}
+                    className="px-3.5 py-1.5 rounded-xl bg-[#162033] light:bg-slate-200 text-slate-300 light:text-slate-700 text-xs font-medium hover:text-white hover:bg-blue-600 transition-colors shadow-sm"
                   >
-                    {selectedScreenshot ? 'Change File' : 'Browse Files'}
+                    {selectedScreenshots.length > 0 ? '+ Add More Images' : 'Browse Files'}
                   </button>
                 </div>
 
-                {screenshotPreview && (
-                  <div className="mt-3 relative inline-block">
-                    <img
-                      src={screenshotPreview}
-                      alt="Trade screenshot preview"
-                      className="h-28 rounded-xl object-cover border border-[#1e293b] shadow-md"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedScreenshot(null);
-                        setScreenshotPreview(null);
-                      }}
-                      className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs font-bold"
-                    >
-                      ✕
-                    </button>
+                {/* Multiple Screenshots Grid */}
+                {selectedScreenshots.length > 0 && (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 pt-1">
+                    {selectedScreenshots.map((item, idx) => (
+                      <div
+                        key={item.id}
+                        className="group relative rounded-2xl bg-[#0e1626] border border-[#1e293b] overflow-hidden shadow-md hover:border-blue-500/40 transition-colors"
+                      >
+                        <div
+                          className="h-28 w-full cursor-pointer overflow-hidden"
+                          onClick={() => setViewingLightboxUrl(item.preview)}
+                        >
+                          <img
+                            src={item.preview}
+                            alt={item.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
+                        </div>
+
+                        {/* File Details Tag */}
+                        <div className="p-1.5 bg-[#0a0f1d] border-t border-[#1e293b] flex items-center justify-between text-[10px] text-slate-400">
+                          <span className="truncate max-w-[90px]" title={item.name}>
+                            {item.name}
+                          </span>
+                          <span className="text-[9px] text-slate-500 font-mono ml-1 flex-shrink-0">
+                            {item.size}
+                          </span>
+                        </div>
+
+                        {/* Remove Button */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRemoveScreenshotItem(item.id);
+                          }}
+                          className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center text-xs font-bold shadow-lg transition-transform hover:scale-110"
+                          title="Remove image"
+                        >
+                          ✕
+                        </button>
+
+                        {/* Index indicator */}
+                        <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded-md bg-black/70 backdrop-blur-sm text-[9px] font-bold text-slate-200">
+                          #{idx + 1}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -1301,17 +1382,35 @@ export default function AddTrade() {
                   {form.lots} ({form.quantity} Qty)
                 </span>
               </div>
-              <div className="py-2 flex items-center justify-between text-slate-400">
-                <span>Entry Premium</span>
-                <span className="font-semibold text-white light:text-slate-900 font-mono-numbers">
-                  {form.entry_premium ? formatINR(form.entry_premium) : '-'}
-                </span>
+              <div className="py-2 text-slate-400">
+                <div className="flex items-center justify-between">
+                  <span>Entry Premium</span>
+                  <span className="font-semibold text-white light:text-slate-900 font-mono-numbers">
+                    {form.entry_premium ? formatINR(form.entry_premium) : '-'}
+                  </span>
+                </div>
+                {form.option_type === 'Both' && (form.ce_entry_price || form.pe_entry_price) && (
+                  <div className="flex items-center justify-between mt-1 text-[11px] font-mono-numbers px-2 py-1 rounded-lg bg-[#0e1626] border border-[#1e293b]">
+                    <span className="text-emerald-400 font-semibold">CE: ₹{form.ce_entry_price || '0.00'}</span>
+                    <span className="text-slate-600">|</span>
+                    <span className="text-rose-400 font-semibold">PE: ₹{form.pe_entry_price || '0.00'}</span>
+                  </div>
+                )}
               </div>
-              <div className="py-2 flex items-center justify-between text-slate-400">
-                <span>Exit Premium</span>
-                <span className="font-semibold text-white light:text-slate-900 font-mono-numbers">
-                  {form.exit_premium ? formatINR(form.exit_premium) : '-'}
-                </span>
+              <div className="py-2 text-slate-400">
+                <div className="flex items-center justify-between">
+                  <span>Exit Premium</span>
+                  <span className="font-semibold text-white light:text-slate-900 font-mono-numbers">
+                    {form.exit_premium ? formatINR(form.exit_premium) : '-'}
+                  </span>
+                </div>
+                {form.option_type === 'Both' && (form.ce_exit_price || form.pe_exit_price) && (
+                  <div className="flex items-center justify-between mt-1 text-[11px] font-mono-numbers px-2 py-1 rounded-lg bg-[#0e1626] border border-[#1e293b]">
+                    <span className="text-emerald-400 font-semibold">CE: ₹{form.ce_exit_price || '0.00'}</span>
+                    <span className="text-slate-600">|</span>
+                    <span className="text-rose-400 font-semibold">PE: ₹{form.pe_exit_price || '0.00'}</span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1491,6 +1590,37 @@ export default function AddTrade() {
               >
                 Save This Trade
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Modal for enlarged view */}
+      {viewingLightboxUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm"
+          onClick={() => setViewingLightboxUrl(null)}
+        >
+          <div
+            className="relative max-w-4xl max-h-[90vh] bg-[#121b2d] border border-[#1e293b] rounded-3xl overflow-hidden shadow-2xl p-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-2 border-b border-[#1e293b]">
+              <span className="text-xs font-semibold text-slate-300">Screenshot Preview</span>
+              <button
+                type="button"
+                onClick={() => setViewingLightboxUrl(null)}
+                className="w-7 h-7 rounded-full bg-[#162033] text-slate-400 hover:text-white flex items-center justify-center text-xs font-bold transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-3 max-h-[80vh] overflow-auto flex items-center justify-center">
+              <img
+                src={viewingLightboxUrl}
+                alt="Enlarged screenshot"
+                className="max-h-[75vh] w-auto rounded-xl object-contain shadow-lg"
+              />
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Wallet,
@@ -32,11 +32,14 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts';
-import { formatINR } from '../utils/formatters';
+import api from '../api/client';
+import { formatINR, formatCompactINR, formatDate } from '../utils/formatters';
 import { useLotSizes } from '../context/LotSizeContext';
+import { useFilter } from '../context/FilterContext';
 
 export default function CapitalManagement() {
   const navigate = useNavigate();
+  const { dateRangeDisplay } = useFilter();
 
   // Timeframe
   const [timeRange, setTimeRange] = useState('1Y');
@@ -81,57 +84,87 @@ export default function CapitalManagement() {
     };
   }, [calcForm]);
 
-  // Top 7 Metric Stats (Matches mockup)
-  const stats = {
-    initial_capital: 50000,
-    total_deposits: 250000,
-    deposit_count: 12,
-    total_withdrawals: 50000,
-    withdrawal_count: 4,
-    current_capital: 278450,
-    current_capital_pct: '+25.7%',
-    available_trading: 208450,
-    available_pct: '75.0%',
-    total_profit: 128450,
-    total_profit_pct: '+25.7%',
-    roi: '25.7%',
+  const [capitalData, setCapitalData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCapital();
+  }, []);
+
+  const fetchCapital = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/capital');
+      setCapitalData(res.data);
+    } catch (e) {
+      console.warn('Failed to load capital data', e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Capital Growth chart data
-  const capitalGrowthData = [
-    { date: 'Jan 2025', capital: 50000, netProfit: 0 },
-    { date: 'Feb 2025', capital: 84000, netProfit: 12000 },
-    { date: 'Mar 2025', capital: 120000, netProfit: 25000 },
-    { date: 'Apr 2025', capital: 145000, netProfit: 45000 },
-    { date: 'May 2025', capital: 180000, netProfit: 68000 },
-    { date: 'Jun 2025', capital: 210000, netProfit: 85000 },
-    { date: 'Jul 2025', capital: 242000, netProfit: 105000 },
-    { date: 'Aug 2025', capital: 278450, netProfit: 128450 },
-  ];
+  const stats = useMemo(() => {
+    const init = capitalData?.initial_capital || 500000;
+    const curr = capitalData?.current_capital || init;
+    const dep = capitalData?.total_deposits || 0;
+    const withdr = capitalData?.total_withdrawals || 0;
+    const profit = capitalData?.total_profit || 0;
+    const roi = capitalData?.overall_roi || 0;
+    const txs = capitalData?.transactions || [];
 
-  // Capital Allocation Donut
-  const allocationData = [
-    { name: 'Available for Trading', value: 208450, color: '#06b6d4', pct: '75.0%' },
-    { name: 'Used in Open Positions', value: 41770, color: '#f59e0b', pct: '15.0%' },
-    { name: 'Cash Reserve', value: 28230, color: '#10b981', pct: '10.0%' },
-  ];
+    return {
+      initial_capital: init,
+      total_deposits: dep,
+      deposit_count: txs.filter((t) => t.transaction_type === 'deposit').length,
+      total_withdrawals: withdr,
+      withdrawal_count: txs.filter((t) => t.transaction_type === 'withdrawal').length,
+      current_capital: curr,
+      current_capital_pct: roi >= 0 ? `+${roi}%` : `${roi}%`,
+      available_trading: curr,
+      available_pct: '100%',
+      total_profit: profit,
+      total_profit_pct: roi >= 0 ? `+${roi}%` : `${roi}%`,
+      roi: `${roi}%`,
+    };
+  }, [capitalData]);
 
-  // Open Positions table
-  const openPositions = [
-    { symbol: 'NIFTY', type: 'CE', qty: 65, avgPrice: 152.5, ltp: 168.0, val: 10920, pnl: 1007.5 },
-    { symbol: 'NIFTY', type: 'PE', qty: 65, avgPrice: 148.0, ltp: 135.5, val: -8125, pnl: -812.5 },
-    { symbol: 'BANKNIFTY', type: 'CE', qty: 25, avgPrice: 512.0, ltp: 525.5, val: 3375, pnl: 337.5 },
-    { symbol: 'SENSEX', type: 'PE', qty: 20, avgPrice: 810.0, ltp: 795.0, val: -3000, pnl: -300 },
-  ];
+  const account = capitalData?.account || {
+    initial_capital: stats.initial_capital,
+    current_capital: stats.current_capital,
+  };
 
-  // Transactions list
-  const transactions = [
-    { id: 1, date: '15 Aug 2025', type: 'Deposit', amount: 50000, balance: 278450, notes: 'Additional capital' },
-    { id: 2, date: '01 Jul 2025', type: 'Withdrawal', amount: -20000, balance: 228450, notes: 'Personal expense' },
-    { id: 3, date: '10 May 2025', type: 'Deposit', amount: 100000, balance: 248450, notes: 'Trading capital' },
-    { id: 4, date: '15 Mar 2025', type: 'Withdrawal', amount: -30000, balance: 148450, notes: 'Laptop purchase' },
-    { id: 5, date: '01 Jan 2025', type: 'Initial Capital', amount: 50000, balance: 50000, notes: 'Starting capital' },
-  ];
+  const capitalGrowthData = useMemo(() => {
+    if (!capitalData?.growth_chart || capitalData.growth_chart.length === 0) {
+      return [{ date: 'Today', capital: capitalData?.current_capital || 500000, netProfit: 0 }];
+    }
+    return capitalData.growth_chart;
+  }, [capitalData]);
+
+  const allocationData = useMemo(() => {
+    const curr = capitalData?.current_capital || 500000;
+    return [
+      { name: 'Available for Trading', value: curr, color: '#06b6d4', pct: '100.0%' },
+      { name: 'Used in Open Positions', value: 0, color: '#f59e0b', pct: '0.0%' },
+      { name: 'Cash Reserve', value: 0, color: '#10b981', pct: '0.0%' },
+    ];
+  }, [capitalData]);
+
+  const openPositions = [];
+  const usedCapital = openPositions.reduce((sum, pos) => sum + (pos.val || 0), 0);
+  const availableCapital = (stats.current_capital || 0) - usedCapital;
+  const utilizationPct = stats.current_capital > 0 ? ((usedCapital / stats.current_capital) * 100).toFixed(1) : '0.0';
+
+  const transactions = useMemo(() => {
+    if (!capitalData?.transactions || capitalData.transactions.length === 0) return [];
+    return capitalData.transactions.map((tx) => ({
+      id: tx.id,
+      date: formatDate(tx.transaction_date),
+      type: tx.transaction_type === 'deposit' ? 'Deposit' : 'Withdrawal',
+      amount: parseFloat(tx.amount) * (tx.transaction_type === 'withdrawal' ? -1 : 1),
+      balance: parseFloat(tx.amount),
+      notes: tx.notes || '-',
+    }));
+  }, [capitalData]);
 
   return (
     <div className="space-y-6 pb-24 md:pb-12 text-slate-100 light:text-slate-800">
@@ -150,8 +183,7 @@ export default function CapitalManagement() {
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900">
             <Calendar className="w-3.5 h-3.5 text-blue-400" />
-            <span>01 Jan 2025 - 31 Aug 2025</span>
-            <ChevronDown className="w-3 h-3 text-slate-400 ml-1" />
+            <span>{dateRangeDisplay || 'All Time'}</span>
           </div>
 
           <div className="flex items-center gap-1 p-1 rounded-xl bg-[#121b2d] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs">
@@ -279,8 +311,8 @@ export default function CapitalManagement() {
 
           <div className="relative h-60 w-full">
             <div className="absolute right-6 top-2 z-10 p-2 rounded-xl bg-[#0e1626]/90 border border-blue-500/40 text-right shadow-lg">
-              <span className="text-[10px] text-slate-400 block">31 Aug 2025</span>
-              <span className="text-xs font-bold text-white font-mono-numbers">₹2,78,450</span>
+              <span className="text-[10px] text-slate-400 block">Current Capital</span>
+              <span className="text-xs font-bold text-white font-mono-numbers">{formatINR(stats.current_capital || stats.initial_capital || 0)}</span>
             </div>
 
             <ResponsiveContainer width="100%" height="100%">
@@ -500,7 +532,7 @@ export default function CapitalManagement() {
 
           <div className="flex flex-col items-center justify-center pt-1 text-center">
             <div className="w-24 h-24 rounded-full border-4 border-emerald-400 border-t-transparent flex flex-col items-center justify-center">
-              <span className="text-xl font-black text-white font-mono-numbers">15.0%</span>
+              <span className="text-xl font-black text-white font-mono-numbers">{utilizationPct}%</span>
               <span className="text-[9px] text-slate-400">Capital in Use</span>
             </div>
           </div>
@@ -508,15 +540,15 @@ export default function CapitalManagement() {
           <div className="space-y-1.5 text-xs pt-1 border-t border-[#1e293b]">
             <div className="flex justify-between text-slate-400">
               <span>Used in Open Positions</span>
-              <span className="font-mono-numbers text-amber-400">₹41,770</span>
+              <span className="font-mono-numbers text-amber-400">{formatINR(usedCapital)}</span>
             </div>
             <div className="flex justify-between text-slate-400">
               <span>Available for Trading</span>
-              <span className="font-mono-numbers text-cyan-400">₹2,08,450</span>
+              <span className="font-mono-numbers text-cyan-400">{formatINR(availableCapital)}</span>
             </div>
             <div className="flex justify-between text-slate-400 font-semibold pt-1">
               <span>Total Capital</span>
-              <span className="font-mono-numbers text-white">₹2,78,450</span>
+              <span className="font-mono-numbers text-white">{formatINR(stats.current_capital)}</span>
             </div>
           </div>
         </div>
@@ -566,35 +598,43 @@ export default function CapitalManagement() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e293b]/60">
-                {transactions.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-[#162033]/50">
-                    <td className="py-2.5 text-slate-300">{tx.date}</td>
-                    <td className="py-2.5">
-                      <span
-                        className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                          tx.amount >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
-                        }`}
-                      >
-                        {tx.type}
-                      </span>
-                    </td>
-                    <td className={`py-2.5 text-right font-mono-numbers font-semibold ${
-                      tx.amount >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                    }`}>
-                      {tx.amount >= 0 ? '+' : ''}{formatINR(tx.amount)}
-                    </td>
-                    <td className="py-2.5 text-right font-mono-numbers text-slate-300">
-                      {formatINR(tx.balance)}
-                    </td>
-                    <td className="py-2.5 pl-3 text-slate-400 text-[11px]">{tx.notes}</td>
-                    <td className="py-2.5 text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <button className="p-1 rounded text-slate-400 hover:text-blue-400"><Edit2 className="w-3 h-3" /></button>
-                        <button className="p-1 rounded text-slate-400 hover:text-rose-400"><Trash2 className="w-3 h-3" /></button>
-                      </div>
+                {transactions.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="py-8 text-center text-slate-500 text-xs">
+                      No capital transactions recorded yet.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  transactions.map((tx) => (
+                    <tr key={tx.id} className="hover:bg-[#162033]/50">
+                      <td className="py-2.5 text-slate-300">{tx.date}</td>
+                      <td className="py-2.5">
+                        <span
+                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                            tx.amount >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                          }`}
+                        >
+                          {tx.type}
+                        </span>
+                      </td>
+                      <td className={`py-2.5 text-right font-mono-numbers font-semibold ${
+                        tx.amount >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                      }`}>
+                        {tx.amount >= 0 ? '+' : ''}{formatINR(tx.amount)}
+                      </td>
+                      <td className="py-2.5 text-right font-mono-numbers text-slate-300">
+                        {formatINR(tx.balance)}
+                      </td>
+                      <td className="py-2.5 pl-3 text-slate-400 text-[11px]">{tx.notes}</td>
+                      <td className="py-2.5 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <button className="p-1 rounded text-slate-400 hover:text-blue-400"><Edit2 className="w-3 h-3" /></button>
+                          <button className="p-1 rounded text-slate-400 hover:text-rose-400"><Trash2 className="w-3 h-3" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -619,7 +659,14 @@ export default function CapitalManagement() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e293b]/60">
-                {openPositions.map((pos, idx) => (
+                {openPositions.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="py-8 text-center text-slate-500 text-xs">
+                      No open positions currently.
+                    </td>
+                  </tr>
+                ) : (
+                  openPositions.map((pos, idx) => (
                   <tr key={idx} className="hover:bg-[#162033]/50">
                     <td className="py-2.5 font-semibold text-white">{pos.symbol}</td>
                     <td className="py-2.5">
@@ -638,14 +685,15 @@ export default function CapitalManagement() {
                       {formatINR(pos.val)}
                     </td>
                   </tr>
-                ))}
-              </tbody>
+                ))
+              )}
+            </tbody>
             </table>
           </div>
 
           <div className="pt-2 border-t border-[#1e293b] flex items-center justify-between text-xs">
             <span className="text-slate-400">Total Used Capital</span>
-            <span className="text-sm font-bold text-white font-mono-numbers">₹41,770</span>
+            <span className="text-sm font-bold text-white font-mono-numbers">{formatINR(usedCapital)}</span>
           </div>
         </div>
       </div>
@@ -670,21 +718,21 @@ export default function CapitalManagement() {
               </div>
 
               <div>
-                <div className="w-5 h-5 rounded-full bg-emerald-400 mx-auto mb-1 ring-4 ring-[#121b2d]" />
-                <span className="text-xs font-bold text-emerald-400 block">₹1L</span>
-                <span className="text-[9px] text-slate-400">Achieved 12 Feb 2025</span>
+                <div className={`w-5 h-5 rounded-full mx-auto mb-1 ring-4 ring-[#121b2d] ${(stats.current_capital || 0) >= 100000 ? 'bg-emerald-400' : 'bg-[#1e293b]'}`} />
+                <span className="text-xs font-bold text-slate-300 block">₹1L</span>
+                <span className="text-[9px] text-slate-400">{(stats.current_capital || 0) >= 100000 ? 'Achieved' : 'Milestone'}</span>
               </div>
 
               <div>
-                <div className="w-5 h-5 rounded-full bg-emerald-400 mx-auto mb-1 ring-4 ring-[#121b2d]" />
-                <span className="text-xs font-bold text-emerald-400 block">₹2L</span>
-                <span className="text-[9px] text-slate-400">Achieved 28 Apr 2025</span>
+                <div className={`w-5 h-5 rounded-full mx-auto mb-1 ring-4 ring-[#121b2d] ${(stats.current_capital || 0) >= 200000 ? 'bg-emerald-400' : 'bg-[#1e293b]'}`} />
+                <span className="text-xs font-bold text-slate-300 block">₹2L</span>
+                <span className="text-[9px] text-slate-400">{(stats.current_capital || 0) >= 200000 ? 'Achieved' : 'Milestone'}</span>
               </div>
 
               <div>
-                <div className="w-5 h-5 rounded-full bg-blue-500 mx-auto mb-1 ring-4 ring-blue-500/30 animate-pulse" />
-                <span className="text-xs font-bold text-blue-400 block">₹3L</span>
-                <span className="text-[9px] text-blue-300 font-semibold">In Progress 92%</span>
+                <div className={`w-5 h-5 rounded-full mx-auto mb-1 ring-4 ring-[#121b2d] ${(stats.current_capital || 0) >= 500000 ? 'bg-emerald-400' : 'bg-blue-500 animate-pulse'}`} />
+                <span className="text-xs font-bold text-blue-400 block">₹5L</span>
+                <span className="text-[9px] text-blue-300 font-semibold">{(stats.current_capital || 0) >= 500000 ? 'Achieved' : 'Target'}</span>
               </div>
 
               <div>
@@ -711,11 +759,11 @@ export default function CapitalManagement() {
           <div className="space-y-2 text-xs">
             <div className="flex items-start gap-2">
               <TrendingUp className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <p className="text-slate-300">Your capital has grown by <strong className="text-emerald-400">25.7%</strong> this year.</p>
+              <p className="text-slate-300">Your capital has grown by <strong className="text-emerald-400">{stats.roi}</strong> this year.</p>
             </div>
             <div className="flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <p className="text-slate-300">You have added <strong className="text-white">₹2,50,000</strong> in deposits (12 transactions).</p>
+              <p className="text-slate-300">You have added <strong className="text-white">{formatINR(stats.total_deposits)}</strong> in deposits ({stats.deposit_count} transactions).</p>
             </div>
             <div className="flex items-start gap-2">
               <ShieldAlert className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />

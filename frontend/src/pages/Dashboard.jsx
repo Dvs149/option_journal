@@ -39,7 +39,8 @@ export default function Dashboard() {
   const { filter, customFrom, customTo, setDateRangeDisplay } = useFilter();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
-  const [calendarMonth, setCalendarMonth] = useState({ year: 2025, month: 8 });
+  const today = new Date();
+  const [calendarMonth, setCalendarMonth] = useState({ year: today.getFullYear(), month: today.getMonth() + 1 });
   const [calendarData, setCalendarData] = useState(null);
 
   useEffect(() => {
@@ -101,6 +102,34 @@ export default function Dashboard() {
   const recentTrades = data?.recent_trades || [];
   const risk = data?.risk_management || {};
 
+  // Dynamically calculate percentage badges relative to capital
+  const hasTrades = (stats.total_trades || 0) > 0;
+  const investedCap = stats.invested_capital || stats.initial_capital || 500000;
+
+  const netProfitPct = stats.period_roi !== undefined && stats.period_roi !== null
+    ? `${stats.period_roi >= 0 ? '+' : ''}${Number(stats.period_roi).toFixed(2)}%`
+    : `${((stats.total_net_profit || 0) / investedCap * 100) >= 0 ? '+' : ''}${(((stats.total_net_profit || 0) / investedCap) * 100).toFixed(2)}%`;
+
+  const grossProfitPct = stats.gross_profit_pct !== undefined && stats.gross_profit_pct !== null
+    ? `+${Number(stats.gross_profit_pct).toFixed(2)}%`
+    : `+${(((stats.total_gross_profit || 0) / investedCap) * 100).toFixed(2)}%`;
+
+  const grossLossPct = stats.gross_loss_pct !== undefined && stats.gross_loss_pct !== null
+    ? `-${Number(stats.gross_loss_pct).toFixed(2)}%`
+    : `-${(((stats.total_gross_loss || 0) / investedCap) * 100).toFixed(2)}%`;
+
+  const todayPnlPct = stats.today_pnl_pct !== undefined && stats.today_pnl_pct !== null
+    ? `${stats.today_pnl_pct >= 0 ? '+' : ''}${Number(stats.today_pnl_pct).toFixed(2)}%`
+    : `${((stats.today_pnl || 0) / investedCap * 100) >= 0 ? '+' : ''}${(((stats.today_pnl || 0) / investedCap) * 100).toFixed(2)}%`;
+
+  const monthPnlPct = stats.this_month_pnl_pct !== undefined && stats.this_month_pnl_pct !== null
+    ? `${stats.this_month_pnl_pct >= 0 ? '+' : ''}${Number(stats.this_month_pnl_pct).toFixed(2)}%`
+    : `${((stats.this_month_pnl || 0) / investedCap * 100) >= 0 ? '+' : ''}${(((stats.this_month_pnl || 0) / investedCap) * 100).toFixed(2)}%`;
+
+  const currentCapitalPct = stats.overall_roi !== undefined && stats.overall_roi !== null
+    ? `${stats.overall_roi >= 0 ? '+' : ''}${Number(stats.overall_roi).toFixed(2)}%`
+    : `${((((stats.current_capital || investedCap) - investedCap) / investedCap) * 100) >= 0 ? '+' : ''}${((((stats.current_capital || investedCap) - investedCap) / investedCap) * 100).toFixed(2)}%`;
+
   // Custom colors for Donut charts
   const indexColors = ['#3b82f6', '#06b6d4', '#8b5cf6', '#f97316', '#ec4899', '#10b981'];
   const cePeColors = { CE: '#3b82f6', PE: '#ef4444', Both: '#f97316' };
@@ -156,7 +185,7 @@ export default function Dashboard() {
         <MainStatsCard
           title="Total Net Profit"
           value={formatINR(stats.total_net_profit)}
-          change="+12.6%"
+          change={hasTrades ? netProfitPct : null}
           isPositiveChange={stats.total_net_profit >= 0}
           icon={TrendingUp}
           variant="green"
@@ -164,7 +193,7 @@ export default function Dashboard() {
         <MainStatsCard
           title="Total Gross Profit"
           value={formatINR(stats.total_gross_profit)}
-          change="+8.4%"
+          change={hasTrades ? grossProfitPct : null}
           isPositiveChange={true}
           icon={ArrowUpRight}
           variant="green"
@@ -172,7 +201,7 @@ export default function Dashboard() {
         <MainStatsCard
           title="Total Gross Loss"
           value={formatINR(stats.total_gross_loss)}
-          change="+5.2%"
+          change={hasTrades ? grossLossPct : null}
           isPositiveChange={false}
           icon={TrendingDown}
           variant="red"
@@ -180,7 +209,7 @@ export default function Dashboard() {
         <MainStatsCard
           title="Today's P&L"
           value={formatINR(stats.today_pnl)}
-          change="+2.1%"
+          change={hasTrades ? todayPnlPct : null}
           isPositiveChange={stats.today_pnl >= 0}
           icon={Activity}
           variant={stats.today_pnl >= 0 ? 'green' : 'red'}
@@ -188,16 +217,16 @@ export default function Dashboard() {
         <MainStatsCard
           title="This Month's P&L"
           value={formatINR(stats.this_month_pnl)}
-          change="+12.6%"
+          change={hasTrades ? monthPnlPct : null}
           isPositiveChange={stats.this_month_pnl >= 0}
           icon={LineChartIcon}
-          variant="blue"
+          variant={stats.this_month_pnl >= 0 ? 'blue' : 'red'}
         />
         <MainStatsCard
           title="Current Capital"
           value={formatINR(stats.current_capital)}
-          change="+25.7%"
-          isPositiveChange={true}
+          change={hasTrades ? currentCapitalPct : null}
+          isPositiveChange={stats.overall_roi >= 0}
           icon={Shield}
           variant="teal"
         />
@@ -484,7 +513,7 @@ export default function Dashboard() {
               Monthly P&L
             </h3>
             <span className="text-[11px] font-medium text-slate-400 bg-[#162033] light:bg-slate-100 px-2 py-0.5 rounded-lg border border-[#1e293b] light:border-slate-200">
-              2025
+              {new Date().getFullYear()}
             </span>
           </div>
 
@@ -754,12 +783,12 @@ export default function Dashboard() {
                   <div
                     className="bg-emerald-500 h-full rounded-full transition-all"
                     style={{
-                      width: `${Math.min(100, ((risk.daily_current_profit || 12350) / (risk.daily_profit_target || 20000)) * 100)}%`,
+                      width: `${Math.min(100, (((risk.daily_current_profit ?? 0)) / (risk.daily_profit_target || 20000)) * 100)}%`,
                     }}
                   />
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-400 font-mono-numbers mt-1">
-                  <span>Current: {formatINR(risk.daily_current_profit || 12350)}</span>
+                  <span>Current: {formatINR(risk.daily_current_profit ?? 0)}</span>
                   <span>Target: {formatINR(risk.daily_profit_target || 20000)}</span>
                 </div>
               </div>
@@ -776,12 +805,12 @@ export default function Dashboard() {
                   <div
                     className="bg-rose-500 h-full rounded-full transition-all"
                     style={{
-                      width: `${Math.min(100, ((stats.max_drawdown || 42380) / (risk.max_drawdown_limit || 50000)) * 100)}%`,
+                      width: `${Math.min(100, (((stats.max_drawdown ?? 0)) / (risk.max_drawdown_limit || 50000)) * 100)}%`,
                     }}
                   />
                 </div>
                 <div className="flex justify-between text-[10px] text-slate-400 font-mono-numbers mt-1">
-                  <span>Drawdown: {formatINR(stats.max_drawdown || 42380)}</span>
+                  <span>Drawdown: {formatINR(stats.max_drawdown ?? 0)}</span>
                   <span>Threshold: {formatINR(risk.max_drawdown_limit || 50000)}</span>
                 </div>
               </div>

@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\ExportController;
 use App\Http\Controllers\Api\JournalController;
 use App\Http\Controllers\Api\LotSizeController;
+use App\Http\Controllers\Api\ModuleVisibilityController;
 use App\Http\Controllers\Api\RiskController;
 use App\Http\Controllers\Api\StrategyController;
 use App\Http\Controllers\Api\TradeController;
@@ -41,8 +42,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
     // Trades Management
+    Route::get('/trades/all-ids', [TradeController::class, 'allIds']);
+    Route::post('/trades/bulk-delete', [TradeController::class, 'bulkDestroy']);
+    Route::post('/trades/reset-all-data', [TradeController::class, 'resetAllData']);
     Route::post('/trades/estimate-charges', [TradeController::class, 'estimateCharges']);
     Route::post('/trades/{trade}/duplicate', [TradeController::class, 'duplicate']);
+    Route::post('/trades/{trade}/screenshot', [TradeController::class, 'uploadScreenshot']);
+    Route::delete('/trades/{trade}/screenshot', [TradeController::class, 'deleteScreenshot']);
+    Route::post('/trades/{trade}/screenshots', [TradeController::class, 'uploadScreenshots']);
+    Route::delete('/trades/{trade}/screenshots/{screenshot}', [TradeController::class, 'deleteSingleScreenshot']);
     Route::apiResource('trades', TradeController::class);
 
     // Trading Calendar & Heatmap
@@ -77,6 +85,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/lot-sizes/batch', [LotSizeController::class, 'batchUpdate']);
     Route::post('/lot-sizes/reset', [LotSizeController::class, 'reset']);
     Route::delete('/lot-sizes/{index_name}', [LotSizeController::class, 'destroy']);
+
+    // Dynamic Module Visibility Management (Database Stored)
+    Route::get('/module-visibility', [ModuleVisibilityController::class, 'index']);
+    Route::post('/module-visibility', [ModuleVisibilityController::class, 'update']);
+    Route::put('/module-visibility/batch', [ModuleVisibilityController::class, 'batchUpdate']);
+    Route::post('/module-visibility/reset', [ModuleVisibilityController::class, 'reset']);
 
     // Export, Reports, Backup & Restore
     Route::get('/export/csv', [ExportController::class, 'csv']);
