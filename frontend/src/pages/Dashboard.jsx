@@ -138,6 +138,13 @@ export default function Dashboard() {
   const indexColors = ['#3b82f6', '#06b6d4', '#8b5cf6', '#f97316', '#ec4899', '#10b981'];
   const cePeColors = { CE: '#10b981', PE: '#ef4444', Both: '#3b82f6' };
 
+  // Monthly P&L for the selected calendar month in the widget
+  const calendarMonthlyPnl = calendarData?.total_net_pnl !== undefined && calendarData?.total_net_pnl !== null
+    ? Number(calendarData.total_net_pnl)
+    : (Array.isArray(calendarData?.days)
+        ? calendarData.days.reduce((acc, d) => acc + (Number(d.net_pnl) || 0), 0)
+        : 0);
+
   // Calendar rendering calculation
   const renderCalendarDays = () => {
     const { year, month } = calendarMonth;
@@ -403,11 +410,24 @@ export default function Dashboard() {
 
         {/* Trading Calendar Mini Widget */}
         <div className="lg:col-span-4 bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-2xl p-4 flex flex-col justify-between shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-white light:text-slate-900 tracking-tight">
+          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+            <h3 className="text-sm font-bold text-white light:text-slate-900 tracking-tight shrink-0">
               Trading Calendar
             </h3>
-            <div className="flex items-center gap-1.5">
+            
+            <div className="flex items-center gap-1 shrink-0">
+              {calendarMonthlyPnl !== 0 && (
+                <span
+                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full font-mono-numbers shrink-0 transition-colors ${
+                    calendarMonthlyPnl > 0
+                      ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                  }`}
+                  title={`Total Monthly P&L: ${calendarMonthlyPnl > 0 ? '+' : ''}${formatINR(calendarMonthlyPnl)}`}
+                >
+                  {calendarMonthlyPnl > 0 ? `+${formatINR(calendarMonthlyPnl)}` : formatINR(calendarMonthlyPnl)}
+                </span>
+              )}
               <button
                 onClick={() => {
                   setCalendarMonth((prev) => {
@@ -416,16 +436,25 @@ export default function Dashboard() {
                     return { year: y, month: m };
                   });
                 }}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                title="Previous Month"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <span className="text-xs font-semibold text-slate-200 light:text-slate-800 w-24 text-center">
-                {new Date(calendarMonth.year, calendarMonth.month - 1).toLocaleString('default', {
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </span>
+
+
+              
+              <div className="flex items-center gap-1.5 px-0.5">
+                
+                <span className="text-xs font-semibold text-slate-200 light:text-slate-800 whitespace-nowrap">
+                  {new Date(calendarMonth.year, calendarMonth.month - 1).toLocaleString('default', {
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </span>
+                
+              </div>
+
               <button
                 onClick={() => {
                   setCalendarMonth((prev) => {
@@ -434,7 +463,8 @@ export default function Dashboard() {
                     return { year: y, month: m };
                   });
                 }}
-                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                title="Next Month"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>

@@ -289,10 +289,21 @@ export default function TradingCalendar() {
 
         {/* Month Selector & Today button */}
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 text-xs font-semibold text-white light:text-slate-900">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 text-xs font-semibold text-white light:text-slate-900">
             <CalendarIcon className="w-3.5 h-3.5 text-blue-400" />
             <span>{currentMonthName} {currentDate.year}</span>
-            <ChevronDown className="w-3 h-3 text-slate-400 ml-1" />
+            {stats.monthly_pnl !== 0 && (
+              <span
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full font-mono-numbers ${
+                  stats.monthly_pnl > 0
+                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25'
+                    : 'bg-rose-500/15 text-rose-400 border border-rose-500/25'
+                }`}
+              >
+                {stats.monthly_pnl > 0 ? `+${formatINR(stats.monthly_pnl)}` : formatINR(stats.monthly_pnl)}
+              </span>
+            )}
+            <ChevronDown className="w-3 h-3 text-slate-400 ml-0.5" />
           </div>
 
           <button
@@ -398,15 +409,31 @@ export default function TradingCalendar() {
                 <button
                   onClick={prevMonth}
                   className="p-1.5 rounded-lg bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-slate-400 hover:text-white transition-colors"
+                  title="Previous Month"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <h2 className="text-sm md:text-base font-bold text-white light:text-slate-900 tracking-tight">
-                  {currentMonthName} {currentDate.year}
-                </h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm md:text-base font-bold text-white light:text-slate-900 tracking-tight">
+                    {currentMonthName} {currentDate.year}
+                  </h2>
+                  {stats.monthly_pnl !== 0 && (
+                    <span
+                      className={`text-xs font-bold px-2 py-0.5 rounded-full font-mono-numbers transition-colors ${
+                        stats.monthly_pnl > 0
+                          ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                          : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                      }`}
+                      title={`Total Monthly P&L: ${stats.monthly_pnl > 0 ? '+' : ''}${formatINR(stats.monthly_pnl)}`}
+                    >
+                      {stats.monthly_pnl > 0 ? `+${formatINR(stats.monthly_pnl)}` : formatINR(stats.monthly_pnl)}
+                    </span>
+                  )}
+                </div>
                 <button
                   onClick={nextMonth}
                   className="p-1.5 rounded-lg bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-slate-400 hover:text-white transition-colors"
+                  title="Next Month"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>

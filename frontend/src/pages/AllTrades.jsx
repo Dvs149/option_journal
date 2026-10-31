@@ -142,7 +142,7 @@ export default function AllTrades() {
   const [uploadingDrawerScreenshot, setUploadingDrawerScreenshot] = useState(false);
   const editFileInputRef = useRef(null);
   const drawerFileInputRef = useRef(null);
-  const [sortBy, setSortBy] = useState('latest');
+  const [sortBy, setSortBy] = useState('trade_date');
   const [sortOrder, setSortOrder] = useState('desc');
   const { showToast } = useToast();
   const setFeedbackMessage = (msg, type = 'success') => {
@@ -197,7 +197,7 @@ export default function AllTrades() {
           option_type: selectedOption === 'ALL' ? undefined : selectedOption,
           strategy_name: selectedStrategy === 'ALL' ? undefined : selectedStrategy,
           search: search || undefined,
-          sort_by: sortBy === 'latest' ? 'id' : sortBy,
+          sort_by: sortBy,
           sort_order: sortOrder,
           page,
           per_page: perPage,
@@ -1235,9 +1235,9 @@ export default function AllTrades() {
               className="px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none shrink-0"
               title="Sort Order"
             >
-              <option value="latest_desc">Latest First (Newest Entry)</option>
               <option value="trade_date_desc">Date (Newest to Oldest)</option>
               <option value="trade_date_asc">Date (Oldest to Newest)</option>
+              <option value="id_desc">Entry Time (Newest First)</option>
               <option value="net_pnl_desc">Net P&L (Highest First)</option>
               <option value="net_pnl_asc">Net P&L (Lowest First)</option>
             </select>

@@ -72,12 +72,12 @@ class TradeController extends Controller
             });
         }
 
-        // Sorting: default to latest created trade first
-        $sortBy = $request->input('sort_by', 'id');
+        // Sorting: default to latest trade date first (newest trade_date first, secondary sort by id desc)
+        $sortBy = $request->input('sort_by', 'trade_date');
         $sortOrder = $request->input('sort_order', 'desc');
 
-        if ($sortBy === 'latest') {
-            $sortBy = 'id';
+        if ($sortBy === 'latest' || $sortBy === 'date') {
+            $sortBy = 'trade_date';
         }
 
         $allowedSorts = ['id', 'created_at', 'trade_date', 'net_pnl', 'gross_profit', 'gross_loss', 'total_charges', 'strike_price', 'quantity'];
@@ -87,7 +87,7 @@ class TradeController extends Controller
                 $query->orderBy('id', 'desc');
             }
         } else {
-            $query->orderBy('id', 'desc');
+            $query->orderBy('trade_date', 'desc')->orderBy('id', 'desc');
         }
 
         $perPage = min((int) $request->input('per_page', 15), 100);

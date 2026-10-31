@@ -1744,7 +1744,7 @@ export default function AddTrade() {
         isOpen={showBulkImportModal}
         onClose={() => setShowBulkImportModal(false)}
         onImportSuccess={() => {
-          navigate('/trades');
+          // Keep modal open on the Success Results screen so user can review imported entries
         }}
       />
 
