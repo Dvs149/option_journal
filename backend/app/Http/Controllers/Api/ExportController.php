@@ -24,24 +24,135 @@ class ExportController extends Controller
 
     public function csv(Request $request): StreamedResponse
     {
-        return $this->exportService->exportCsv($request->user(), $request->input('trading_account_id'));
+        return $this->exportService->exportCsv(
+            $request->user(),
+            $request->input('trading_account_id'),
+            $request->all()
+        );
     }
 
     public function excel(Request $request): StreamedResponse
     {
-        return $this->exportService->exportExcel($request->user(), $request->input('trading_account_id'));
+        return $this->exportService->exportExcel(
+            $request->user(),
+            $request->input('trading_account_id'),
+            $request->all()
+        );
     }
 
     public function pdf(Request $request)
     {
         $user = $request->user();
+        $accountId = $request->input('trading_account_id');
+        $filter = $request->input('filter', 'this_month');
+        $fromDate = $request->input('from_date');
+        $toDate = $request->input('to_date');
+
+        [$startDate, $endDate] = $this->analyticsService->resolveDateRange($filter, $fromDate, $toDate);
+
+        // Fetch dashboard analytics for the date range
         $analytics = $this->analyticsService->getDashboardData(
             $user,
-            $request->input('trading_account_id'),
-            $request->input('filter', 'this_month')
+            $accountId,
+            $filter,
+            $fromDate,
+            $toDate
         );
 
-        return $this->exportService->exportPdf($user, $analytics);
+        // Query trades matching the user filters
+        $query = Trade::where('user_id', $user->id);
+
+        if ($accountId) {
+            $query->where('trading_account_id', $accountId);
+        } else {
+            $defaultAccount = $user->defaultAccount ?: $user->tradingAccounts()->first();
+            if ($defaultAccount) {
+                $query->where('trading_account_id', $defaultAccount->id);
+            }
+        }
+
+        if ($startDate) {
+            $query->where('trade_date', '>=', $startDate);
+        }
+        if ($endDate) {
+            $query->where('trade_date', '<=', $endDate);
+        }
+
+        if ($request->filled('index_name') && $request->input('index_name') !== 'ALL') {
+            $query->where('index_name', $request->input('index_name'));
+        }
+
+        if ($request->filled('strategy_name') && $request->input('strategy_name') !== 'ALL') {
+            $query->where('strategy_name', $request->input('strategy_name'));
+        }
+
+        if ($request->filled('option_type') && $request->input('option_type') !== 'ALL') {
+            $query->where('option_type', $request->input('option_type'));
+        }
+
+        if ($request->filled('trading_type') && $request->input('trading_type') !== 'ALL') {
+            $query->where('trading_type', $request->input('trading_type'));
+        }
+
+        if ($request->filled('search')) {
+            $search = '%' . $request->input('search') . '%';
+            $query->where(function ($q) use ($search) {
+                $q->where('strategy_name', 'like', $search)
+                  ->orWhere('index_name', 'like', $search)
+                  ->orWhere('entry_reason', 'like', $search)
+                  ->orWhere('exit_reason', 'like', $search)
+                  ->orWhere('notes', 'like', $search)
+                  ->orWhere('strike_price', 'like', $search);
+            });
+        }
+
+        $sortBy = $request->input('sort_by', 'trade_date');
+        $sortOrder = $request->input('sort_order', 'desc');
+        if ($sortBy === 'latest' || $sortBy === 'date') {
+            $sortBy = 'trade_date';
+        }
+
+        $allowedSorts = ['id', 'created_at', 'trade_date', 'net_pnl', 'gross_profit', 'gross_loss', 'total_charges', 'strike_price', 'quantity'];
+        if (in_array($sortBy, $allowedSorts)) {
+            $query->orderBy($sortBy, $sortOrder === 'asc' ? 'asc' : 'desc');
+            if ($sortBy !== 'id') {
+                $query->orderBy('id', 'desc');
+            }
+        } else {
+            $query->orderBy('trade_date', 'desc')->orderBy('id', 'desc');
+        }
+
+        $trades = $query->get();
+
+        // If specific category filters are active, update analytics stats so the summary cards match
+        if (
+            ($request->filled('index_name') && $request->input('index_name') !== 'ALL') ||
+            ($request->filled('strategy_name') && $request->input('strategy_name') !== 'ALL') ||
+            ($request->filled('option_type') && $request->input('option_type') !== 'ALL') ||
+            ($request->filled('trading_type') && $request->input('trading_type') !== 'ALL') ||
+            $request->filled('search')
+        ) {
+            $totalGrossProfit = (float) $trades->sum('gross_profit');
+            $totalGrossLoss = (float) $trades->sum('gross_loss');
+            $totalCharges = (float) $trades->sum('total_charges');
+            $totalNetProfit = (float) $trades->sum('net_pnl');
+            $totalTradesCount = $trades->count();
+            $winningTrades = $trades->where('net_pnl', '>', 0)->count();
+            $winRate = $totalTradesCount > 0 ? round(($winningTrades / $totalTradesCount) * 100, 1) : 0.0;
+            $profitFactor = $totalGrossLoss > 0
+                ? round($totalGrossProfit / $totalGrossLoss, 2)
+                : ($totalGrossProfit > 0 ? 99.99 : 0.00);
+
+            $analytics['stats']['total_net_profit'] = $totalNetProfit;
+            $analytics['stats']['total_gross_profit'] = $totalGrossProfit;
+            $analytics['stats']['total_gross_loss'] = $totalGrossLoss;
+            $analytics['stats']['total_charges'] = $totalCharges;
+            $analytics['stats']['total_trades'] = $totalTradesCount;
+            $analytics['stats']['win_rate'] = $winRate;
+            $analytics['stats']['profit_factor'] = $profitFactor;
+        }
+
+        return $this->exportService->exportPdf($user, $analytics, $trades);
     }
 
     public function backup(Request $request): JsonResponse

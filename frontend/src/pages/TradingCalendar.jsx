@@ -417,6 +417,14 @@ export default function TradingCalendar() {
                   <h2 className="text-sm md:text-base font-bold text-white light:text-slate-900 tracking-tight">
                     {currentMonthName} {currentDate.year}
                   </h2>
+                </div>
+                <button
+                  onClick={nextMonth}
+                  className="p-1.5 rounded-lg bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-slate-400 hover:text-white transition-colors"
+                  title="Next Month"
+                  >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
                   {stats.monthly_pnl !== 0 && (
                     <span
                       className={`text-xs font-bold px-2 py-0.5 rounded-full font-mono-numbers transition-colors ${
@@ -429,14 +437,6 @@ export default function TradingCalendar() {
                       {stats.monthly_pnl > 0 ? `+${formatINR(stats.monthly_pnl)}` : formatINR(stats.monthly_pnl)}
                     </span>
                   )}
-                </div>
-                <button
-                  onClick={nextMonth}
-                  className="p-1.5 rounded-lg bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-slate-400 hover:text-white transition-colors"
-                  title="Next Month"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
               </div>
 
               <div className="flex items-center gap-2">
@@ -460,9 +460,7 @@ export default function TradingCalendar() {
                   })}
                 </select>
 
-                <div className="hidden sm:block px-2.5 py-1 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-xs text-slate-300 light:text-slate-700">
-                  This Month
-                </div>
+                
               </div>
             </div>
 

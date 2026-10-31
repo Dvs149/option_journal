@@ -12,7 +12,7 @@ class ExportService
     /**
      * Generate CSV export stream for user's trades.
      */
-    public function exportCsv(User $user, ?int $accountId = null): StreamedResponse
+    public function exportCsv(User $user, ?int $accountId = null, array $filters = []): StreamedResponse
     {
         $fileName = 'trades_' . date('Y-m-d_His') . '.csv';
 
@@ -24,7 +24,7 @@ class ExportService
             'Expires' => '0',
         ];
 
-        return response()->stream(function () use ($user, $accountId) {
+        return response()->stream(function () use ($user, $accountId, $filters) {
             $handle = fopen('php://output', 'w');
 
             // UTF-8 BOM for Excel
@@ -62,7 +62,14 @@ class ExportService
 
             Trade::where('user_id', $user->id)
                 ->when($accountId, fn($q) => $q->where('trading_account_id', $accountId))
+                ->when(!empty($filters['from_date']), fn($q) => $q->where('trade_date', '>=', $filters['from_date']))
+                ->when(!empty($filters['to_date']), fn($q) => $q->where('trade_date', '<=', $filters['to_date']))
+                ->when(!empty($filters['index_name']) && $filters['index_name'] !== 'ALL', fn($q) => $q->where('index_name', $filters['index_name']))
+                ->when(!empty($filters['strategy_name']) && $filters['strategy_name'] !== 'ALL', fn($q) => $q->where('strategy_name', $filters['strategy_name']))
+                ->when(!empty($filters['option_type']) && $filters['option_type'] !== 'ALL', fn($q) => $q->where('option_type', $filters['option_type']))
+                ->when(!empty($filters['trading_type']) && $filters['trading_type'] !== 'ALL', fn($q) => $q->where('trading_type', $filters['trading_type']))
                 ->orderBy('trade_date', 'desc')
+                ->orderBy('id', 'desc')
                 ->chunk(200, function ($trades) use ($handle) {
                     foreach ($trades as $trade) {
                         fputcsv($handle, [
@@ -111,13 +118,16 @@ class ExportService
     /**
      * Generate PDF trading report.
      */
-    public function exportPdf(User $user, array $analyticsData)
+    public function exportPdf(User $user, array $analyticsData, $trades = null)
     {
         $pdf = Pdf::loadView('reports.trading_report', [
             'user' => $user,
             'data' => $analyticsData,
+            'trades' => $trades ?? collect([]),
             'generated_at' => now('Asia/Kolkata')->format('d M Y, h:i A'),
         ]);
+
+        $pdf->setPaper('a4', 'portrait');
 
         return $pdf->download('TradeJournal_Report_' . date('Y-m-d') . '.pdf');
     }

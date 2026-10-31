@@ -29,6 +29,7 @@ import {
   Pie,
   Cell,
   CartesianGrid,
+  ReferenceLine,
 } from 'recharts';
 import api from '../api/client';
 import { useFilter } from '../context/FilterContext';
@@ -307,6 +308,7 @@ export default function Dashboard() {
                   tickLine={false}
                   tickFormatter={(val) => formatCompactINR(val)}
                 />
+                <ReferenceLine y={0} stroke="#334155" strokeWidth={1} />
                 <Tooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
@@ -325,24 +327,14 @@ export default function Dashboard() {
                     return null;
                   }}
                 />
-                <Bar
-                  dataKey="pnl"
-                  radius={[4, 4, 0, 0]}
-                  shape={(props) => {
-                    const { fill, x, y, width, height, value } = props;
-                    const isPositive = value >= 0;
-                    return (
-                      <rect
-                        x={x}
-                        y={isPositive ? y : y}
-                        width={width}
-                        height={Math.max(2, Math.abs(height))}
-                        fill={isPositive ? '#10b981' : '#f43f5e'}
-                        rx={3}
-                      />
-                    );
-                  }}
-                />
+                <Bar dataKey="pnl" radius={[3, 3, 3, 3]}>
+                  {(charts.daily_pnl || []).map((entry, index) => (
+                    <Cell
+                      key={`daily-pnl-${index}`}
+                      fill={entry.pnl >= 0 ? '#10b981' : '#f43f5e'}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -562,6 +554,7 @@ export default function Dashboard() {
                   tickLine={false}
                   tickFormatter={(val) => formatCompactINR(val)}
                 />
+                <ReferenceLine y={0} stroke="#334155" strokeWidth={1} />
                 <Tooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
@@ -579,24 +572,14 @@ export default function Dashboard() {
                     return null;
                   }}
                 />
-                <Bar
-                  dataKey="pnl"
-                  fill="#10b981"
-                  radius={[3, 3, 0, 0]}
-                  shape={(props) => {
-                    const { fill, x, y, width, height, value } = props;
-                    return (
-                      <rect
-                        x={x}
-                        y={y}
-                        width={width}
-                        height={Math.max(2, Math.abs(height))}
-                        fill={value >= 0 ? '#10b981' : '#f43f5e'}
-                        rx={2}
-                      />
-                    );
-                  }}
-                />
+                <Bar dataKey="pnl" radius={[3, 3, 3, 3]}>
+                  {(charts.monthly_pnl || []).map((entry, index) => (
+                    <Cell
+                      key={`monthly-pnl-${index}`}
+                      fill={entry.pnl >= 0 ? '#10b981' : '#f43f5e'}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>

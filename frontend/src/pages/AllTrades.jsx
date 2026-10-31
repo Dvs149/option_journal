@@ -51,6 +51,7 @@ import { useFilter } from '../context/FilterContext';
 import { useBrokerage } from '../context/BrokerageContext';
 import { useDropdown } from '../context/DropdownContext';
 import BulkImportModal from '../components/trades/BulkImportModal';
+import * as XLSX from 'xlsx';
 
 // Helper to resolve individual CE and PE leg prices
 const getLegPrices = (trade) => {
@@ -100,7 +101,7 @@ export default function AllTrades() {
   });
 
   // Filters
-  const { dateRangeDisplay } = useFilter();
+  const { filter, customFrom, customTo, dateRangeDisplay } = useFilter();
   const { getActiveOptions } = useDropdown();
   const tradeIndices = useMemo(() => getActiveOptions('trades', 'index_name'), [getActiveOptions]);
   const tradeTradingTypes = useMemo(() => getActiveOptions('trades', 'trading_type'), [getActiveOptions]);
@@ -343,11 +344,167 @@ export default function AllTrades() {
   };
 
   // Export handlers
-  const handleExport = (type) => {
+  const [exporting, setExporting] = useState(false);
+
+  const handleExport = async (type) => {
     setShowExportMenu(false);
-    const token = localStorage.getItem('tj_token');
-    const url = `${api.defaults.baseURL}/export/${type}?token=${token}`;
-    window.open(url, '_blank');
+    if (exporting) return;
+
+    if (type === 'excel') {
+      await handleExportExcel();
+    } else if (type === 'csv') {
+      await handleExportCsv();
+    } else if (type === 'pdf') {
+      await handleExportPdf();
+    }
+  };
+
+  const handleExportExcel = async () => {
+    setExporting(true);
+    showToast('Generating Excel (.xlsx) file...', 'info');
+    try {
+      // Fetch all trades matching the current filter (up to 5000 trades)
+      const res = await api.get('/trades', {
+        params: {
+          filter,
+          from_date: filter === 'custom' ? customFrom : undefined,
+          to_date: filter === 'custom' ? customTo : undefined,
+          index_name: selectedIndex === 'ALL' ? undefined : selectedIndex,
+          trading_type: selectedTradingType === 'ALL' ? undefined : selectedTradingType,
+          option_type: selectedOption === 'ALL' ? undefined : selectedOption,
+          strategy_name: selectedStrategy === 'ALL' ? undefined : selectedStrategy,
+          search: search || undefined,
+          sort_by: sortBy,
+          sort_order: sortOrder,
+          per_page: 5000,
+        },
+      });
+
+      const list = res.data?.data || trades;
+      if (!list || list.length === 0) {
+        showToast('No trades found to export.', 'warning');
+        return;
+      }
+
+      const rows = list.map((t, idx) => ({
+        '#': idx + 1,
+        'Date': t.trade_date,
+        'Index / Symbol': t.index_name,
+        'Trading Type': t.trading_type || 'Intraday',
+        'Option Type': t.option_type,
+        'Strike Price': t.strike_price || '',
+        'Expiry Date': t.expiry_date || '',
+        'Lots': t.lots || 1,
+        'Quantity': t.quantity || '',
+        'Entry Premium (₹)': Number(t.entry_premium || 0),
+        'Exit Premium (₹)': Number(t.exit_premium || 0),
+        'Gross Profit (₹)': Number(t.gross_profit || 0),
+        'Gross Loss (₹)': Number(t.gross_loss || 0),
+        'Brokerage (₹)': Number(t.brokerage || 0),
+        'STT (₹)': Number(t.stt || 0),
+        'Exchange Charges (₹)': Number(t.exchange_charges || 0),
+        'GST (₹)': Number(t.gst || 0),
+        'SEBI Charges (₹)': Number(t.sebi_charges || 0),
+        'Stamp Duty (₹)': Number(t.stamp_duty || 0),
+        'Total Charges (₹)': Number(t.total_charges || 0),
+        'Net P&L (₹)': Number(t.net_pnl || 0),
+        'Strategy': t.strategy_name || '',
+        'Entry Reason': t.entry_reason || '',
+        'Exit Reason': t.exit_reason || '',
+        'Notes': t.notes || '',
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      worksheet['!cols'] = [
+        { wch: 4 }, { wch: 12 }, { wch: 14 }, { wch: 12 }, { wch: 10 },
+        { wch: 12 }, { wch: 12 }, { wch: 8 }, { wch: 10 }, { wch: 16 },
+        { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 14 }, { wch: 10 },
+        { wch: 18 }, { wch: 10 }, { wch: 14 }, { wch: 14 }, { wch: 16 },
+        { wch: 14 }, { wch: 18 }, { wch: 20 }, { wch: 20 }, { wch: 30 }
+      ];
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Trades');
+      const fileName = `trades_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
+      showToast(`✓ Exported ${list.length} trades to Excel (${fileName})!`, 'success');
+    } catch (err) {
+      console.error('Excel export error:', err);
+      showToast(`Failed to export Excel: ${err.message}`, 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportCsv = async () => {
+    setExporting(true);
+    showToast('Downloading CSV...', 'info');
+    try {
+      const res = await api.get('/export/csv', {
+        params: {
+          filter: filter || 'all',
+          from_date: filter === 'custom' ? customFrom : undefined,
+          to_date: filter === 'custom' ? customTo : undefined,
+          index_name: selectedIndex === 'ALL' ? undefined : selectedIndex,
+          trading_type: selectedTradingType === 'ALL' ? undefined : selectedTradingType,
+          option_type: selectedOption === 'ALL' ? undefined : selectedOption,
+          strategy_name: selectedStrategy === 'ALL' ? undefined : selectedStrategy,
+        },
+        responseType: 'blob',
+      });
+      const blob = new Blob([res.data], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `trades_export_${new Date().toISOString().split('T')[0]}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      showToast('✓ CSV file downloaded successfully!', 'success');
+    } catch (err) {
+      console.error('CSV export error:', err);
+      showToast(`Failed to export CSV: ${err.message}`, 'error');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setExporting(true);
+    showToast('Generating PDF Report with all trades...', 'info');
+    try {
+      const res = await api.get('/export/pdf', {
+        params: {
+          filter: filter || 'this_month',
+          from_date: filter === 'custom' ? customFrom : undefined,
+          to_date: filter === 'custom' ? customTo : undefined,
+          index_name: selectedIndex === 'ALL' ? undefined : selectedIndex,
+          trading_type: selectedTradingType === 'ALL' ? undefined : selectedTradingType,
+          option_type: selectedOption === 'ALL' ? undefined : selectedOption,
+          strategy_name: selectedStrategy === 'ALL' ? undefined : selectedStrategy,
+          search: search || undefined,
+          sort_by: sortBy,
+          sort_order: sortOrder,
+        },
+        responseType: 'blob',
+      });
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `TradeJournal_Report_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+      showToast('✓ PDF report downloaded successfully!', 'success');
+    } catch (err) {
+      console.error('PDF export error:', err);
+      showToast(`Failed to export PDF: ${err.message}`, 'error');
+    } finally {
+      setExporting(false);
+    }
   };
 
   // Delete trade
@@ -1267,37 +1424,56 @@ export default function AllTrades() {
             <div className="relative">
               <button
                 type="button"
+                disabled={exporting}
                 onClick={() => setShowExportMenu(!showExportMenu)}
-                className="px-3.5 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-slate-300 light:text-slate-700 hover:text-white light:hover:text-slate-900 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                className="px-3.5 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-slate-300 light:text-slate-700 hover:text-white light:hover:text-slate-900 text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-60"
               >
-                <span>Export</span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
+                {exporting ? (
+                  <>
+                    <RotateCw className="w-3.5 h-3.5 text-blue-400 animate-spin" />
+                    <span>Exporting...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Export</span>
+                    <ChevronDown className="w-3 h-3 text-slate-400" />
+                  </>
+                )}
               </button>
 
               {showExportMenu && (
-                <div className="absolute right-0 mt-1 w-36 py-1 bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-xl shadow-xl z-20 text-xs animate-fadeIn">
-                  <button
-                    onClick={() => handleExport('csv')}
-                    className="w-full px-3 py-2 text-left text-slate-300 light:text-slate-700 hover:bg-[#18233a] light:hover:bg-slate-100 flex items-center gap-2"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>CSV</span>
-                  </button>
-                  <button
-                    onClick={() => handleExport('excel')}
-                    className="w-full px-3 py-2 text-left text-slate-300 light:text-slate-700 hover:bg-[#18233a] light:hover:bg-slate-100 flex items-center gap-2"
-                  >
-                    <FileSpreadsheet className="w-3.5 h-3.5" />
-                    <span>Excel</span>
-                  </button>
-                  <button
-                    onClick={() => handleExport('pdf')}
-                    className="w-full px-3 py-2 text-left text-slate-300 light:text-slate-700 hover:bg-[#18233a] light:hover:bg-slate-100 flex items-center gap-2"
-                  >
-                    <FileText className="w-3.5 h-3.5" />
-                    <span>PDF</span>
-                  </button>
-                </div>
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setShowExportMenu(false)}
+                  />
+                  <div className="absolute right-0 mt-1 w-40 py-1 bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-xl shadow-xl z-20 text-xs animate-fadeIn">
+                    <button
+                      type="button"
+                      onClick={() => handleExport('csv')}
+                      className="w-full px-3 py-2 text-left text-slate-300 light:text-slate-700 hover:bg-[#18233a] light:hover:bg-slate-100 flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5 text-blue-400" />
+                      <span>CSV (.csv)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleExport('excel')}
+                      className="w-full px-3 py-2 text-left text-slate-300 light:text-slate-700 hover:bg-[#18233a] light:hover:bg-slate-100 flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Excel (.xlsx)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleExport('pdf')}
+                      className="w-full px-3 py-2 text-left text-slate-300 light:text-slate-700 hover:bg-[#18233a] light:hover:bg-slate-100 flex items-center gap-2 cursor-pointer transition-colors"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-rose-400" />
+                      <span>PDF Report</span>
+                    </button>
+                  </div>
+                </>
               )}
             </div>
 

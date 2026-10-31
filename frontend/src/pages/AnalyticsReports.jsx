@@ -198,7 +198,13 @@ export default function AnalyticsReports() {
   const handleExport = async (format = 'pdf') => {
     try {
       const endpoint = format === 'pdf' ? '/export/pdf' : '/export/csv';
-      const response = await api.get(endpoint, { responseType: 'blob' });
+      const periodParam = granularity === 'All' ? 'all' : (granularity === 'Monthly' ? 'this_month' : (granularity === 'Weekly' ? 'this_week' : 'all'));
+      const response = await api.get(endpoint, {
+        params: {
+          filter: periodParam,
+        },
+        responseType: 'blob'
+      });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
@@ -208,7 +214,7 @@ export default function AnalyticsReports() {
       link.remove();
     } catch (e) {
       console.error('Export error', e);
-      alert('Report exported successfully! Check your downloads folder.');
+      alert('Report export failed. Please try again.');
     }
   };
 
