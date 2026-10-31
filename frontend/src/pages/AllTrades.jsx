@@ -50,6 +50,7 @@ import { useToast } from '../context/ToastContext';
 import { useFilter } from '../context/FilterContext';
 import { useBrokerage } from '../context/BrokerageContext';
 import { useDropdown } from '../context/DropdownContext';
+import BulkImportModal from '../components/trades/BulkImportModal';
 
 // Helper to resolve individual CE and PE leg prices
 const getLegPrices = (trade) => {
@@ -115,6 +116,7 @@ export default function AllTrades() {
   const [perPage, setPerPage] = useState(10);
   const [selectedRowIds, setSelectedRowIds] = useState(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [deletingBulk, setDeletingBulk] = useState(false);
   const selectAllRef = useRef(null);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -1249,6 +1251,16 @@ export default function AllTrades() {
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Trade</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowBulkImportModal(true)}
+              className="px-3.5 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-blue-500/30 text-blue-400 hover:text-blue-300 hover:bg-blue-600/10 text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap"
+              title="Bulk Import trades from Zerodha, Kotak Neo, or Custom Excel"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>Bulk Import</span>
             </button>
 
             {/* Export Dropdown */}
@@ -3333,6 +3345,16 @@ export default function AllTrades() {
           </div>
         </div>
       )}
+
+      {/* Bulk Import Modal */}
+      <BulkImportModal
+        isOpen={showBulkImportModal}
+        onClose={() => setShowBulkImportModal(false)}
+        onImportSuccess={() => {
+          fetchTrades();
+          fetchStats();
+        }}
+      />
     </div>
   );
 }

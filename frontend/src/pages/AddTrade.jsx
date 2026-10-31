@@ -22,6 +22,7 @@ import { useLotSizes } from '../context/LotSizeContext';
 import { useToast } from '../context/ToastContext';
 import { useBrokerage } from '../context/BrokerageContext';
 import { useDropdown } from '../context/DropdownContext';
+import BulkImportModal from '../components/trades/BulkImportModal';
 
 export default function AddTrade() {
   const navigate = useNavigate();
@@ -38,6 +39,7 @@ export default function AddTrade() {
   // Active section tab: 'trade_details' | 'pnl_charges' | 'strategy_journal' | 'preview'
   const [activeTab, setActiveTab] = useState('trade_details');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { showToast } = useToast();
   const setSuccessMessage = (msg) => { if (msg) showToast(msg, 'success'); };
@@ -650,6 +652,16 @@ export default function AddTrade() {
         >
           <Eye className="w-3.5 h-3.5" />
           <span>Preview</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowBulkImportModal(true)}
+          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-blue-400 hover:text-blue-300 hover:bg-blue-600/10 border border-blue-500/30 bg-blue-500/5 shadow-sm"
+          title="Import trades in bulk from Zerodha, Kotak Neo, or Custom Excel"
+        >
+          <Upload className="w-3.5 h-3.5 text-blue-400" />
+          <span>Bulk Import</span>
         </button>
       </div>
 
@@ -1726,6 +1738,15 @@ export default function AddTrade() {
           </div>
         </div>
       )}
+
+      {/* Bulk Import Modal */}
+      <BulkImportModal
+        isOpen={showBulkImportModal}
+        onClose={() => setShowBulkImportModal(false)}
+        onImportSuccess={() => {
+          navigate('/trades');
+        }}
+      />
 
       {/* Lightbox Modal for enlarged view */}
       {viewingLightboxUrl && (

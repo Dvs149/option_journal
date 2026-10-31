@@ -46,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Trades Management
     Route::get('/trades/all-ids', [TradeController::class, 'allIds']);
     Route::post('/trades/bulk-delete', [TradeController::class, 'bulkDestroy']);
+    Route::post('/trades/bulk-import', [TradeController::class, 'bulkImport']);
     Route::post('/trades/reset-all-data', [TradeController::class, 'resetAllData']);
     Route::post('/trades/estimate-charges', [TradeController::class, 'estimateCharges']);
     Route::post('/trades/{trade}/duplicate', [TradeController::class, 'duplicate']);

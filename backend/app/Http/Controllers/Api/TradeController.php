@@ -701,6 +701,105 @@ class TradeController extends Controller
         ]);
     }
 
+    public function bulkImport(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $account = $user->defaultAccount ?: $user->tradingAccounts()->first();
+        $accountId = $request->input('trading_account_id', $account ? $account->id : null);
+
+        $tradesData = $request->input('trades', []);
+        if (!is_array($tradesData) || empty($tradesData)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No valid trades provided for bulk import',
+            ], 422);
+        }
+
+        $importedTrades = [];
+        $errors = [];
+
+        DB::beginTransaction();
+        try {
+            foreach ($tradesData as $index => $row) {
+                $rowNum = $index + 1;
+                if (empty($row['index_name'])) {
+                    $errors[] = ['row' => $rowNum, 'error' => 'Missing Index / Symbol'];
+                    continue;
+                }
+                if (empty($row['trade_date'])) {
+                    $errors[] = ['row' => $rowNum, 'error' => 'Missing Trade Date'];
+                    continue;
+                }
+                if (!isset($row['quantity']) || (int)$row['quantity'] <= 0) {
+                    $errors[] = ['row' => $rowNum, 'error' => 'Invalid quantity (must be > 0)'];
+                    continue;
+                }
+
+                $calculated = $this->calcService->calculate($row);
+
+                $trade = Trade::create([
+                    'user_id' => $user->id,
+                    'trading_account_id' => $accountId,
+                    'trade_date' => $row['trade_date'],
+                    'index_name' => strtoupper($row['index_name']),
+                    'trading_type' => $row['trading_type'] ?? 'Intraday',
+                    'strategy_name' => $row['strategy_name'] ?? 'Long Straddle',
+                    'option_type' => strtoupper($row['option_type'] ?? 'CE'),
+                    'strike_price' => isset($row['strike_price']) && is_numeric($row['strike_price']) ? $row['strike_price'] : null,
+                    'expiry_date' => !empty($row['expiry_date']) ? $row['expiry_date'] : null,
+                    'ce_entry_price' => $row['ce_entry_price'] ?? null,
+                    'pe_entry_price' => $row['pe_entry_price'] ?? null,
+                    'entry_premium' => isset($row['entry_premium']) && is_numeric($row['entry_premium']) ? $row['entry_premium'] : null,
+                    'ce_exit_price' => $row['ce_exit_price'] ?? null,
+                    'pe_exit_price' => $row['pe_exit_price'] ?? null,
+                    'exit_premium' => isset($row['exit_premium']) && is_numeric($row['exit_premium']) ? $row['exit_premium'] : null,
+                    'quantity' => (int) $row['quantity'],
+                    'lots' => max(1, (int) ($row['lots'] ?? 1)),
+                    'gross_profit' => $calculated['gross_profit'],
+                    'gross_loss' => $calculated['gross_loss'],
+                    'brokerage' => $calculated['brokerage'],
+                    'stt' => $calculated['stt'],
+                    'exchange_charges' => $calculated['exchange_charges'],
+                    'gst' => $calculated['gst'],
+                    'sebi_charges' => $calculated['sebi_charges'],
+                    'stamp_duty' => $calculated['stamp_duty'],
+                    'other_charges' => $calculated['other_charges'],
+                    'total_charges' => $calculated['total_charges'],
+                    'net_pnl' => $calculated['net_pnl'],
+                    'entry_reason' => $row['entry_reason'] ?? ('Bulk Import: ' . ($row['source_broker'] ?? 'Excel')),
+                    'exit_reason' => $row['exit_reason'] ?? null,
+                    'notes' => $row['notes'] ?? ('Imported from ' . ($row['source_broker'] ?? 'Excel')),
+                ]);
+
+                if (!empty($row['market_conditions']) || !empty($row['notes'])) {
+                    TradeJournal::create([
+                        'trade_id' => $trade->id,
+                        'market_conditions' => $row['market_conditions'] ?? null,
+                        'personal_notes' => $row['notes'] ?? null,
+                    ]);
+                }
+
+                $importedTrades[] = $trade->id;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully imported " . count($importedTrades) . " trades.",
+                'imported_count' => count($importedTrades),
+                'errors' => $errors,
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Bulk import failed: ' . $e->getMessage(),
+                'errors' => $errors,
+            ], 500);
+        }
+    }
+
     protected function authorizeTrade($user, Trade $trade): void
     {
         if ($trade->user_id !== $user->id) {
