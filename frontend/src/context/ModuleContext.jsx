@@ -10,6 +10,7 @@ import {
   BarChart3,
   Wallet,
   SlidersHorizontal,
+  Code2,
 } from 'lucide-react';
 import api from '../api/client';
 
@@ -85,6 +86,14 @@ export const APP_MODULES = [
     icon: Wallet,
     desc: 'Manage account deposits, withdrawals, ROI calculations, and live net capital balance',
     category: 'Account',
+  },
+  {
+    id: 'pine-scripts',
+    name: 'Pine Script Manager',
+    path: '/pine-scripts',
+    icon: Code2,
+    desc: 'Manage, organize, and copy TradingView Pine Script indicators, strategies, and webhook alerts',
+    category: 'Tools',
   },
   {
     id: 'dropdown-manager',

@@ -22,6 +22,7 @@ import StrategyAnalysis from './pages/StrategyAnalysis';
 import AnalyticsReports from './pages/AnalyticsReports';
 import CapitalManagement from './pages/CapitalManagement';
 import DropdownManager from './pages/DropdownManager';
+import PineScriptManager from './pages/PineScriptManager';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -80,6 +81,7 @@ export default function App() {
                           <Route path="strategy-analysis" element={<StrategyAnalysis />} />
                           <Route path="analytics" element={<AnalyticsReports />} />
                           <Route path="capital-management" element={<CapitalManagement />} />
+                          <Route path="pine-scripts" element={<PineScriptManager />} />
                           <Route path="dropdown-manager" element={<DropdownManager />} />
                           <Route path="dropdowns" element={<Navigate to="/dropdown-manager" replace />} />
                           <Route path="settings" element={<Settings />} />

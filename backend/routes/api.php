@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ExportController;
 use App\Http\Controllers\Api\JournalController;
 use App\Http\Controllers\Api\LotSizeController;
 use App\Http\Controllers\Api\ModuleVisibilityController;
+use App\Http\Controllers\Api\PineScriptController;
 use App\Http\Controllers\Api\RiskController;
 use App\Http\Controllers\Api\StrategyController;
 use App\Http\Controllers\Api\TradeController;
@@ -72,6 +73,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/strategies', [StrategyController::class, 'index']);
     Route::post('/strategies', [StrategyController::class, 'store']);
     Route::delete('/strategies/{strategy}', [StrategyController::class, 'destroy']);
+
+    // Pine Script Management
+    Route::get('/pine-scripts/export-json', [PineScriptController::class, 'exportJson']);
+    Route::post('/pine-scripts/import-json', [PineScriptController::class, 'importJson']);
+    Route::post('/pine-scripts/{pine_script}/favorite', [PineScriptController::class, 'toggleFavorite']);
+    Route::post('/pine-scripts/{pine_script}/duplicate', [PineScriptController::class, 'duplicate']);
+    Route::apiResource('pine-scripts', PineScriptController::class);
 
     // Capital & Targets
     Route::get('/capital', [CapitalController::class, 'index']);
