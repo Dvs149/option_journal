@@ -102,7 +102,12 @@ export default function AllTrades() {
   });
 
   // Filters
-  const { filter, customFrom, customTo, dateRangeDisplay } = useFilter();
+  const { filter, updateFilter, fromDate, toDate, customFrom, customTo, updateCustomDates, dateRangeDisplay } = useFilter();
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [localFrom, setLocalFrom] = useState(customFrom || '');
+  const [localTo, setLocalTo] = useState(customTo || '');
+  const datePickerRef = useRef(null);
+
   const { getActiveOptions } = useDropdown();
   const tradeIndices = useMemo(() => getActiveOptions('trades', 'index_name'), [getActiveOptions]);
   const tradeTradingTypes = useMemo(() => getActiveOptions('trades', 'trading_type'), [getActiveOptions]);
@@ -162,18 +167,24 @@ export default function AllTrades() {
     setPage(1);
   };
 
-  // Fetch Dashboard Stats & Trades
+  // Fetch Dashboard Stats & Trades when date filters or category filters change
   useEffect(() => {
     fetchStats();
-  }, []);
+  }, [filter, fromDate, toDate, customFrom, customTo]);
 
   useEffect(() => {
     fetchTrades();
-  }, [selectedIndex, selectedTradingType, selectedOption, selectedStrategy, page, perPage, sortBy, sortOrder]);
+  }, [filter, fromDate, toDate, customFrom, customTo, selectedIndex, selectedTradingType, selectedOption, selectedStrategy, page, perPage, sortBy, sortOrder]);
 
   const fetchStats = async () => {
     try {
-      const res = await api.get('/dashboard', { params: { filter: 'all' } });
+      const res = await api.get('/dashboard', {
+        params: {
+          filter: filter || 'this_month',
+          from_date: filter === 'custom' ? customFrom : (fromDate || undefined),
+          to_date: filter === 'custom' ? customTo : (toDate || undefined),
+        },
+      });
       if (res.data?.stats) {
         const s = res.data.stats;
         setStats({
@@ -195,6 +206,9 @@ export default function AllTrades() {
       setLoading(true);
       const res = await api.get('/trades', {
         params: {
+          filter: filter || 'this_month',
+          from_date: filter === 'custom' ? customFrom : (fromDate || undefined),
+          to_date: filter === 'custom' ? customTo : (toDate || undefined),
           index_name: selectedIndex === 'ALL' ? undefined : selectedIndex,
           trading_type: selectedTradingType === 'ALL' ? undefined : selectedTradingType,
           option_type: selectedOption === 'ALL' ? undefined : selectedOption,
@@ -1235,18 +1249,112 @@ export default function AllTrades() {
       <div className="p-4 rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-3.5">
         {/* Row 1: Filter Dropdowns */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
-          {/* Date Range Selector */}
-          <div>
-            <label className="block text-slate-400 text-[11px] mb-1">Date Range</label>
-            <div className="relative">
-              <input
-                type="text"
-                readOnly
-                value={dateRangeDisplay || 'All Time'}
-                className="w-full pl-3 pr-8 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 cursor-pointer focus:outline-none"
-              />
-              <Calendar className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
+          {/* Date Range Selector (Interactive Popover) */}
+          <div className="relative" ref={datePickerRef}>
+            <label className="block text-slate-400 text-[11px] mb-1 font-medium">Date Range</label>
+            <button
+              type="button"
+              onClick={() => {
+                setLocalFrom(customFrom || fromDate || '');
+                setLocalTo(customTo || toDate || '');
+                setShowDatePicker(!showDatePicker);
+              }}
+              className="w-full px-3 py-2 h-[38px] rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 hover:border-blue-500 light:hover:border-blue-500 text-xs text-white light:text-slate-900 cursor-pointer focus:outline-none flex items-center justify-between gap-2 transition-colors shadow-sm text-left"
+            >
+              <span className="truncate font-medium">{dateRangeDisplay || 'All Time'}</span>
+              <Calendar className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+            </button>
+
+            {/* Date Picker Popover */}
+            {showDatePicker && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setShowDatePicker(false)}
+                />
+                <div className="absolute left-0 top-full mt-1.5 w-72 sm:w-80 p-3.5 rounded-2xl bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-2xl z-50 animate-fadeIn space-y-3">
+                  <div className="flex items-center justify-between border-b border-[#1e293b] light:border-slate-200 pb-2">
+                    <span className="text-xs font-bold text-white light:text-slate-900">Select Date Range</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowDatePicker(false)}
+                      className="p-1 rounded-lg text-slate-400 hover:text-white light:hover:text-slate-900"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  {/* Presets */}
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {[
+                      { key: 'this_month', label: 'This Month' },
+                      { key: 'last_month', label: 'Last Month' },
+                      { key: 'today', label: 'Today' },
+                      { key: 'yesterday', label: 'Yesterday' },
+                      { key: 'this_week', label: 'This Week' },
+                      { key: 'this_year', label: 'This Year' },
+                      { key: 'all', label: 'All Time' },
+                    ].map((preset) => (
+                      <button
+                        key={preset.key}
+                        type="button"
+                        onClick={() => {
+                          updateFilter(preset.key);
+                          setShowDatePicker(false);
+                          setPage(1);
+                        }}
+                        className={`px-2.5 py-1.5 rounded-lg text-left text-xs font-medium transition-colors cursor-pointer ${
+                          filter === preset.key
+                            ? 'bg-blue-600 text-white font-semibold shadow-sm'
+                            : 'bg-[#162033] light:bg-slate-100 text-slate-300 light:text-slate-700 hover:bg-[#1f2d47] light:hover:bg-slate-200'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Custom Range Picker */}
+                  <div className="pt-2 border-t border-[#1e293b] light:border-slate-200 space-y-2">
+                    <span className="text-[11px] font-semibold text-slate-400 block">Custom Date Range</span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-0.5">From</label>
+                        <input
+                          type="date"
+                          value={localFrom}
+                          onChange={(e) => setLocalFrom(e.target.value)}
+                          className="w-full px-2 py-1 rounded-lg bg-[#162033] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-[11px] text-white light:text-slate-900 focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-slate-400 block mb-0.5">To</label>
+                        <input
+                          type="date"
+                          value={localTo}
+                          onChange={(e) => setLocalTo(e.target.value)}
+                          className="w-full px-2 py-1 rounded-lg bg-[#162033] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-[11px] text-white light:text-slate-900 focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={!localFrom || !localTo}
+                      onClick={() => {
+                        if (localFrom && localTo) {
+                          updateCustomDates(localFrom, localTo);
+                          setShowDatePicker(false);
+                          setPage(1);
+                        }
+                      }}
+                      className="w-full py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow transition-colors disabled:opacity-50 cursor-pointer"
+                    >
+                      Apply Custom Range
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Index Selector */}
@@ -1817,8 +1925,10 @@ export default function AllTrades() {
             <div className="flex items-center justify-between pb-2 border-b border-[#1e293b] light:border-slate-200">
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={() => setSelectedTrade(null)}
-                  className="p-1 rounded-lg hover:bg-[#162033] text-slate-400 hover:text-white transition-colors"
+                  className="p-1 rounded-lg hover:bg-[#162033] light:hover:bg-slate-100 text-slate-400 hover:text-white light:hover:text-slate-900 transition-colors"
+                  title="Back"
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </button>
@@ -1826,12 +1936,34 @@ export default function AllTrades() {
                   Trade Details
                 </h3>
               </div>
-              <button
-                onClick={() => setSelectedTrade(null)}
-                className="p-1 rounded-lg hover:bg-[#162033] text-slate-400 hover:text-white"
-              >
-                <X className="w-4 h-4" />
-              </button>
+
+              {/* Action Icons: Edit, Delete, Close */}
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={(e) => handleOpenEdit(selectedTrade, e)}
+                  className="p-1.5 rounded-lg hover:bg-[#162033] light:hover:bg-slate-100 text-slate-400 hover:text-blue-400 transition-colors"
+                  title="Edit Trade"
+                >
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTradeToDelete(selectedTrade)}
+                  className="p-1.5 rounded-lg hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 transition-colors"
+                  title="Delete Trade"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedTrade(null)}
+                  className="p-1.5 rounded-lg hover:bg-[#162033] light:hover:bg-slate-100 text-slate-400 hover:text-white light:hover:text-slate-900 transition-colors ml-0.5"
+                  title="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             {/* 3 Drawer Tabs: Details / Charges / Journal */}
@@ -2177,24 +2309,6 @@ export default function AllTrades() {
                       </span>
                     </div>
                   )}
-                </div>
-
-                {/* Action Buttons in Drawer */}
-                <div className="grid grid-cols-2 gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={(e) => handleOpenEdit(selectedTrade, e)}
-                    className="py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-colors shadow-md shadow-blue-600/20"
-                  >
-                    Edit Trade
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setTradeToDelete(selectedTrade)}
-                    className="py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold text-xs transition-colors"
-                  >
-                    Delete Trade
-                  </button>
                 </div>
               </div>
             )}

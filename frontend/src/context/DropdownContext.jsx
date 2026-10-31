@@ -15,7 +15,7 @@ export const MODULE_METADATA = {
   },
   'trades': {
     name: 'All Trades',
-    desc: 'Filter dropdowns used in trade list & exports (Index, Trading Type, Option Type, Strategy Filter)',
+    desc: 'Filter dropdowns used in trade list & exports (Date Period, Index, Trading Type, Option Type, Strategy Filter)',
     icon: 'ListFilter',
     color: 'emerald',
   },

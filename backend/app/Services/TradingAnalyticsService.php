@@ -91,8 +91,9 @@ class TradingAnalyticsService
 
         // Filtered trades for current view
         $filteredTrades = $allTrades->filter(function ($trade) use ($startDate, $endDate) {
-            if ($startDate && $trade->trade_date < $startDate) return false;
-            if ($endDate && $trade->trade_date > $endDate) return false;
+            $tDate = Carbon::parse($trade->trade_date)->toDateString();
+            if ($startDate && $tDate < $startDate) return false;
+            if ($endDate && $tDate > $endDate) return false;
             return true;
         })->values();
 
@@ -129,14 +130,20 @@ class TradingAnalyticsService
 
         $weekStart = Carbon::today('Asia/Kolkata')->startOfWeek()->toDateString();
         $weekEnd = Carbon::today('Asia/Kolkata')->endOfWeek()->toDateString();
-        $thisWeekPnl = (float) $allTrades->filter(fn($t) => $t->trade_date >= $weekStart && $t->trade_date <= $weekEnd)->sum('net_pnl');
+        $thisWeekPnl = (float) $allTrades->filter(function ($t) use ($weekStart, $weekEnd) {
+            $d = Carbon::parse($t->trade_date)->toDateString();
+            return $d >= $weekStart && $d <= $weekEnd;
+        })->sum('net_pnl');
 
         $monthStart = Carbon::today('Asia/Kolkata')->startOfMonth()->toDateString();
         $monthEnd = Carbon::today('Asia/Kolkata')->endOfMonth()->toDateString();
-        $thisMonthPnl = (float) $allTrades->filter(fn($t) => $t->trade_date >= $monthStart && $t->trade_date <= $monthEnd)->sum('net_pnl');
+        $thisMonthPnl = (float) $allTrades->filter(function ($t) use ($monthStart, $monthEnd) {
+            $d = Carbon::parse($t->trade_date)->toDateString();
+            return $d >= $monthStart && $d <= $monthEnd;
+        })->sum('net_pnl');
 
         // Daily grouping for win rate and daily stats
-        $dailyGrouped = $filteredTrades->groupBy('trade_date')->map(function ($trades, $date) {
+        $dailyGrouped = $filteredTrades->groupBy(fn($t) => Carbon::parse($t->trade_date)->toDateString())->map(function ($trades, $date) {
             $net = (float) $trades->sum('net_pnl');
             $grossP = (float) $trades->sum('gross_profit');
             $grossL = (float) $trades->sum('gross_loss');
@@ -299,7 +306,7 @@ class TradingAnalyticsService
      */
     public function buildEquityCurveSeries(float $initialCapital, Collection $trades, ?string $startDate = null, ?string $endDate = null): array
     {
-        $daily = $trades->groupBy('trade_date')->sortKeys();
+        $daily = $trades->groupBy(fn($t) => Carbon::parse($t->trade_date)->toDateString())->sortKeys();
         
         $cumulativePnl = 0.0;
         $runningCapital = $initialCapital;
@@ -343,7 +350,7 @@ class TradingAnalyticsService
         $maxDrawdown = 0.0;
         $maxDrawdownPct = 0.0;
 
-        $dailyTrades = $trades->groupBy('trade_date')->sortKeys();
+        $dailyTrades = $trades->groupBy(fn($t) => Carbon::parse($t->trade_date)->toDateString())->sortKeys();
 
         foreach ($dailyTrades as $date => $dayTrades) {
             $dayPnl = (float) $dayTrades->sum('net_pnl');
@@ -382,7 +389,7 @@ class TradingAnalyticsService
         for ($m = 1; $m <= 12; $m++) {
             $monthNum = str_pad($m, 2, '0', STR_PAD_LEFT);
             $prefix = "{$year}-{$monthNum}";
-            $monthTrades = $trades->filter(fn($t) => str_starts_with($t->trade_date, $prefix));
+            $monthTrades = $trades->filter(fn($t) => str_starts_with(Carbon::parse($t->trade_date)->toDateString(), $prefix));
             $net = (float) $monthTrades->sum('net_pnl');
             $grossP = (float) $monthTrades->sum('gross_profit');
             $grossL = (float) $monthTrades->sum('gross_loss');
@@ -527,7 +534,7 @@ class TradingAnalyticsService
         $todayCurrentProfit = $todayNet > 0 ? $todayNet : 0.0;
 
         // Consecutive winning / losing streaks
-        $daily = $allTrades->groupBy('trade_date')->sortKeysDesc();
+        $daily = $allTrades->groupBy(fn($t) => Carbon::parse($t->trade_date)->toDateString())->sortKeysDesc();
         $consecutiveWins = 0;
         $consecutiveLosses = 0;
 
@@ -613,7 +620,7 @@ class TradingAnalyticsService
             ->orderBy('trade_date', 'asc')
             ->get();
 
-        $daily = $trades->groupBy('trade_date')->map(function ($dayTrades, $date) {
+        $daily = $trades->groupBy(fn($t) => Carbon::parse($t->trade_date)->toDateString())->map(function ($dayTrades, $date) {
             $net = (float) $dayTrades->sum('net_pnl');
             $grossP = (float) $dayTrades->sum('gross_profit');
             $grossL = (float) $dayTrades->sum('gross_loss');
@@ -675,7 +682,7 @@ class TradingAnalyticsService
     public function calculateWeekdayAnalytics(Collection $trades): array
     {
         $weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-        $daily = $trades->groupBy('trade_date');
+        $daily = $trades->groupBy(fn($t) => Carbon::parse($t->trade_date)->toDateString());
 
         $stats = [];
         foreach ($weekdays as $dayName) {
@@ -725,7 +732,7 @@ class TradingAnalyticsService
 
         $trades = $query->get();
 
-        $dailyGrouped = $trades->groupBy('trade_date')->map(fn($t, $d) => (float) $t->sum('net_pnl'));
+        $dailyGrouped = $trades->groupBy(fn($t) => Carbon::parse($t->trade_date)->toDateString())->map(fn($t, $d) => (float) $t->sum('net_pnl'));
 
         // Best and Worst trading days
         $bestDay = $dailyGrouped->sortDesc()->keys()->first();

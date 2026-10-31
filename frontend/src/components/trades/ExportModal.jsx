@@ -14,7 +14,6 @@ import {
   BarChart3,
   SlidersHorizontal,
   Sparkles,
-  ChevronDown,
   CheckSquare,
   Square,
   FileCheck,
@@ -22,6 +21,7 @@ import {
 import * as XLSX from 'xlsx';
 import api from '../../api/client';
 import { useToast } from '../../context/ToastContext';
+import { useDropdown } from '../../context/DropdownContext';
 
 // Column definitions for Trade-by-Trade Log
 const TRADE_COLUMNS = [
@@ -105,6 +105,63 @@ export default function ExportModal({
   tradeStrategies = [],
 }) {
   const { showToast } = useToast();
+  const { getActiveOptions } = useDropdown();
+
+  // Dynamically load active options from Dropdown Manager
+  const activeDatePeriods = useMemo(() => {
+    const list = getActiveOptions('trades', 'date_period');
+    if (list && list.length > 0) return list;
+    return [
+      { option_value: 'this_month', option_label: 'This Month' },
+      { option_value: 'last_month', option_label: 'Last Month' },
+      { option_value: 'today', option_label: 'Today' },
+      { option_value: 'yesterday', option_label: 'Yesterday' },
+      { option_value: 'this_week', option_label: 'This Week' },
+      { option_value: 'this_year', option_label: 'This Year' },
+      { option_value: 'all', option_label: 'All Time' },
+      { option_value: 'custom', option_label: 'Custom Date Range' },
+    ];
+  }, [getActiveOptions]);
+
+  const activeIndices = useMemo(() => {
+    const list = getActiveOptions('trades', 'index_name');
+    if (list && list.length > 0) return list;
+    if (tradeIndices && tradeIndices.length > 0) return tradeIndices;
+    return Object.keys(lotSizes)
+      .filter((idx) => idx !== 'BANK NIFTY')
+      .map((idx) => ({ option_value: idx, option_label: idx === 'BANKNIFTY' ? 'BANK NIFTY' : idx }));
+  }, [getActiveOptions, tradeIndices, lotSizes]);
+
+  const activeTradingTypes = useMemo(() => {
+    const list = getActiveOptions('trades', 'trading_type');
+    if (list && list.length > 0) return list;
+    if (tradeTradingTypes && tradeTradingTypes.length > 0) return tradeTradingTypes;
+    return [
+      { option_value: 'Intraday', option_label: 'Intraday' },
+      { option_value: 'BTST', option_label: 'BTST' },
+      { option_value: 'Overnight', option_label: 'Overnight' },
+      { option_value: 'Positional', option_label: 'Positional' },
+      { option_value: 'Scalping', option_label: 'Scalping' },
+    ];
+  }, [getActiveOptions, tradeTradingTypes]);
+
+  const activeOptionTypes = useMemo(() => {
+    const list = getActiveOptions('trades', 'option_type');
+    if (list && list.length > 0) return list;
+    if (tradeOptionTypes && tradeOptionTypes.length > 0) return tradeOptionTypes;
+    return [
+      { option_value: 'CE', option_label: 'CE (Calls)' },
+      { option_value: 'PE', option_label: 'PE (Puts)' },
+      { option_value: 'Both', option_label: 'Both' },
+    ];
+  }, [getActiveOptions, tradeOptionTypes]);
+
+  const activeStrategies = useMemo(() => {
+    const list = getActiveOptions('trades', 'strategy_name');
+    if (list && list.length > 0) return list;
+    if (tradeStrategies && tradeStrategies.length > 0) return tradeStrategies;
+    return [];
+  }, [getActiveOptions, tradeStrategies]);
 
   // Export File Format: 'xlsx' | 'csv' | 'pdf'
   const [format, setFormat] = useState('xlsx');
@@ -761,94 +818,89 @@ export default function ExportModal({
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
               {/* Date Period Filter */}
               <div>
-                <label className="block text-[11px] text-slate-400 mb-1">Date Period</label>
-                <div className="relative">
-                  <select
-                    value={filterPeriod}
-                    onChange={(e) => setFilterPeriod(e.target.value)}
-                    className="w-full appearance-none px-3 py-2 rounded-xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 pr-8 cursor-pointer"
-                  >
-                    <option value="this_month">This Month</option>
-                    <option value="last_month">Last Month</option>
-                    <option value="today">Today</option>
-                    <option value="yesterday">Yesterday</option>
-                    <option value="this_week">This Week</option>
-                    <option value="this_year">This Year</option>
-                    <option value="all">All Time</option>
-                    <option value="custom">Custom Date Range</option>
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+                <label className="block text-[11px] text-slate-400 mb-1 font-medium">Date Period</label>
+                <select
+                  value={filterPeriod}
+                  onChange={(e) => setFilterPeriod(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 cursor-pointer transition-colors"
+                >
+                  {activeDatePeriods.map((opt) => (
+                    <option key={opt.option_value} value={opt.option_value}>
+                      {opt.option_label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Index Filter */}
               <div>
-                <label className="block text-[11px] text-slate-400 mb-1">Index / Symbol</label>
-                <div className="relative">
-                  <select
-                    value={selectedIndex}
-                    onChange={(e) => setSelectedIndex(e.target.value)}
-                    className="w-full appearance-none px-3 py-2 rounded-xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 pr-8 cursor-pointer"
-                  >
-                    <option value="ALL">All Indices</option>
-                    {Object.keys(lotSizes)
-                      .filter((idx) => idx !== 'BANK NIFTY')
-                      .map((idx) => (
-                        <option key={idx} value={idx}>
-                          {idx === 'BANKNIFTY' ? 'BANK NIFTY' : idx}
-                        </option>
-                      ))}
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+                <label className="block text-[11px] text-slate-400 mb-1 font-medium">Index / Symbol</label>
+                <select
+                  value={selectedIndex}
+                  onChange={(e) => setSelectedIndex(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 cursor-pointer transition-colors"
+                >
+                  <option value="ALL">All Indices</option>
+                  {activeIndices.map((opt) => (
+                    <option key={opt.option_value} value={opt.option_value}>
+                      {opt.option_label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Trading Type */}
               <div>
-                <label className="block text-[11px] text-slate-400 mb-1">Trading Type</label>
-                <div className="relative">
-                  <select
-                    value={selectedTradingType}
-                    onChange={(e) => setSelectedTradingType(e.target.value)}
-                    className="w-full appearance-none px-3 py-2 rounded-xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 pr-8 cursor-pointer"
-                  >
-                    <option value="ALL">All Types</option>
-                    {tradeTradingTypes && tradeTradingTypes.length > 0 ? (
-                      tradeTradingTypes.map((opt) => (
-                        <option key={opt.option_value} value={opt.option_value}>
-                          {opt.option_label}
-                        </option>
-                      ))
-                    ) : (
-                      <>
-                        <option value="Intraday">Intraday</option>
-                        <option value="BTST">BTST</option>
-                        <option value="Positional">Positional</option>
-                      </>
-                    )}
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+                <label className="block text-[11px] text-slate-400 mb-1 font-medium">Trading Type</label>
+                <select
+                  value={selectedTradingType}
+                  onChange={(e) => setSelectedTradingType(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 cursor-pointer transition-colors"
+                >
+                  <option value="ALL">All Types</option>
+                  {activeTradingTypes.map((opt) => (
+                    <option key={opt.option_value} value={opt.option_value}>
+                      {opt.option_label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Option Type */}
               <div>
-                <label className="block text-[11px] text-slate-400 mb-1">Option Type</label>
-                <div className="relative">
-                  <select
-                    value={selectedOption}
-                    onChange={(e) => setSelectedOption(e.target.value)}
-                    className="w-full appearance-none px-3 py-2 rounded-xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 pr-8 cursor-pointer"
-                  >
-                    <option value="ALL">All Options</option>
-                    <option value="CE">CE (Calls)</option>
-                    <option value="PE">PE (Puts)</option>
-                  </select>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
+                <label className="block text-[11px] text-slate-400 mb-1 font-medium">Option Type</label>
+                <select
+                  value={selectedOption}
+                  onChange={(e) => setSelectedOption(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 cursor-pointer transition-colors"
+                >
+                  <option value="ALL">All Options</option>
+                  {activeOptionTypes.map((opt) => (
+                    <option key={opt.option_value} value={opt.option_value}>
+                      {opt.option_label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Strategy Filter */}
+              <div>
+                <label className="block text-[11px] text-slate-400 mb-1 font-medium">Strategy</label>
+                <select
+                  value={selectedStrategy}
+                  onChange={(e) => setSelectedStrategy(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 cursor-pointer transition-colors"
+                >
+                  <option value="ALL">All Strategies</option>
+                  {activeStrategies.map((opt) => (
+                    <option key={opt.option_value} value={opt.option_value}>
+                      {opt.option_label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 

@@ -12,7 +12,6 @@ import {
   TrendingUp,
   RefreshCw,
   Layers,
-  ChevronDown,
   Sparkles,
   ExternalLink,
   PlusCircle,
@@ -412,11 +411,11 @@ export default function BulkImportModal({ isOpen, onClose, onImportSuccess }) {
                   <label className="text-xs font-semibold text-slate-300 light:text-slate-700 block">
                     Select Broker / File Format *
                   </label>
-                  <div className="relative">
+                  <div>
                     <select
                       value={selectedBroker}
                       onChange={(e) => handleBrokerChange(e.target.value)}
-                      className="w-full appearance-none px-4 py-2.5 rounded-2xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-semibold focus:outline-none focus:border-blue-500 pr-10 cursor-pointer shadow-inner"
+                      className="w-full px-4 py-2.5 rounded-2xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs font-semibold focus:outline-none focus:border-blue-500 cursor-pointer shadow-inner"
                     >
                       {BROKER_OPTIONS.map((opt) => (
                         <option key={opt.id} value={opt.id}>
@@ -424,7 +423,6 @@ export default function BulkImportModal({ isOpen, onClose, onImportSuccess }) {
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
                   <p className="text-[11px] text-slate-400">
                     {currentBroker.description}

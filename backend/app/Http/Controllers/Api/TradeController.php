@@ -59,6 +59,12 @@ class TradeController extends Controller
             $query->where('trade_date', '<=', $request->to_date);
         }
 
+        if (!$request->filled('from_date') && !$request->filled('to_date') && $request->filled('filter')) {
+            [$start, $end] = app(\App\Services\TradingAnalyticsService::class)->resolveDateRange($request->filter);
+            if ($start) $query->where('trade_date', '>=', $start);
+            if ($end) $query->where('trade_date', '<=', $end);
+        }
+
         // Search text
         if ($request->filled('search')) {
             $search = '%' . $request->search . '%';
@@ -500,6 +506,12 @@ class TradeController extends Controller
 
         if ($request->filled('to_date')) {
             $query->where('trade_date', '<=', $request->to_date);
+        }
+
+        if (!$request->filled('from_date') && !$request->filled('to_date') && $request->filled('filter')) {
+            [$start, $end] = app(\App\Services\TradingAnalyticsService::class)->resolveDateRange($request->filter);
+            if ($start) $query->where('trade_date', '>=', $start);
+            if ($end) $query->where('trade_date', '<=', $end);
         }
 
         if ($request->filled('search')) {

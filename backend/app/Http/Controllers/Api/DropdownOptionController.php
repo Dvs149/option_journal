@@ -16,9 +16,11 @@ class DropdownOptionController extends Controller
     {
         $user = $request->user();
 
-        // Check if user has any options; if not, seed defaults
-        $count = DropdownOption::where('user_id', $user->id)->count();
-        if ($count === 0) {
+        // Ensure user has default options seeded, including newly added dropdown keys like date_period
+        $hasDatePeriod = DropdownOption::where('user_id', $user->id)
+            ->where('dropdown_key', 'date_period')
+            ->exists();
+        if (!$hasDatePeriod) {
             DropdownOption::seedDefaultsForUser($user->id);
         }
 
