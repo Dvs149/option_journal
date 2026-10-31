@@ -116,19 +116,28 @@ class ExportService
     }
 
     /**
-     * Generate PDF trading report.
+     * Generate PDF trading report with optional aggregation and custom columns.
      */
-    public function exportPdf(User $user, array $analyticsData, $trades = null)
-    {
+    public function exportPdf(
+        User $user,
+        array $analyticsData,
+        $trades = null,
+        string $reportType = 'trades',
+        array $selectedColumns = [],
+        $aggregatedData = null
+    ) {
         $pdf = Pdf::loadView('reports.trading_report', [
             'user' => $user,
             'data' => $analyticsData,
             'trades' => $trades ?? collect([]),
+            'report_type' => $reportType,
+            'selected_columns' => $selectedColumns,
+            'aggregated_data' => $aggregatedData ?? collect([]),
             'generated_at' => now('Asia/Kolkata')->format('d M Y, h:i A'),
         ]);
 
         $pdf->setPaper('a4', 'portrait');
 
-        return $pdf->download('TradeJournal_Report_' . date('Y-m-d') . '.pdf');
+        return $pdf->download('TradeJournal_' . strtoupper($reportType) . '_Report_' . date('Y-m-d') . '.pdf');
     }
 }

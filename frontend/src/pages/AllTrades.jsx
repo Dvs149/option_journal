@@ -51,6 +51,7 @@ import { useFilter } from '../context/FilterContext';
 import { useBrokerage } from '../context/BrokerageContext';
 import { useDropdown } from '../context/DropdownContext';
 import BulkImportModal from '../components/trades/BulkImportModal';
+import ExportModal from '../components/trades/ExportModal';
 import * as XLSX from 'xlsx';
 
 // Helper to resolve individual CE and PE leg prices
@@ -121,6 +122,7 @@ export default function AllTrades() {
   const [deletingBulk, setDeletingBulk] = useState(false);
   const selectAllRef = useRef(null);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   // Selected trade for side drawer
   const [selectedTrade, setSelectedTrade] = useState(null);
@@ -1420,71 +1422,17 @@ export default function AllTrades() {
               <span>Bulk Import</span>
             </button>
 
-            {/* Export Dropdown */}
-            <div className="relative">
-              <button
-                type="button"
-                disabled={exporting}
-                onClick={() => setShowExportMenu(!showExportMenu)}
-                className="px-3.5 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-slate-300 light:text-slate-700 hover:text-white light:hover:text-slate-900 text-xs font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-60"
-              >
-                {exporting ? (
-                  <>
-                    <RotateCw className="w-3.5 h-3.5 text-blue-400 animate-spin" />
-                    <span>Exporting...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Export</span>
-                    <ChevronDown className="w-3 h-3 text-slate-400" />
-                  </>
-                )}
-              </button>
-
-              {showExportMenu && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    onClick={() => setShowExportMenu(false)}
-                  />
-                  <div className="absolute right-0 mt-1 w-40 py-1 bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-xl shadow-xl z-20 text-xs animate-fadeIn">
-                    <button
-                      type="button"
-                      onClick={() => handleExport('csv')}
-                      className="w-full px-3 py-2 text-left text-slate-300 light:text-slate-700 hover:bg-[#18233a] light:hover:bg-slate-100 flex items-center gap-2 cursor-pointer transition-colors"
-                    >
-                      <Download className="w-3.5 h-3.5 text-blue-400" />
-                      <span>CSV (.csv)</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleExport('excel')}
-                      className="w-full px-3 py-2 text-left text-slate-300 light:text-slate-700 hover:bg-[#18233a] light:hover:bg-slate-100 flex items-center gap-2 cursor-pointer transition-colors"
-                    >
-                      <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>Excel (.xlsx)</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleExport('pdf')}
-                      className="w-full px-3 py-2 text-left text-slate-300 light:text-slate-700 hover:bg-[#18233a] light:hover:bg-slate-100 flex items-center gap-2 cursor-pointer transition-colors"
-                    >
-                      <FileText className="w-3.5 h-3.5 text-rose-400" />
-                      <span>PDF Report</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-
-            {/* Filter Toggle */}
+            {/* Export Button - Opens Export Modal */}
             <button
               type="button"
-              className="p-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-slate-400 hover:text-white light:hover:text-slate-900 transition-colors"
-              title="Advanced Filter"
+              onClick={() => setShowExportModal(true)}
+              className="px-3.5 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-slate-300 light:text-slate-700 hover:text-white light:hover:text-slate-900 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
             >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 text-blue-400" />
+              <span>Export</span>
             </button>
+
+            
           </div>
         </div>
       </div>
@@ -3530,6 +3478,24 @@ export default function AllTrades() {
           fetchTrades();
           fetchStats();
         }}
+      />
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        initialFilter={filter}
+        initialFromDate={customFrom}
+        initialToDate={customTo}
+        initialIndex={selectedIndex}
+        initialTradingType={selectedTradingType}
+        initialOptionType={selectedOption}
+        initialStrategy={selectedStrategy}
+        lotSizes={lotSizes}
+        tradeIndices={tradeIndices}
+        tradeTradingTypes={tradeTradingTypes}
+        tradeOptionTypes={tradeOptionTypes}
+        tradeStrategies={tradeStrategies}
       />
     </div>
   );

@@ -124,6 +124,94 @@ class ExportController extends Controller
 
         $trades = $query->get();
 
+        // Extract report aggregation type and custom column selections
+        $reportType = $request->input('report_type', 'trades');
+        $columnsInput = $request->input('columns');
+        $selectedColumns = [];
+        if (is_string($columnsInput) && strlen(trim($columnsInput)) > 0) {
+            $selectedColumns = array_values(array_filter(array_map('trim', explode(',', $columnsInput))));
+        } elseif (is_array($columnsInput)) {
+            $selectedColumns = array_values($columnsInput);
+        }
+
+        // Build aggregated data when requested
+        $aggregatedData = [];
+        if ($reportType === 'daily') {
+            $aggregatedData = $trades->groupBy('trade_date')->map(function ($dayTrades, $date) {
+                $grossP = (float) $dayTrades->sum('gross_profit');
+                $grossL = (float) $dayTrades->sum('gross_loss');
+                $charges = (float) $dayTrades->sum('total_charges');
+                $net = (float) $dayTrades->sum('net_pnl');
+                $count = $dayTrades->count();
+                $wins = $dayTrades->where('net_pnl', '>', 0)->count();
+                $losses = $dayTrades->where('net_pnl', '<', 0)->count();
+                $winRate = $count > 0 ? round(($wins / $count) * 100, 1) : 0;
+                return [
+                    'date' => $date,
+                    'trades_count' => $count,
+                    'winning_trades' => $wins,
+                    'losing_trades' => $losses,
+                    'gross_profit' => $grossP,
+                    'gross_loss' => $grossL,
+                    'total_charges' => $charges,
+                    'net_pnl' => $net,
+                    'win_rate' => $winRate,
+                    'status' => $net > 0 ? 'Win' : ($net < 0 ? 'Loss' : 'Breakeven'),
+                ];
+            })->sortByDesc('date')->values();
+        } elseif ($reportType === 'monthly') {
+            $aggregatedData = $trades->groupBy(function ($t) {
+                return \Carbon\Carbon::parse($t->trade_date)->format('Y-m');
+            })->map(function ($monthTrades, $ym) {
+                $grossP = (float) $monthTrades->sum('gross_profit');
+                $grossL = (float) $monthTrades->sum('gross_loss');
+                $charges = (float) $monthTrades->sum('total_charges');
+                $net = (float) $monthTrades->sum('net_pnl');
+                $count = $monthTrades->count();
+                $wins = $monthTrades->where('net_pnl', '>', 0)->count();
+                $losses = $monthTrades->where('net_pnl', '<', 0)->count();
+                $winRate = $count > 0 ? round(($wins / $count) * 100, 1) : 0;
+                $monthLabel = \Carbon\Carbon::parse($ym . '-01')->format('M Y');
+                return [
+                    'month' => $monthLabel,
+                    'trades_count' => $count,
+                    'winning_trades' => $wins,
+                    'losing_trades' => $losses,
+                    'gross_profit' => $grossP,
+                    'gross_loss' => $grossL,
+                    'total_charges' => $charges,
+                    'net_pnl' => $net,
+                    'win_rate' => $winRate,
+                    'status' => $net > 0 ? 'Profit' : ($net < 0 ? 'Loss' : 'Breakeven'),
+                ];
+            })->values();
+        } elseif ($reportType === 'yearly') {
+            $aggregatedData = $trades->groupBy(function ($t) {
+                return \Carbon\Carbon::parse($t->trade_date)->format('Y');
+            })->map(function ($yearTrades, $year) {
+                $grossP = (float) $yearTrades->sum('gross_profit');
+                $grossL = (float) $yearTrades->sum('gross_loss');
+                $charges = (float) $yearTrades->sum('total_charges');
+                $net = (float) $yearTrades->sum('net_pnl');
+                $count = $yearTrades->count();
+                $wins = $yearTrades->where('net_pnl', '>', 0)->count();
+                $losses = $yearTrades->where('net_pnl', '<', 0)->count();
+                $winRate = $count > 0 ? round(($wins / $count) * 100, 1) : 0;
+                return [
+                    'year' => $year,
+                    'trades_count' => $count,
+                    'winning_trades' => $wins,
+                    'losing_trades' => $losses,
+                    'gross_profit' => $grossP,
+                    'gross_loss' => $grossL,
+                    'total_charges' => $charges,
+                    'net_pnl' => $net,
+                    'win_rate' => $winRate,
+                    'status' => $net > 0 ? 'Profit' : ($net < 0 ? 'Loss' : 'Breakeven'),
+                ];
+            })->values();
+        }
+
         // If specific category filters are active, update analytics stats so the summary cards match
         if (
             ($request->filled('index_name') && $request->input('index_name') !== 'ALL') ||
@@ -152,7 +240,14 @@ class ExportController extends Controller
             $analytics['stats']['profit_factor'] = $profitFactor;
         }
 
-        return $this->exportService->exportPdf($user, $analytics, $trades);
+        return $this->exportService->exportPdf(
+            $user,
+            $analytics,
+            $trades,
+            $reportType,
+            $selectedColumns,
+            $aggregatedData
+        );
     }
 
     public function backup(Request $request): JsonResponse
