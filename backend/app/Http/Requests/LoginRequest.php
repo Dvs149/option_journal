@@ -14,8 +14,19 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'login' => ['nullable', 'string'],
+            'email' => ['nullable', 'string'],
+            'username' => ['nullable', 'string'],
             'password' => ['required', 'string'],
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if (!$this->filled('login') && !$this->filled('email') && !$this->filled('username')) {
+                $validator->errors()->add('login', 'Please provide your email or username.');
+            }
+        });
     }
 }

@@ -11,14 +11,29 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     public function register(RegisterRequest $request): JsonResponse
     {
+        $username = $request->input('username');
+        if (!$username) {
+            $base = Str::slug($request->name ?: explode('@', $request->email)[0], '');
+            $base = strtolower($base ?: 'user');
+            $candidate = $base;
+            $counter = 1;
+            while (User::where('username', $candidate)->exists()) {
+                $candidate = $base . $counter;
+                $counter++;
+            }
+            $username = $candidate;
+        }
+
         $user = User::create([
             'name' => $request->name,
+            'username' => strtolower($username),
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
@@ -69,10 +84,16 @@ class AuthController extends Controller
 
     public function login(LoginRequest $request): JsonResponse
     {
-        $user = User::where('email', $request->email)->first();
+        $login = trim($request->input('login') ?? $request->input('email') ?? $request->input('username') ?? '');
+
+        $user = User::where('email', $login)
+            ->orWhere('username', $login)
+            ->orWhere('name', $login)
+            ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
+                'login' => ['The provided credentials do not match our records.'],
                 'email' => ['The provided credentials do not match our records.'],
             ]);
         }
@@ -108,8 +129,13 @@ class AuthController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'username' => ['nullable', 'string', 'max:50', 'alpha_dash', 'unique:users,username,' . $user->id],
             'email' => ['required', 'email', 'unique:users,email,' . $user->id],
         ]);
+
+        if (isset($validated['username'])) {
+            $validated['username'] = strtolower($validated['username']);
+        }
 
         $user->update($validated);
 

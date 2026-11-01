@@ -209,10 +209,6 @@ export default function DropdownManager() {
             <h1 className="text-xl md:text-2xl font-bold text-white light:text-slate-900 tracking-tight">
               Dropdown & Option Manager
             </h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1 font-mono-numbers">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              DB Stored
-            </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
             Manage all options & dropdown lists module-wise (Add Trade, All Trades, Journal). Easily activate, deactivate, or add custom options.

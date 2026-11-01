@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, Lock, Mail, User, IndianRupee, AlertCircle, ArrowRight, Eye, EyeOff } from 'lucide-react';
+import { Activity, Lock, Mail, User, IndianRupee, AlertCircle, ArrowRight, Eye, EyeOff, AtSign } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Register() {
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
@@ -25,7 +26,7 @@ export default function Register() {
     setError('');
     setSubmitting(true);
     try {
-      await register(name, email, password, passwordConfirmation, parseFloat(initialCapital));
+      await register(name, email, password, passwordConfirmation, parseFloat(initialCapital), username.trim());
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to register. Please check input values.');
@@ -70,6 +71,20 @@ export default function Register() {
                   placeholder="e.g. Rahul Sharma"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-slate-400 mb-1 font-medium">Username (Optional)</label>
+              <div className="relative">
+                <AtSign className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="e.g. rahul_trader (auto-generated if empty)"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
                   className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500"
                 />
               </div>

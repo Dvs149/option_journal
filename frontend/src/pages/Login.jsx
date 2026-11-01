@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, Lock, Mail, AlertCircle, ArrowRight, Sparkles, Eye, EyeOff } from 'lucide-react';
+import { Activity, Lock, Mail, User, AlertCircle, ArrowRight, Sparkles, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -17,22 +17,22 @@ export default function Login() {
     setError('');
     setSubmitting(true);
     try {
-      await login(email, password);
+      await login(loginId, password);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Invalid email or password credentials.');
+      setError(err.response?.data?.message || 'Invalid email/username or password credentials.');
     } finally {
       setSubmitting(false);
     }
   };
 
   const fillDemoCredentials = async () => {
-    setEmail('trader@example.com');
+    setLoginId('trader');
     setPassword('password');
     setError('');
     setSubmitting(true);
     try {
-      await login('trader@example.com', 'password');
+      await login('trader', 'password');
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to login with demo credentials.');
@@ -68,15 +68,17 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4 text-xs">
             <div>
-              <label className="block text-slate-400 mb-1 font-medium">Email Address</label>
+              <label className="block text-slate-400 mb-1 font-medium">Email or Username</label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <User className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
-                  type="email"
+                  type="text"
                   required
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  placeholder="name@example.com or username"
+                  value={loginId}
+                  onChange={(e) => setLoginId(e.target.value)}
                   className="w-full pl-9 pr-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500"
                 />
               </div>

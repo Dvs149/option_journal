@@ -30,8 +30,12 @@ export function AuthProvider({ children }) {
     }
   }, [token]);
 
-  const login = async (email, password) => {
-    const res = await api.post('/login', { email, password });
+  const login = async (identifier, password) => {
+    const res = await api.post('/login', {
+      login: identifier,
+      email: identifier,
+      password,
+    });
     setToken(res.data.token);
     setUser(res.data.user);
     localStorage.setItem('tj_token', res.data.token);
@@ -39,9 +43,10 @@ export function AuthProvider({ children }) {
     return res.data;
   };
 
-  const register = async (name, email, password, password_confirmation, initial_capital) => {
+  const register = async (name, email, password, password_confirmation, initial_capital, username) => {
     const res = await api.post('/register', {
       name,
+      username: username || undefined,
       email,
       password,
       password_confirmation,

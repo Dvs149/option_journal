@@ -213,9 +213,43 @@ export default function Settings() {
   const [backupStatus, setBackupStatus] = useState('Up to date');
 
   // Account Form
-  const [name, setName] = useState(user?.name || 'Divyesh Lunagariya');
-  const [email, setEmail] = useState(user?.email || 'divyesh@example.com');
+  const [name, setName] = useState(user?.name || 'Trader');
+  const [username, setUsername] = useState(user?.username || '');
+  const [email, setEmail] = useState(user?.email || 'trader@example.com');
+  const [savingProfile, setSavingProfile] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      if (user.name) setName(user.name);
+      if (user.username) setUsername(user.username);
+      if (user.email) setEmail(user.email);
+    }
+  }, [user]);
+
+  const handleSaveProfile = async (e) => {
+    e?.preventDefault();
+    if (!name.trim() || !email.trim()) {
+      triggerToast('Name and Email are required', 'error');
+      return;
+    }
+    setSavingProfile(true);
+    try {
+      const res = await api.put('/user/profile', {
+        name: name.trim(),
+        username: username.trim() || undefined,
+        email: email.trim(),
+      });
+      if (res.data?.user) {
+        updateUser(res.data.user);
+      }
+      triggerToast('✓ Account profile & username updated successfully!');
+    } catch (err) {
+      triggerToast(err.response?.data?.message || 'Failed to update profile', 'error');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -407,10 +441,7 @@ export default function Settings() {
                 </div>
               </div>
 
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1 font-mono-numbers">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                DB Stored
-              </span>
+              
             </div>
 
             <div className="space-y-3 text-xs">
@@ -672,10 +703,7 @@ export default function Settings() {
                     <h2 className="text-sm font-bold text-white light:text-slate-900">
                       Brokerage & Regulatory Charges
                     </h2>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1 font-mono-numbers">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                      DB Stored
-                    </span>
+                    
                   </div>
                   <p className="text-[11px] text-slate-400">
                     Official Zerodha & regulatory schedule (auto-calculates in trades)
@@ -1618,26 +1646,50 @@ export default function Settings() {
 
             <div className="space-y-3 text-xs">
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Name</label>
+                <label className="text-[11px] text-slate-400 block mb-1">Full Name</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                  placeholder="Your Name"
                 />
               </div>
 
               <div>
-                <label className="text-[11px] text-slate-400 block mb-1">Email</label>
+                <label className="text-[11px] text-slate-400 block mb-1">
+                  Username <span className="text-[10px] text-blue-400">(Can be used to sign in)</span>
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none font-mono"
+                  placeholder="e.g. trader"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] text-slate-400 block mb-1">Email Address</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none"
+                  placeholder="name@example.com"
                 />
               </div>
 
               <div className="flex items-center justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={handleSaveProfile}
+                  disabled={savingProfile}
+                  className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md transition-all disabled:opacity-50"
+                >
+                  {savingProfile ? 'Saving...' : 'Save Profile'}
+                </button>
+
                 <button
                   type="button"
                   onClick={() => setShowPasswordModal(true)}
@@ -1647,8 +1699,8 @@ export default function Settings() {
                 </button>
 
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-md">
-                    D
+                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-xs shadow-md uppercase">
+                    {user?.name ? user.name[0] : (name ? name[0] : 'T')}
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 block">Profile Picture</span>
@@ -1737,10 +1789,6 @@ export default function Settings() {
                     </h2>
                     <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-[10px] font-bold">
                       {modules.filter((m) => isModuleVisible(m.id)).length} / {modules.length} Visible
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-bold flex items-center gap-1">
-                      <Database className="w-2.5 h-2.5" />
-                      DB Stored
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-400">

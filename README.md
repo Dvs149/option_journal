@@ -202,7 +202,7 @@ All routes except authentication are protected via Laravel Sanctum (`auth:sanctu
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `POST` | `/api/login` | Authenticate user & issue Sanctum bearer token |
+| `POST` | `/api/login` | Authenticate user via username, email, or display name & issue Sanctum bearer token |
 | `POST` | `/api/register` | Register new trader account |
 | `GET` | `/api/dashboard` | Fetch dashboard KPIs, chart series, and daily P&L |
 | `GET` | `/api/trades` | List trades with pagination, search, sorting & filtering |
