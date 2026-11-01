@@ -114,3 +114,4 @@
   - **P&L Metrics**: Crisp NSE/BSE Green (`#4caf50`) for profits and Red (`#df514c`) for losses.
 - Selectable in **Settings → Appearance** with dedicated live preview thumbnail cards for **Light**, **Dark (Midnight)**, **Zerodha Kite**, and **System**.
 - Theme persistence via `localStorage` (`tj_theme`) and responsive mobile drawer integration.
+

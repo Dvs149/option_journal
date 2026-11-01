@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useDropdown, MODULE_METADATA } from '../context/DropdownContext';
 import { useToast } from '../context/ToastContext';
+import { useTheme } from '../context/ThemeContext';
 
 // Color map for badge preview
 const COLOR_VARIANTS = {
@@ -44,6 +45,7 @@ const MODULE_ICONS = {
 };
 
 export default function DropdownManager() {
+  const { isKite } = useTheme();
   const {
     options,
     grouped,
@@ -571,7 +573,13 @@ export default function DropdownManager() {
                                       type="button"
                                       onClick={() => toggleOptionStatus(opt.id, !opt.is_active)}
                                       className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                        opt.is_active ? 'bg-emerald-500' : 'bg-[#1e293b]'
+                                        opt.is_active
+                                          ? isKite
+                                            ? 'bg-[#4987ee]'
+                                            : 'bg-emerald-500'
+                                          : isKite
+                                            ? 'bg-[#444444]'
+                                            : 'bg-[#1e293b]'
                                       }`}
                                       title={
                                         opt.is_active
@@ -580,7 +588,9 @@ export default function DropdownManager() {
                                       }
                                     >
                                       <span
-                                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full transition duration-200 ease-in-out ${
+                                          isKite ? 'bg-[#222222] shadow-none ring-0' : 'bg-white shadow ring-0'
+                                        } ${
                                           opt.is_active ? 'translate-x-4' : 'translate-x-0'
                                         }`}
                                       />

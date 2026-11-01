@@ -277,6 +277,29 @@ export default function Settings() {
     showToast(msg, type);
   };
 
+  const renderToggle = (checked, onChange, title) => (
+    <button
+      type="button"
+      onClick={onChange}
+      title={title}
+      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+        checked
+          ? isKite
+            ? 'bg-[#4987ee]'
+            : 'bg-blue-600'
+          : isKite
+            ? 'bg-[#444444]'
+            : 'bg-[#1e293b]'
+      }`}
+    >
+      <span
+        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full transition duration-200 ease-in-out ${
+          isKite ? 'bg-[#222222] shadow-none ring-0' : 'bg-white shadow ring-0'
+        } ${checked ? 'translate-x-4' : 'translate-x-0'}`}
+      />
+    </button>
+  );
+
   const handleAddIndex = (e) => {
     e.preventDefault();
     if (!newIndexName.trim()) return;
@@ -1203,19 +1226,7 @@ export default function Settings() {
               {/* Enable Risk Alerts Toggle */}
               <div className="flex items-center justify-between pt-2 border-t border-[#1e293b]/50">
                 <span className="text-[11px] text-slate-300">Enable Risk Alerts</span>
-                <button
-                  type="button"
-                  onClick={() => setEnableRiskAlerts(!enableRiskAlerts)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    enableRiskAlerts ? 'bg-blue-600' : 'bg-[#1e293b]'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      enableRiskAlerts ? 'translate-x-4' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
+                {renderToggle(enableRiskAlerts, () => setEnableRiskAlerts(!enableRiskAlerts))}
               </div>
             </div>
           </div>
@@ -1247,19 +1258,10 @@ export default function Settings() {
                     <div className="text-xs font-semibold text-slate-200 light:text-slate-800">{n.title}</div>
                     <div className="text-[10px] text-slate-400">{n.desc}</div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setNotifications((prev) => ({ ...prev, [n.id]: !prev[n.id] }))}
-                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      notifications[n.id] ? 'bg-blue-600' : 'bg-[#1e293b]'
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        notifications[n.id] ? 'translate-x-4' : 'translate-x-0'
-                      }`}
-                    />
-                  </button>
+                  {renderToggle(
+                    !!notifications[n.id],
+                    () => setNotifications((prev) => ({ ...prev, [n.id]: !prev[n.id] }))
+                  )}
                 </div>
               ))}
             </div>
@@ -1410,37 +1412,13 @@ export default function Settings() {
               {/* Compact Mode */}
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-slate-300">Compact Mode</span>
-                <button
-                  type="button"
-                  onClick={() => setCompactMode(!compactMode)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    compactMode ? 'bg-blue-600' : 'bg-[#1e293b]'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      compactMode ? 'translate-x-4' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
+                {renderToggle(compactMode, () => setCompactMode(!compactMode))}
               </div>
 
               {/* Show Animations */}
               <div className="flex items-center justify-between">
                 <span className="text-[11px] text-slate-300">Show Animations</span>
-                <button
-                  type="button"
-                  onClick={() => setShowAnimations(!showAnimations)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    showAnimations ? 'bg-blue-600' : 'bg-[#1e293b]'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      showAnimations ? 'translate-x-4' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
+                {renderToggle(showAnimations, () => setShowAnimations(!showAnimations))}
               </div>
             </div>
           </div>
@@ -1466,19 +1444,7 @@ export default function Settings() {
                   <span className="text-xs font-semibold text-slate-200 block">Auto Backup</span>
                   <span className="text-[10px] text-slate-400">Automatically backup your data</span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setAutoBackup(!autoBackup)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                    autoBackup ? 'bg-blue-600' : 'bg-[#1e293b]'
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                      autoBackup ? 'translate-x-4' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
+                {renderToggle(autoBackup, () => setAutoBackup(!autoBackup))}
               </div>
 
               {/* Backup Frequency */}
@@ -1788,19 +1754,10 @@ export default function Settings() {
                       <div className="text-xs font-semibold text-slate-200 light:text-slate-800">{s.title}</div>
                       <div className="text-[10px] text-slate-400">{s.desc}</div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setAppSettings((prev) => ({ ...prev, [s.id]: !prev[s.id] }))}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        appSettings[s.id] ? 'bg-blue-600' : 'bg-[#1e293b]'
-                      }`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          appSettings[s.id] ? 'translate-x-4' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
+                    {renderToggle(
+                      !!appSettings[s.id],
+                      () => setAppSettings((prev) => ({ ...prev, [s.id]: !prev[s.id] }))
+                    )}
                   </div>
                 ))}
               </div>
@@ -1915,9 +1872,9 @@ export default function Settings() {
                     </div>
 
                     {/* Toggle Switch */}
-                    <button
-                      type="button"
-                      onClick={async () => {
+                    {renderToggle(
+                      visible,
+                      async () => {
                         const willBeVisible = !visible;
                         await toggleModule(mod.id);
                         triggerToast(
@@ -1925,18 +1882,9 @@ export default function Settings() {
                             ? `✓ Saved "${mod.name}" (Visible) to Database!`
                             : `✓ Saved "${mod.name}" (Hidden) to Database!`
                         );
-                      }}
-                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                        visible ? 'bg-blue-600' : 'bg-[#1e293b]'
-                      }`}
-                      title={visible ? `Click to hide ${mod.name}` : `Click to show ${mod.name}`}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                          visible ? 'translate-x-4' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
+                      },
+                      visible ? `Click to hide ${mod.name}` : `Click to show ${mod.name}`
+                    )}
                   </div>
                 );
               })}

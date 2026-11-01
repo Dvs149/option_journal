@@ -131,10 +131,14 @@ export default function Sidebar({ onCloseMobile }) {
           </div>
           <div
             className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 ease-in-out flex items-center ${
-              isKite ? 'bg-[#ff5722] justify-end' : isDark ? 'bg-blue-600 justify-end' : 'bg-slate-600 justify-start'
+              isKite ? 'bg-[#4987ee] justify-end' : isDark ? 'bg-blue-600 justify-end' : 'bg-slate-600 justify-start'
             }`}
           >
-            <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform" />
+            <div
+              className={`w-4 h-4 rounded-full transform transition-transform ${
+                isKite ? 'bg-[#222222] shadow-none' : 'bg-white shadow-md'
+              }`}
+            />
           </div>
         </button>
 

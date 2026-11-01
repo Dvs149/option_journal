@@ -11,7 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.11.2] - 2026-11-01
+## [1.11.3] - 2026-11-01
+
+### Added & Refined
+- **Zerodha Kite Authentic Toggle Switch Styling**:
+  - Implemented exact Zerodha Kite toggle switches matching user reference images ("Privacy mode" [OFF] & "Theme (Dark)" [ON]).
+  - **OFF State**: Dark charcoal gray track (`#444444`) with dark circular knob (`#222222`) aligned to the left.
+  - **ON State**: Vibrant Kite Blue track (`#4987ee`) with dark circular knob (`#222222`) aligned to the right.
+  - Removed standard white knob shadows in Kite mode to maintain clean flat terminal contrast.
+  - Integrated global scoped CSS rules in `index.css` for `html.theme-kite` targeting all toggle switch containers (`h-5 w-9 rounded-full`).
+  - Standardized toggle component rendering across all pages:
+    - **Settings** (`Settings.jsx`): Compact Mode, Show Animations, Enable Risk Alerts, Notification Triggers, Auto Backup, App Settings, and Navigation Module Visibility.
+    - **Sidebar** (`Sidebar.jsx`): Bottom theme toggle switch.
+    - **Dropdown Manager** (`DropdownManager.jsx`): Dropdown option active/inactive toggle.
 
 ### Fixed & Refined
 - **Zerodha Kite Tab & Segmented Pill Typography**:
