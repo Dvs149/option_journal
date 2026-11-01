@@ -16,7 +16,7 @@ class JournalController extends Controller
         $user = $request->user();
 
         $query = Trade::where('user_id', $user->id)
-            ->with('journal')
+            ->with(['journal', 'screenshots'])
             ->orderBy('trade_date', 'desc')
             ->orderBy('id', 'desc');
 
