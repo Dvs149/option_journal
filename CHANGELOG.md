@@ -11,6 +11,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.12.2] - 2026-11-01
+
+### Fixed & Optimized
+- **PDF Export Memory & Timeout for Full Trade Datasets**:
+  - Resolved `Export failed: Network Error` caused by PHP memory exhaustion (`Allowed memory size of 134217728 bytes exhausted`) in DomPDF when rendering large trade datasets (954+ trades).
+  - Configured `@ini_set('memory_limit', '1024M')` and `@ini_set('max_execution_time', '300')` in both `ExportController::pdf` and `ExportService::exportPdf`.
+  - Optimized `trading_report.blade.php` table rendering: replaced `border-collapse: collapse;` with `border-collapse: separate; border-spacing: 0;` and cell borders, reducing DomPDF `Cellmap` memory overhead and reflow time.
+  - Enhanced frontend error handler in `ExportModal.jsx` to parse underlying JSON error messages from blob error responses instead of showing generic network errors.
+
+---
+
+## [1.12.1] - 2026-11-01
+
+### Fixed & Enhanced
+- **Export All Entries Without 100 Limit**:
+  - Fixed `TradeController::index` and `JournalController::index` which previously clamped `$perPage = min($request->input('per_page', 15), 100)`.
+  - Added support for `all=true`, `per_page=-1`, or `per_page='all'` to calculate the exact filtered total and paginate across all records (`paginate(max(1, $totalCount))`).
+  - Increased `per_page` maximum ceiling from 100 to 100,000 for large batch and export requests.
+  - Updated `ExportModal.jsx` and `AllTrades.jsx` to pass `all: true` and `per_page: -1` when exporting Excel (`.xlsx`) or CSV (`.csv`) files, ensuring all 954+ trades in the journal are included in exported reports instead of only the first 100.
+
+---
+
+## [1.12.0] - 2026-11-01
+
+### Added & Imported
+- **Kotak Neo FY 2023–2024 Trades Import**:
+  - Parsed and imported all **290 derivative option trades** from the user's Kotak Neo statement (`1.xlsx` / `P&L Equity-Tradewise`) for the period `2023-04-01` to `2024-03-31`.
+  - Reconciled exact financial figures:
+    - **Gross Profit**: `₹278,557.66`
+    - **Gross Loss**: `₹334,654.64`
+    - **Net Gross P&L**: `-₹56,096.98`
+    - **Total Charges**: `₹14,290.04` (Brokerage: ₹3.84, Misc/Exchange: ₹9,459.22, STT: ₹4,826.98, GST: ₹0.00)
+    - **Total Net P&L**: `-₹70,387.02` (exact match to statement header down to 0.00 paisa).
+  - Automatically mapped contract specifications across all 5 indices (188 BANKNIFTY, 57 NIFTY, 25 MIDCPNIFTY, 16 FINNIFTY, 4 SENSEX) with historical 2023-2024 lot sizes (15, 50, 75, 40, 10).
+  - Created corresponding `TradeJournal` records for each trade with contract notes and execution references.
+
+### Fixed & Enhanced
+- **Kotak Neo Statement Parser (`bulkTradeParser.js`)**:
+  - Enhanced `parseKotakNeoScript` to support 4-digit contract years (e.g., `03JAN2024`) in addition to 2-digit years.
+  - Added multi-row header merging in `parseKotakNeoRows` to combine standard Kotak multi-level headers (`Charges` + `GST (C)`, `Brokerage (D)`, `Misc. (E)`, `STT/CTT (S)`).
+  - Configured parser to prioritize detailed `P&L Equity-Tradewise` data and filter out legal/disclaimer footnote rows.
+- **Backend Calculation Precision (`TradingCalculationService.php`)**:
+  - Preserved explicit broker statement `gross_profit`, `gross_loss`, `total_charges`, and `net_pnl` amounts when importing from verified institutional broker statements.
+
+---
+
 ## [1.11.6] - 2026-11-01
 
 ### Fixed & Refined
