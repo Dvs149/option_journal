@@ -11,7 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.11.3] - 2026-11-01
+## [1.11.4] - 2026-11-01
+
+### Removed & Refined
+- **Complete Elimination of Shadows in Zerodha Kite Theme**:
+  - Implemented comprehensive flat terminal styling across `html.theme-kite` by stripping all `box-shadow` and `text-shadow` properties from buttons, cards, modals, dropdowns, badges, and icon containers.
+  - Removed colored glowing drop shadows from primary action buttons (e.g. `+ Add Trade`, `Save`, `Submit`, `Add Transaction`).
+  - Removed glowing shadow from sidebar logo and header badges.
+  - Enforced `box-shadow: none !important` across all pseudo-elements and pseudo-classes (`:hover`, `:focus`, `:active`), ensuring flat, crisp, authentic Zerodha Kite terminal visuals everywhere.
 
 ### Added & Refined
 - **Zerodha Kite Authentic Toggle Switch Styling**:

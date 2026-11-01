@@ -138,6 +138,19 @@ html.theme-kite body {
   color: #e0e0e0 !important;
 }
 
+/* Zerodha Kite Authentic Flat Terminal Design:
+   Remove all shadows, button glows, card elevations, and drop-shadows everywhere */
+html.theme-kite,
+html.theme-kite *,
+html.theme-kite *::before,
+html.theme-kite *::after,
+html.theme-kite *:hover,
+html.theme-kite *:focus,
+html.theme-kite *:active {
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
 /* Base Surfaces & Cards */
 html.theme-kite .bg-\[\#0b0f19\] {
   background-color: #191919 !important;
@@ -247,7 +260,7 @@ html.theme-kite aside nav a:not(.active):hover svg {
 
 html.theme-kite aside div.bg-blue-600 {
   background-color: #ff5722 !important;
-  box-shadow: 0 4px 14px rgba(255, 87, 34, 0.3) !important;
+  box-shadow: none !important;
 }
 
 html.theme-kite aside span.text-blue-400 {
