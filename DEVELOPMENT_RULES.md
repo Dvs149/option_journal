@@ -89,3 +89,25 @@ Before making any change, assess the risk level:
 - **LOW RISK**: Minor UI alignment, CSS styling, text labels, documentation. (Can implement directly).
 - **MEDIUM RISK**: Adding new controller endpoints, creating reusable components, modifying calculations. (Plan and review first).
 - **HIGH RISK**: Database schema migrations, authentication logic, modifying shared calculation engines, deleting records. (Requires detailed impact analysis and approval).
+
+---
+
+## 7. Automatic Documentation Maintenance
+
+Documentation must remain synchronized with the actual application codebase as a mandatory part of every development task.
+
+Whenever implementing, modifying, removing, or refactoring functionality:
+1. **Identify Affected Files**: Determine which of the 10 core documentation files are impacted.
+2. **Update Immediately After Implementation**: Never defer documentation updates or wait for user requests.
+3. **Specific File Triggers**:
+   - `PROJECT_CONTEXT.md`: System scope, target market, or operational environment changes.
+   - `ARCHITECTURE.md`: Architecture patterns, context providers, services, or component hierarchy changes.
+   - `DATABASE_SCHEMA.md`: Table, column, foreign key, or index additions/modifications.
+   - `API_DOCUMENTATION.md`: New routes, parameter changes, response signatures, or status codes.
+   - `FEATURES.md`: Application features added, updated, or enhanced.
+   - `DEVELOPMENT_RULES.md`: Development rules, styling standards, or architectural guidelines.
+   - `CHANGELOG.md`: Log every completed development task under Semantic Versioning.
+   - `KNOWN_ISSUES.md`: Record new issues discovered, performance bottlenecks, or mark resolved issues.
+   - `TODO.md`: Track completed roadmap items and log newly identified tasks.
+4. **Final Task Report**:
+   - Always report which documentation files were updated or explicitly state if none were affected.

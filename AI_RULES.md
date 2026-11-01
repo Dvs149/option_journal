@@ -360,3 +360,63 @@ Never perform destructive operations without approval.
 Never make assumptions when you can inspect the actual code.
 
 Ask questions when requirements are unclear.
+
+---
+
+## 16. INITIAL PROJECT DOCUMENTATION SETUP
+
+Before starting any feature development, create and verify the 10 core documentation files in the project root:
+
+1. `PROJECT_CONTEXT.md`
+2. `ARCHITECTURE.md`
+3. `DATABASE_SCHEMA.md`
+4. `API_DOCUMENTATION.md`
+5. `FEATURES.md`
+6. `DEVELOPMENT_RULES.md`
+7. `CHANGELOG.md`
+8. `KNOWN_ISSUES.md`
+9. `TODO.md`
+10. `AI_RULES.md`
+
+All documentation files must reflect verified facts from the source code without assumptions or fictional features.
+
+---
+
+## 17. AUTOMATIC DOCUMENTATION MAINTENANCE
+
+Documentation must remain synchronized with the actual application codebase.
+
+Whenever you implement, modify, remove or refactor any functionality:
+
+1. Identify which documentation files are affected.
+2. Update the relevant documentation immediately after implementation.
+3. Update `PROJECT_CONTEXT.md` if the overall project structure or behavior changes.
+4. Update `ARCHITECTURE.md` if architecture or component relationships change.
+5. Update `DATABASE_SCHEMA.md` whenever database structure or relationships change.
+6. Update `API_DOCUMENTATION.md` whenever APIs, routes, request parameters or responses change.
+7. Update `FEATURES.md` whenever application functionality changes.
+8. Update `DEVELOPMENT_RULES.md` whenever development conventions change.
+9. Update `CHANGELOG.md` with every completed development task.
+10. Update `KNOWN_ISSUES.md` when issues are discovered, resolved or introduced.
+11. Update `TODO.md` when tasks are completed or new tasks are identified.
+
+### Important Rules
+
+- Never wait for the user to request documentation updates.
+- Never update documentation with assumptions.
+- Always verify changes against actual source code.
+- Do not unnecessarily rewrite entire documentation files.
+- Preserve existing useful information.
+- Keep documentation concise and accurate.
+- If no documentation changes are required, explicitly mention that.
+
+### Final Verification
+
+Before completing any development task:
+
+- Verify that relevant documentation has been updated.
+- Check that documentation matches the actual implementation.
+- Report which documentation files were updated.
+- Report any documentation that still requires manual attention.
+
+Documentation maintenance is a mandatory part of every development task.
