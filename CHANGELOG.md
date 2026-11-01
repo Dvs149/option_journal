@@ -11,7 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [1.11.4] - 2026-11-01
+## [1.11.6] - 2026-11-01
+
+### Fixed & Refined
+- **Dynamic Number Coloring (Orange if Negative, Green if Positive)**:
+  - Updated `MainStatsCard` in `StatsCard.jsx` so metric numbers (such as `-₹88,178` on the "Total Net Profit" card) dynamically colorize based on their sign:
+    - **Negative numbers** (e.g. `-₹88,178`, losses): Render in **Kite Orange (`#ff5722`)**.
+    - **Positive / zero numbers** (e.g. `+₹50,000`, profits): Render in **Kite Green (`#4caf50`)**.
+  - Synchronized "Total Net Profit" metrics across `Dashboard.jsx`, `AnalyticsReports.jsx`, and `EquityCurve.jsx` so negative amounts display in orange and positive amounts in green.
+  - Preserved neutral white typography for balance/capital accounts (`Current Capital`).
+
+### Fixed & Refined
+- **Orange Styling for Negative Metrics & Badges in Zerodha Kite**:
+  - Fixed badge styling in `MainStatsCard` (`StatsCard.jsx`) so negative percentage changes (e.g. `↘ -22.04%`) render in authentic Kite Orange (`#ff5722`) with `bg-[#ff5722]/15` and border `#ff5722]/20` instead of green.
+  - Automatically flip card trend icons from `TrendingUp` to `TrendingDown` when values or changes are negative.
+  - Updated `Dashboard.jsx` so "Total Net Profit" and other primary metric cards dynamically reflect negative states (icon `TrendingDown` and variant `'orange'`).
+  - Scoped negative P&L utility classes in `index.css` under `.theme-kite` (`.text-rose-400`, `.bg-rose-500/*`, `.border-rose-500/*`) to Kite Orange (`#ff5722`), ensuring consistent orange indicators across the entire application.
 
 ### Removed & Refined
 - **Complete Elimination of Shadows in Zerodha Kite Theme**:

@@ -250,11 +250,11 @@ export default function EquityCurve() {
         {/* Total Net Profit */}
         <div className="p-3.5 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-1">
           <span className="text-[10px] text-slate-400 font-medium block">Total Net Profit</span>
-          <span className="text-base font-bold text-emerald-400 font-mono-numbers block tracking-tight">
+          <span className={`text-base font-bold font-mono-numbers block tracking-tight ${stats.total_net_profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
             {formatINR(stats.total_net_profit)}
           </span>
-          <span className="text-[10px] font-semibold text-emerald-400 flex items-center gap-0.5">
-            <TrendingUp className="w-3 h-3 inline" /> {stats.total_net_profit_pct}
+          <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${stats.total_net_profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {stats.total_net_profit >= 0 ? <TrendingUp className="w-3 h-3 inline" /> : <TrendingDown className="w-3 h-3 inline" />} {stats.total_net_profit_pct}
           </span>
         </div>
 

@@ -320,13 +320,25 @@ html.theme-kite div[class*="p-1.5"] > button:not(.bg-blue-600):not([class*="text
   color: #ffffff !important;
 }
 
-/* Trading P&L Colors (Zerodha NSE/BSE Green & Red) */
+/* Trading P&L Colors (Zerodha Kite Theme: Positive is Green #4caf50, Negative is Orange #ff5722) */
 html.theme-kite .text-emerald-400 {
   color: #4caf50 !important;
 }
 
 html.theme-kite .text-rose-400 {
-  color: #df514c !important;
+  color: #ff5722 !important;
+}
+
+html.theme-kite .bg-rose-500\/10,
+html.theme-kite .bg-rose-500\/15,
+html.theme-kite .bg-rose-500\/20 {
+  background-color: rgba(255, 87, 34, 0.15) !important;
+}
+
+html.theme-kite .border-rose-500\/20,
+html.theme-kite .border-rose-500\/30,
+html.theme-kite .border-rose-500\/40 {
+  border-color: rgba(255, 87, 34, 0.25) !important;
 }
 
 /* Form Controls & Dropdowns */

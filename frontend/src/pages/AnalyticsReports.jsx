@@ -287,14 +287,14 @@ export default function AnalyticsReports() {
         <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-2xl p-4 shadow-sm">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[11px] text-slate-400">Total Net Profit</span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4" />
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${metrics.netPnl >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
+              {metrics.netPnl >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
             </div>
           </div>
-          <div className="text-lg font-bold text-white light:text-slate-900 font-mono-numbers">
+          <div className={`text-lg font-bold font-mono-numbers ${metrics.netPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
             {formatINR(metrics.netPnl)}
           </div>
-          <div className="text-[11px] font-bold text-emerald-400 flex items-center gap-1 mt-1 font-mono-numbers">
+          <div className={`text-[11px] font-bold flex items-center gap-1 mt-1 font-mono-numbers ${metrics.netPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
             <span>{metrics.netPnl >= 0 ? '↑ Profit' : '↓ Loss'}</span>
           </div>
         </div>

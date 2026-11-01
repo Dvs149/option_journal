@@ -33,11 +33,13 @@ import {
 } from 'recharts';
 import api from '../api/client';
 import { useFilter } from '../context/FilterContext';
+import { useTheme } from '../context/ThemeContext';
 import { MainStatsCard, CompactMetricCard } from '../components/common/StatsCard';
 import { formatINR, formatCompactINR } from '../utils/formatters';
 
 export default function Dashboard() {
   const { filter, customFrom, customTo, setDateRangeDisplay } = useFilter();
+  const { isKite } = useTheme();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const today = new Date();
@@ -199,8 +201,8 @@ export default function Dashboard() {
           value={formatINR(stats.total_net_profit)}
           change={hasTrades ? netProfitPct : null}
           isPositiveChange={stats.total_net_profit >= 0}
-          icon={TrendingUp}
-          variant="green"
+          icon={stats.total_net_profit >= 0 ? TrendingUp : TrendingDown}
+          variant={stats.total_net_profit >= 0 ? 'green' : (isKite ? 'orange' : 'red')}
         />
         <MainStatsCard
           title="Total Gross Profit"
@@ -216,23 +218,23 @@ export default function Dashboard() {
           change={hasTrades ? grossLossPct : null}
           isPositiveChange={false}
           icon={TrendingDown}
-          variant="red"
+          variant={isKite ? 'orange' : 'red'}
         />
         <MainStatsCard
           title="Today's P&L"
           value={formatINR(stats.today_pnl)}
           change={hasTrades ? todayPnlPct : null}
           isPositiveChange={stats.today_pnl >= 0}
-          icon={Activity}
-          variant={stats.today_pnl >= 0 ? 'green' : 'red'}
+          icon={stats.today_pnl >= 0 ? TrendingUp : TrendingDown}
+          variant={stats.today_pnl >= 0 ? 'green' : (isKite ? 'orange' : 'red')}
         />
         <MainStatsCard
           title="This Month's P&L"
           value={formatINR(stats.this_month_pnl)}
           change={hasTrades ? monthPnlPct : null}
           isPositiveChange={stats.this_month_pnl >= 0}
-          icon={LineChartIcon}
-          variant={stats.this_month_pnl >= 0 ? 'blue' : 'red'}
+          icon={stats.this_month_pnl >= 0 ? LineChartIcon : TrendingDown}
+          variant={stats.this_month_pnl >= 0 ? 'blue' : (isKite ? 'orange' : 'red')}
         />
         <MainStatsCard
           title="Current Capital"
@@ -240,7 +242,7 @@ export default function Dashboard() {
           change={hasTrades ? currentCapitalPct : null}
           isPositiveChange={stats.overall_roi >= 0}
           icon={Shield}
-          variant="teal"
+          variant={stats.overall_roi >= 0 ? 'teal' : (isKite ? 'orange' : 'red')}
         />
       </div>
 
