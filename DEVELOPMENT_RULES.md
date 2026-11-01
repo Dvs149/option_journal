@@ -111,3 +111,23 @@ Whenever implementing, modifying, removing, or refactoring functionality:
    - `TODO.md`: Track completed roadmap items and log newly identified tasks.
 4. **Final Task Report**:
    - Always report which documentation files were updated or explicitly state if none were affected.
+
+---
+
+## 8. Codebase Dependency Analysis with Graphify
+
+TradeJournal uses Graphify (`graphifyy`) for codebase structure discovery, AST relationship mapping, and impact analysis without external LLM dependencies.
+
+### Query Guidelines for Developers & AI Agents
+
+- **Explore Relationships**:
+  - `graphify query "<concept or question>"`: Performs breadth-first traversal from relevant entrypoints to discover related controllers, models, and UI components.
+- **Find Dependency Paths**:
+  - `graphify path "<SourceSymbol>" "<TargetSymbol>"`: Finds the shortest connection path between two classes, functions, or files.
+- **Explain Module Interfaces**:
+  - `graphify explain "<SymbolName>"`: Dumps the incoming and outgoing connections, methods, and source locations for a specific class or service.
+- **Visual Exploration**:
+  - Open `graphify-out/graph.html` in a web browser for interactive D3 graph visualization.
+- **Synchronization**:
+  - Run `export PATH="$HOME/.local/bin:$PATH" && graphify update .` to re-extract AST nodes whenever code changes occur.
+  - Exclusions are maintained in `.graphifyignore` (`vendor/`, `node_modules/`, `build/`, `dist/`, `.env`).

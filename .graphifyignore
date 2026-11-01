@@ -1,0 +1,28 @@
+# Dependencies
+**/node_modules/
+node_modules/
+**/vendor/
+vendor/
+backend/vendor/
+frontend/node_modules/
+
+# Build outputs & dist
+dist/
+frontend/dist/
+build/
+backend/public/build/
+
+# Cache, logs and temp
+backend/storage/framework/
+backend/storage/logs/
+*.log
+.cache/
+
+# Local databases and runtime files
+backend/database/*.sqlite
+backend/database/*.sqlite-*
+
+# Environment and secrets
+.env
+.env.*
+!.env.example

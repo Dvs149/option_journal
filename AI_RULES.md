@@ -420,3 +420,32 @@ Before completing any development task:
 - Report any documentation that still requires manual attention.
 
 Documentation maintenance is a mandatory part of every development task.
+
+---
+
+## 18. GRAPHIFY KNOWLEDGE GRAPH INTEGRATION
+
+Graphify provides AST-based structural knowledge graphing of the codebase (`graphify-out/graph.json`, `graphify-out/GRAPH_REPORT.md`, `graphify-out/graph.html`) for architectural navigation, dependency tracking, and impact analysis.
+
+### Mandatory Operational Rules
+
+1. **Consult Graphify Before Significant Changes**:
+   - Before modifying existing controllers, services, models, context providers, or core UI components, query the graph to identify caller relationships, methods, and downstream dependencies.
+   - Use `graphify query "<question>"`, `graphify path "<from>" "<to>"`, or `graphify explain "<symbol>"` for scoped dependency retrieval.
+2. **Identify Affected Dependencies**:
+   - Trace the entire execution and data flow (frontend dispatch -> API route -> controller -> service -> model -> database).
+   - Evaluate whether changes affect other components or consumers before making edits.
+3. **Verify Actual Source Files Before Implementation**:
+   - The knowledge graph is a structural map, not a replacement for source code.
+   - Always read and verify the actual lines in the source files before making modifications.
+4. **Refresh the Graph When Code Changes**:
+   - Run `graphify update .` after significant source code additions, refactors, or deletions to keep `graph.json` and `GRAPH_REPORT.md` synchronized.
+   - Use `graphify update . --force` if node deletions or refactors decrease the node count.
+5. **Keep Graphify Output Synchronized**:
+   - Ensure `graphify-out/` artifacts reflect the current state of the repository.
+   - Git hooks (`post-commit`, `post-checkout`) automatically update code nodes on commits.
+6. **Never Modify Unrelated Files**:
+   - Limit all modifications strictly to the files identified in the approved implementation plan.
+   - Never refactor or touch files outside the scope of the user's request.
+7. **Preserve Existing Application Functionality**:
+   - Never break existing features, routes, or API contracts when adding or modifying code.

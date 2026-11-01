@@ -85,3 +85,18 @@ The system addresses the core needs of active option traders:
 - User access is single-tenant per account: each user's trades, accounts, strategies, scripts, and settings are strictly partitioned by `user_id`.
 - Soft deletion is enabled on `trades` table to preserve historical audits.
 - Screenshots are stored on the local public disk and resolved through client-aware URL parsers.
+
+---
+
+## 6. Developer Tooling & Codebase Knowledge Graph (Graphify)
+
+- **Knowledge Graph Tooling**: Graphify (`graphifyy`) integrated at repository root.
+- **Output Artifacts**:
+  - `graphify-out/graph.json`: Machine-navigable AST graph (785 nodes, 1025 edges, 97 communities).
+  - `graphify-out/graph.html`: Interactive D3 visual graph of project structure and dependencies.
+  - `graphify-out/GRAPH_REPORT.md`: Comprehensive textual report with god nodes, community hubs, and surprising connections.
+- **Repository Configuration**:
+  - `.graphifyignore`: Excludes `backend/vendor/`, `node_modules/`, `dist/`, `build/`, `.env`, and local database files.
+  - `.agents/rules/graphify.md`: Antigravity rule instructing the AI assistant to query the graph before answering architectural questions.
+  - `.agents/workflows/graphify.md`: Antigravity workflow for building and refreshing the graph.
+  - `.git/hooks/post-commit` & `post-checkout`: Git hooks that trigger AST updates on code commits without LLM cost.

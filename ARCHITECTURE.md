@@ -144,3 +144,63 @@ To prevent bloated controllers, heavy business logic is decoupled into dedicated
 - **SQL Injection Prevention**: PDO parameterized queries via Eloquent ORM.
 - **File Upload Security**: Mime-type and extension validation (`image/*`, max 10MB) stored on protected filesystem paths.
 - **CORS**: Configured in Laravel with allowed origins and headers.
+
+---
+
+## 5. Knowledge Graph & Tooling Architecture (Graphify)
+
+The codebase incorporates an AST-based Knowledge Graph layer powered by **Graphify** (`graphifyy`) for dependency discovery, call graph extraction, and AI agent grounding:
+
+```mermaid
+graph LR
+    subgraph Repo ["Codebase (option_journal)"]
+        F["frontend/src/ (*.jsx)"]
+        B["backend/app/ (*.php)"]
+        M["database/migrations/ (*.php)"]
+    end
+
+    subgraph Ignored ["Ignored via .graphifyignore"]
+        NM["node_modules/"]
+        V["backend/vendor/"]
+        D["dist/ & build/"]
+    end
+
+    subgraph Tooling ["Graphify Pipeline"]
+        AST["AST Parser (Fast Python AST / Tree-sitter)"]
+        CD["Community Detection (Louvain Algorithm)"]
+        EXP["Exporter"]
+    end
+
+    subgraph Output ["graphify-out/"]
+        JSON["graph.json (Nodes & Edges)"]
+        HTML["graph.html (D3 Visualizer)"]
+        REP["GRAPH_REPORT.md (Architectural Report)"]
+    end
+
+    subgraph Assistant ["Google Antigravity Integration"]
+        RULES[".agents/rules/graphify.md"]
+        WORKFLOW[".agents/workflows/graphify.md"]
+        SKILL["~/.agents/skills/graphify/SKILL.md"]
+        HOOKS[".git/hooks/post-commit & post-checkout"]
+    end
+
+    F & B & M --> AST
+    AST --> CD
+    CD --> EXP
+    EXP --> JSON & HTML & REP
+    RULES & WORKFLOW & SKILL --> JSON
+    HOOKS -.->|auto-update on commit| AST
+```
+
+### Knowledge Graph Components
+1. **Extraction Engine**:
+   - Parses 139 core application code and documentation files without external network calls or LLM dependencies.
+   - Extracts 785 nodes, 1025 edges, and 97 communities.
+2. **Exclusion Boundary (`.graphifyignore`)**:
+   - Prevents bloat by omitting `backend/vendor/` (9,000+ framework files) and `node_modules/`.
+3. **Query Interface**:
+   - `graphify query`: Performs breadth-first graph traversal for contextual questions.
+   - `graphify path`: Discovers shortest call paths between symbols.
+   - `graphify explain`: Summarizes node attributes, inbound/outbound edges, and file origins.
+4. **Antigravity Rule Integration**:
+   - Projects rules in `.agents/rules/graphify.md` require querying `graph.json` before answering architecture questions or planning major refactors.
