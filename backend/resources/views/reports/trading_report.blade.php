@@ -75,7 +75,8 @@
 
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             margin-top: 5px;
             page-break-inside: auto;
         }
@@ -95,14 +96,23 @@
             font-weight: bold;
             padding: 4.5px 5px;
             text-align: left;
-            border: 1px solid #cbd5e1;
+            border-top: 1px solid #cbd5e1;
+            border-bottom: 1px solid #cbd5e1;
+            border-right: 1px solid #cbd5e1;
             font-size: 8px;
             white-space: nowrap;
         }
+        th:first-child {
+            border-left: 1px solid #cbd5e1;
+        }
         td {
             padding: 4px 5px;
-            border: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
             font-size: 8px;
+        }
+        td:first-child {
+            border-left: 1px solid #e2e8f0;
         }
         tbody tr:nth-child(even) {
             background-color: #f8fafc;

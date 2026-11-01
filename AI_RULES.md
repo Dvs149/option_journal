@@ -425,7 +425,7 @@ Documentation maintenance is a mandatory part of every development task.
 
 ## 18. GRAPHIFY KNOWLEDGE GRAPH INTEGRATION
 
-Graphify provides locally generated AST-based structural knowledge graphing of the codebase (`graphify-out/graph.json`, `graphify-out/GRAPH_REPORT.md`, `graphify-out/graph.html`) for architectural navigation, dependency tracking, and impact analysis. These files are developer aids, not application/runtime inputs; `graphify-out/` is gitignored and can be regenerated locally.
+Graphify provides AST-based structural knowledge graphing of the codebase (`graphify-out/graph.json`, `graphify-out/GRAPH_REPORT.md`, `graphify-out/graph.html`) for architectural navigation, dependency tracking, and impact analysis.
 
 ### Mandatory Operational Rules
 
@@ -441,9 +441,9 @@ Graphify provides locally generated AST-based structural knowledge graphing of t
 4. **Refresh the Graph When Code Changes**:
    - Run `graphify update .` after significant source code additions, refactors, or deletions to keep `graph.json` and `GRAPH_REPORT.md` synchronized.
    - Use `graphify update . --force` if node deletions or refactors decrease the node count.
-5. **Keep Local Graphify Output Synchronized**:
-   - When using Graphify, ensure local `graphify-out/` artifacts reflect the current state of the repository.
-   - Git hooks (`post-commit`, `post-checkout`) may automatically update local code nodes; generated output is not committed.
+5. **Keep Graphify Output Synchronized**:
+   - Ensure `graphify-out/` artifacts reflect the current state of the repository.
+   - Git hooks (`post-commit`, `post-checkout`) automatically update code nodes on commits.
 6. **Never Modify Unrelated Files**:
    - Limit all modifications strictly to the files identified in the approved implementation plan.
    - Never refactor or touch files outside the scope of the user's request.

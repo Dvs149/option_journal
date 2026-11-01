@@ -96,8 +96,16 @@ class TradeController extends Controller
             $query->orderBy('trade_date', 'desc')->orderBy('id', 'desc');
         }
 
-        $perPage = min((int) $request->input('per_page', 15), 100);
-        $trades = $query->with('journal')->paginate($perPage);
+        $isAll = $request->boolean('all') || $request->input('per_page') === 'all' || (int) $request->input('per_page') === -1;
+
+        if ($isAll) {
+            $totalCount = (clone $query)->count();
+            $trades = $query->with('journal')->paginate(max(1, $totalCount));
+        } else {
+            $rawPerPage = (int) $request->input('per_page', 15);
+            $perPage = $rawPerPage > 0 ? min($rawPerPage, 100000) : 15;
+            $trades = $query->with('journal')->paginate($perPage);
+        }
 
         return response()->json($trades);
     }

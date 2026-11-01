@@ -381,7 +381,7 @@ export default function AllTrades() {
     setExporting(true);
     showToast('Generating Excel (.xlsx) file...', 'info');
     try {
-      // Fetch all trades matching the current filter (up to 5000 trades)
+      // Fetch all trades matching the current filter without pagination limits
       const res = await api.get('/trades', {
         params: {
           filter,
@@ -394,7 +394,8 @@ export default function AllTrades() {
           search: search || undefined,
           sort_by: sortBy,
           sort_order: sortOrder,
-          per_page: 5000,
+          all: true,
+          per_page: -1,
         },
       });
 

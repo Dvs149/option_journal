@@ -134,4 +134,3 @@ TradeJournal uses Graphify (`graphifyy`) for codebase structure discovery, AST r
 - **Synchronization**:
   - Run `export PATH="$HOME/.local/bin:$PATH" && graphify update .` to re-extract AST nodes whenever code changes occur.
   - Exclusions are maintained in `.graphifyignore` (`vendor/`, `node_modules/`, `build/`, `dist/`, `.env`).
-  - Graphify output is generated locally, ignored by Git, and is not required to run or build the application.

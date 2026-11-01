@@ -59,8 +59,16 @@ class JournalController extends Controller
             });
         }
 
-        $perPage = min((int) $request->input('per_page', 10), 50);
-        $trades = $query->paginate($perPage);
+        $isAll = $request->boolean('all') || $request->input('per_page') === 'all' || (int) $request->input('per_page') === -1;
+
+        if ($isAll) {
+            $totalCount = (clone $query)->count();
+            $trades = $query->paginate(max(1, $totalCount));
+        } else {
+            $rawPerPage = (int) $request->input('per_page', 10);
+            $perPage = $rawPerPage > 0 ? min($rawPerPage, 100000) : 10;
+            $trades = $query->paginate($perPage);
+        }
 
         // Overall summary statistics for top metrics across all trades of this user
         $allTrades = Trade::where('user_id', $user->id);

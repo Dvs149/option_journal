@@ -10,7 +10,6 @@
 **/vendor/
 frontend/dist/
 backend/public/build/
-graphify-out/
 
 # Local databases and runtime files
 backend/database/*.sqlite

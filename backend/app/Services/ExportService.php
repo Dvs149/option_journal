@@ -126,6 +126,9 @@ class ExportService
         array $selectedColumns = [],
         $aggregatedData = null
     ) {
+        @ini_set('memory_limit', '1024M');
+        @ini_set('max_execution_time', '300');
+
         $pdf = Pdf::loadView('reports.trading_report', [
             'user' => $user,
             'data' => $analyticsData,

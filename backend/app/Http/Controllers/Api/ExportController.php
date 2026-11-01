@@ -42,6 +42,9 @@ class ExportController extends Controller
 
     public function pdf(Request $request)
     {
+        @ini_set('memory_limit', '1024M');
+        @ini_set('max_execution_time', '300');
+
         $user = $request->user();
         $accountId = $request->input('trading_account_id');
         $filter = $request->input('filter', 'this_month');

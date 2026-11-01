@@ -317,11 +317,12 @@ export default function ExportModal({
         return;
       }
 
-      // For Excel (.xlsx) and CSV (.csv): Fetch full matching trade dataset
+      // For Excel (.xlsx) and CSV (.csv): Fetch full matching trade dataset without pagination limits
       const res = await api.get('/trades', {
         params: {
           ...getQueryParams(),
-          per_page: 10000,
+          all: true,
+          per_page: -1,
         },
       });
 
@@ -678,7 +679,19 @@ export default function ExportModal({
       onClose();
     } catch (err) {
       console.error('Export error:', err);
-      showToast(`Export failed: ${err.message || 'Unknown error'}`, 'error');
+      let errMsg = err.message || 'Unknown error';
+      if (err.response?.data instanceof Blob) {
+        try {
+          const text = await err.response.data.text();
+          const json = JSON.parse(text);
+          if (json?.message) errMsg = json.message;
+        } catch (_) {
+          // ignore parsing error
+        }
+      } else if (err.response?.data?.message) {
+        errMsg = err.response.data.message;
+      }
+      showToast(`Export failed: ${errMsg}`, 'error');
     } finally {
       setExporting(false);
     }
