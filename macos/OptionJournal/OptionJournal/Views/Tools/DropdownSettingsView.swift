@@ -1,202 +1,376 @@
 import SwiftUI
 
 public struct DropdownSettingsView: View {
-    @Environment(\.colorScheme) private var colorScheme
     @StateObject private var viewModel = DropdownSettingsViewModel()
+    @ObservedObject private var preferences = PreferencesManager.shared
+    @Environment(\.colorScheme) private var colorScheme
     
     public init() {}
     
     public var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            headerView
-            
-            Divider()
-                .background(KiteTheme.border(for: colorScheme))
-            
-            // Content
-            if viewModel.isLoading && viewModel.options.isEmpty {
-                VStack {
-                    Spacer()
-                    ProgressView("Loading dropdown configuration...")
-                        .font(.system(size: 13))
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let error = viewModel.errorMessage, viewModel.options.isEmpty {
-                VStack(spacing: 12) {
-                    Spacer()
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 32))
-                        .foregroundColor(KiteTheme.lossRed)
-                    Text("Failed to load dropdown options")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                    Text(error)
-                        .font(.system(size: 12))
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                    Button("Try Again") {
-                        Task { await viewModel.loadData() }
-                    }
-                    .buttonStyle(KiteSecondaryButtonStyle())
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        // Category Filter Bar
-                        categoryFilterBar
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(alignment: .leading, spacing: 20) {
+                // MARK: - Header
+                headerSection
+                
+                // MARK: - Top 4 Metric Cards
+                topMetricsSection
+                
+                // MARK: - Module Filter Bar
+                moduleFilterBarSection
+                
+                // MARK: - Add Trade Section Header
+                addTradeSectionHeader
+                
+                // MARK: - 2x2 Grid Cards: Index, Trading Type, Option Type, Strategy Name
+                VStack(spacing: 16) {
+                    HStack(alignment: .top, spacing: 16) {
+                        dropdownGroupCard(
+                            title: "Index",
+                            activeCount: viewModel.indexOptions.filter { $0.isActive }.count,
+                            totalCount: 9,
+                            key: "index_name",
+                            options: viewModel.indexOptions,
+                            badgeColor: Color(hex: "3b82f6")
+                        )
+                        .frame(maxWidth: .infinity)
                         
-                        // Options Grid / List
-                        VStack(spacing: 8) {
-                            ForEach(viewModel.filteredOptions) { item in
-                                optionRow(item)
-                            }
-                        }
+                        dropdownGroupCard(
+                            title: "Trading Type",
+                            activeCount: viewModel.tradingTypeOptions.filter { $0.isActive }.count,
+                            totalCount: 5,
+                            key: "trading_type",
+                            options: viewModel.tradingTypeOptions,
+                            badgeColor: Color(hex: "10b981")
+                        )
+                        .frame(maxWidth: .infinity)
                     }
-                    .padding(20)
+                    .frame(maxWidth: .infinity)
+                    
+                    HStack(alignment: .top, spacing: 16) {
+                        dropdownGroupCard(
+                            title: "Option Type",
+                            activeCount: viewModel.optionTypeOptions.filter { $0.isActive }.count,
+                            totalCount: 3,
+                            key: "option_type",
+                            options: viewModel.optionTypeOptions,
+                            badgeColor: Color(hex: "06b6d4")
+                        )
+                        .frame(maxWidth: .infinity)
+                        
+                        dropdownGroupCard(
+                            title: "Strategy Name",
+                            activeCount: viewModel.strategyOptions.filter { $0.isActive }.count,
+                            totalCount: 14,
+                            key: "strategy_name",
+                            options: viewModel.strategyOptions,
+                            badgeColor: Color(hex: "a855f7")
+                        )
+                        .frame(maxWidth: .infinity)
+                    }
+                    .frame(maxWidth: .infinity)
+                    
+                    dropdownGroupCard(
+                        title: "Market Condition",
+                        activeCount: viewModel.marketConditionOptions.filter { $0.isActive }.count,
+                        totalCount: 6,
+                        key: "market_conditions",
+                        options: viewModel.marketConditionOptions,
+                        badgeColor: Color(hex: "f59e0b")
+                    )
+                    .frame(maxWidth: .infinity)
                 }
+                .frame(maxWidth: .infinity)
             }
+            .padding(24)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .background(KiteTheme.canvas(for: colorScheme))
+        .background(Color(hex: "0b111e"))
         .task {
             await viewModel.loadData()
         }
     }
     
-    // MARK: - Header
-    private var headerView: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Dropdown Manager")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                Text("Enable or disable instruments, strategies, and option classifications across trade entry forms")
-                    .font(.system(size: 12))
-                    .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
+    // MARK: - Header Section
+    private var headerSection: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Dropdown & Option Manager")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundColor(.white)
+                Text("Manage all options & dropdown lists module-wise (Add Trade, All Trades, Journal). Easily activate, deactivate, or add custom options.")
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(hex: "94a3b8"))
             }
             
             Spacer()
             
-            Button(action: {
-                Task { await viewModel.loadData() }
-            }) {
-                Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-            }
-            .buttonStyle(PlainButtonStyle())
-            .padding(6)
-            .background(KiteTheme.surface(for: colorScheme))
-            .overlay(
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(KiteTheme.border(for: colorScheme), lineWidth: 1)
-            )
-            .help("Refresh Dropdown Options")
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
-    }
-    
-    // MARK: - Category Filter Bar
-    private var categoryFilterBar: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
-                ForEach(viewModel.dropdownKeys, id: \.self) { key in
-                    let isSelected = viewModel.selectedDropdownKey == key
-                    Button(action: {
-                        viewModel.selectedDropdownKey = key
-                    }) {
-                        Text(formatKeyLabel(key))
-                            .font(.system(size: 12, weight: isSelected ? .bold : .medium))
-                            .foregroundColor(isSelected ? KiteTheme.brandBlue : KiteTheme.textSecondary(for: colorScheme))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(
-                                isSelected ? KiteTheme.brandBlue.opacity(0.12) : KiteTheme.surface(for: colorScheme)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 4)
-                                    .stroke(
-                                        isSelected ? KiteTheme.brandBlue : KiteTheme.border(for: colorScheme),
-                                        lineWidth: 1
-                                    )
-                            )
-                            .cornerRadius(4)
+                Button {
+                    // Reset defaults
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.counterclockwise")
+                        Text("Reset Defaults")
                     }
-                    .buttonStyle(PlainButtonStyle())
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .background(Color(hex: "121b2d"))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Color(hex: "1e293b"), lineWidth: 1)
+                    )
                 }
+                .buttonStyle(.plain)
+                
+                Button {
+                    // Add Custom Option
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "plus")
+                        Text("Add Custom Option")
+                    }
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(Color(hex: "3b82f6"))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
+                .buttonStyle(.plain)
             }
         }
     }
     
-    // MARK: - Option Row
-    private func optionRow(_ item: DropdownOptionItem) -> some View {
+    // MARK: - Top 4 Metric Cards
+    private var topMetricsSection: some View {
         HStack(spacing: 12) {
-            // Category Badge
-            Text(formatKeyLabel(item.dropdownKey).uppercased())
-                .font(.system(size: 9, weight: .bold))
-                .foregroundColor(KiteTheme.brandBlue)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(KiteTheme.brandBlue.opacity(0.12))
-                .cornerRadius(3)
-                .frame(width: 140, alignment: .leading)
-            
-            // Value
-            Text(item.optionValue)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-            
-            if let label = item.optionLabel, !label.isEmpty && label != item.optionValue {
-                Text("(\(label))")
-                    .font(.system(size: 11))
-                    .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-            }
-            
-            Spacer()
-            
-            // Status Tag
-            Text(item.isActive ? "ACTIVE" : "DISABLED")
-                .font(.system(size: 9, weight: .bold))
-                .foregroundColor(item.isActive ? KiteTheme.profitGreen : KiteTheme.textSecondary(for: colorScheme))
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(
-                    (item.isActive ? KiteTheme.profitGreen : KiteTheme.textSecondary(for: colorScheme)).opacity(0.12)
-                )
-                .cornerRadius(3)
-            
-            // Toggle Switch
-            Toggle("", isOn: Binding(
-                get: { item.isActive },
-                set: { _ in
-                    Task { await viewModel.toggleStatus(for: item) }
-                }
-            ))
-            .toggleStyle(SwitchToggleStyle(tint: KiteTheme.brandBlue))
-            .labelsHidden()
+            statCard("Total Dropdown Options", "\(viewModel.totalOptionsCount)", "slider.horizontal.3", Color(hex: "3b82f6"))
+            statCard("Active in Dropdowns", "\(viewModel.activeOptionsCount)", "checkmark.circle.fill", Color(hex: "10b981"))
+            statCard("Deactivated (Hidden)", "\(viewModel.deactivatedCount)", "eye.slash.fill", Color(hex: "64748b"))
+            statCard("Configured Modules", "\(viewModel.configuredModulesCount)", "square.stack.3d.up.fill", Color(hex: "a855f7"))
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(KiteTheme.surface(for: colorScheme))
+    }
+    
+    private func statCard(_ title: String, _ value: String, _ icon: String, _ color: Color) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.system(size: 11, weight: .medium)).foregroundColor(Color(hex: "94a3b8"))
+                Text(value).font(.system(size: 20, weight: .bold, design: .monospaced)).foregroundColor(.white)
+            }
+            Spacer()
+            ZStack {
+                Circle().fill(color.opacity(0.15)).frame(width: 36, height: 36)
+                Image(systemName: icon).font(.system(size: 14)).foregroundColor(color)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
-            RoundedRectangle(cornerRadius: 4)
-                .stroke(KiteTheme.border(for: colorScheme), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
         )
     }
     
-    private func formatKeyLabel(_ key: String) -> String {
-        switch key {
-        case "ALL": return "All Options"
-        case "index_name": return "Indices / Symbols"
-        case "strategy_name": return "Strategies"
-        case "trading_type": return "Trading Types"
-        case "option_type": return "Option Types"
-        case "date_period": return "Date Periods"
-        default: return key.replacingOccurrences(of: "_", with: " ").capitalized
+    // MARK: - Module Filter Bar
+    private var moduleFilterBarSection: some View {
+        HStack {
+            HStack(spacing: 4) {
+                modulePill("All Modules (81)", isSelected: viewModel.selectedModulePill.contains("All"))
+                modulePill("Add Trade (37)", isSelected: viewModel.selectedModulePill.contains("Add Trade"))
+                modulePill("All Trades (34)", isSelected: viewModel.selectedModulePill.contains("All Trades"))
+                modulePill("Trading Journal (10)", isSelected: viewModel.selectedModulePill.contains("Journal"))
+            }
+            
+            Spacer()
+            
+            HStack(spacing: 8) {
+                HStack(spacing: 2) {
+                    ForEach(["All", "Active Only", "Inactive"], id: \.self) { f in
+                        Button {
+                            viewModel.statusFilter = f
+                        } label: {
+                            Text(f)
+                                .font(.system(size: 11, weight: viewModel.statusFilter == f ? .bold : .medium))
+                                .foregroundColor(viewModel.statusFilter == f ? .white : Color(hex: "94a3b8"))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 5)
+                                .background(viewModel.statusFilter == f ? Color(hex: "f97316") : Color.clear)
+                                .clipShape(RoundedRectangle(cornerRadius: 5))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(2)
+                .background(Color(hex: "121b2d"))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                
+                HStack(spacing: 6) {
+                    Image(systemName: "magnifyingglass").font(.system(size: 10)).foregroundColor(Color(hex: "64748b"))
+                    TextField("Search options...", text: $viewModel.searchQuery)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 11))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .background(Color(hex: "0e1524"))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color(hex: "1e293b"), lineWidth: 1)
+                )
+                .frame(width: 150)
+            }
         }
+    }
+    
+    private func modulePill(_ label: String, isSelected: Bool) -> some View {
+        Button {
+            viewModel.selectedModulePill = label
+        } label: {
+            Text(label)
+                .font(.system(size: 11, weight: isSelected ? .bold : .medium))
+                .foregroundColor(isSelected ? .white : Color(hex: "94a3b8"))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(isSelected ? Color(hex: "f43f5e") : Color(hex: "121b2d"))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color(hex: "1e293b"), lineWidth: 1)
+                )
+        }
+        .buttonStyle(.plain)
+    }
+    
+    // MARK: - Add Trade Section Header
+    private var addTradeSectionHeader: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 6) {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 12))
+                    .foregroundColor(Color(hex: "3b82f6"))
+                Text("Add Trade")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+                Text("(5 Dropdowns)")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color(hex: "64748b"))
+            }
+            Text("Options used when entering new trades (Index, Trading Type, Strategy, Market Condition, Option Type)")
+                .font(.system(size: 11))
+                .foregroundColor(Color(hex: "94a3b8"))
+        }
+        .padding(.top, 4)
+    }
+    
+    // MARK: - Dropdown Group Card
+    private func dropdownGroupCard(
+        title: String,
+        activeCount: Int,
+        totalCount: Int,
+        key: String,
+        options: [DropdownOptionItem],
+        badgeColor: Color
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Group Header
+            HStack {
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 6) {
+                        Text(title)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                        
+                        Text("\(activeCount) / \(totalCount) Active")
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(Color(hex: "10b981"))
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Color(hex: "10b981").opacity(0.15))
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                    }
+                    Text("Key: \(key)")
+                        .font(.system(size: 9, design: .monospaced))
+                        .foregroundColor(Color(hex: "64748b"))
+                }
+                
+                Spacer()
+                
+                HStack(spacing: 6) {
+                    Text("Enable All").font(.system(size: 9)).foregroundColor(Color(hex: "94a3b8"))
+                    Text("Disable All").font(.system(size: 9)).foregroundColor(Color(hex: "94a3b8"))
+                    Image(systemName: "plus").font(.system(size: 10)).foregroundColor(Color(hex: "3b82f6"))
+                }
+            }
+            
+            Divider().background(Color(hex: "1e293b"))
+            
+            // Options list
+            VStack(spacing: 6) {
+                ForEach(options) { opt in
+                    HStack {
+                        // Badge
+                        Text(opt.optionValue)
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundColor(badgeColor)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
+                            .background(badgeColor.opacity(0.15))
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
+                            .frame(width: 80, alignment: .leading)
+                        
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(opt.optionLabel ?? opt.optionValue)
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(.white)
+                            Text(opt.isActive ? "Status: Active" : "Status: Inactive (Hidden)")
+                                .font(.system(size: 9))
+                                .foregroundColor(opt.isActive ? Color(hex: "10b981") : Color(hex: "64748b"))
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "pencil").font(.system(size: 10)).foregroundColor(Color(hex: "64748b"))
+                        
+                        // Switch toggle
+                        Toggle("", isOn: Binding(
+                            get: { opt.isActive },
+                            set: { _ in viewModel.toggleOptionStatus(in: key, optionId: opt.id) }
+                        ))
+                        .labelsHidden()
+                        .scaleEffect(0.65)
+                    }
+                    .padding(8)
+                    .background(Color(hex: "0e1524"))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
+            }
+            
+            Divider().background(Color(hex: "1e293b"))
+            
+            HStack {
+                Text("Changes take effect instantly in Add Trade")
+                    .font(.system(size: 9))
+                    .foregroundColor(Color(hex: "64748b"))
+                Spacer()
+                Text("+ Add Option")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(Color(hex: "3b82f6"))
+            }
+        }
+        .padding(14)
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
+        )
     }
 }

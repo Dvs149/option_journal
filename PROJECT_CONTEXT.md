@@ -32,7 +32,7 @@ The system addresses the core needs of active option traders:
 | Layer | Technology | Version | Key Libraries / Frameworks |
 |---|---|---|---|
 | **Frontend** | React SPA | 19.0.0 | Vite 6.2+, Tailwind CSS 4.0, React Router v7.3, Lucide React, Recharts 2.15, SheetJS (XLSX), date-fns |
-| **Backend** | PHP / Laravel | Laravel 12.x / PHP 8.3+ | Laravel Sanctum 4.0, Barryvdh Laravel DomPDF 3.1, Laravel Tinker |
+| **Backend** | PHP / Laravel | Laravel 13.x / PHP 8.3+ | Laravel Sanctum 4.0, Barryvdh Laravel DomPDF 3.1, Laravel Tinker |
 | **Database** | MySQL | 8.0+ | Relational schema with Foreign Keys, Soft Deletes, Index optimizations |
 | **Auth** | Stateful / Token-based | Sanctum | Bearer Token, Dual Username/Email authentication |
 | **File Storage** | Local Public Disk | Storage Driver | Stored in `storage/app/public/screenshots`, linked via `public/storage` |

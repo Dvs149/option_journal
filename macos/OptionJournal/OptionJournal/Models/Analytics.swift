@@ -4,8 +4,112 @@ import Foundation
 public struct DashboardDataResponse: Codable, Sendable {
     public let account: TradingAccount?
     public let stats: DashboardStats
+    public let charts: DashboardChartsData?
+    public let strategyPerformance: [StrategyPerformanceItem]?
     public let recentTrades: [RecentTradeItem]?
+    public let riskManagement: RiskSummaryDashboard?
     public let equityCurveData: [EquityPoint]?
+}
+
+// MARK: - Dashboard Charts Data
+public struct DashboardChartsData: Codable, Sendable {
+    public let dailyPnl: [DailyPnlPoint]?
+    public let equityCurve: [EquityPoint]?
+    public let drawdownCurve: [EquityPoint]?
+    public let monthlyPnl: [MonthlyPnlPoint]?
+    public let indexPerformance: IndexPerformanceContainer?
+    public let cePePerformance: CePePerformanceContainer?
+}
+
+// MARK: - Daily P&L Chart Point
+public struct DailyPnlPoint: Codable, Identifiable, Sendable, Hashable {
+    public var id: String { date }
+    public let date: String
+    public let displayDate: String?
+    @FlexibleDouble public var pnl: Double?
+    @FlexibleDouble public var netPnl: Double?
+    @FlexibleDouble public var grossProfit: Double?
+    @FlexibleDouble public var grossLoss: Double?
+    public let trades: Int?
+    
+    public var calculatedPnl: Double {
+        netPnl ?? pnl ?? 0.0
+    }
+}
+
+// MARK: - Monthly P&L Chart Point
+public struct MonthlyPnlPoint: Codable, Identifiable, Sendable, Hashable {
+    public var id: String { "\(year ?? 0)-\(month)" }
+    public let month: String
+    public let monthNum: Int?
+    public let year: Int?
+    @FlexibleDouble public var pnl: Double?
+    @FlexibleDouble public var grossProfit: Double?
+    @FlexibleDouble public var grossLoss: Double?
+    public let tradesCount: Int?
+    
+    public var calculatedPnl: Double {
+        pnl ?? 0.0
+    }
+}
+
+// MARK: - Index Performance
+public struct IndexPerformanceContainer: Codable, Sendable {
+    @FlexibleDouble public var totalNetPnl: Double?
+    public let items: [IndexPerformanceItem]?
+}
+
+public struct IndexPerformanceItem: Codable, Identifiable, Sendable, Hashable {
+    public var id: String { name }
+    public let name: String
+    @FlexibleDouble public var netPnl: Double?
+    public let trades: Int?
+    @FlexibleDouble public var winRate: Double?
+    @FlexibleDouble public var percentage: Double?
+    public let color: String?
+    
+    public var calculatedNetPnl: Double {
+        netPnl ?? 0.0
+    }
+    public var calculatedPercentage: Double {
+        percentage ?? 0.0
+    }
+}
+
+// MARK: - CE vs PE Performance
+public struct CePePerformanceContainer: Codable, Sendable {
+    @FlexibleDouble public var totalNetPnl: Double?
+    public let items: [CePePerformanceItem]?
+}
+
+public struct CePePerformanceItem: Codable, Identifiable, Sendable, Hashable {
+    public var id: String { name }
+    public let name: String
+    @FlexibleDouble public var netPnl: Double?
+    public let trades: Int?
+    @FlexibleDouble public var winRate: Double?
+    @FlexibleDouble public var percentage: Double?
+    public let color: String?
+    
+    public var calculatedNetPnl: Double {
+        netPnl ?? 0.0
+    }
+    public var calculatedPercentage: Double {
+        percentage ?? 0.0
+    }
+}
+
+// MARK: - Risk Summary Dashboard
+public struct RiskSummaryDashboard: Codable, Sendable {
+    @FlexibleDouble public var dailyLossLimit: Double?
+    @FlexibleDouble public var dailyCurrentLoss: Double?
+    @FlexibleDouble public var dailyProfitTarget: Double?
+    @FlexibleDouble public var dailyCurrentProfit: Double?
+    @FlexibleDouble public var maxDrawdownLimit: Double?
+    @FlexibleDouble public var currentDrawdown: Double?
+    public let consecutiveLossDays: Int?
+    public let consecutiveWinDays: Int?
+    public let alerts: [RiskAlertItem]?
 }
 
 // MARK: - Equity Point for Swift Charts
@@ -18,6 +122,29 @@ public struct EquityPoint: Codable, Identifiable, Sendable, Hashable {
     @FlexibleDouble public var capital: Double?
     @FlexibleDouble public var drawdown: Double?
     @FlexibleDouble public var peak: Double?
+
+    public var balance: Double? {
+        capital
+    }
+
+    public init(
+        date: String,
+        displayDate: String? = nil,
+        pnl: Double? = nil,
+        cumulativePnl: Double? = nil,
+        capital: Double? = nil,
+        balance: Double? = nil,
+        drawdown: Double? = nil,
+        peak: Double? = nil
+    ) {
+        self.date = date
+        self.displayDate = displayDate
+        self._pnl = FlexibleDouble(wrappedValue: pnl)
+        self._cumulativePnl = FlexibleDouble(wrappedValue: cumulativePnl)
+        self._capital = FlexibleDouble(wrappedValue: capital ?? balance)
+        self._drawdown = FlexibleDouble(wrappedValue: drawdown)
+        self._peak = FlexibleDouble(wrappedValue: peak)
+    }
 }
 
 // MARK: - Calendar Models
@@ -48,6 +175,30 @@ public struct CalendarDayItem: Codable, Identifiable, Sendable, Hashable {
     
     public var isProfit: Bool {
         (netPnl ?? 0) > 0
+    }
+
+    public init(
+        date: String,
+        day: Int,
+        weekday: String = "",
+        netPnl: Double? = nil,
+        grossProfit: Double? = nil,
+        grossLoss: Double? = nil,
+        totalCharges: Double? = nil,
+        tradeCount: Int = 0,
+        status: String = "no_trade",
+        trades: [CalendarDayTrade]? = nil
+    ) {
+        self.date = date
+        self.day = day
+        self.weekday = weekday
+        self._netPnl = FlexibleDouble(wrappedValue: netPnl)
+        self._grossProfit = FlexibleDouble(wrappedValue: grossProfit)
+        self._grossLoss = FlexibleDouble(wrappedValue: grossLoss)
+        self._totalCharges = FlexibleDouble(wrappedValue: totalCharges)
+        self.tradeCount = tradeCount
+        self.status = status
+        self.trades = trades
     }
 }
 
@@ -132,6 +283,26 @@ public struct StrategyPerformanceItem: Codable, Identifiable, Sendable, Hashable
     @FlexibleDouble public var netPnl: Double?
     @FlexibleDouble public var avgProfit: Double?
     @FlexibleDouble public var avgLoss: Double?
+
+    public init(
+        strategy: String,
+        totalTrades: Int,
+        winningTrades: Int = 0,
+        losingTrades: Int = 0,
+        winRate: Double? = nil,
+        netPnl: Double? = nil,
+        avgProfit: Double? = nil,
+        avgLoss: Double? = nil
+    ) {
+        self.strategy = strategy
+        self.totalTrades = totalTrades
+        self.winningTrades = winningTrades
+        self.losingTrades = losingTrades
+        self._winRate = FlexibleDouble(wrappedValue: winRate)
+        self._netPnl = FlexibleDouble(wrappedValue: netPnl)
+        self._avgProfit = FlexibleDouble(wrappedValue: avgProfit)
+        self._avgLoss = FlexibleDouble(wrappedValue: avgLoss)
+    }
 }
 
 // MARK: - Dashboard Stats
@@ -149,9 +320,23 @@ public struct DashboardStats: Codable, Sendable {
     public let losingDays: Int?
     public let breakevenDays: Int?
     @FlexibleDouble public var winRate: Double?
+    @FlexibleDouble public var tradeWinRate: Double?
+    public let totalTrades: Int?
     @FlexibleDouble public var profitFactor: Double?
     @FlexibleDouble public var periodRoi: Double?
     @FlexibleDouble public var overallRoi: Double?
+    @FlexibleDouble public var avgDailyProfit: Double?
+    @FlexibleDouble public var avgDailyLoss: Double?
+    @FlexibleDouble public var maxDrawdown: Double?
+    @FlexibleDouble public var maxDrawdownPct: Double?
+    @FlexibleDouble public var currentDrawdown: Double?
+    @FlexibleDouble public var grossProfitPct: Double?
+    @FlexibleDouble public var grossLossPct: Double?
+    @FlexibleDouble public var todayPnlPct: Double?
+    @FlexibleDouble public var thisMonthPnlPct: Double?
+    @FlexibleDouble public var investedCapital: Double?
+    @FlexibleDouble public var initialCapital: Double?
+    @FlexibleDouble public var highestCapital: Double?
 }
 
 // MARK: - Recent Trade Item

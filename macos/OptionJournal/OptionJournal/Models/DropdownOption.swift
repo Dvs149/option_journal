@@ -16,6 +16,26 @@ public struct DropdownOptionItem: Codable, Identifiable, Sendable, Hashable {
     public let optionLabel: String?
     public let isActive: Bool
     public let sortOrder: Int?
+
+    public init(
+        id: Int,
+        moduleKey: String,
+        dropdownKey: String,
+        dropdownLabel: String? = nil,
+        optionValue: String,
+        optionLabel: String? = nil,
+        isActive: Bool = true,
+        sortOrder: Int? = 0
+    ) {
+        self.id = id
+        self.moduleKey = moduleKey
+        self.dropdownKey = dropdownKey
+        self.dropdownLabel = dropdownLabel
+        self.optionValue = optionValue
+        self.optionLabel = optionLabel
+        self.isActive = isActive
+        self.sortOrder = sortOrder
+    }
 }
 
 public struct ToggleDropdownStatusRequest: Codable, Sendable {

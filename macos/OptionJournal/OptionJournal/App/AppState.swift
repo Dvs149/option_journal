@@ -1,6 +1,33 @@
 import SwiftUI
 import Combine
 
+// MARK: - Date Range Filter Enum
+public enum DateRangeFilter: String, CaseIterable, Identifiable, Sendable {
+    case today = "today"
+    case yesterday = "yesterday"
+    case thisWeek = "this_week"
+    case thisMonth = "this_month"
+    case lastMonth = "last_month"
+    case thisYear = "this_year"
+    case allTime = "all"
+    case custom = "custom"
+    
+    public var id: String { rawValue }
+    
+    public var displayName: String {
+        switch self {
+        case .today: return "Today"
+        case .yesterday: return "Yesterday"
+        case .thisWeek: return "This Week"
+        case .thisMonth: return "This Month"
+        case .lastMonth: return "Last Month"
+        case .thisYear: return "This Year"
+        case .allTime: return "All Time"
+        case .custom: return "Custom Range..."
+        }
+    }
+}
+
 @MainActor
 public final class AppState: ObservableObject {
     @Published public var currentUser: User?
@@ -9,6 +36,35 @@ public final class AppState: ObservableObject {
     @Published public var selectedTab: String = "dashboard"
     @Published public var isPrivacyMode: Bool = false
     @Published public var globalError: String?
+    
+    // Global Date Filter State
+    @Published public var selectedDateFilter: DateRangeFilter = .allTime
+    @Published public var customStartDate: Date = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
+    @Published public var customEndDate: Date = Date()
+    @Published public var dateFilterTrigger: Int = 0
+    
+    public var dateFilterDisplayTitle: String {
+        if selectedDateFilter == .custom {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "dd MMM"
+            return "\(formatter.string(from: customStartDate)) - \(formatter.string(from: customEndDate))"
+        }
+        return selectedDateFilter.displayName
+    }
+    
+    public var apiFromDateString: String? {
+        guard selectedDateFilter == .custom else { return nil }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: customStartDate)
+    }
+    
+    public var apiToDateString: String? {
+        guard selectedDateFilter == .custom else { return nil }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: customEndDate)
+    }
     
     private let authService: AuthServiceProtocol
     private let keychain: KeychainManager

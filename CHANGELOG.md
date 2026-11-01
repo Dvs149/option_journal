@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (macOS Native Application - Phase 6)
+- **Journaling, Tools, Packaging & Release**:
+  - `TradingJournalView`: Post-trade reviews, psychological discipline ratings, mistake logging (`mistakes_made`), lessons learned, and reflection drawer (`JournalReflectionSheet`).
+  - `CapitalManagementView`: Account ledger tracking cash deposits, withdrawals, equity progression chart, and return on invested capital (`overall_roi`).
+  - `PineScriptManagerView`: Master-detail Pine Script library supporting indicators, strategies, and execution webhooks with monospaced code display, one-click clipboard copy, and full script editor (`PineScriptEditorSheet`).
+  - `DropdownSettingsView`: Interactive toggles for active instruments, strategies, trading types, and option parameters with instant local UI updates.
+  - Configured macOS App Sandbox entitlements (`OptionJournal.entitlements`) with `com.apple.security.network.client` and `com.apple.security.files.user-selected.read-write`.
+  - Added dedicated services: `JournalService`, `CapitalService`, `PineScriptService`, `SettingsService` and their respective view models.
+  - Universal 2 (`arm64` + `x86_64`) Release build prepared for release.
+
+### Added (macOS Native Application - Phase 5)
+- **Visual Analytics & Financial Charts (Swift Charts & Native Heatmaps)**:
+  - `EquityCurveView`: Interactive cumulative P&L chart with high-water mark overlay, drawdown area graph, timeframe filtering (All, Today, Week, Month), and hover scrubbing with tooltip inspect.
+  - `TradingCalendarView`: Interactive 7-column monthly heatmap grid (Mon–Sun) with daily P&L badges, trade counts, month navigator (`<`, `>`, Today), and `DayTradesDetailSheet` with itemized trade logs.
+  - `StrategyAnalysisView`: Comparative setup breakdown featuring best and worst performing setup highlight cards, horizontal Net P&L distribution bar chart, win rate gauges, and average win/loss metrics.
+  - `RiskManagementView`: Safety guardrail engine featuring real-time daily loss & profit target meters, danger/warning alert banners, discipline metrics (R:R ratio, max drawdown, win streaks), and `EditLimitsSheet` for updating risk parameters via `PUT /api/risk/limits`.
+  - `AnalyticsReportsView`: Comprehensive multi-segment breakdown across index instruments (NIFTY vs SENSEX), option types (CE vs PE), trading types (Intraday vs BTST), and weekday performance.
+  - `AnalyticsServiceProtocol` & `AnalyticsService`: Complete API integrations for `/dashboard`, `/calendar`, `/risk`, `/risk/limits`, `/strategies`, and `/analytics`.
+  - Added view models: `EquityCurveViewModel`, `CalendarViewModel`, `StrategyAnalysisViewModel`, `RiskViewModel`, and `AnalyticsReportsViewModel`.
+  - Verified clean native compilation on macOS with `xcodebuild`: `** BUILD SUCCEEDED **`.
+
 ---
 
 ## [1.12.2] - 2026-11-01
@@ -258,6 +279,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2026-10-30
 
 ### Initial Release
-- Initial project import with React 19 frontend and Laravel 12 backend.
+- Initial project import with React 19 frontend and Laravel 13 backend.
 - Base tables created via migration `2026_10_30_120000_create_trading_system_tables.php` (`trading_accounts`, `trading_strategies`, `trades`, `trade_journals`, `capital_transactions`).
 - Core dashboard, trade log, calendar, equity curve, risk management, and settings pages.

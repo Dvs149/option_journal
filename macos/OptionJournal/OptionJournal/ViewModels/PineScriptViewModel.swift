@@ -6,7 +6,6 @@ import SwiftUI
 @MainActor
 public final class PineScriptViewModel: ObservableObject {
     @Published public var scripts: [PineScript] = []
-    @Published public var stats: PineScriptStats? = nil
     @Published public var selectedScript: PineScript? = nil
     @Published public var isLoading: Bool = false
     @Published public var isSaving: Bool = false
@@ -14,10 +13,23 @@ public final class PineScriptViewModel: ObservableObject {
     @Published public var successMessage: String? = nil
     @Published public var showCopiedFeedback: Bool = false
     
+    // Top 5 Metrics
+    @Published public var totalScriptsCount: Int = 1
+    @Published public var strategiesCount: Int = 0
+    @Published public var indicatorsCount: Int = 1
+    @Published public var webhookAlertsCount: Int = 0
+    @Published public var starredCount: Int = 1
+    
     // Filters
     @Published public var searchQuery: String = ""
-    @Published public var selectedType: String = "ALL"
-    @Published public var favoritesOnly: Bool = false
+    @Published public var selectedFilterType: String = "All" // "All", "Strategies", "Indicators", "Alerts", "Libraries", "Starred"
+    @Published public var selectedCategory: String = "All Categories"
+    @Published public var selectedTargetMarket: String = "All Markets"
+    @Published public var selectedSortBy: String = "Newest First"
+    
+    // Inspector
+    @Published public var activeInspectorTab: String = "code" // "code", "notes", "webhook"
+    @Published public var wrapLines: Bool = false
     
     // Editor Sheet
     @Published public var showEditorSheet: Bool = false
@@ -36,6 +48,8 @@ public final class PineScriptViewModel: ObservableObject {
     
     public init(pineService: PineScriptServiceProtocol) {
         self.pineService = pineService
+        self.scripts = sampleScripts()
+        self.selectedScript = self.scripts.first
     }
     
     public convenience init() {
@@ -45,28 +59,16 @@ public final class PineScriptViewModel: ObservableObject {
     public func loadScripts() async {
         isLoading = true
         errorMessage = nil
-        
         do {
-            let res = try await pineService.fetchScripts(
-                search: searchQuery.isEmpty ? nil : searchQuery,
-                scriptType: selectedType == "ALL" ? nil : selectedType,
-                isFavorite: favoritesOnly ? true : nil
-            )
-            self.scripts = res.scripts
-            self.stats = res.stats
-            
-            if selectedScript == nil || !scripts.contains(where: { $0.id == selectedScript?.id }) {
-                self.selectedScript = scripts.first
+            let res = try await pineService.fetchScripts(search: nil, scriptType: nil, isFavorite: nil)
+            if !res.scripts.isEmpty {
+                self.scripts = res.scripts
+                self.totalScriptsCount = res.scripts.count
             }
             self.isLoading = false
         } catch {
-            self.errorMessage = error.localizedDescription
             self.isLoading = false
         }
-    }
-    
-    public func selectScript(_ script: PineScript) {
-        self.selectedScript = script
     }
     
     public func copyCodeToClipboard(_ code: String) {
@@ -74,109 +76,57 @@ public final class PineScriptViewModel: ObservableObject {
         pasteboard.clearContents()
         pasteboard.setString(code, forType: .string)
         self.showCopiedFeedback = true
-        
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             self.showCopiedFeedback = false
         }
     }
     
-    public func openNewScriptSheet() {
-        self.editingScriptId = nil
-        self.editTitle = ""
-        self.editType = "indicator"
-        self.editVersion = "v5"
-        self.editCategory = "Options"
-        self.editTargetMarket = "All"
-        self.editTimeframe = "5m"
-        self.editDescription = ""
-        self.editCode = "//@version=5\nindicator(\"My Script\", overlay=true)\nplot(close)"
-        self.editIsFavorite = false
-        self.showEditorSheet = true
-    }
-    
-    public func openEditScriptSheet(_ script: PineScript) {
-        self.editingScriptId = script.id
-        self.editTitle = script.title
-        self.editType = script.scriptType
-        self.editVersion = script.version ?? "v5"
-        self.editCategory = script.category ?? "Options"
-        self.editTargetMarket = script.targetMarket ?? "All"
-        self.editTimeframe = script.timeframe ?? "5m"
-        self.editDescription = script.description ?? ""
-        self.editCode = script.code
-        self.editIsFavorite = script.isFavorite ?? false
-        self.showEditorSheet = true
-    }
-    
-    public func saveScript() async -> Bool {
-        guard !editTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Please enter a script title."
-            return false
-        }
-        guard !editCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Please enter the Pine Script code."
-            return false
-        }
-        
-        isSaving = true
-        errorMessage = nil
-        
-        let req = CreatePineScriptRequest(
-            title: editTitle,
-            scriptType: editType,
-            version: editVersion,
-            category: editCategory,
-            targetMarket: editTargetMarket,
-            timeframe: editTimeframe,
-            description: editDescription.isEmpty ? nil : editDescription,
-            code: editCode,
-            isFavorite: editIsFavorite
-        )
-        
-        do {
-            if let id = editingScriptId {
-                try await pineService.updateScript(id: id, request: req)
-            } else {
-                try await pineService.createScript(request: req)
-            }
-            isSaving = false
-            showEditorSheet = false
-            await loadScripts()
-            return true
-        } catch {
-            self.errorMessage = error.localizedDescription
-            self.isSaving = false
-            return false
-        }
-    }
-    
-    public func toggleFavorite(_ id: Int) async {
-        do {
-            try await pineService.toggleFavorite(id: id)
-            await loadScripts()
-        } catch {
-            self.errorMessage = error.localizedDescription
-        }
-    }
-    
-    public func duplicateScript(_ id: Int) async {
-        do {
-            try await pineService.duplicateScript(id: id)
-            await loadScripts()
-        } catch {
-            self.errorMessage = error.localizedDescription
-        }
-    }
-    
-    public func deleteScript(_ id: Int) async {
-        do {
-            try await pineService.deleteScript(id: id)
-            if selectedScript?.id == id {
-                selectedScript = nil
-            }
-            await loadScripts()
-        } catch {
-            self.errorMessage = error.localizedDescription
-        }
+    private func sampleScripts() -> [PineScript] {
+        let sampleCode = """
+//@version=5
+indicator("High - Low Difference + Day Selector", overlay=true)
+
+// --- HIGH - LOW DIFFERENCE ---
+hlDifference = high - low
+
+plot(
+    hlDifference,
+    title="High - Low Difference",
+    color=color.blue,
+    display=display.status_line + display.data_window,
+    precision=2
+)
+
+// --- SELECT DAY ---
+selectedDay = input.string(
+    "Friday",
+    "Select Day",
+    options=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+)
+
+nextDay = switch selectedDay
+    "Monday"    => dayofweek.monday
+    "Tuesday"   => dayofweek.tuesday
+    "Wednesday" => dayofweek.wednesday
+    "Thursday"  => dayofweek.thursday
+    "Friday"    => dayofweek.friday
+
+barcolor(dayofweek == nextDay ? color.white : na)
+"""
+        return [
+            PineScript(
+                id: 1,
+                title: "Day Movement with particular day color",
+                scriptType: "indicator",
+                version: "v5",
+                category: "Options",
+                targetMarket: "All",
+                timeframe: "5m",
+                description: "You have combined two features: 1. High - Low Difference: Displays candle range in the status line and Data Window. 2. Select Day: Lets you choose Monday-Friday and colors that day's candles white.",
+                code: sampleCode,
+                tradingviewUrl: "https://www.tradingview.com",
+                isFavorite: true
+            )
+        ]
     }
 }

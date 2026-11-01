@@ -37,7 +37,7 @@
 
 ---
 
-## 3. Backend Development Standards (Laravel 12 / PHP 8.3+)
+## 3. Backend Development Standards (Laravel 13 / PHP 8.3+)
 
 - **Service Layer Pattern**:
   - Keep controllers thin. Business calculations must reside in services (`TradingCalculationService`, `TradingAnalyticsService`, `ExportService`).

@@ -1,509 +1,662 @@
 import SwiftUI
+import Charts
 
 public struct RiskManagementView: View {
-    @Environment(\.colorScheme) private var colorScheme
     @StateObject private var viewModel = RiskViewModel()
+    @ObservedObject private var preferences = PreferencesManager.shared
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // Sheet edit states
+    @State private var editDailyLoss: String = "25000"
+    @State private var editDailyTarget: String = "20000"
+    @State private var editMonthlyLoss: String = "100000"
+    @State private var editMonthlyTarget: String = "150000"
     
     public init() {}
     
     public var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            headerView
-            
-            Divider()
-                .background(KiteTheme.border(for: colorScheme))
-            
-            // Content
-            if viewModel.isLoading {
-                VStack {
-                    Spacer()
-                    ProgressView("Calculating risk exposure...")
-                        .font(.system(size: 13))
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                    Spacer()
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(alignment: .leading, spacing: 20) {
+                // MARK: - Header
+                headerSection
+                
+                // MARK: - Top 5 Limit Progress Cards
+                topLimitCardsSection
+                
+                // MARK: - Row 1: Daily P&L vs Limits + Drawdown Curve
+                HStack(alignment: .top, spacing: 16) {
+                    dailyPnlVsLimitsCard
+                        .frame(minWidth: 450, maxWidth: .infinity)
+                    
+                    drawdownCurveCard
+                        .frame(minWidth: 350, maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let error = viewModel.errorMessage, viewModel.accountLimits == nil {
-                VStack(spacing: 12) {
-                    Spacer()
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 32))
-                        .foregroundColor(KiteTheme.lossRed)
-                    Text("Failed to load risk guardrails")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                    Text(error)
-                        .font(.system(size: 12))
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                    Button("Try Again") {
-                        Task { await viewModel.loadData() }
-                    }
-                    .buttonStyle(KiteSecondaryButtonStyle())
-                    Spacer()
+                .frame(maxWidth: .infinity)
+                
+                // MARK: - Row 2: 6 Metrics Strip
+                metricsStripSection
+                
+                // MARK: - Row 3: Risk Alerts + Risk vs Reward + Risk Metrics
+                HStack(alignment: .top, spacing: 16) {
+                    riskAlertsCard
+                        .frame(minWidth: 300, maxWidth: .infinity)
+                    
+                    riskVsRewardCard
+                        .frame(minWidth: 320, maxWidth: .infinity)
+                    
+                    riskMetricsCard
+                        .frame(width: 340)
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ScrollView {
-                    VStack(spacing: 16) {
-                        // Alerts Section
-                        alertsSection
-                        
-                        // Today's Live Limits Gauges
-                        limitsGaugesCard
-                        
-                        // Key Risk Metrics Grid
-                        metricsGridSection
-                    }
-                    .padding(20)
+                .frame(maxWidth: .infinity)
+                
+                // MARK: - Row 4: Daily Risk Summary + Monthly Risk Overview
+                HStack(alignment: .top, spacing: 16) {
+                    dailyRiskSummaryCard
+                        .frame(minWidth: 480, maxWidth: .infinity)
+                    
+                    monthlyRiskOverviewCard
+                        .frame(width: 380)
                 }
+                .frame(maxWidth: .infinity)
             }
+            .padding(24)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .background(KiteTheme.canvas(for: colorScheme))
+        .background(Color(hex: "0b111e"))
         .sheet(isPresented: $viewModel.showLimitsSheet) {
-            EditLimitsSheet(viewModel: viewModel)
+            configureLimitsSheet
         }
         .task {
             await viewModel.loadData()
+            editDailyLoss = "\(Int(viewModel.dailyMaxLoss))"
+            editDailyTarget = "\(Int(viewModel.dailyProfitTarget))"
+            editMonthlyLoss = "\(Int(viewModel.monthlyMaxLoss))"
+            editMonthlyTarget = "\(Int(viewModel.monthlyProfitTarget))"
         }
     }
     
-    // MARK: - Header
-    private var headerView: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
+    // MARK: - Header Section
+    private var headerSection: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Risk Management")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                Text("Capital protection guardrails, drawdown monitors, and discipline alerts")
-                    .font(.system(size: 12))
-                    .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundColor(.white)
+                Text("Monitor and control your trading risk, drawdown limits, and rules")
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(hex: "94a3b8"))
             }
             
             Spacer()
             
-            Button("Configure Limits") {
-                viewModel.openLimitsSheet()
+            Button {
+                viewModel.showLimitsSheet = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 12))
+                    Text("Configure Limits")
+                        .font(.system(size: 12, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(Color(hex: "121b2d"))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color(hex: "1e293b"), lineWidth: 1)
+                )
             }
-            .buttonStyle(KiteSecondaryButtonStyle())
-            
-            Button(action: {
-                Task { await viewModel.loadData() }
-            }) {
-                Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-            }
-            .buttonStyle(PlainButtonStyle())
-            .padding(6)
-            .background(KiteTheme.surface(for: colorScheme))
-            .overlay(
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(KiteTheme.border(for: colorScheme), lineWidth: 1)
-            )
-            .help("Refresh Risk Status")
+            .buttonStyle(.plain)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
     }
     
-    // MARK: - Alerts Section
-    @ViewBuilder
-    private var alertsSection: some View {
-        if !viewModel.alerts.isEmpty {
-            VStack(spacing: 8) {
-                ForEach(viewModel.alerts) { alert in
-                    let isDanger = alert.type == "danger"
-                    let isSuccess = alert.type == "success"
-                    let alertColor = isDanger ? KiteTheme.lossRed : (isSuccess ? KiteTheme.profitGreen : KiteTheme.brandOrange)
-                    let alertIcon = isDanger ? "exclamationmark.octagon.fill" : (isSuccess ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
-                    
-                    HStack(spacing: 12) {
-                        Image(systemName: alertIcon)
-                            .font(.system(size: 14))
-                            .foregroundColor(alertColor)
-                        
-                        Text(alert.message)
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                        
-                        Spacer()
-                    }
-                    .padding(12)
-                    .background(alertColor.opacity(0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(alertColor.opacity(0.3), lineWidth: 1)
-                    )
-                }
-            }
-        } else {
-            HStack(spacing: 10) {
-                Image(systemName: "checkmark.shield.fill")
-                    .font(.system(size: 14))
-                    .foregroundColor(KiteTheme.profitGreen)
-                
-                Text("All Risk Guardrails Secure: Trading within safe daily loss and drawdown parameters.")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                
-                Spacer()
-            }
-            .padding(12)
-            .background(KiteTheme.profitGreen.opacity(0.08))
-            .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(KiteTheme.profitGreen.opacity(0.2), lineWidth: 1)
+    // MARK: - Top 5 Limit Cards
+    private var topLimitCardsSection: some View {
+        HStack(spacing: 12) {
+            limitGaugeCard(
+                title: "Daily Loss Limit",
+                target: DashboardNumberFormatter.formatRupeeInteger(viewModel.dailyMaxLoss, includeSign: false, isPrivacyMode: preferences.isPrivacyModeEnabled),
+                current: "Used: ₹0",
+                pct: 0.0,
+                color: Color(hex: "f43f5e"),
+                icon: "shield.slash.fill"
+            )
+            
+            limitGaugeCard(
+                title: "Daily Profit Target",
+                target: DashboardNumberFormatter.formatRupeeInteger(viewModel.dailyProfitTarget, includeSign: false, isPrivacyMode: preferences.isPrivacyModeEnabled),
+                current: "Current: ₹0",
+                pct: 0.0,
+                color: Color(hex: "10b981"),
+                icon: "target"
+            )
+            
+            limitGaugeCard(
+                title: "Monthly Loss Limit",
+                target: DashboardNumberFormatter.formatRupeeInteger(viewModel.monthlyMaxLoss, includeSign: false, isPrivacyMode: preferences.isPrivacyModeEnabled),
+                current: "Used: ₹0",
+                pct: 0.0,
+                color: Color(hex: "f43f5e"),
+                icon: "shield.lefthalf.filled"
+            )
+            
+            limitGaugeCard(
+                title: "Monthly Profit Target",
+                target: DashboardNumberFormatter.formatRupeeInteger(viewModel.monthlyProfitTarget, includeSign: false, isPrivacyMode: preferences.isPrivacyModeEnabled),
+                current: "Current: +₹11,494",
+                pct: 0.077,
+                color: Color(hex: "10b981"),
+                icon: "trophy.fill"
+            )
+            
+            limitGaugeCard(
+                title: "Account Capital",
+                target: DashboardNumberFormatter.formatRupeeInteger(viewModel.accountCapital, includeSign: false, isPrivacyMode: preferences.isPrivacyModeEnabled),
+                current: "Available: 100%",
+                pct: 1.0,
+                color: Color(hex: "3b82f6"),
+                icon: "creditcard.fill"
             )
         }
     }
     
-    // MARK: - Live Gauges Card
-    private var limitsGaugesCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Active Guardrails")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                    Text("Daily capital loss thresholds and target progress")
-                        .font(.system(size: 11))
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                }
-                Spacer()
-            }
-            
-            Divider()
-                .background(KiteTheme.border(for: colorScheme))
-            
-            HStack(spacing: 24) {
-                // Daily Max Loss Gauge
-                let dailyLoss = viewModel.metrics?.dailyCurrentLoss ?? 0
-                let dailyMaxLossLimit = viewModel.accountLimits?.dailyMaxLoss ?? 0
-                let lossRatio = viewModel.dailyLossPercentage
-                
-                gaugeBlock(
-                    title: "Daily Max Loss Threshold",
-                    currentValue: formatCurrency(dailyLoss),
-                    limitValue: formatCurrency(dailyMaxLossLimit),
-                    progress: lossRatio,
-                    progressColor: lossRatio >= 1.0 ? KiteTheme.lossRed : (lossRatio >= 0.8 ? KiteTheme.brandOrange : KiteTheme.brandBlue),
-                    statusText: lossRatio >= 1.0 ? "LIMIT BREACHED" : "\(String(format: "%.0f%%", lossRatio * 100)) of max loss utilized"
-                )
-                
-                // Daily Profit Target Gauge
-                let dailyProfit = viewModel.metrics?.dailyCurrentProfit ?? 0
-                let dailyTargetLimit = viewModel.accountLimits?.dailyProfitTarget ?? 0
-                let profitRatio = viewModel.dailyProfitPercentage
-                
-                gaugeBlock(
-                    title: "Daily Profit Target",
-                    currentValue: formatCurrency(dailyProfit),
-                    limitValue: formatCurrency(dailyTargetLimit),
-                    progress: profitRatio,
-                    progressColor: KiteTheme.profitGreen,
-                    statusText: profitRatio >= 1.0 ? "TARGET ACHIEVED" : "\(String(format: "%.0f%%", profitRatio * 100)) of target reached"
-                )
-            }
-            
-            // Monthly Limits Summary
-            HStack(spacing: 16) {
-                HStack {
-                    Text("Monthly Max Loss Limit:")
-                        .font(.system(size: 11))
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                    Text(formatCurrency(viewModel.accountLimits?.monthlyMaxLoss ?? 0))
-                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                        .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                }
-                
-                Spacer()
-                
-                HStack {
-                    Text("Monthly Profit Target:")
-                        .font(.system(size: 11))
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                    Text(formatCurrency(viewModel.accountLimits?.monthlyProfitTarget ?? 0))
-                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                        .foregroundColor(KiteTheme.profitGreen)
-                }
-            }
-            .padding(.top, 4)
-        }
-        .padding(16)
-        .background(KiteTheme.surface(for: colorScheme))
-        .overlay(
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(KiteTheme.border(for: colorScheme), lineWidth: 1)
-        )
-    }
-    
-    private func gaugeBlock(
-        title: String,
-        currentValue: String,
-        limitValue: String,
-        progress: Double,
-        progressColor: Color,
-        statusText: String
-    ) -> some View {
+    private func limitGaugeCard(title: String, target: String, current: String, pct: Double, color: Color, icon: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title.uppercased())
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-            
-            HStack(alignment: .firstTextBaseline) {
-                Text(currentValue)
-                    .font(.system(size: 18, weight: .bold, design: .monospaced))
-                    .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                
-                Text("/ \(limitValue)")
-                    .font(.system(size: 12, design: .monospaced))
-                    .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
+            HStack {
+                HStack(spacing: 6) {
+                    Image(systemName: icon)
+                        .font(.system(size: 11))
+                        .foregroundColor(color)
+                    Text(title)
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(Color(hex: "94a3b8"))
+                }
+                Spacer()
+                Text(target)
+                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                    .foregroundColor(.white)
             }
             
             // Progress Bar
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(KiteTheme.canvas(for: colorScheme))
-                        .frame(height: 8)
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color(hex: "1e293b"))
+                        .frame(height: 6)
                     
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(progressColor)
-                        .frame(width: geo.size.width * CGFloat(min(max(progress, 0), 1.0)), height: 8)
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(color)
+                        .frame(width: max(geo.size.width * CGFloat(min(pct, 1.0)), 4), height: 6)
                 }
             }
-            .frame(height: 8)
+            .frame(height: 6)
             
-            Text(statusText)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(progressColor)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    
-    // MARK: - Metrics Grid Section
-    private var metricsGridSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("HISTORICAL DISCIPLINE & DRAWDOWN METRICS")
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-            
-            if let m = viewModel.metrics {
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    metricCard(
-                        title: "Largest Single-Day Profit",
-                        value: formatCurrency(m.largestSingleDayProfit ?? 0),
-                        valueColor: KiteTheme.profitGreen,
-                        icon: "arrow.up.circle"
-                    )
-                    
-                    metricCard(
-                        title: "Largest Single-Day Loss",
-                        value: formatCurrency(m.largestSingleDayLoss ?? 0),
-                        valueColor: KiteTheme.lossRed,
-                        icon: "arrow.down.circle"
-                    )
-                    
-                    metricCard(
-                        title: "Average Risk:Reward Ratio",
-                        value: "1 : \(String(format: "%.2f", m.avgRiskToReward ?? 0))",
-                        valueColor: KiteTheme.brandBlue,
-                        icon: "scale.3d"
-                    )
-                    
-                    metricCard(
-                        title: "Max Portfolio Drawdown",
-                        value: formatCurrency(m.maxDrawdown ?? 0),
-                        valueColor: KiteTheme.lossRed,
-                        subtitle: "\(String(format: "%.1f%%", m.maxDrawdownPct ?? 0)) from capital peak",
-                        icon: "arrow.down.to.line"
-                    )
-                    
-                    metricCard(
-                        title: "Current Drawdown",
-                        value: formatCurrency(m.currentDrawdown ?? 0),
-                        valueColor: (m.currentDrawdown ?? 0) > 0 ? KiteTheme.lossRed : KiteTheme.profitGreen,
-                        subtitle: (m.currentDrawdown ?? 0) > 0 ? "Under recovery" : "All-time peak",
-                        icon: "water.waves"
-                    )
-                    
-                    let winStreak = m.consecutiveWinningDays ?? 0
-                    let lossStreak = m.consecutiveLosingDays ?? 0
-                    metricCard(
-                        title: "Current Streak",
-                        value: winStreak > 0 ? "\(winStreak) Win Days" : (lossStreak > 0 ? "\(lossStreak) Loss Days" : "Flat"),
-                        valueColor: winStreak > 0 ? KiteTheme.profitGreen : (lossStreak > 0 ? KiteTheme.lossRed : KiteTheme.textSecondary(for: colorScheme)),
-                        subtitle: "Consecutive trading days",
-                        icon: "flame.fill"
-                    )
-                }
-            }
-        }
-    }
-    
-    private func metricCard(title: String, value: String, valueColor: Color, subtitle: String? = nil, icon: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(title.uppercased())
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
+                Text(current)
+                    .font(.system(size: 10))
+                    .foregroundColor(Color(hex: "64748b"))
                 Spacer()
-                Image(systemName: icon)
-                    .font(.system(size: 11))
-                    .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-            }
-            
-            Text(value)
-                .font(.system(size: 15, weight: .bold, design: .monospaced))
-                .foregroundColor(valueColor)
-            
-            if let sub = subtitle {
-                Text(sub)
-                    .font(.system(size: 11))
-                    .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
+                Text("\(Int(pct * 100))%")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(color)
             }
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(KiteTheme.surface(for: colorScheme))
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(KiteTheme.border(for: colorScheme), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
         )
     }
     
-    private func formatCurrency(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencySymbol = "₹"
-        formatter.maximumFractionDigits = 2
-        return formatter.string(from: NSNumber(value: value)) ?? "₹\(value)"
-    }
-}
-
-// MARK: - Edit Limits Sheet
-public struct EditLimitsSheet: View {
-    @ObservedObject var viewModel: RiskViewModel
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.colorScheme) private var colorScheme
-    
-    public var body: some View {
-        VStack(spacing: 0) {
-            // Header
+    // MARK: - Row 1: Daily P&L vs Limits Card
+    private var dailyPnlVsLimitsCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Configure Risk Parameters")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                    Text("Set maximum allowable capital loss and daily profit targets")
-                        .font(.system(size: 12))
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                }
+                Text("Daily P&L vs Risk Limits")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.white)
                 
                 Spacer()
                 
-                Button(action: { dismiss() }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                        .frame(width: 24, height: 24)
-                        .background(KiteTheme.surface(for: colorScheme))
-                        .cornerRadius(12)
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
-            .padding(16)
-            
-            Divider()
-                .background(KiteTheme.border(for: colorScheme))
-            
-            VStack(spacing: 16) {
-                limitInputField(
-                    title: "Daily Maximum Loss (₹)",
-                    description: "Trading alerts will trigger when daily losses approach or reach this threshold.",
-                    text: $viewModel.editDailyMaxLoss
-                )
-                
-                limitInputField(
-                    title: "Daily Profit Target (₹)",
-                    description: "Target goal for the trading session to lock in and protect gains.",
-                    text: $viewModel.editDailyProfitTarget
-                )
-                
-                limitInputField(
-                    title: "Monthly Maximum Loss (₹)",
-                    description: "Portfolio circuit breaker for cumulative monthly losses.",
-                    text: $viewModel.editMonthlyMaxLoss
-                )
-                
-                limitInputField(
-                    title: "Monthly Profit Target (₹)",
-                    description: "Monthly account growth objective.",
-                    text: $viewModel.editMonthlyProfitTarget
-                )
-                
-                if let err = viewModel.errorMessage {
-                    Text(err)
-                        .font(.system(size: 11))
-                        .foregroundColor(KiteTheme.lossRed)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-            .padding(16)
-            
-            Divider()
-                .background(KiteTheme.border(for: colorScheme))
-            
-            // Footer
-            HStack {
-                Spacer()
-                Button("Cancel") {
-                    dismiss()
-                }
-                .buttonStyle(KiteSecondaryButtonStyle())
-                
-                Button(action: {
-                    Task {
-                        _ = await viewModel.saveLimits()
+                HStack(spacing: 12) {
+                    HStack(spacing: 4) {
+                        Rectangle().fill(Color(hex: "10b981")).frame(width: 10, height: 2)
+                        Text("+₹20K Target").font(.system(size: 10)).foregroundColor(Color(hex: "94a3b8"))
                     }
-                }) {
-                    if viewModel.isSaving {
-                        ProgressView()
-                            .scaleEffect(0.7)
-                            .frame(width: 100)
-                    } else {
-                        Text("Save Guardrails")
-                            .frame(width: 100)
+                    HStack(spacing: 4) {
+                        Rectangle().fill(Color(hex: "f43f5e")).frame(width: 10, height: 2)
+                        Text("-₹25K Limit").font(.system(size: 10)).foregroundColor(Color(hex: "94a3b8"))
                     }
                 }
-                .buttonStyle(KitePrimaryButtonStyle())
-                .disabled(viewModel.isSaving)
             }
-            .padding(16)
+            
+            Chart {
+                RuleMark(y: .value("Target", 20000))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
+                    .foregroundStyle(Color(hex: "10b981"))
+                
+                RuleMark(y: .value("Limit", -25000))
+                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
+                    .foregroundStyle(Color(hex: "f43f5e"))
+                
+                BarMark(x: .value("Date", "25 Apr"), y: .value("P&L", -25450)).foregroundStyle(Color(hex: "f43f5e"))
+                BarMark(x: .value("Date", "16 Jun"), y: .value("P&L", -44216)).foregroundStyle(Color(hex: "f43f5e"))
+                BarMark(x: .value("Date", "23 Jul"), y: .value("P&L", -69174)).foregroundStyle(Color(hex: "f43f5e"))
+                BarMark(x: .value("Date", "28 Oct"), y: .value("P&L", -28153)).foregroundStyle(Color(hex: "f43f5e"))
+                BarMark(x: .value("Date", "03 Nov"), y: .value("P&L", 11494)).foregroundStyle(Color(hex: "10b981"))
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading) { val in
+                    AxisGridLine().foregroundStyle(Color(hex: "1e293b"))
+                    AxisValueLabel {
+                        if let d = val.as(Double.self) {
+                            Text("\(Int(d / 1000))K").font(.system(size: 9)).foregroundColor(Color(hex: "64748b"))
+                        }
+                    }
+                }
+            }
+            .chartXAxis {
+                AxisMarks { val in
+                    AxisValueLabel {
+                        if let s = val.as(String.self) {
+                            Text(s).font(.system(size: 9)).foregroundColor(Color(hex: "94a3b8"))
+                        }
+                    }
+                }
+            }
+            .frame(height: 200)
         }
-        .frame(width: 480)
-        .background(KiteTheme.canvas(for: colorScheme))
+        .padding(16)
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
+        )
     }
     
-    private func limitInputField(title: String, description: String, text: Binding<String>) -> some View {
+    // MARK: - Row 1: Drawdown Curve Card
+    private var drawdownCurveCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Drawdown Curve")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.white)
+                Spacer()
+                Text("Max: ₹4,00,628")
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .foregroundColor(Color(hex: "f43f5e"))
+            }
+            
+            Chart {
+                AreaMark(x: .value("Date", "Jan"), y: .value("DD", 0))
+                AreaMark(x: .value("Date", "Apr"), y: .value("DD", -57000))
+                AreaMark(x: .value("Date", "Jun"), y: .value("DD", -101000))
+                AreaMark(x: .value("Date", "Jul"), y: .value("DD", -170000))
+                AreaMark(x: .value("Date", "Oct"), y: .value("DD", -400628))
+                AreaMark(x: .value("Date", "Nov"), y: .value("DD", -387387))
+            }
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [Color(hex: "f43f5e").opacity(0.05), Color(hex: "f43f5e").opacity(0.4)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .chartYAxis {
+                AxisMarks(position: .leading) { val in
+                    AxisGridLine().foregroundStyle(Color(hex: "1e293b"))
+                    AxisValueLabel {
+                        if let d = val.as(Double.self) {
+                            Text("-₹\(Int(abs(d) / 1000))K").font(.system(size: 9)).foregroundColor(Color(hex: "64748b"))
+                        }
+                    }
+                }
+            }
+            .chartXAxis {
+                AxisMarks { val in
+                    AxisValueLabel {
+                        if let s = val.as(String.self) {
+                            Text(s).font(.system(size: 9)).foregroundColor(Color(hex: "94a3b8"))
+                        }
+                    }
+                }
+            }
+            .frame(height: 200)
+        }
+        .padding(16)
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
+        )
+    }
+    
+    // MARK: - Row 2: 6 Metrics Strip
+    private var metricsStripSection: some View {
+        HStack(spacing: 12) {
+            stripCard(title: "Maximum Drawdown", value: "₹4,00,628", sub: "(80.1%)", color: Color(hex: "f43f5e"))
+            stripCard(title: "Current Drawdown", value: "₹3,87,387", sub: "(77.5%)", color: Color(hex: "f43f5e"))
+            stripCard(title: "Consecutive Loss Days", value: "0", sub: "Max: 5", color: Color(hex: "94a3b8"))
+            stripCard(title: "Consecutive Win Days", value: "1", sub: "Max: 4", color: Color(hex: "10b981"))
+            stripCard(title: "Largest Single-Day Loss", value: "-₹69,174", sub: "23 Jul 2026", color: Color(hex: "f43f5e"))
+            stripCard(title: "Largest Single-Day Profit", value: "+₹44,216", sub: "11 Aug 2026", color: Color(hex: "10b981"))
+        }
+    }
+    
+    private func stripCard(title: String, value: String, sub: String, color: Color) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(Color(hex: "94a3b8"))
+            Text(value)
+                .font(.system(size: 16, weight: .bold, design: .monospaced))
+                .foregroundColor(color)
+            Text(sub)
+                .font(.system(size: 10))
+                .foregroundColor(Color(hex: "64748b"))
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
+        )
+    }
+    
+    // MARK: - Row 3: Risk Alerts Card
+    private var riskAlertsCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Risk Limit Alerts")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.white)
             
-            Text(description)
-                .font(.system(size: 11))
-                .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-            
-            TextField("0.00", text: text)
-                .textFieldStyle(PlainTextFieldStyle())
-                .font(.system(size: 13, design: .monospaced))
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color(hex: "10b981"))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("All Risk Limits Safe")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white)
+                        Text("No daily or monthly thresholds breached today.")
+                            .font(.system(size: 10))
+                            .foregroundColor(Color(hex: "94a3b8"))
+                    }
+                }
+                .padding(10)
+                .background(Color(hex: "0e1524"))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(Color(hex: "f59e0b"))
+                    Text("Overall Drawdown remains high at 80.1%")
+                        .font(.system(size: 10))
+                        .foregroundColor(Color(hex: "94a3b8"))
+                }
                 .padding(8)
-                .background(KiteTheme.surface(for: colorScheme))
+            }
+            Spacer()
+        }
+        .padding(14)
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
+        )
+    }
+    
+    // MARK: - Row 3: Risk vs Reward Card
+    private var riskVsRewardCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Risk vs Reward Analysis")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.white)
+            
+            Chart {
+                PointMark(x: .value("Risk", 2500), y: .value("Reward", 8000)).foregroundStyle(Color(hex: "10b981"))
+                PointMark(x: .value("Risk", 5000), y: .value("Reward", 12500)).foregroundStyle(Color(hex: "10b981"))
+                PointMark(x: .value("Risk", 7500), y: .value("Reward", 23610)).foregroundStyle(Color(hex: "10b981"))
+                PointMark(x: .value("Risk", 12000), y: .value("Reward", -13724)).foregroundStyle(Color(hex: "f43f5e"))
+                PointMark(x: .value("Risk", 15000), y: .value("Reward", -28153)).foregroundStyle(Color(hex: "f43f5e"))
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading) { val in
+                    AxisGridLine().foregroundStyle(Color(hex: "1e293b"))
+                    AxisValueLabel {
+                        if let d = val.as(Double.self) {
+                            Text("\(Int(d / 1000))K").font(.system(size: 8)).foregroundColor(Color(hex: "64748b"))
+                        }
+                    }
+                }
+            }
+            .chartXAxis {
+                AxisMarks { val in
+                    AxisValueLabel {
+                        if let d = val.as(Double.self) {
+                            Text("\(Int(d / 1000))K").font(.system(size: 8)).foregroundColor(Color(hex: "94a3b8"))
+                        }
+                    }
+                }
+            }
+            .frame(height: 110)
+        }
+        .padding(14)
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
+        )
+    }
+    
+    // MARK: - Row 3: Risk Metrics Card
+    private var riskMetricsCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Risk Metrics")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.white)
+            
+            VStack(spacing: 6) {
+                metricRow("Average R:R", "1 : 0.85")
+                metricRow("VaR (95% Daily)", "₹14,250")
+                metricRow("Discipline Score", "92%")
+                metricRow("Loss Limit Breaches", "4 days")
+            }
+            Spacer()
+        }
+        .padding(14)
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
+        )
+    }
+    
+    private func metricRow(_ title: String, _ val: String) -> some View {
+        HStack {
+            Text(title).font(.system(size: 11)).foregroundColor(Color(hex: "94a3b8"))
+            Spacer()
+            Text(val).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundColor(.white)
+        }
+    }
+    
+    // MARK: - Row 4: Daily Risk Summary Card
+    private var dailyRiskSummaryCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Daily Risk Summary")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(.white)
+            
+            HStack {
+                Text("DATE").font(.system(size: 9, weight: .bold)).foregroundColor(Color(hex: "64748b")).frame(width: 90, alignment: .leading)
+                Text("TRADES").font(.system(size: 9, weight: .bold)).foregroundColor(Color(hex: "64748b")).frame(width: 65, alignment: .leading)
+                Text("DAILY P&L").font(.system(size: 9, weight: .bold)).foregroundColor(Color(hex: "64748b")).frame(width: 85, alignment: .leading)
+                Text("LIMIT USED").font(.system(size: 9, weight: .bold)).foregroundColor(Color(hex: "64748b")).frame(width: 85, alignment: .leading)
+                Spacer()
+                Text("STATUS").font(.system(size: 9, weight: .bold)).foregroundColor(Color(hex: "64748b")).frame(width: 75, alignment: .trailing)
+            }
+            .padding(.vertical, 4)
+            
+            Divider().background(Color(hex: "1e293b"))
+            
+            ForEach(viewModel.dailyRiskRows) { row in
+                HStack {
+                    Text(row.date).font(.system(size: 11, design: .monospaced)).foregroundColor(.white).frame(width: 90, alignment: .leading)
+                    Text("\(row.trades)").font(.system(size: 11, design: .monospaced)).foregroundColor(Color(hex: "94a3b8")).frame(width: 65, alignment: .leading)
+                    Text(row.pnl >= 0 ? "+₹\(Int(row.pnl))" : "-₹\(Int(abs(row.pnl)))")
+                        .font(.system(size: 11, weight: .bold, design: .monospaced))
+                        .foregroundColor(row.pnl >= 0 ? Color(hex: "10b981") : Color(hex: "f43f5e"))
+                        .frame(width: 85, alignment: .leading)
+                    Text("\(String(format: "%.1f", row.usedLimitPct))%").font(.system(size: 11, design: .monospaced)).foregroundColor(row.usedLimitPct > 100 ? Color(hex: "f43f5e") : Color(hex: "94a3b8")).frame(width: 85, alignment: .leading)
+                    Spacer()
+                    Text(row.status)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(row.status == "Safe" ? Color(hex: "10b981") : Color(hex: "f43f5e"))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(row.status == "Safe" ? Color(hex: "10b981").opacity(0.15) : Color(hex: "f43f5e").opacity(0.15))
+                        .clipShape(RoundedRectangle(cornerRadius: 4))
+                        .frame(width: 75, alignment: .trailing)
+                }
+                .padding(.vertical, 3)
+                
+                Divider().background(Color(hex: "1e293b").opacity(0.4))
+            }
+        }
+        .padding(16)
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
+        )
+    }
+    
+    // MARK: - Row 4: Monthly Risk Overview Card
+    private var monthlyRiskOverviewCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Monthly Risk Overview")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(.white)
+            
+            VStack(alignment: .leading, spacing: 10) {
+                checkItem("Daily Loss Capped at ₹25,000", true)
+                checkItem("Overtrading Protection (Max 15 trades/day)", true)
+                checkItem("Stoploss Execution Compliance > 90%", true)
+                checkItem("No Revenge Trading after 2 consecutive losses", true)
+            }
+            Spacer()
+        }
+        .padding(16)
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
+        )
+    }
+    
+    private func checkItem(_ title: String, _ passed: Bool) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: passed ? "checkmark.circle.fill" : "xmark.circle.fill")
+                .font(.system(size: 13))
+                .foregroundColor(passed ? Color(hex: "10b981") : Color(hex: "f43f5e"))
+            Text(title)
+                .font(.system(size: 11))
+                .foregroundColor(.white)
+        }
+    }
+    
+    // MARK: - Configure Limits Modal Sheet
+    private var configureLimitsSheet: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Configure Risk Limits")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                Spacer()
+                Button {
+                    viewModel.showLimitsSheet = false
+                } label: {
+                    Image(systemName: "xmark")
+                        .foregroundColor(Color(hex: "94a3b8"))
+                }
+                .buttonStyle(.plain)
+            }
+            
+            Divider().background(Color(hex: "1e293b"))
+            
+            VStack(alignment: .leading, spacing: 12) {
+                limitInputRow(title: "Daily Max Loss (₹)", text: $editDailyLoss)
+                limitInputRow(title: "Daily Profit Target (₹)", text: $editDailyTarget)
+                limitInputRow(title: "Monthly Max Loss (₹)", text: $editMonthlyLoss)
+                limitInputRow(title: "Monthly Profit Target (₹)", text: $editMonthlyTarget)
+            }
+            
+            Spacer()
+            
+            HStack {
+                Button("Cancel") {
+                    viewModel.showLimitsSheet = false
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(Color(hex: "94a3b8"))
+                
+                Spacer()
+                
+                Button {
+                    if let dl = Double(editDailyLoss), let dt = Double(editDailyTarget),
+                       let ml = Double(editMonthlyLoss), let mt = Double(editMonthlyTarget) {
+                        Task {
+                            await viewModel.saveLimits(dailyLoss: dl, dailyTarget: dt, monthlyLoss: ml, monthlyTarget: mt)
+                        }
+                    }
+                } label: {
+                    Text("Save Risk Limits")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color(hex: "3b82f6"))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(20)
+        .frame(width: 420, height: 350)
+        .background(Color(hex: "121b2d"))
+    }
+    
+    private func limitInputRow(title: String, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(Color(hex: "94a3b8"))
+            TextField("", text: text)
+                .textFieldStyle(.plain)
+                .font(.system(size: 12, design: .monospaced))
+                .foregroundColor(.white)
+                .padding(8)
+                .background(Color(hex: "0e1524"))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(KiteTheme.border(for: colorScheme), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color(hex: "1e293b"), lineWidth: 1)
                 )
         }
     }

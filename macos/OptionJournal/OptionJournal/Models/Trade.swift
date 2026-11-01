@@ -44,6 +44,78 @@ public struct Trade: Codable, Identifiable, Sendable, Hashable {
     public var isProfit: Bool {
         calculatedNetPnl > 0
     }
+
+    public init(
+        id: Int,
+        tradeDate: String,
+        indexName: String,
+        tradingType: String,
+        strategyName: String? = nil,
+        optionType: String,
+        strikePrice: Double? = nil,
+        expiryDate: String? = nil,
+        ceEntryPrice: Double? = nil,
+        peEntryPrice: Double? = nil,
+        entryPremium: Double? = nil,
+        ceExitPrice: Double? = nil,
+        peExitPrice: Double? = nil,
+        exitPremium: Double? = nil,
+        quantity: Int? = nil,
+        lots: Int? = nil,
+        grossProfit: Double? = nil,
+        grossLoss: Double? = nil,
+        brokerage: Double? = nil,
+        stt: Double? = nil,
+        exchangeCharges: Double? = nil,
+        gst: Double? = nil,
+        sebiCharges: Double? = nil,
+        stampDuty: Double? = nil,
+        otherCharges: Double? = nil,
+        totalCharges: Double? = nil,
+        netPnl: Double? = nil,
+        entryReason: String? = nil,
+        exitReason: String? = nil,
+        notes: String? = nil,
+        journal: TradeJournal? = nil,
+        screenshotUrl: String? = nil,
+        createdAt: String? = nil,
+        updatedAt: String? = nil
+    ) {
+        self.id = id
+        self.tradeDate = tradeDate
+        self.indexName = indexName
+        self.tradingType = tradingType
+        self.strategyName = strategyName
+        self.optionType = optionType
+        self._strikePrice = FlexibleDouble(wrappedValue: strikePrice)
+        self.expiryDate = expiryDate
+        self._ceEntryPrice = FlexibleDouble(wrappedValue: ceEntryPrice)
+        self._peEntryPrice = FlexibleDouble(wrappedValue: peEntryPrice)
+        self._entryPremium = FlexibleDouble(wrappedValue: entryPremium)
+        self._ceExitPrice = FlexibleDouble(wrappedValue: ceExitPrice)
+        self._peExitPrice = FlexibleDouble(wrappedValue: peExitPrice)
+        self._exitPremium = FlexibleDouble(wrappedValue: exitPremium)
+        self.quantity = quantity
+        self.lots = lots
+        self._grossProfit = FlexibleDouble(wrappedValue: grossProfit)
+        self._grossLoss = FlexibleDouble(wrappedValue: grossLoss)
+        self._brokerage = FlexibleDouble(wrappedValue: brokerage)
+        self._stt = FlexibleDouble(wrappedValue: stt)
+        self._exchangeCharges = FlexibleDouble(wrappedValue: exchangeCharges)
+        self._gst = FlexibleDouble(wrappedValue: gst)
+        self._sebiCharges = FlexibleDouble(wrappedValue: sebiCharges)
+        self._stampDuty = FlexibleDouble(wrappedValue: stampDuty)
+        self._otherCharges = FlexibleDouble(wrappedValue: otherCharges)
+        self._totalCharges = FlexibleDouble(wrappedValue: totalCharges)
+        self._netPnl = FlexibleDouble(wrappedValue: netPnl)
+        self.entryReason = entryReason
+        self.exitReason = exitReason
+        self.notes = notes
+        self.journal = journal
+        self.screenshotUrl = screenshotUrl
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
 }
 
 // MARK: - Trade Journal Model
@@ -129,7 +201,66 @@ public struct CreateTradeRequest: Codable, Sendable {
     public let exitReason: String?
     public let notes: String?
     
-    public init(tradeDate: String, indexName: String, tradingType: String, strategyName: String, optionType: String, strikePrice: Double?, expiryDate: String?, entryPremium: Double?, exitPremium: Double?, ceEntryPrice: Double? = nil, peEntryPrice: Double? = nil, ceExitPrice: Double? = nil, peExitPrice: Double? = nil, quantity: Int, lots: Int, entryReason: String? = nil, exitReason: String? = nil, notes: String? = nil) {
+    // Strategy & Journal Reflections
+    public let marketConditions: String?
+    public let tradeSetup: String?
+    public let whatWentRight: String?
+    public let whatWentWrong: String?
+    public let mistakesMade: String?
+    public let lessonsLearned: String?
+    public let personalNotes: String?
+    
+    // P&L & Charges Breakdown
+    public let grossProfit: Double?
+    public let grossLoss: Double?
+    public let brokerage: Double?
+    public let stt: Double?
+    public let exchangeCharges: Double?
+    public let gst: Double?
+    public let sebiCharges: Double?
+    public let stampDuty: Double?
+    public let otherCharges: Double?
+    public let totalCharges: Double?
+    public let netPnl: Double?
+    
+    public init(
+        tradeDate: String,
+        indexName: String,
+        tradingType: String,
+        strategyName: String,
+        optionType: String,
+        strikePrice: Double?,
+        expiryDate: String?,
+        entryPremium: Double?,
+        exitPremium: Double?,
+        ceEntryPrice: Double? = nil,
+        peEntryPrice: Double? = nil,
+        ceExitPrice: Double? = nil,
+        peExitPrice: Double? = nil,
+        quantity: Int,
+        lots: Int,
+        entryReason: String? = nil,
+        exitReason: String? = nil,
+        notes: String? = nil,
+        marketConditions: String? = nil,
+        tradeSetup: String? = nil,
+        whatWentRight: String? = nil,
+        whatWentWrong: String? = nil,
+        mistakesMade: String? = nil,
+        lessonsLearned: String? = nil,
+        personalNotes: String? = nil,
+        grossProfit: Double? = nil,
+        grossLoss: Double? = nil,
+        brokerage: Double? = nil,
+        stt: Double? = nil,
+        exchangeCharges: Double? = nil,
+        gst: Double? = nil,
+        sebiCharges: Double? = nil,
+        stampDuty: Double? = nil,
+        otherCharges: Double? = nil,
+        totalCharges: Double? = nil,
+        netPnl: Double? = nil
+    ) {
         self.tradeDate = tradeDate
         self.indexName = indexName
         self.tradingType = tradingType
@@ -148,6 +279,24 @@ public struct CreateTradeRequest: Codable, Sendable {
         self.entryReason = entryReason
         self.exitReason = exitReason
         self.notes = notes
+        self.marketConditions = marketConditions
+        self.tradeSetup = tradeSetup
+        self.whatWentRight = whatWentRight
+        self.whatWentWrong = whatWentWrong
+        self.mistakesMade = mistakesMade
+        self.lessonsLearned = lessonsLearned
+        self.personalNotes = personalNotes
+        self.grossProfit = grossProfit
+        self.grossLoss = grossLoss
+        self.brokerage = brokerage
+        self.stt = stt
+        self.exchangeCharges = exchangeCharges
+        self.gst = gst
+        self.sebiCharges = sebiCharges
+        self.stampDuty = stampDuty
+        self.otherCharges = otherCharges
+        self.totalCharges = totalCharges
+        self.netPnl = netPnl
     }
 }
 

@@ -31,6 +31,36 @@ public struct PineScript: Codable, Identifiable, Sendable, Hashable {
     public let isFavorite: Bool?
     public let createdAt: String?
     public let updatedAt: String?
+
+    public init(
+        id: Int,
+        title: String,
+        scriptType: String,
+        version: String? = "v5",
+        category: String? = "Options",
+        targetMarket: String? = "All",
+        timeframe: String? = "5m",
+        description: String? = nil,
+        code: String,
+        tradingviewUrl: String? = nil,
+        isFavorite: Bool? = false,
+        createdAt: String? = nil,
+        updatedAt: String? = nil
+    ) {
+        self.id = id
+        self.title = title
+        self.scriptType = scriptType
+        self.version = version
+        self.category = category
+        self.targetMarket = targetMarket
+        self.timeframe = timeframe
+        self.description = description
+        self.code = code
+        self.tradingviewUrl = tradingviewUrl
+        self.isFavorite = isFavorite
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
 }
 
 public struct CreatePineScriptRequest: Codable, Sendable {

@@ -143,6 +143,7 @@ public struct SettingsView: View {
                 .kiteCard()
             }
             .padding(24)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .background(KiteTheme.canvas(for: colorScheme))
     }

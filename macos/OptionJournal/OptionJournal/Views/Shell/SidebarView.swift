@@ -44,11 +44,11 @@ public struct SidebarView: View {
                 AppLogoView(size: 28)
                 
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("OptionJournal")
+                    Text("TradeJournal")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
                     
-                    Text("OPTIONS TERMINAL")
+                    Text("OPTIONS PRO")
                         .font(.system(size: 9, weight: .bold))
                         .foregroundColor(KiteTheme.brandOrange)
                         .tracking(0.8)
@@ -165,9 +165,9 @@ private struct SidebarRow: View {
             .background(
                 RoundedRectangle(cornerRadius: 6)
                     .fill(
-                        isSelected
-                            ? (colorScheme == .dark ? Color(red: 0.16, green: 0.11, blue: 0.08) : Color(red: 1.0, green: 0.94, blue: 0.90))
-                            : (isHovered ? (colorScheme == .dark ? Color(red: 0.16, green: 0.16, blue: 0.16) : Color(red: 0.94, green: 0.94, blue: 0.94)) : Color.clear)
+                        (isHovered && !isSelected)
+                            ? (colorScheme == .dark ? Color(red: 0.16, green: 0.16, blue: 0.16) : Color(red: 0.94, green: 0.94, blue: 0.94))
+                            : Color.clear
                     )
             )
         }

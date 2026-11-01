@@ -4,7 +4,7 @@
 
 TradeJournal follows a modern decoupled **Client-Server Architecture**:
 - **Frontend**: Single Page Application (SPA) built with React 19 and Vite 6, styled with Tailwind CSS v4.
-- **Backend**: RESTful API service built with Laravel 12 (PHP 8.3+), leveraging Laravel Sanctum for stateful token-based authentication.
+- **Backend**: RESTful API service built with Laravel 13 (PHP 8.3+), leveraging Laravel Sanctum for stateful token-based authentication.
 - **Database**: MySQL 8.x relational database with transactional integrity and strict foreign key cascading.
 
 ```mermaid
@@ -17,7 +17,7 @@ graph TD
         CTX --> AXIOS
     end
 
-    subgraph Server ["Backend API (Laravel 12)"]
+    subgraph Server ["Backend API (Laravel 13)"]
         ROUTER["API Router (routes/api.php)"]
         SANCTUM["Sanctum Middleware (auth:sanctum)"]
         REQ["Form Requests (Validation)"]
@@ -96,7 +96,7 @@ App.jsx (Root Router)
 
 ---
 
-## 3. Backend Architecture (Laravel 12 REST API)
+## 3. Backend Architecture (Laravel 13 REST API)
 
 ### 3.1 Route & Middleware Structure
 - **Public Endpoints**: `/api/login`, `/api/register`, `/api/ping`.

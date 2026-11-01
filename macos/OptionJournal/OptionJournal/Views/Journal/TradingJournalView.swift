@@ -1,518 +1,661 @@
 import SwiftUI
+import Charts
 
 public struct TradingJournalView: View {
-    @Environment(\.colorScheme) private var colorScheme
     @StateObject private var viewModel = TradingJournalViewModel()
+    @ObservedObject private var preferences = PreferencesManager.shared
+    @Environment(\.colorScheme) private var colorScheme
     
     public init() {}
     
     public var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            headerView
-            
-            Divider()
-                .background(KiteTheme.border(for: colorScheme))
-            
-            // Content
-            if viewModel.isLoading && viewModel.trades.isEmpty {
-                VStack {
-                    Spacer()
-                    ProgressView("Loading journal entries...")
-                        .font(.system(size: 13))
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let error = viewModel.errorMessage, viewModel.trades.isEmpty {
-                VStack(spacing: 12) {
-                    Spacer()
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 32))
-                        .foregroundColor(KiteTheme.lossRed)
-                    Text("Failed to load journal")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                    Text(error)
-                        .font(.system(size: 12))
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                    Button("Try Again") {
-                        Task { await viewModel.loadJournal() }
+        ScrollView(.vertical, showsIndicators: true) {
+            VStack(alignment: .leading, spacing: 20) {
+                // MARK: - Header
+                headerSection
+                
+                // MARK: - Top 5 Metric Cards
+                kpiMetricsSection
+                
+                // MARK: - Main 2-Column Split: Entries Table + Journal Details Inspector
+                HStack(alignment: .top, spacing: 16) {
+                    journalEntriesTableCard
+                        .frame(minWidth: 500, maxWidth: .infinity)
+                    
+                    if let selected = viewModel.selectedEntry {
+                        journalDetailsInspector(for: selected)
+                            .frame(width: 380)
+                            .transition(.move(edge: .trailing).combined(with: .opacity))
                     }
-                    .buttonStyle(KiteSecondaryButtonStyle())
-                    Spacer()
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                ScrollView {
-                    VStack(spacing: 16) {
-                        // Summary Stats Bar
-                        summaryStatsBar
-                        
-                        // Filters Toolbar
-                        filtersToolbar
-                        
-                        // Journal Entries List
-                        if viewModel.trades.isEmpty {
-                            VStack(spacing: 12) {
-                                Image(systemName: "book.closed")
-                                    .font(.system(size: 36))
-                                    .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                                Text("No Journal Entries Found")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                                Text("Try adjusting your search criteria or outcome filters.")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                            }
-                            .padding(.vertical, 40)
-                            .frame(maxWidth: .infinity)
-                        } else {
-                            VStack(spacing: 12) {
-                                ForEach(viewModel.trades) { trade in
-                                    journalCard(trade)
-                                }
-                            }
-                            
-                            // Pagination
-                            paginationFooter
-                        }
-                    }
-                    .padding(20)
+                .frame(maxWidth: .infinity)
+                
+                // MARK: - Bottom Row: Strategy Performance + Sentiment + Common Tags
+                HStack(alignment: .top, spacing: 16) {
+                    strategyPerformanceCard
+                        .frame(minWidth: 320, maxWidth: .infinity)
+                    
+                    sentimentAnalysisCard
+                        .frame(width: 300)
+                    
+                    commonTagsCard
+                        .frame(width: 320)
                 }
+                .frame(maxWidth: .infinity)
             }
+            .padding(24)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
         }
-        .background(KiteTheme.canvas(for: colorScheme))
-        .sheet(isPresented: $viewModel.showEditSheet) {
-            JournalReflectionSheet(viewModel: viewModel)
-        }
+        .background(Color(hex: "0b111e"))
         .task {
             await viewModel.loadJournal()
         }
     }
     
-    // MARK: - Header
-    private var headerView: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Trading Journal & Reflection")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                Text("Post-trade reviews, psychological discipline, mistake logging, and lessons learned")
-                    .font(.system(size: 12))
-                    .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
+    // MARK: - Header Section
+    private var headerSection: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Trading Journal")
+                    .font(.system(size: 26, weight: .bold))
+                    .foregroundColor(.white)
+                Text("Document your trading decisions, psychology, notes, lessons learned and emotions")
+                    .font(.system(size: 13))
+                    .foregroundColor(Color(hex: "94a3b8"))
             }
             
             Spacer()
             
-            Button(action: {
-                Task { await viewModel.loadJournal(page: viewModel.currentPage) }
-            }) {
-                Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
+            HStack(spacing: 6) {
+                Image(systemName: "calendar")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color(hex: "3b82f6"))
+                Text("All Time")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white)
             }
-            .buttonStyle(PlainButtonStyle())
-            .padding(6)
-            .background(KiteTheme.surface(for: colorScheme))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color(hex: "121b2d"))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
             .overlay(
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(KiteTheme.border(for: colorScheme), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color(hex: "1e293b"), lineWidth: 1)
             )
-            .help("Refresh Journal")
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
     }
     
-    // MARK: - Summary Stats Bar
-    @ViewBuilder
-    private var summaryStatsBar: some View {
-        if let stats = viewModel.summaryStats {
+    // MARK: - Top 5 Metric Cards
+    private var kpiMetricsSection: some View {
+        HStack(spacing: 12) {
+            journalKpiCard(
+                title: "Total Journal Entries",
+                value: "\(viewModel.totalJournalEntries)",
+                sub: "All logged trades",
+                subColor: Color(hex: "3b82f6"),
+                icon: "book.fill",
+                iconColor: Color(hex: "3b82f6")
+            )
+            
+            journalKpiCard(
+                title: "Successful Trades",
+                value: "\(viewModel.successfulTrades)",
+                sub: "Win rate 44.8%",
+                subColor: Color(hex: "10b981"),
+                icon: "checkmark.circle.fill",
+                iconColor: Color(hex: "10b981")
+            )
+            
+            journalKpiCard(
+                title: "Failed Trades",
+                value: "\(viewModel.failedTrades)",
+                sub: "Loss rate 55.1%",
+                subColor: Color(hex: "f43f5e"),
+                icon: "exclamationmark.triangle.fill",
+                iconColor: Color(hex: "f43f5e")
+            )
+            
+            journalKpiCard(
+                title: "Best Trade",
+                value: "+₹\(Int(viewModel.bestTradePnl))",
+                sub: viewModel.bestTradeDate,
+                subColor: Color(hex: "10b981"),
+                icon: "trophy.fill",
+                iconColor: Color(hex: "10b981"),
+                valColor: Color(hex: "10b981")
+            )
+            
+            journalKpiCard(
+                title: "Worst Trade",
+                value: "-₹\(Int(abs(viewModel.worstTradePnl)))",
+                sub: viewModel.worstTradeDate,
+                subColor: Color(hex: "f43f5e"),
+                icon: "chart.line.downtrend.xyaxis",
+                iconColor: Color(hex: "f43f5e"),
+                valColor: Color(hex: "f43f5e")
+            )
+        }
+    }
+    
+    private func journalKpiCard(title: String, value: String, sub: String, subColor: Color, icon: String, iconColor: Color, valColor: Color = .white) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(title)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(Color(hex: "94a3b8"))
+                Spacer()
+                Image(systemName: icon)
+                    .font(.system(size: 12))
+                    .foregroundColor(iconColor)
+            }
+            
+            Text(value)
+                .font(.system(size: 20, weight: .bold, design: .monospaced))
+                .foregroundColor(valColor)
+            
+            Text(sub)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(subColor)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
+        )
+    }
+    
+    // MARK: - Journal Entries Table Card (Left)
+    private var journalEntriesTableCard: some View {
+        VStack(spacing: 0) {
+            // Filter and Search Toolbar
             HStack(spacing: 12) {
-                statPill(title: "TOTAL ENTRIES", value: "\(stats.totalEntries)", color: KiteTheme.textPrimary(for: colorScheme))
-                statPill(
-                    title: "WIN RATE",
-                    value: String(format: "%.1f%%", stats.winRate ?? 0),
-                    color: (stats.winRate ?? 0) >= 50 ? KiteTheme.profitGreen : KiteTheme.brandOrange
+                // Search Field
+                HStack(spacing: 6) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 11))
+                        .foregroundColor(Color(hex: "64748b"))
+                    TextField("Search reflections, strategies, notes...", text: $viewModel.searchQuery)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 12))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(Color(hex: "0e1524"))
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color(hex: "1e293b"), lineWidth: 1)
                 )
-                statPill(
-                    title: "BEST TRADE",
-                    value: formatCurrency(stats.bestTradePnl ?? 0),
-                    color: KiteTheme.profitGreen,
-                    sub: stats.bestTradeDate
-                )
-                statPill(
-                    title: "WORST TRADE",
-                    value: formatCurrency(stats.worstTradePnl ?? 0),
-                    color: KiteTheme.lossRed,
-                    sub: stats.worstTradeDate
-                )
+                .frame(maxWidth: 280)
+                
+                // Outcome Filter Pills
+                HStack(spacing: 4) {
+                    filterPill("All (954)", code: "ALL")
+                    filterPill("Successful (427)", code: "SUCCESSFUL")
+                    filterPill("Mistakes Only (526)", code: "MISTAKES")
+                }
+                
+                Spacer()
+            }
+            .padding(14)
+            .background(Color(hex: "0e1524"))
+            
+            Divider().background(Color(hex: "1e293b"))
+            
+            // Table Header
+            HStack(spacing: 8) {
+                Text("MOOD").font(.system(size: 9, weight: .bold)).foregroundColor(Color(hex: "64748b")).frame(width: 45, alignment: .leading)
+                Text("DATE").font(.system(size: 9, weight: .bold)).foregroundColor(Color(hex: "64748b")).frame(width: 85, alignment: .leading)
+                Text("CONTRACT / STRATEGY").font(.system(size: 9, weight: .bold)).foregroundColor(Color(hex: "64748b")).frame(width: 170, alignment: .leading)
+                Text("NET P&L").font(.system(size: 9, weight: .bold)).foregroundColor(Color(hex: "64748b")).frame(width: 85, alignment: .leading)
+                Text("RATING").font(.system(size: 9, weight: .bold)).foregroundColor(Color(hex: "64748b")).frame(width: 75, alignment: .leading)
+                Spacer()
+                Text("TAGS").font(.system(size: 9, weight: .bold)).foregroundColor(Color(hex: "64748b")).frame(width: 130, alignment: .leading)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(Color(hex: "0e1524"))
+            
+            Divider().background(Color(hex: "1e293b"))
+            
+            // Rows
+            VStack(spacing: 0) {
+                ForEach(viewModel.entries) { entry in
+                    journalRow(entry)
+                        .onTapGesture {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                viewModel.selectedEntry = entry
+                            }
+                        }
+                    
+                    Divider().background(Color(hex: "1e293b").opacity(0.5))
+                }
+            }
+            
+            // Pagination Footer
+            HStack {
+                Text("Showing 1 to \(viewModel.entries.count) of \(viewModel.totalJournalEntries) entries")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color(hex: "94a3b8"))
+                Spacer()
+                HStack(spacing: 4) {
+                    Text("< 1 2 3 ... 96 >")
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundColor(Color(hex: "94a3b8"))
+                }
+            }
+            .padding(12)
+            .background(Color(hex: "0e1524"))
+        }
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
+        )
+    }
+    
+    private func filterPill(_ title: String, code: String) -> some View {
+        Button {
+            viewModel.selectedFilter = code
+        } label: {
+            Text(title)
+                .font(.system(size: 11, weight: viewModel.selectedFilter == code ? .bold : .medium))
+                .foregroundColor(viewModel.selectedFilter == code ? .white : Color(hex: "94a3b8"))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(viewModel.selectedFilter == code ? Color(hex: "3b82f6") : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private func journalRow(_ entry: DetailedJournalEntry) -> some View {
+        let isSelected = viewModel.selectedEntry?.id == entry.id
+        let isProfit = entry.netPnl >= 0
+        
+        return HStack(spacing: 8) {
+            // Mood Emoji
+            Text(entry.mood == "happy" ? "😊" : (entry.mood == "sad" ? "😞" : "😐"))
+                .font(.system(size: 16))
+                .frame(width: 45, alignment: .leading)
+            
+            // Date
+            Text(entry.date)
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundColor(.white)
+                .frame(width: 85, alignment: .leading)
+            
+            // Contract & Strategy
+            VStack(alignment: .leading, spacing: 1) {
+                HStack(spacing: 4) {
+                    Text(entry.indexName)
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.white)
+                    Text(entry.optionType)
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(entry.optionType == "CE" ? Color(hex: "10b981") : Color(hex: "f43f5e"))
+                    if let s = entry.strike {
+                        Text("\(s)")
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundColor(Color(hex: "94a3b8"))
+                    }
+                }
+                Text(entry.strategy)
+                    .font(.system(size: 10))
+                    .foregroundColor(Color(hex: "64748b"))
+            }
+            .frame(width: 170, alignment: .leading)
+            
+            // Net P&L
+            Text(isProfit ? "+₹\(Int(entry.netPnl))" : "-₹\(Int(abs(entry.netPnl)))")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .foregroundColor(isProfit ? Color(hex: "10b981") : Color(hex: "f43f5e"))
+                .frame(width: 85, alignment: .leading)
+            
+            // Star Rating
+            HStack(spacing: 1) {
+                ForEach(1...5, id: \.self) { star in
+                    Image(systemName: star <= entry.rating ? "star.fill" : "star")
+                        .font(.system(size: 9))
+                        .foregroundColor(star <= entry.rating ? Color(hex: "f59e0b") : Color(hex: "334155"))
+                }
+            }
+            .frame(width: 75, alignment: .leading)
+            
+            Spacer()
+            
+            // Tags
+            HStack(spacing: 4) {
+                ForEach(entry.tags.prefix(2), id: \.self) { tag in
+                    Text("#\(tag)")
+                        .font(.system(size: 9))
+                        .foregroundColor(Color(hex: "94a3b8"))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Color(hex: "0e1524"))
+                        .clipShape(RoundedRectangle(cornerRadius: 3))
+                }
+            }
+            .frame(width: 130, alignment: .leading)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(isSelected ? Color(hex: "1e293b").opacity(0.8) : Color.clear)
+        .contentShape(Rectangle())
+    }
+    
+    // MARK: - Journal Details Inspector (Right)
+    private func journalDetailsInspector(for entry: DetailedJournalEntry) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // Header
+            HStack {
+                Text("Trade Details")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.white)
+                
+                Spacer()
+                
+                HStack(spacing: 10) {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(hex: "94a3b8"))
+                    Image(systemName: "trash")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(hex: "f43f5e"))
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color(hex: "94a3b8"))
+                        .onTapGesture {
+                            viewModel.selectedEntry = nil
+                        }
+                }
+            }
+            
+            // Tabs: Details, Notes, Screenshots, Lessons
+            HStack(spacing: 0) {
+                inspectorTabButton("Details", tab: "details")
+                inspectorTabButton("Notes", tab: "notes")
+                inspectorTabButton("Screenshots", tab: "screenshots")
+                inspectorTabButton("Lessons", tab: "lessons")
+            }
+            .background(Color(hex: "0e1524"))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 12) {
+                    if viewModel.activeInspectorTab == "details" {
+                        entryDetailsTab(entry)
+                    } else if viewModel.activeInspectorTab == "notes" {
+                        entryNotesTab(entry)
+                    } else if viewModel.activeInspectorTab == "screenshots" {
+                        entryScreenshotsTab()
+                    } else {
+                        entryLessonsTab(entry)
+                    }
+                }
+                .padding(.top, 4)
             }
         }
+        .padding(16)
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
+        )
     }
     
-    private func statPill(title: String, value: String, color: Color, sub: String? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
+    private func inspectorTabButton(_ title: String, tab: String) -> some View {
+        Button {
+            viewModel.activeInspectorTab = tab
+        } label: {
             Text(title)
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-            Text(value)
-                .font(.system(size: 14, weight: .bold, design: .monospaced))
-                .foregroundColor(color)
-            if let sub = sub, !sub.isEmpty {
-                Text(sub)
+                .font(.system(size: 11, weight: viewModel.activeInspectorTab == tab ? .bold : .medium))
+                .foregroundColor(viewModel.activeInspectorTab == tab ? .white : Color(hex: "94a3b8"))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 7)
+                .background(viewModel.activeInspectorTab == tab ? Color(hex: "3b82f6") : Color.clear)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private func entryDetailsTab(_ entry: DetailedJournalEntry) -> some View {
+        VStack(spacing: 8) {
+            infoRow("Contract", "\(entry.indexName) \(entry.strike != nil ? "\(entry.strike!)" : "") \(entry.optionType)")
+            infoRow("Trading Type", entry.tradingType)
+            infoRow("Strategy", entry.strategy)
+            infoRow("Date", entry.date)
+            Divider().background(Color(hex: "1e293b"))
+            HStack {
+                Text("Net Result").font(.system(size: 12, weight: .bold)).foregroundColor(.white)
+                Spacer()
+                let isProfit = entry.netPnl >= 0
+                Text(isProfit ? "+₹\(Int(entry.netPnl))" : "-₹\(Int(abs(entry.netPnl)))")
+                    .font(.system(size: 16, weight: .bold, design: .monospaced))
+                    .foregroundColor(isProfit ? Color(hex: "10b981") : Color(hex: "f43f5e"))
+            }
+        }
+        .padding(12)
+        .background(Color(hex: "0e1524"))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+    
+    private func entryNotesTab(_ entry: DetailedJournalEntry) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            noteBox("Market Conditions", entry.marketConditions)
+            noteBox("Trade Setup", entry.tradeSetup)
+            noteBox("Personal Notes & Psychology", entry.personalNotes)
+        }
+    }
+    
+    private func entryScreenshotsTab() -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(spacing: 6) {
+                Image(systemName: "photo.badge.plus")
+                    .font(.system(size: 24))
+                    .foregroundColor(Color(hex: "64748b"))
+                Text("No screenshot attached")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white)
+                Text("Upload 5-min or 15-min chart setup")
                     .font(.system(size: 10))
-                    .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
+                    .foregroundColor(Color(hex: "64748b"))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 32)
+            .background(Color(hex: "0e1524"))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(style: StrokeStyle(lineWidth: 1, dash: [4]))
+                    .foregroundColor(Color(hex: "1e293b"))
+            )
+        }
+    }
+    
+    private func entryLessonsTab(_ entry: DetailedJournalEntry) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            lessonItem("What Went Right?", entry.whatWentRight, "checkmark.circle.fill", Color(hex: "10b981"))
+            lessonItem("What Went Wrong?", entry.whatWentWrong, "xmark.circle.fill", Color(hex: "f43f5e"))
+            lessonItem("Mistakes Made", entry.mistakesMade, "exclamationmark.triangle.fill", Color(hex: "f59e0b"))
+            lessonItem("Lessons Learned", entry.lessonsLearned, "lightbulb.fill", Color(hex: "3b82f6"))
+        }
+    }
+    
+    private func noteBox(_ title: String, _ text: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.system(size: 10, weight: .bold))
+                .foregroundColor(Color(hex: "64748b"))
+            Text(text)
+                .font(.system(size: 11))
+                .foregroundColor(.white)
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(hex: "0e1524"))
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+    
+    private func lessonItem(_ title: String, _ text: String, _ icon: String, _ color: Color) -> some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 13))
+                .foregroundColor(color)
+                .frame(width: 16)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                Text(text)
+                    .font(.system(size: 11))
+                    .foregroundColor(Color(hex: "94a3b8"))
             }
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(KiteTheme.surface(for: colorScheme))
-        .overlay(
-            RoundedRectangle(cornerRadius: 4)
-                .stroke(KiteTheme.border(for: colorScheme), lineWidth: 1)
-        )
+        .background(Color(hex: "0e1524"))
+        .clipShape(RoundedRectangle(cornerRadius: 6))
     }
     
-    // MARK: - Filters Toolbar
-    private var filtersToolbar: some View {
-        HStack(spacing: 12) {
-            // Search field
-            HStack(spacing: 6) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 11))
-                    .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                TextField("Search lessons, mistakes, setups...", text: $viewModel.searchQuery)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .font(.system(size: 12))
-                    .onSubmit {
-                        Task { await viewModel.loadJournal(page: 1) }
-                    }
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 5)
-            .frame(width: 240)
-            .background(KiteTheme.surface(for: colorScheme))
-            .overlay(
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(KiteTheme.border(for: colorScheme), lineWidth: 1)
-            )
-            
-            // Outcome Picker
-            Picker("Outcome", selection: $viewModel.selectedOutcome) {
-                Text("All Outcomes").tag("ALL")
-                Text("Wins Only").tag("win")
-                Text("Losses Only").tag("loss")
-            }
-            .pickerStyle(.segmented)
-            .frame(width: 240)
-            .onChange(of: viewModel.selectedOutcome) { _ in
-                Task { await viewModel.loadJournal(page: 1) }
-            }
-            
-            // Mistakes toggle
-            Toggle("Mistakes Logged Only", isOn: $viewModel.hasMistakesOnly)
-                .font(.system(size: 12))
-                .onChange(of: viewModel.hasMistakesOnly) { _ in
-                    Task { await viewModel.loadJournal(page: 1) }
-                }
-            
+    private func infoRow(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text(label).font(.system(size: 11)).foregroundColor(Color(hex: "94a3b8"))
             Spacer()
+            Text(value).font(.system(size: 11, weight: .medium)).foregroundColor(.white)
         }
     }
     
-    // MARK: - Journal Card
-    private func journalCard(_ trade: JournalTradeItem) -> some View {
-        let net = trade.netPnl ?? 0.0
-        let isProfit = trade.isProfit
-        let j = trade.journal
-        
-        return VStack(alignment: .leading, spacing: 12) {
-            // Header row
-            HStack(alignment: .center, spacing: 12) {
-                // Contract info
-                HStack(spacing: 8) {
-                    Text(trade.indexName)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                    
-                    Text(trade.optionType)
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(trade.optionType == "CE" ? KiteTheme.profitGreen : KiteTheme.lossRed)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 1)
-                        .background(
-                            (trade.optionType == "CE" ? KiteTheme.profitGreen : KiteTheme.lossRed).opacity(0.12)
-                        )
-                        .cornerRadius(3)
-                    
-                    if let strike = trade.strikePrice {
-                        Text(String(format: "%.0f", strike))
-                            .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                            .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                    }
-                    
-                    Text("•")
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                    
-                    Text(trade.tradingType)
-                        .font(.system(size: 11))
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                    
-                    if let strat = trade.strategyName, !strat.isEmpty {
-                        Text("•")
-                            .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                        Text(strat)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundColor(KiteTheme.brandBlue)
-                    }
-                }
-                
-                Spacer()
-                
-                // Date & Net P&L
-                HStack(spacing: 16) {
-                    Text(trade.displayDate ?? trade.tradeDate)
-                        .font(.system(size: 11, design: .monospaced))
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                    
-                    Text(formatCurrency(net))
-                        .font(.system(size: 15, weight: .bold, design: .monospaced))
-                        .foregroundColor(isProfit ? KiteTheme.profitGreen : KiteTheme.lossRed)
-                    
-                    Button("Reflect") {
-                        viewModel.openReflectionSheet(for: trade)
-                    }
-                    .buttonStyle(KiteSecondaryButtonStyle())
-                }
+    // MARK: - Bottom Row: Strategy Performance Card
+    private var strategyPerformanceCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Strategy Performance (From Journal)")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.white)
+            
+            Chart {
+                BarMark(x: .value("Strategy", "Long Straddle"), y: .value("P&L", -387387)).foregroundStyle(Color(hex: "f43f5e"))
+                BarMark(x: .value("Strategy", "Directional CE"), y: .value("P&L", 18500)).foregroundStyle(Color(hex: "10b981"))
+                BarMark(x: .value("Strategy", "Directional PE"), y: .value("P&L", 24200)).foregroundStyle(Color(hex: "10b981"))
             }
-            
-            Divider()
-                .background(KiteTheme.border(for: colorScheme))
-            
-            // Reflection Notes Content
-            if let j = j, hasAnyReflection(j) {
-                VStack(alignment: .leading, spacing: 8) {
-                    if let setup = j.tradeSetup, !setup.isEmpty {
-                        reflectionBlock(label: "TRADE SETUP & CONTEXT", text: setup, color: KiteTheme.brandBlue)
-                    }
-                    
-                    if let right = j.whatWentRight, !right.isEmpty {
-                        reflectionBlock(label: "WHAT WENT RIGHT", text: right, color: KiteTheme.profitGreen)
-                    }
-                    
-                    if let wrong = j.whatWentWrong, !wrong.isEmpty {
-                        reflectionBlock(label: "WHAT WENT WRONG", text: wrong, color: KiteTheme.lossRed)
-                    }
-                    
-                    if let mistakes = j.mistakesMade, !mistakes.isEmpty {
-                        HStack(alignment: .top, spacing: 6) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.system(size: 11))
-                                .foregroundColor(KiteTheme.brandOrange)
-                            reflectionBlock(label: "DISCIPLINE MISTAKES", text: mistakes, color: KiteTheme.brandOrange)
+            .chartYAxis {
+                AxisMarks(position: .leading) { val in
+                    AxisGridLine().foregroundStyle(Color(hex: "1e293b"))
+                    AxisValueLabel {
+                        if let d = val.as(Double.self) {
+                            Text("\(Int(d / 1000))K").font(.system(size: 8)).foregroundColor(Color(hex: "64748b"))
                         }
                     }
-                    
-                    if let lessons = j.lessonsLearned, !lessons.isEmpty {
-                        reflectionBlock(label: "KEY LESSONS", text: lessons, color: KiteTheme.textPrimary(for: colorScheme))
-                    }
-                    
-                    if let notes = j.personalNotes, !notes.isEmpty {
-                        reflectionBlock(label: "JOURNAL NOTES", text: notes, color: KiteTheme.textSecondary(for: colorScheme))
-                    }
-                }
-            } else {
-                HStack {
-                    Text("No reflection logged yet for this trade.")
-                        .font(.system(size: 12))
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme).opacity(0.6))
-                    Spacer()
-                    Button("Log Reflection Now") {
-                        viewModel.openReflectionSheet(for: trade)
-                    }
-                    .buttonStyle(KiteGhostButtonStyle())
                 }
             }
+            .chartXAxis {
+                AxisMarks { val in
+                    AxisValueLabel {
+                        if let s = val.as(String.self) {
+                            Text(s).font(.system(size: 9)).foregroundColor(Color(hex: "94a3b8"))
+                        }
+                    }
+                }
+            }
+            .frame(height: 110)
         }
         .padding(14)
-        .background(KiteTheme.surface(for: colorScheme))
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(KiteTheme.border(for: colorScheme), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
         )
     }
     
-    private func reflectionBlock(label: String, text: String, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(label)
-                .font(.system(size: 9, weight: .bold))
-                .foregroundColor(color)
-            Text(text)
-                .font(.system(size: 12))
-                .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-        }
-    }
-    
-    private func hasAnyReflection(_ j: TradeJournal) -> Bool {
-        !(j.tradeSetup ?? "").isEmpty ||
-        !(j.whatWentRight ?? "").isEmpty ||
-        !(j.whatWentWrong ?? "").isEmpty ||
-        !(j.mistakesMade ?? "").isEmpty ||
-        !(j.lessonsLearned ?? "").isEmpty ||
-        !(j.personalNotes ?? "").isEmpty
-    }
-    
-    // MARK: - Pagination Footer
-    private var paginationFooter: some View {
-        HStack {
-            Text("Showing \(viewModel.trades.count) of \(viewModel.totalTrades) entries")
-                .font(.system(size: 11))
-                .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
+    // MARK: - Bottom Row: Sentiment Analysis Card
+    private var sentimentAnalysisCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Trade Notes Sentiment")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.white)
             
+            HStack(spacing: 14) {
+                // Mini Pie
+                ZStack {
+                    Circle()
+                        .stroke(Color(hex: "10b981"), lineWidth: 12)
+                        .frame(width: 70, height: 70)
+                    Text("45%")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    sentimentRow("Positive", "45%", Color(hex: "10b981"))
+                    sentimentRow("Neutral", "25%", Color(hex: "f59e0b"))
+                    sentimentRow("Negative", "30%", Color(hex: "f43f5e"))
+                }
+            }
+            .padding(.top, 4)
             Spacer()
-            
-            HStack(spacing: 8) {
-                Button("Previous") {
-                    if viewModel.currentPage > 1 {
-                        Task { await viewModel.loadJournal(page: viewModel.currentPage - 1) }
-                    }
-                }
-                .buttonStyle(KiteSecondaryButtonStyle())
-                .disabled(viewModel.currentPage <= 1)
-                
-                Text("Page \(viewModel.currentPage) of \(max(1, viewModel.totalPages))")
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                
-                Button("Next") {
-                    if viewModel.currentPage < viewModel.totalPages {
-                        Task { await viewModel.loadJournal(page: viewModel.currentPage + 1) }
-                    }
-                }
-                .buttonStyle(KiteSecondaryButtonStyle())
-                .disabled(viewModel.currentPage >= viewModel.totalPages)
-            }
         }
-        .padding(.top, 8)
+        .padding(14)
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
+        )
     }
     
-    private func formatCurrency(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .currency
-        formatter.currencySymbol = "₹"
-        formatter.maximumFractionDigits = 2
-        return formatter.string(from: NSNumber(value: value)) ?? "₹\(value)"
-    }
-}
-
-// MARK: - Journal Reflection Sheet
-public struct JournalReflectionSheet: View {
-    @ObservedObject var viewModel: TradingJournalViewModel
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.colorScheme) private var colorScheme
-    
-    public var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Trade Reflection & Post-Mortem")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
-                    if let trade = viewModel.selectedTrade {
-                        Text("\(trade.indexName) \(trade.optionType) • \(trade.displayDate ?? trade.tradeDate)")
-                            .font(.system(size: 12))
-                            .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                    }
-                }
-                
-                Spacer()
-                
-                Button(action: { dismiss() }) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(KiteTheme.textSecondary(for: colorScheme))
-                        .frame(width: 24, height: 24)
-                        .background(KiteTheme.surface(for: colorScheme))
-                        .cornerRadius(12)
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
-            .padding(16)
-            
-            Divider()
-                .background(KiteTheme.border(for: colorScheme))
-            
-            // Scrollable fields
-            ScrollView {
-                VStack(spacing: 14) {
-                    fieldBlock(title: "Market Conditions & Bias", placeholder: "e.g. Gap up, CPR breakout, high IV", text: $viewModel.editMarketConditions)
-                    fieldBlock(title: "Trade Setup & Entry Rationale", placeholder: "e.g. 15m candle close above EMA, volume surge", text: $viewModel.editTradeSetup)
-                    fieldBlock(title: "What Went Right", placeholder: "e.g. Followed stop loss strictly, let winners run", text: $viewModel.editWhatWentRight)
-                    fieldBlock(title: "What Went Wrong", placeholder: "e.g. Premature exit, chased momentum", text: $viewModel.editWhatWentWrong)
-                    fieldBlock(title: "Mistakes Made (Discipline)", placeholder: "e.g. Over-leveraged, entered before candle confirmation", text: $viewModel.editMistakesMade)
-                    fieldBlock(title: "Lessons Learned & Rules to Adopt", placeholder: "e.g. Never trade without predetermined stop loss", text: $viewModel.editLessonsLearned)
-                    fieldBlock(title: "Personal Notes", placeholder: "Additional observations", text: $viewModel.editPersonalNotes)
-                    
-                    if let err = viewModel.errorMessage {
-                        Text(err)
-                            .font(.system(size: 11))
-                            .foregroundColor(KiteTheme.lossRed)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-                .padding(16)
-            }
-            
-            Divider()
-                .background(KiteTheme.border(for: colorScheme))
-            
-            // Footer
-            HStack {
-                Spacer()
-                Button("Cancel") { dismiss() }
-                    .buttonStyle(KiteSecondaryButtonStyle())
-                
-                Button(action: {
-                    Task {
-                        _ = await viewModel.saveReflection()
-                    }
-                }) {
-                    if viewModel.isSaving {
-                        ProgressView()
-                            .scaleEffect(0.7)
-                            .frame(width: 100)
-                    } else {
-                        Text("Save Reflection")
-                            .frame(width: 100)
-                    }
-                }
-                .buttonStyle(KitePrimaryButtonStyle())
-                .disabled(viewModel.isSaving)
-            }
-            .padding(16)
+    private func sentimentRow(_ label: String, _ pct: String, _ color: Color) -> some View {
+        HStack {
+            Circle().fill(color).frame(width: 6, height: 6)
+            Text(label).font(.system(size: 10)).foregroundColor(Color(hex: "94a3b8"))
+            Spacer()
+            Text(pct).font(.system(size: 10, weight: .bold)).foregroundColor(.white)
         }
-        .frame(width: 540, height: 600)
-        .background(KiteTheme.canvas(for: colorScheme))
     }
     
-    private func fieldBlock(title: String, placeholder: String, text: Binding<String>) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(KiteTheme.textPrimary(for: colorScheme))
+    // MARK: - Bottom Row: Common Tags Card
+    private var commonTagsCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Common Tags")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.white)
             
-            TextField(placeholder, text: text)
-                .textFieldStyle(PlainTextFieldStyle())
-                .font(.system(size: 12))
-                .padding(8)
-                .background(KiteTheme.surface(for: colorScheme))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(KiteTheme.border(for: colorScheme), lineWidth: 1)
-                )
+            VStack(spacing: 5) {
+                tagItem("#LongStraddle", count: 954, color: Color(hex: "3b82f6"))
+                tagItem("#StoplossExecution", count: 480, color: Color(hex: "10b981"))
+                tagItem("#ExpiryGreed", count: 120, color: Color(hex: "f43f5e"))
+                tagItem("#RevengeTrading", count: 45, color: Color(hex: "f43f5e"))
+            }
+            Spacer()
+        }
+        .padding(14)
+        .background(Color(hex: "121b2d"))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(hex: "1e293b"), lineWidth: 1)
+        )
+    }
+    
+    private func tagItem(_ tag: String, count: Int, color: Color) -> some View {
+        HStack {
+            Text(tag)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(.white)
+            Spacer()
+            Text("\(count)")
+                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                .foregroundColor(color)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(color.opacity(0.15))
+                .clipShape(RoundedRectangle(cornerRadius: 4))
         }
     }
 }
