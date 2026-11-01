@@ -91,12 +91,13 @@ The system addresses the core needs of active option traders:
 ## 6. Developer Tooling & Codebase Knowledge Graph (Graphify)
 
 - **Knowledge Graph Tooling**: Graphify (`graphifyy`) integrated at repository root.
-- **Output Artifacts**:
-  - `graphify-out/graph.json`: Machine-navigable AST graph (785 nodes, 1025 edges, 97 communities).
+- **Generated Output Artifacts** (local and gitignored; not required by the application):
+  - `graphify-out/graph.json`: Machine-navigable AST graph.
   - `graphify-out/graph.html`: Interactive D3 visual graph of project structure and dependencies.
-  - `graphify-out/GRAPH_REPORT.md`: Comprehensive textual report with god nodes, community hubs, and surprising connections.
+  - `graphify-out/GRAPH_REPORT.md`: Textual report with god nodes, community hubs, and surprising connections.
 - **Repository Configuration**:
   - `.graphifyignore`: Excludes `backend/vendor/`, `node_modules/`, `dist/`, `build/`, `.env`, and local database files.
+  - `.gitignore`: Excludes generated `graphify-out/` artifacts from version control.
   - `.agents/rules/graphify.md`: Antigravity rule instructing the AI assistant to query the graph before answering architectural questions.
   - `.agents/workflows/graphify.md`: Antigravity workflow for building and refreshing the graph.
   - `.git/hooks/post-commit` & `post-checkout`: Git hooks that trigger AST updates on code commits without LLM cost.

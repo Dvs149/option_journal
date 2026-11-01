@@ -149,7 +149,7 @@ To prevent bloated controllers, heavy business logic is decoupled into dedicated
 
 ## 5. Knowledge Graph & Tooling Architecture (Graphify)
 
-The codebase incorporates an AST-based Knowledge Graph layer powered by **Graphify** (`graphifyy`) for dependency discovery, call graph extraction, and AI agent grounding:
+The codebase supports a locally generated AST-based Knowledge Graph powered by **Graphify** (`graphifyy`) for dependency discovery, call graph extraction, and AI agent grounding. Graphify output is ignored by Git and is not required by the application; regenerate it locally when needed.
 
 ```mermaid
 graph LR
@@ -194,8 +194,8 @@ graph LR
 
 ### Knowledge Graph Components
 1. **Extraction Engine**:
-   - Parses 139 core application code and documentation files without external network calls or LLM dependencies.
-   - Extracts 785 nodes, 1025 edges, and 97 communities.
+   - Parses application code without external network calls or LLM dependencies.
+   - Generated node, edge, and community counts vary with the current source tree.
 2. **Exclusion Boundary (`.graphifyignore`)**:
    - Prevents bloat by omitting `backend/vendor/` (9,000+ framework files) and `node_modules/`.
 3. **Query Interface**:
@@ -203,4 +203,4 @@ graph LR
    - `graphify path`: Discovers shortest call paths between symbols.
    - `graphify explain`: Summarizes node attributes, inbound/outbound edges, and file origins.
 4. **Antigravity Rule Integration**:
-   - Projects rules in `.agents/rules/graphify.md` require querying `graph.json` before answering architecture questions or planning major refactors.
+   - Project rules in `.agents/rules/graphify.md` query local `graph.json` when it is available before answering architecture questions or planning major refactors.
