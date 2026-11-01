@@ -50,6 +50,7 @@ import { useToast } from '../context/ToastContext';
 import { useFilter } from '../context/FilterContext';
 import { useBrokerage } from '../context/BrokerageContext';
 import { useDropdown } from '../context/DropdownContext';
+import { useTheme } from '../context/ThemeContext';
 import BulkImportModal from '../components/trades/BulkImportModal';
 import ExportModal from '../components/trades/ExportModal';
 import * as XLSX from 'xlsx';
@@ -80,6 +81,7 @@ const getLegPrices = (trade) => {
 export default function AllTrades() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { isKite } = useTheme();
   const { lotSizes = {}, getLotSize } = useLotSizes();
   const { calculateCharges } = useBrokerage();
 
@@ -1970,30 +1972,42 @@ export default function AllTrades() {
             <div className="grid grid-cols-3 gap-1 p-1 bg-[#0e1626] light:bg-slate-100 rounded-xl border border-[#1e293b] text-xs">
               <button
                 onClick={() => setDrawerTab('details')}
-                className={`py-1.5 rounded-lg font-semibold transition-all ${
+                className={`py-1.5 rounded-lg transition-all cursor-pointer ${
                   drawerTab === 'details'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                    ? isKite
+                      ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                      : 'bg-blue-600 text-white shadow-sm font-semibold'
+                    : isKite
+                      ? 'text-[#9b9b9b] hover:text-white font-medium'
+                      : 'text-slate-400 hover:text-white font-medium'
                 }`}
               >
                 Details
               </button>
               <button
                 onClick={() => setDrawerTab('charges')}
-                className={`py-1.5 rounded-lg font-semibold transition-all ${
+                className={`py-1.5 rounded-lg transition-all cursor-pointer ${
                   drawerTab === 'charges'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                    ? isKite
+                      ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                      : 'bg-blue-600 text-white shadow-sm font-semibold'
+                    : isKite
+                      ? 'text-[#9b9b9b] hover:text-white font-medium'
+                      : 'text-slate-400 hover:text-white font-medium'
                 }`}
               >
                 Charges
               </button>
               <button
                 onClick={() => setDrawerTab('journal')}
-                className={`py-1.5 rounded-lg font-semibold transition-all ${
+                className={`py-1.5 rounded-lg transition-all cursor-pointer ${
                   drawerTab === 'journal'
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                    ? isKite
+                      ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                      : 'bg-blue-600 text-white shadow-sm font-semibold'
+                    : isKite
+                      ? 'text-[#9b9b9b] hover:text-white font-medium'
+                      : 'text-slate-400 hover:text-white font-medium'
                 }`}
               >
                 Journal
@@ -2683,10 +2697,14 @@ export default function AllTrades() {
               <button
                 type="button"
                 onClick={() => setEditModalTab('details')}
-                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl font-semibold transition-all ${
+                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl transition-all cursor-pointer ${
                   editModalTab === 'details'
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                    : 'text-slate-400 hover:text-white'
+                    ? isKite
+                      ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                      : 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-semibold'
+                    : isKite
+                      ? 'text-[#9b9b9b] hover:text-white font-medium'
+                      : 'text-slate-400 hover:text-white font-medium'
                 }`}
               >
                 <FileText className="w-3.5 h-3.5" />
@@ -2695,10 +2713,14 @@ export default function AllTrades() {
               <button
                 type="button"
                 onClick={() => setEditModalTab('charges')}
-                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl font-semibold transition-all ${
+                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl transition-all cursor-pointer ${
                   editModalTab === 'charges'
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                    : 'text-slate-400 hover:text-white'
+                    ? isKite
+                      ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                      : 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-semibold'
+                    : isKite
+                      ? 'text-[#9b9b9b] hover:text-white font-medium'
+                      : 'text-slate-400 hover:text-white font-medium'
                 }`}
               >
                 <Receipt className="w-3.5 h-3.5" />
@@ -2707,10 +2729,14 @@ export default function AllTrades() {
               <button
                 type="button"
                 onClick={() => setEditModalTab('journal')}
-                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl font-semibold transition-all ${
+                className={`flex items-center justify-center gap-1.5 py-2 rounded-xl transition-all cursor-pointer ${
                   editModalTab === 'journal'
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                    : 'text-slate-400 hover:text-white'
+                    ? isKite
+                      ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                      : 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-semibold'
+                    : isKite
+                      ? 'text-[#9b9b9b] hover:text-white font-medium'
+                      : 'text-slate-400 hover:text-white font-medium'
                 }`}
               >
                 <BookOpen className="w-3.5 h-3.5" />

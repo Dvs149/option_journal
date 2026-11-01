@@ -16,6 +16,7 @@ import { useLotSizes } from '../../context/LotSizeContext';
 import { useToast } from '../../context/ToastContext';
 import { useBrokerage } from '../../context/BrokerageContext';
 import { useDropdown } from '../../context/DropdownContext';
+import { useTheme } from '../../context/ThemeContext';
 import { formatINR } from '../../utils/formatters';
 
 const getLegPrices = (trade) => {
@@ -62,6 +63,7 @@ const resolveScreenshot = (tradeOrUrl) => {
 };
 
 export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
+  const { isKite } = useTheme();
   const { getLotSize, lotSizes } = useLotSizes();
   const { showToast } = useToast();
   const { calculateCharges } = useBrokerage();
@@ -472,10 +474,14 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
           <button
             type="button"
             onClick={() => setModalTab('details')}
-            className={`flex items-center justify-center gap-1.5 py-2 rounded-xl transition-all ${
+            className={`flex items-center justify-center gap-1.5 py-2 rounded-xl transition-all cursor-pointer ${
               modalTab === 'details'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                : 'text-slate-400 hover:text-white'
+                ? isKite
+                  ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                  : 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                : isKite
+                  ? 'text-[#9b9b9b] hover:text-white'
+                  : 'text-slate-400 hover:text-white'
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
@@ -484,10 +490,14 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
           <button
             type="button"
             onClick={() => setModalTab('charges')}
-            className={`flex items-center justify-center gap-1.5 py-2 rounded-xl transition-all ${
+            className={`flex items-center justify-center gap-1.5 py-2 rounded-xl transition-all cursor-pointer ${
               modalTab === 'charges'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                : 'text-slate-400 hover:text-white'
+                ? isKite
+                  ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                  : 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                : isKite
+                  ? 'text-[#9b9b9b] hover:text-white'
+                  : 'text-slate-400 hover:text-white'
             }`}
           >
             <Receipt className="w-3.5 h-3.5" />
@@ -496,10 +506,14 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
           <button
             type="button"
             onClick={() => setModalTab('journal')}
-            className={`flex items-center justify-center gap-1.5 py-2 rounded-xl transition-all ${
+            className={`flex items-center justify-center gap-1.5 py-2 rounded-xl transition-all cursor-pointer ${
               modalTab === 'journal'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                : 'text-slate-400 hover:text-white'
+                ? isKite
+                  ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                  : 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                : isKite
+                  ? 'text-[#9b9b9b] hover:text-white'
+                  : 'text-slate-400 hover:text-white'
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
@@ -508,10 +522,14 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
           <button
             type="button"
             onClick={() => setModalTab('screenshots')}
-            className={`flex items-center justify-center gap-1.5 py-2 rounded-xl transition-all ${
+            className={`flex items-center justify-center gap-1.5 py-2 rounded-xl transition-all cursor-pointer ${
               modalTab === 'screenshots'
-                ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                : 'text-slate-400 hover:text-white'
+                ? isKite
+                  ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                  : 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                : isKite
+                  ? 'text-[#9b9b9b] hover:text-white'
+                  : 'text-slate-400 hover:text-white'
             }`}
           >
             <Camera className="w-3.5 h-3.5" />

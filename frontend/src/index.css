@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @custom-variant light (&:where(.light, .light *));
+@custom-variant kite (&:where(.theme-kite, .theme-kite *));
 
 @layer base {
   :root {
@@ -24,7 +25,19 @@
     --text-secondary: #475569;
     --text-muted: #94a3b8;
   }
+
+  .theme-kite {
+    color-scheme: dark;
+    --bg-main: #191919;
+    --bg-card: #1e1e1e;
+    --bg-card-hover: #262626;
+    --border-color: #292929;
+    --text-primary: #f0f0f0;
+    --text-secondary: #9b9b9b;
+    --text-muted: #757575;
+  }
 }
+
 
 body {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -104,4 +117,236 @@ select option {
 
 .animate-toast {
   animation: toastSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ==========================================================================
+   ZERODHA KITE PLATFORM THEME
+   Replicates the exact Zerodha Kite Dark terminal experience:
+   - Base canvas: #191919 (Kite pure dark charcoal)
+   - Sidebar / Header: #141414 (Deep panel)
+   - Cards / Modules: #1e1e1e (Flat elevated card surface)
+   - Sub-surfaces / Inputs: #252525 (Crisp sub-card)
+   - Dividers: #292929 (Hairline border)
+   - Brand Accent: #ff5722 (Kite iconic orange for active nav & indicators)
+   - Action Button: #387ed1 (Kite blue CTA for primary actions)
+   - Trading P&L: #4caf50 (Green) / #df514c (Red)
+   ========================================================================== */
+
+html.theme-kite,
+html.theme-kite body {
+  background-color: #191919 !important;
+  color: #e0e0e0 !important;
+}
+
+/* Base Surfaces & Cards */
+html.theme-kite .bg-\[\#0b0f19\] {
+  background-color: #191919 !important;
+}
+
+html.theme-kite .bg-\[\#0e1626\] {
+  background-color: #141414 !important;
+}
+
+html.theme-kite .bg-\[\#0e1626\]\/80,
+html.theme-kite .bg-\[\#0e1626\]\/40,
+html.theme-kite .bg-\[\#0e1626\]\/60 {
+  background-color: rgba(20, 20, 20, 0.9) !important;
+}
+
+html.theme-kite .bg-\[\#121b2d\] {
+  background-color: #1e1e1e !important;
+}
+
+html.theme-kite .bg-\[\#162033\] {
+  background-color: #252525 !important;
+}
+
+html.theme-kite .bg-\[\#162033\]\/40,
+html.theme-kite .bg-\[\#162033\]\/60 {
+  background-color: rgba(37, 37, 37, 0.6) !important;
+}
+
+html.theme-kite .bg-\[\#18233a\],
+html.theme-kite .bg-\[\#1f2d47\],
+html.theme-kite .bg-\[\#0b1322\],
+html.theme-kite .bg-\[\#0a0f1d\],
+html.theme-kite .bg-\[\#131c2e\],
+html.theme-kite .bg-\[\#080d1a\],
+html.theme-kite .bg-\[\#152033\],
+html.theme-kite .bg-\[\#0b111e\] {
+  background-color: #222222 !important;
+}
+
+/* Hairline Dividers & Borders */
+html.theme-kite .border-\[\#1e293b\] {
+  border-color: #292929 !important;
+}
+
+html.theme-kite .border-slate-800,
+html.theme-kite .border-slate-700 {
+  border-color: #303030 !important;
+}
+
+/* Hover States */
+html.theme-kite .hover\:bg-\[\#162033\]:hover,
+html.theme-kite .hover\:bg-\[\#1f2d47\]:hover,
+html.theme-kite .hover\:bg-\[\#18233a\]:hover {
+  background-color: #2c2c2c !important;
+}
+
+html.theme-kite .hover\:bg-\[\#121b2d\]:hover {
+  background-color: #262626 !important;
+}
+
+html.theme-kite .hover\:border-slate-700:hover {
+  border-color: #3d3d3d !important;
+}
+
+/* Zerodha Kite Brand Highlights: Orange Active Module Fonts & Badges */
+html.theme-kite aside nav a.active,
+html.theme-kite aside nav a.active span,
+html.theme-kite aside nav a.active svg,
+html.theme-kite aside nav a.bg-blue-600,
+html.theme-kite aside nav a[class*="bg-blue-600"] {
+  background-color: transparent !important;
+  color: #ff5722 !important;
+  stroke: #ff5722 !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+}
+
+html.theme-kite aside nav a.active:hover,
+html.theme-kite aside nav a.active:hover span,
+html.theme-kite aside nav a.active:hover svg {
+  background-color: transparent !important;
+  color: #ff5722 !important;
+  stroke: #ff5722 !important;
+  box-shadow: none !important;
+}
+
+html.theme-kite aside nav a:not(.active) {
+  color: #9b9b9b !important;
+  background-color: transparent !important;
+}
+
+html.theme-kite aside nav a:not(.active) svg {
+  color: #9b9b9b !important;
+  stroke: #9b9b9b !important;
+}
+
+html.theme-kite aside nav a:not(.active):hover,
+html.theme-kite aside nav a:not(.active):hover span {
+  color: #ffffff !important;
+  background-color: #222222 !important;
+}
+
+html.theme-kite aside nav a:not(.active):hover svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+html.theme-kite aside div.bg-blue-600 {
+  background-color: #ff5722 !important;
+  box-shadow: 0 4px 14px rgba(255, 87, 34, 0.3) !important;
+}
+
+html.theme-kite aside span.text-blue-400 {
+  color: #ff5722 !important;
+}
+
+/* Kite Action CTA Buttons (Apply, Submit, Save, Get started) */
+html.theme-kite button.bg-blue-600,
+html.theme-kite a.bg-blue-600 {
+  background-color: #387ed1 !important;
+}
+
+html.theme-kite button.bg-blue-600:hover,
+html.theme-kite a.bg-blue-600:hover {
+  background-color: #2b6cb0 !important;
+}
+
+/* Tab Bars and Segmented Pill Containers in Kite Theme:
+   Active tabs/pills display vibrant orange font (#ff5722), transparent background, no hover fill.
+   Inactive tabs display muted text (#9b9b9b) transitioning to white on hover. */
+html.theme-kite div[class*="grid-cols-"] > button.bg-blue-600,
+html.theme-kite div[class*="p-1"] > button.bg-blue-600,
+html.theme-kite div[class*="p-0.5"] > button.bg-blue-600,
+html.theme-kite div[class*="p-1.5"] > button.bg-blue-600,
+html.theme-kite div[class*="no-scrollbar"] > button.bg-blue-600,
+html.theme-kite div[class*="overflow-x-auto"] > button.bg-blue-600 {
+  background-color: transparent !important;
+  color: #ff5722 !important;
+  stroke: #ff5722 !important;
+  box-shadow: none !important;
+  font-weight: 600 !important;
+}
+
+html.theme-kite div[class*="grid-cols-"] > button.bg-blue-600:hover,
+html.theme-kite div[class*="p-1"] > button.bg-blue-600:hover,
+html.theme-kite div[class*="p-0.5"] > button.bg-blue-600:hover,
+html.theme-kite div[class*="p-1.5"] > button.bg-blue-600:hover,
+html.theme-kite div[class*="no-scrollbar"] > button.bg-blue-600:hover,
+html.theme-kite div[class*="overflow-x-auto"] > button.bg-blue-600:hover {
+  background-color: transparent !important;
+  color: #ff5722 !important;
+  stroke: #ff5722 !important;
+  box-shadow: none !important;
+}
+
+html.theme-kite div[class*="grid-cols-"] > button:not(.bg-blue-600):not([class*="text-[#ff5722]"]),
+html.theme-kite div[class*="p-1"] > button:not(.bg-blue-600):not([class*="text-[#ff5722]"]):not(.bg-emerald-600):not(.bg-rose-600),
+html.theme-kite div[class*="p-0.5"] > button:not(.bg-blue-600):not([class*="text-[#ff5722]"]),
+html.theme-kite div[class*="p-1.5"] > button:not(.bg-blue-600):not([class*="text-[#ff5722]"]) {
+  color: #9b9b9b !important;
+}
+
+html.theme-kite div[class*="grid-cols-"] > button:not(.bg-blue-600):not([class*="text-[#ff5722]"]):hover,
+html.theme-kite div[class*="p-1"] > button:not(.bg-blue-600):not([class*="text-[#ff5722]"]):not(.bg-emerald-600):not(.bg-rose-600):hover,
+html.theme-kite div[class*="p-0.5"] > button:not(.bg-blue-600):not([class*="text-[#ff5722]"]):hover,
+html.theme-kite div[class*="p-1.5"] > button:not(.bg-blue-600):not([class*="text-[#ff5722]"]):hover {
+  color: #ffffff !important;
+}
+
+/* Trading P&L Colors (Zerodha NSE/BSE Green & Red) */
+html.theme-kite .text-emerald-400 {
+  color: #4caf50 !important;
+}
+
+html.theme-kite .text-rose-400 {
+  color: #df514c !important;
+}
+
+/* Form Controls & Dropdowns */
+html.theme-kite select {
+  background-color: #222222 !important;
+  border-color: #2f2f2f !important;
+  color: #f0f0f0 !important;
+}
+
+html.theme-kite select option {
+  background-color: #222222 !important;
+  color: #ffffff !important;
+}
+
+html.theme-kite input,
+html.theme-kite textarea {
+  background-color: #1c1c1c !important;
+  border-color: #2e2e2e !important;
+  color: #f0f0f0 !important;
+}
+
+html.theme-kite input:focus,
+html.theme-kite textarea:focus,
+html.theme-kite select:focus {
+  border-color: #ff5722 !important;
+  outline: none !important;
+}
+
+/* Custom Scrollbars in Kite */
+html.theme-kite ::-webkit-scrollbar-thumb {
+  background: #363636;
+}
+
+html.theme-kite ::-webkit-scrollbar-thumb:hover {
+  background: #4a4a4a;
 }

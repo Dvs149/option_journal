@@ -45,7 +45,7 @@ import { useDropdown } from '../context/DropdownContext';
 
 export default function Settings() {
   const { user, updateUser } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
+  const { theme, setTheme, isDark, toggleTheme, isKite } = useTheme();
   const {
     lotSizes,
     getLotSize,
@@ -199,11 +199,15 @@ export default function Settings() {
   });
 
   // Appearance Settings
-  const [selectedTheme, setSelectedTheme] = useState(isDark ? 'dark' : 'light');
+  const [selectedTheme, setSelectedTheme] = useState(theme);
   const [primaryColor, setPrimaryColor] = useState('#3b82f6');
   const [fontSize, setFontSize] = useState('Medium');
   const [compactMode, setCompactMode] = useState(false);
   const [showAnimations, setShowAnimations] = useState(true);
+
+  useEffect(() => {
+    setSelectedTheme(theme);
+  }, [theme]);
 
   // Data & Backup
   const [autoBackup, setAutoBackup] = useState(true);
@@ -1279,46 +1283,87 @@ export default function Settings() {
               {/* Theme Selectors */}
               <div>
                 <label className="text-[11px] text-slate-400 block mb-1.5">Theme</label>
-                <div className="grid grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {/* Light */}
                   <button
+                    type="button"
                     onClick={() => {
                       setSelectedTheme('light');
-                      if (isDark) toggleTheme();
+                      setTheme('light');
+                      showToast?.('Switched to Light theme', 'info');
                     }}
-                    className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
+                    className={`p-2.5 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                       selectedTheme === 'light'
-                        ? 'border-blue-500 bg-blue-500/10 text-white'
-                        : 'border-[#1e293b] bg-[#0e1626] text-slate-400'
+                        ? 'border-blue-500 bg-blue-500/10 text-white shadow-sm ring-1 ring-blue-500'
+                        : 'border-[#1e293b] bg-[#0e1626] text-slate-400 hover:text-slate-200'
                     }`}
                   >
                     <div className="w-full h-8 rounded bg-slate-200 border border-slate-300"></div>
                     <span className="text-[10px] font-semibold">Light</span>
                   </button>
 
+                  {/* Dark (Midnight) */}
                   <button
+                    type="button"
                     onClick={() => {
                       setSelectedTheme('dark');
-                      if (!isDark) toggleTheme();
+                      setTheme('dark');
+                      showToast?.('Switched to Midnight Dark theme', 'info');
                     }}
-                    className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
+                    className={`p-2.5 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                       selectedTheme === 'dark'
-                        ? 'border-blue-500 bg-blue-500/10 text-white'
-                        : 'border-[#1e293b] bg-[#0e1626] text-slate-400'
+                        ? 'border-blue-500 bg-blue-500/10 text-white shadow-sm ring-1 ring-blue-500'
+                        : 'border-[#1e293b] bg-[#0e1626] text-slate-400 hover:text-slate-200'
                     }`}
                   >
-                    <div className="w-full h-8 rounded bg-[#0b111e] border border-blue-500/50"></div>
-                    <span className="text-[10px] font-semibold">Dark</span>
+                    <div className="w-full h-8 rounded bg-[#0b111e] border border-blue-500/50 flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-blue-400/80"></div>
+                    </div>
+                    <span className="text-[10px] font-semibold">Dark (Midnight)</span>
                   </button>
 
+                  {/* Zerodha Kite */}
                   <button
-                    onClick={() => setSelectedTheme('system')}
-                    className={`p-2 rounded-xl border flex flex-col items-center gap-1.5 transition-all ${
-                      selectedTheme === 'system'
-                        ? 'border-blue-500 bg-blue-500/10 text-white'
-                        : 'border-[#1e293b] bg-[#0e1626] text-slate-400'
+                    type="button"
+                    onClick={() => {
+                      setSelectedTheme('kite');
+                      setTheme('kite');
+                      showToast?.('Switched to Zerodha Kite Platform theme', 'success');
+                    }}
+                    className={`p-2.5 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer relative ${
+                      selectedTheme === 'kite'
+                        ? 'border-[#ff5722] bg-[#ff5722]/10 text-white shadow-sm shadow-[#ff5722]/20 ring-1 ring-[#ff5722]'
+                        : 'border-[#1e293b] bg-[#0e1626] text-slate-400 hover:text-slate-200 hover:border-slate-700'
                     }`}
                   >
-                    <div className="w-full h-8 rounded bg-gradient-to-r from-slate-200 to-[#0b111e] border border-[#1e293b]"></div>
+                    <div className="w-full h-8 rounded bg-[#191919] border border-[#ff5722]/60 flex flex-col justify-between p-1 overflow-hidden shadow-inner">
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-[8px] font-extrabold text-[#ff5722] leading-none">KITE</span>
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#4caf50]"></div>
+                      </div>
+                      <div className="w-8 h-1 bg-[#ff5722] rounded-full mx-auto"></div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#ff5722]"></span>
+                      <span className="text-[10px] font-semibold text-white">Zerodha Kite</span>
+                    </div>
+                  </button>
+
+                  {/* System */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedTheme('system');
+                      setTheme('system');
+                      showToast?.('Switched to System theme preference', 'info');
+                    }}
+                    className={`p-2.5 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                      selectedTheme === 'system'
+                        ? 'border-blue-500 bg-blue-500/10 text-white shadow-sm ring-1 ring-blue-500'
+                        : 'border-[#1e293b] bg-[#0e1626] text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    <div className="w-full h-8 rounded bg-gradient-to-r from-slate-200 to-[#191919] border border-[#1e293b]"></div>
                     <span className="text-[10px] font-semibold">System</span>
                   </button>
                 </div>
@@ -2255,10 +2300,14 @@ export default function Settings() {
                 setActiveTab(tab.id);
                 setSearchQuery('');
               }}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl transition-all cursor-pointer ${
                 isActive
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white light:hover:text-slate-900 hover:bg-[#121b2d]/50'
+                  ? isKite
+                    ? 'text-[#ff5722] font-semibold bg-transparent border-b-2 border-[#ff5722] rounded-none shadow-none'
+                    : 'bg-blue-600 text-white shadow-sm'
+                  : isKite
+                    ? 'text-[#9b9b9b] hover:text-white bg-transparent'
+                    : 'text-slate-400 hover:text-white light:hover:text-slate-900 hover:bg-[#121b2d]/50'
               }`}
             >
               <Icon className="w-3.5 h-3.5" />

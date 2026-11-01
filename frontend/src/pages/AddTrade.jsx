@@ -22,11 +22,13 @@ import { useLotSizes } from '../context/LotSizeContext';
 import { useToast } from '../context/ToastContext';
 import { useBrokerage } from '../context/BrokerageContext';
 import { useDropdown } from '../context/DropdownContext';
+import { useTheme } from '../context/ThemeContext';
 import BulkImportModal from '../components/trades/BulkImportModal';
 
 export default function AddTrade() {
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const { isKite } = useTheme();
   const { calculateCharges } = useBrokerage();
   const { getActiveOptions } = useDropdown();
 
@@ -605,10 +607,14 @@ export default function AddTrade() {
         <button
           type="button"
           onClick={() => scrollToSection('trade_details')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer ${
             activeTab === 'trade_details'
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-              : 'text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#18233a] light:hover:bg-slate-200/60'
+              ? isKite
+                ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                : 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-semibold'
+              : isKite
+                ? 'text-[#9b9b9b] hover:text-white bg-transparent font-medium'
+                : 'text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#18233a] light:hover:bg-slate-200/60 font-medium'
           }`}
         >
           <FileText className="w-3.5 h-3.5" />
@@ -618,10 +624,14 @@ export default function AddTrade() {
         <button
           type="button"
           onClick={() => scrollToSection('pnl_charges')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer ${
             activeTab === 'pnl_charges'
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-              : 'text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#18233a] light:hover:bg-slate-200/60'
+              ? isKite
+                ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                : 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-semibold'
+              : isKite
+                ? 'text-[#9b9b9b] hover:text-white bg-transparent font-medium'
+                : 'text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#18233a] light:hover:bg-slate-200/60 font-medium'
           }`}
         >
           <Receipt className="w-3.5 h-3.5" />
@@ -631,10 +641,14 @@ export default function AddTrade() {
         <button
           type="button"
           onClick={() => scrollToSection('strategy_journal')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer ${
             activeTab === 'strategy_journal'
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-              : 'text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#18233a] light:hover:bg-slate-200/60'
+              ? isKite
+                ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                : 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-semibold'
+              : isKite
+                ? 'text-[#9b9b9b] hover:text-white bg-transparent font-medium'
+                : 'text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#18233a] light:hover:bg-slate-200/60 font-medium'
           }`}
         >
           <BookOpen className="w-3.5 h-3.5" />
@@ -644,10 +658,14 @@ export default function AddTrade() {
         <button
           type="button"
           onClick={() => scrollToSection('preview')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer ${
             activeTab === 'preview'
-              ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-              : 'text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#18233a] light:hover:bg-slate-200/60'
+              ? isKite
+                ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                : 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-semibold'
+              : isKite
+                ? 'text-[#9b9b9b] hover:text-white bg-transparent font-medium'
+                : 'text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#18233a] light:hover:bg-slate-200/60 font-medium'
           }`}
         >
           <Eye className="w-3.5 h-3.5" />
@@ -657,10 +675,14 @@ export default function AddTrade() {
         <button
           type="button"
           onClick={() => setShowBulkImportModal(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all text-blue-400 hover:text-blue-300 hover:bg-blue-600/10 border border-blue-500/30 bg-blue-500/5 shadow-sm"
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            isKite
+              ? 'text-[#ff5722] border border-[#ff5722]/30 bg-[#ff5722]/5 hover:bg-[#ff5722]/10'
+              : 'text-blue-400 hover:text-blue-300 hover:bg-blue-600/10 border border-blue-500/30 bg-blue-500/5 shadow-sm'
+          }`}
           title="Import trades in bulk from Zerodha, Kotak Neo, or Custom Excel"
         >
-          <Upload className="w-3.5 h-3.5 text-blue-400" />
+          <Upload className={`w-3.5 h-3.5 ${isKite ? 'text-[#ff5722]' : 'text-blue-400'}`} />
           <span>Bulk Import</span>
         </button>
       </div>

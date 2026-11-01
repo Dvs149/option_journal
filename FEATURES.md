@@ -21,7 +21,7 @@
 | **Pine Script Manager & Webhook Alert**| Production Ready | `pages/PineScriptManager.jsx` | `PineScriptController.php`, `PineScript.php` |
 | **Brokerage & Tax Schedule Editor** | Production Ready | `pages/Settings.jsx` | `BrokerageSettingController.php`, `BrokerageSetting.php` |
 | **Dynamic Module Visibility** | Production Ready | `pages/Settings.jsx`, `components/layout/Sidebar.jsx` | `ModuleVisibilityController.php`, `UserModuleVisibility.php` |
-| **Dark / Light Theme Switcher** | Production Ready | `context/ThemeContext.jsx`, `Navbar.jsx` | Native CSS Tokens (`index.css`) |
+| **Zerodha Kite & Multi-Theme System** | Production Ready | `context/ThemeContext.jsx`, `pages/Settings.jsx`, `index.css` | Native Theme Tokens (`index.css`), LocalStorage |
 
 ---
 
@@ -104,3 +104,13 @@
 - Update profile name, unique username, and email.
 - Change password with confirmation.
 - 1-click database reset and sample data seeder.
+
+### 2.9 Zerodha Kite Platform Theme (`Settings -> Appearance`)
+- Replicates the terminal aesthetic of the official Zerodha Kite trading platform:
+  - **Base Canvas**: Authentic dark neutral charcoal (`#191919`).
+  - **Elevated Surfaces**: Deep charcoal cards (`#1e1e1e`), sidebar/headers (`#141414`), and sub-surfaces (`#252525`).
+  - **Kite Brand Accents**: Iconic Zerodha Orange (`#ff5722`) for active navigation, active tabs, and badges.
+  - **Kite Action Buttons**: High-contrast Kite Blue (`#387ed1`) for primary CTA buttons ("Apply", "Save", "Submit").
+  - **P&L Metrics**: Crisp NSE/BSE Green (`#4caf50`) for profits and Red (`#df514c`) for losses.
+- Selectable in **Settings → Appearance** with dedicated live preview thumbnail cards for **Light**, **Dark (Midnight)**, **Zerodha Kite**, and **System**.
+- Theme persistence via `localStorage` (`tj_theme`) and responsive mobile drawer integration.

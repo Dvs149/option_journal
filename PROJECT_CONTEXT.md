@@ -76,7 +76,7 @@ The system addresses the core needs of active option traders:
    - Module visibility manager (toggle visibility of any navigation link).
    - Dropdown options manager (activate/deactivate or add custom indices, strategies, order types).
    - Dynamic lot sizes per index.
-   - Dark mode & Light mode theme persistence.
+   - Multi-theme engine (Zerodha Kite platform theme, Midnight Dark, Light, and System preference) persisted in LocalStorage.
 
 ---
 

@@ -40,11 +40,13 @@ import { formatINR, formatCompactINR, formatDate } from '../utils/formatters';
 import { useLotSizes } from '../context/LotSizeContext';
 import { useFilter } from '../context/FilterContext';
 import { useToast } from '../context/ToastContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function CapitalManagement() {
   const navigate = useNavigate();
   const { dateRangeDisplay } = useFilter();
   const { showToast } = useToast();
+  const { isKite } = useTheme();
 
   // Timeframe
   const [timeRange, setTimeRange] = useState('1Y');
@@ -385,10 +387,14 @@ export default function CapitalManagement() {
                 key={r}
                 type="button"
                 onClick={() => setTimeRange(r)}
-                className={`px-2.5 py-1 rounded-lg font-semibold transition-all ${
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all cursor-pointer ${
                   timeRange === r
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white light:hover:text-slate-900'
+                    ? isKite
+                      ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                      : 'bg-blue-600 text-white shadow-sm'
+                    : isKite
+                      ? 'text-[#9b9b9b] hover:text-white'
+                      : 'text-slate-400 hover:text-white light:hover:text-slate-900'
                 }`}
               >
                 {r}
@@ -808,9 +814,16 @@ export default function CapitalManagement() {
                 {['All', 'Deposits', 'Withdrawals'].map((t) => (
                   <button
                     key={t}
+                    type="button"
                     onClick={() => setTxTab(t.toLowerCase())}
-                    className={`px-2 py-0.5 rounded font-semibold ${
-                      txTab === t.toLowerCase() ? 'bg-blue-600 text-white' : 'text-slate-400'
+                    className={`px-2 py-0.5 rounded font-semibold transition-all cursor-pointer ${
+                      txTab === t.toLowerCase()
+                        ? isKite
+                          ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                          : 'bg-blue-600 text-white'
+                        : isKite
+                          ? 'text-[#9b9b9b] hover:text-white'
+                          : 'text-slate-400'
                     }`}
                   >
                     {t}

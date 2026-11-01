@@ -15,8 +15,11 @@
   - Always use modern functional components with React Hooks (`useState`, `useEffect`, `useMemo`, `useCallback`, `useRef`).
   - Keep state localized to the smallest necessary scope.
 - **Theme & Styling**:
-  - The UI uses Tailwind CSS v4 tokens with a default dark theme (`#0b0f19` background, `#121b2d` card surfaces, `#1e293b` borders).
-  - Always support Light Mode using `light:` modifiers (e.g. `bg-[#121b2d] light:bg-white border-[#1e293b] light:border-slate-200 text-white light:text-slate-900`).
+  - The UI supports three primary themes:
+    - **Dark (Default / Midnight)**: Navy blue `#0b0f19` canvas, `#121b2d` card surfaces, `#1e293b` borders.
+    - **Zerodha Kite**: Pitch charcoal `#191919` canvas, `#1e1e1e` card surfaces, `#141414` sidebar/header, `#292929` hairline borders, `#ff5722` Kite orange active indicators, `#387ed1` CTA buttons.
+    - **Light Mode**: Clean white `#ffffff` surfaces, `#f8fafc` canvas, `#e2e8f0` borders using `light:` modifiers.
+  - Controlled by `ThemeContext.jsx` via CSS class `.theme-kite` and `.light` on `document.documentElement`.
   - Reuse established typography and color schemes:
     - **Profits / Bullish**: `text-emerald-400`, `bg-emerald-500/10`, `border-emerald-500/20`.
     - **Losses / Bearish**: `text-rose-400`, `bg-rose-500/10`, `border-rose-500/20`.

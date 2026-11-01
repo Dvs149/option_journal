@@ -28,7 +28,7 @@ import { useModules } from '../../context/ModuleContext';
 
 export default function Sidebar({ onCloseMobile }) {
   const { user, logout } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
+  const { theme, isDark, toggleTheme, isKite } = useTheme();
   const { isModuleVisible } = useModules();
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -81,12 +81,21 @@ export default function Sidebar({ onCloseMobile }) {
             <NavLink
               key={item.path}
               to={item.path}
+              end={item.path === '/'}
               onClick={() => onCloseMobile && onCloseMobile()}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+                `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-all duration-150 ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/25 font-semibold'
-                    : 'text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#162033] light:hover:bg-slate-100'
+                    ? `active ${
+                        isKite
+                          ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                          : 'bg-blue-600 text-white shadow-md shadow-blue-600/25 font-semibold'
+                      }`
+                    : `${
+                        isKite
+                          ? 'text-[#9b9b9b] hover:text-white hover:bg-[#202020] font-medium'
+                          : 'text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#162033] light:hover:bg-slate-100 font-medium'
+                      }`
                 }`
               }
             >
@@ -104,19 +113,25 @@ export default function Sidebar({ onCloseMobile }) {
           onClick={toggleTheme}
           type="button"
           className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#162033] light:hover:bg-slate-200/70 transition-colors"
-          title={`Dark Mode is currently ${isDark ? 'ON' : 'OFF'}. Click to toggle.`}
+          title={`Current Theme: ${theme === 'kite' ? 'Zerodha Kite' : isDark ? 'Dark (Midnight)' : 'Light'}. Click to toggle.`}
         >
           <div className="flex items-center gap-2.5">
-            {isDark ? (
+            {isKite ? (
+              <div className="w-4 h-4 rounded-full bg-[#ff5722] text-white flex items-center justify-center text-[9px] font-black">
+                K
+              </div>
+            ) : isDark ? (
               <Moon className="w-4 h-4 text-blue-400" />
             ) : (
               <Sun className="w-4 h-4 text-amber-500" />
             )}
-            <span className="font-semibold text-slate-200 light:text-slate-800">Dark Mode</span>
+            <span className="font-semibold text-slate-200 light:text-slate-800">
+              {isKite ? 'Zerodha Kite' : isDark ? 'Dark Mode' : 'Light Mode'}
+            </span>
           </div>
           <div
             className={`w-9 h-5 rounded-full p-0.5 transition-colors duration-200 ease-in-out flex items-center ${
-              isDark ? 'bg-blue-600 justify-end' : 'bg-slate-600 justify-start'
+              isKite ? 'bg-[#ff5722] justify-end' : isDark ? 'bg-blue-600 justify-end' : 'bg-slate-600 justify-start'
             }`}
           >
             <div className="w-4 h-4 bg-white rounded-full shadow-md transform transition-transform" />

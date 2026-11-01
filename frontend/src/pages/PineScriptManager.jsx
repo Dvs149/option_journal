@@ -34,9 +34,11 @@ import {
 } from 'lucide-react';
 import api from '../api/client';
 import { useToast } from '../context/ToastContext';
+import { useTheme } from '../context/ThemeContext';
 
 export default function PineScriptManager() {
   const { showToast } = useToast();
+  const { isKite } = useTheme();
 
   const [scripts, setScripts] = useState([]);
   const [stats, setStats] = useState({
@@ -646,8 +648,12 @@ plot(fastMA - slowMA, "Signal Momentum", color=fastMA > slowMA ? color.green : c
                 onClick={() => setSelectedType(t.id)}
                 className={`px-3 py-2 rounded-xl font-semibold transition-all whitespace-nowrap cursor-pointer ${
                   selectedType === t.id
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'bg-[#0e1626] light:bg-slate-100 text-slate-400 hover:text-white light:hover:text-slate-900 border border-[#1e293b] light:border-slate-200'
+                    ? isKite
+                      ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent border border-[#ff5722]/30'
+                      : 'bg-blue-600 text-white shadow-sm'
+                    : isKite
+                      ? 'bg-[#1e1e1e] text-[#9b9b9b] hover:text-white border border-[#292929]'
+                      : 'bg-[#0e1626] light:bg-slate-100 text-slate-400 hover:text-white light:hover:text-slate-900 border border-[#1e293b] light:border-slate-200'
                 }`}
               >
                 {t.label}
@@ -977,8 +983,12 @@ plot(fastMA - slowMA, "Signal Momentum", color=fastMA > slowMA ? color.green : c
                     onClick={() => setViewerTab('code')}
                     className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
                       viewerTab === 'code'
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-white light:hover:text-slate-900'
+                        ? isKite
+                          ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                          : 'bg-blue-600 text-white shadow-sm'
+                        : isKite
+                          ? 'text-[#9b9b9b] hover:text-white'
+                          : 'text-slate-400 hover:text-white light:hover:text-slate-900'
                     }`}
                   >
                     Pine Script Code ({codeLines.length} lines)
@@ -988,8 +998,12 @@ plot(fastMA - slowMA, "Signal Momentum", color=fastMA > slowMA ? color.green : c
                     onClick={() => setViewerTab('notes')}
                     className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
                       viewerTab === 'notes'
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-white light:hover:text-slate-900'
+                        ? isKite
+                          ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                          : 'bg-blue-600 text-white shadow-sm'
+                        : isKite
+                          ? 'text-[#9b9b9b] hover:text-white'
+                          : 'text-slate-400 hover:text-white light:hover:text-slate-900'
                     }`}
                   >
                     Setup & Logic Notes
@@ -999,8 +1013,12 @@ plot(fastMA - slowMA, "Signal Momentum", color=fastMA > slowMA ? color.green : c
                     onClick={() => setViewerTab('webhook')}
                     className={`px-3 py-1.5 rounded-lg font-semibold transition-all cursor-pointer ${
                       viewerTab === 'webhook'
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'text-slate-400 hover:text-white light:hover:text-slate-900'
+                        ? isKite
+                          ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                          : 'bg-blue-600 text-white shadow-sm'
+                        : isKite
+                          ? 'text-[#9b9b9b] hover:text-white'
+                          : 'text-slate-400 hover:text-white light:hover:text-slate-900'
                     }`}
                   >
                     Webhook Alert Setup

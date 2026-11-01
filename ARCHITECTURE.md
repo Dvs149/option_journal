@@ -50,7 +50,7 @@ graph TD
 The application relies on lightweight, modular React Contexts rather than an external state library:
 
 1. **`AuthContext.jsx`**: Handles user authentication, token storage in `localStorage`, user session caching, dual username/email login, and registration.
-2. **`ThemeContext.jsx`**: Manages Dark Mode (`dark`) and Light Mode (`light`) toggle with `localStorage` persistence.
+2. **`ThemeContext.jsx`**: Multi-theme state engine supporting **Zerodha Kite Platform Theme** (`theme-kite`), **Midnight Dark** (`dark`), **Light Mode** (`light`), and **System** preference with `localStorage` persistence and automatic OS preference sync.
 3. **`FilterContext.jsx`**: Global date range filter state (e.g. *Today, Yesterday, This Week, This Month, Last Month, This Year, Custom Date Range*).
 4. **`LotSizeContext.jsx`**: Dynamic per-index lot sizes (NIFTY: 75/50, BANKNIFTY: 30/15, SENSEX: 10, etc.) synced with database and localStorage fallback.
 5. **`BrokerageContext.jsx`**: Dynamic brokerage and statutory tax rates schedule (brokerage per order, STT %, exchange %, GST %, SEBI fees, stamp duty).

@@ -11,6 +11,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.11.2] - 2026-11-01
+
+### Fixed & Refined
+- **Zerodha Kite Tab & Segmented Pill Typography**:
+  - Converted active tab states in all tab bars and segmented pill containers across the application to render with authentic Zerodha Kite orange typography (`#ff5722`), transparent background, and zero background hover fill.
+  - Inactive tabs now display muted gray text (`#9b9b9b`) highlighting cleanly to crisp white (`#ffffff`) on hover.
+  - Updated key views and modals:
+    - **Add Trade** (`AddTrade.jsx`): Top navigation tab bar (`Trade Details`, `P&L & Charges`, `Strategy & Journal`, `Preview`).
+    - **All Trades** (`AllTrades.jsx`): Side drawer tabs (`Details`, `Charges`, `Journal`) and inline edit modal tabs.
+    - **Trading Journal** (`TradingJournal.jsx`): Side drawer tabs (`Trade Details`, `Journal Notes`, `Screenshots`, `Lessons`).
+    - **Capital Management** (`CapitalManagement.jsx`): Transaction history tabs (`All`, `Deposits`, `Withdrawals`) and timeframe pills (`1M`, `3M`, `6M`, `YTD`, `1Y`, `All`).
+    - **Pine Script Manager** (`PineScriptManager.jsx`): Code inspector tabs (`Pine Script Code`, `Setup & Logic Notes`, `Webhook Alert Setup`) and script category filter pills.
+    - **Edit Trade Modal** (`EditTradeModal.jsx`): Modal section tabs (`Trade Details`, `P&L & Charges`, `Journal`, `Screenshots`).
+  - Added global scoped CSS rules in `index.css` for `.theme-kite` segmented pill containers (`grid-cols-`, `p-1`, `p-0.5`, `p-1.5`, `no-scrollbar`, `overflow-x-auto`) ensuring all segmented pill tabs inherit Kite orange active typography without solid pill backgrounds.
+
+### Fixed & Refined
+- **Zerodha Kite Active Module Typography**:
+  - Removed solid filled block backgrounds on active sidebar navigation modules in Kite theme.
+  - Styled active modules with authentic Zerodha Kite orange fonts (`text-[#ff5722]`) and matching orange icons with transparent background, exactly matching Kite's clean header and navigation layout.
+  - Eliminated hover background effects on the active navigation module so it remains purely transparent with orange typography on hover.
+  - Added explicit `.active` class propagation and `end` matching on root paths so active route detection triggers reliably across all views.
+  - Refined hover states for inactive modules with subtle `#222222` contrast and white text.
+  - Styled active module tabs in `Settings.jsx` and `MobileNav.jsx` with Kite orange font indicators.
+
+---
+
+## [1.11.0] - 2026-11-01
+
+### Added
+- **Zerodha Kite Platform Theme Integration**:
+  - Replicated the official Zerodha Kite Dark terminal experience based on user-provided reference screenshots.
+  - Added **Zerodha Kite** as a 4th selectable theme option in **Settings → Appearance** (`Settings.jsx`) alongside *Light*, *Dark (Midnight)*, and *System* with a dedicated preview thumbnail featuring Kite orange branding and live status dot.
+  - Implemented comprehensive `.theme-kite` design tokens in `index.css`:
+    - Authentic neutral dark charcoal canvas (`#191919`).
+    - Elevated flat card surfaces (`#1e1e1e`), sidebar/headers (`#141414`), and sub-surfaces (`#252525`).
+    - Fine hairline dividers (`#292929` / `#2e2e2e`).
+    - Iconic Zerodha Orange (`#ff5722`) for active sidebar navigation, active tabs, and badges.
+    - High-contrast Kite Blue (`#387ed1`) for primary CTA buttons ("Apply", "Save", "Submit").
+    - Crisp NSE/BSE Green (`#4caf50`) for profits and Red (`#df514c`) for losses.
+    - Form controls, dropdowns, inputs, and custom scrollbars tuned for dark terminal contrast.
+  - Upgraded `ThemeContext.jsx` to natively manage `'kite'` theme mode, persist to `localStorage` (`tj_theme`), synchronize OS system preferences, and expose `isKite` state.
+  - Updated `Sidebar.jsx` and `MobileNav.jsx` with real-time theme indicators and dynamic toggle support.
+  - Synchronized documentation in `FEATURES.md`, `DEVELOPMENT_RULES.md`, `PROJECT_CONTEXT.md`, and `ARCHITECTURE.md`.
+
+---
+
 ## [1.10.0] - 2026-11-01
 
 ### Added

@@ -40,6 +40,7 @@ import api from '../api/client';
 import { formatINR, formatDate } from '../utils/formatters';
 import { useFilter } from '../context/FilterContext';
 import { useToast } from '../context/ToastContext';
+import { useTheme } from '../context/ThemeContext';
 import EditTradeModal from '../components/trades/EditTradeModal';
 
 const resolveScreenshot = (tradeOrUrl) => {
@@ -146,6 +147,7 @@ export default function TradingJournal() {
   const navigate = useNavigate();
   const { dateRangeDisplay } = useFilter();
   const { showToast } = useToast();
+  const { isKite } = useTheme();
 
   // Search & Filters
   const [search, setSearch] = useState('');
@@ -807,10 +809,14 @@ export default function TradingJournal() {
                   key={tab.id}
                   type="button"
                   onClick={() => setDrawerTab(tab.id)}
-                  className={`py-1.5 rounded-lg font-semibold transition-all text-[11px] whitespace-nowrap text-center ${
+                  className={`py-1.5 rounded-lg font-semibold transition-all text-[11px] whitespace-nowrap text-center cursor-pointer ${
                     drawerTab === tab.id
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'text-slate-400 hover:text-white'
+                      ? isKite
+                        ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                        : 'bg-blue-600 text-white shadow-sm'
+                      : isKite
+                        ? 'text-[#9b9b9b] hover:text-white'
+                        : 'text-slate-400 hover:text-white'
                   }`}
                 >
                   {tab.label}

@@ -26,7 +26,7 @@ import { useModules } from '../../context/ModuleContext';
 export default function MobileNav() {
   const [showMoreDrawer, setShowMoreDrawer] = useState(false);
   const { user, logout } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark, toggleTheme, isKite } = useTheme();
   const { isModuleVisible } = useModules();
   const navigate = useNavigate();
 
@@ -58,10 +58,11 @@ export default function MobileNav() {
             <NavLink
               key={item.path}
               to={item.path}
+              end={item.path === '/'}
               className={({ isActive }) =>
                 `flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-[10px] font-medium transition-all ${
                   isActive
-                    ? 'text-blue-500 font-semibold'
+                    ? `active ${isKite ? 'text-[#ff5722] font-semibold' : 'text-blue-500 font-semibold'}`
                     : 'text-slate-400 light:text-slate-500 hover:text-white light:hover:text-slate-900'
                 }`
               }
@@ -129,12 +130,20 @@ export default function MobileNav() {
                 onClick={toggleTheme}
                 className="flex items-center gap-2 text-xs text-slate-300 light:text-slate-700 py-2 px-3 rounded-xl bg-[#131c2e] light:bg-slate-200"
               >
-                {isDark ? <Moon className="w-4 h-4 text-blue-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
-                <span className="font-semibold">Dark Mode:</span>
+                {isKite ? (
+                  <div className="w-4 h-4 rounded-full bg-[#ff5722] text-white flex items-center justify-center text-[9px] font-black">
+                    K
+                  </div>
+                ) : isDark ? (
+                  <Moon className="w-4 h-4 text-blue-400" />
+                ) : (
+                  <Sun className="w-4 h-4 text-amber-500" />
+                )}
+                <span className="font-semibold">{isKite ? 'Kite Theme' : 'Theme:'}</span>
                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                  isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-300 text-slate-700'
+                  isKite ? 'bg-[#ff5722]/20 text-[#ff5722]' : isDark ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-300 text-slate-700'
                 }`}>
-                  {isDark ? 'ON' : 'OFF'}
+                  {isKite ? 'KITE' : isDark ? 'DARK' : 'LIGHT'}
                 </span>
               </button>
 
