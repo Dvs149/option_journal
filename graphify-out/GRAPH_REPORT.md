@@ -1,16 +1,16 @@
 # Graph Report - option_journal  (2026-11-01)
 
 ## Corpus Check
-- 139 files · ~129,021 words
+- 139 files · ~129,905 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 785 nodes · 1025 edges · 97 communities (68 shown, 29 thin omitted)
+- 795 nodes · 1038 edges · 97 communities (68 shown, 29 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 41 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `913484ec`
+- Built from commit: `fadb8b49`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -79,13 +79,13 @@
 ## God Nodes (most connected - your core abstractions)
 1. `useToast()` - 26 edges
 2. `formatINR()` - 23 edges
-3. `useFilter()` - 20 edges
-4. `useAuth()` - 19 edges
-5. `MASTER AI DEVELOPMENT RULES & PROJECT GUIDELINES` - 19 edges
+3. `MASTER AI DEVELOPMENT RULES & PROJECT GUIDELINES` - 20 edges
+4. `useFilter()` - 20 edges
+5. `useAuth()` - 19 edges
 6. `TradeController` - 18 edges
-7. `useDropdown()` - 13 edges
-8. `TradingAnalyticsService` - 13 edges
-9. `CHANGELOG — TradeJournal` - 13 edges
+7. `CHANGELOG — TradeJournal` - 14 edges
+8. `useDropdown()` - 13 edges
+9. `TradingAnalyticsService` - 13 edges
 10. `useLotSizes()` - 12 edges
 
 ## Surprising Connections (you probably didn't know these)
@@ -104,11 +104,11 @@
 
 ### Community 0 - "Community 0"
 Cohesion: 0.08
-Nodes (46): api, token, CompactMetricCard(), MainStatsCard(), useBrokerage(), useDropdown(), FilterContext, FilterProvider() (+38 more)
+Nodes (51): api, token, CompactMetricCard(), MainStatsCard(), BrokerageContext, DEFAULT_BROKERAGE_RATES, useBrokerage(), DropdownContext (+43 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.09
-Nodes (28): ErrorBoundary, AuthContext, AuthProvider(), useAuth(), BrokerageContext, BrokerageProvider(), DEFAULT_BROKERAGE_RATES, DropdownContext (+20 more)
+Cohesion: 0.10
+Nodes (23): ErrorBoundary, AuthContext, AuthProvider(), useAuth(), BrokerageProvider(), DropdownProvider(), LotSizeProvider(), APP_MODULES (+15 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.05
@@ -124,7 +124,7 @@ Nodes (5): AuthController, ExportController, StrategyController, TradingStrategy
 
 ### Community 5 - "Community 5"
 Cohesion: 0.07
-Nodes (27): 10. ERROR HANDLING AND DEBUGGING, 11. AI DEVELOPMENT BEST PRACTICES, 12. AUTOMATED TESTING AND QUALITY CONTROL, 13. CHANGE MANAGEMENT, 14. FINAL IMPLEMENTATION REPORT, 15. FINAL PRIORITIES, 16. INITIAL PROJECT DOCUMENTATION SETUP, 17. AUTOMATIC DOCUMENTATION MAINTENANCE (+19 more)
+Nodes (29): 10. ERROR HANDLING AND DEBUGGING, 11. AI DEVELOPMENT BEST PRACTICES, 12. AUTOMATED TESTING AND QUALITY CONTROL, 13. CHANGE MANAGEMENT, 14. FINAL IMPLEMENTATION REPORT, 15. FINAL PRIORITIES, 16. INITIAL PROJECT DOCUMENTATION SETUP, 17. AUTOMATIC DOCUMENTATION MAINTENANCE (+21 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.11
@@ -140,7 +140,7 @@ Nodes (3): CapitalController, CapitalTransaction, TradingAnalyticsService
 
 ### Community 9 - "Community 9"
 Cohesion: 0.08
-Nodes (24): [1.0.0] - 2026-10-30, [1.1.0] - 2026-10-30, [1.2.0] - 2026-10-30, [1.3.0] - 2026-10-30, [1.4.0] - 2026-10-30, [1.5.0] - 2026-10-31, [1.6.0] - 2026-10-31, [1.7.0] - 2026-10-31 (+16 more)
+Nodes (26): [1.0.0] - 2026-10-30, [1.10.0] - 2026-11-01, [1.1.0] - 2026-10-30, [1.2.0] - 2026-10-30, [1.3.0] - 2026-10-30, [1.4.0] - 2026-10-30, [1.5.0] - 2026-10-31, [1.6.0] - 2026-10-31 (+18 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.09
@@ -159,8 +159,8 @@ Cohesion: 0.13
 Nodes (14): devDependencies, concurrently, laravel-vite-plugin, tailwindcss, @tailwindcss/vite, vite, optionalDependencies, @laravel/multiplex (+6 more)
 
 ### Community 16 - "Community 16"
-Cohesion: 0.14
-Nodes (13): 1. Architectural Overview, 2.1 State Management via React Context, 2.2 Component Hierarchy & Layout, 2.3 Shared & Reusable Components, 2. Frontend Architecture (React 19 + Vite), 3.1 Route & Middleware Structure, 3.2 Service Layer Pattern, 3.3 Controller Inventory (+5 more)
+Cohesion: 0.12
+Nodes (16): 1. Architectural Overview, 2.1 State Management via React Context, 2.2 Component Hierarchy & Layout, 2.3 Shared & Reusable Components, 2. Frontend Architecture (React 19 + Vite), 3.1 Route & Middleware Structure, 3.2 Service Layer Pattern, 3.3 Controller Inventory (+8 more)
 
 ### Community 17 - "Community 17"
 Cohesion: 0.17
@@ -187,8 +187,8 @@ Cohesion: 0.22
 Nodes (8): About Laravel, Agentic Development, Code of Conduct, code:bash (composer require laravel/boost --dev), Contributing, Learning Laravel, License, Security Vulnerabilities
 
 ### Community 26 - "Community 26"
-Cohesion: 0.22
-Nodes (8): 1. Core Guiding Principles, 2. Frontend Development Standards (React 19 + Tailwind v4), 3. Backend Development Standards (Laravel 12 / PHP 8.3+), 4. Database Safety Rules, 5. Security Checklist, 6. Change Management & Risk Assessment, 7. Automatic Documentation Maintenance, DEVELOPMENT RULES & CODING STANDARDS — TradeJournal
+Cohesion: 0.18
+Nodes (10): 1. Core Guiding Principles, 2. Frontend Development Standards (React 19 + Tailwind v4), 3. Backend Development Standards (Laravel 12 / PHP 8.3+), 4. Database Safety Rules, 5. Security Checklist, 6. Change Management & Risk Assessment, 7. Automatic Documentation Maintenance, 8. Codebase Dependency Analysis with Graphify (+2 more)
 
 ### Community 27 - "Community 27"
 Cohesion: 0.22
@@ -199,8 +199,8 @@ Cohesion: 0.25
 Nodes (8): require-dev, fakerphp/faker, laravel/pail, laravel/pao, laravel/pint, mockery/mockery, nunomaduro/collision, phpunit/phpunit
 
 ### Community 29 - "Community 29"
-Cohesion: 0.25
-Nodes (7): 1. Executive Summary, 2. Target Audience & Market Domain, 3. Technology Stack & Operational Environment, 4. Key Functional Subsystems, 5. System Constraints & Assumptions, Default Ports & Development Servers, PROJECT CONTEXT — TradeJournal
+Cohesion: 0.22
+Nodes (8): 1. Executive Summary, 2. Target Audience & Market Domain, 3. Technology Stack & Operational Environment, 4. Key Functional Subsystems, 5. System Constraints & Assumptions, 6. Developer Tooling & Codebase Knowledge Graph (Graphify), Default Ports & Development Servers, PROJECT CONTEXT — TradeJournal
 
 ### Community 30 - "Community 30"
 Cohesion: 0.29
@@ -227,7 +227,7 @@ Cohesion: 0.67
 Nodes (3): autoload-dev, psr-4, Tests\\
 
 ## Knowledge Gaps
-- **257 isolated node(s):** `name`, `private`, `version`, `type`, `dev` (+252 more)
+- **260 isolated node(s):** `graphify`, `Workflow: graphify`, `ROLE AND RESPONSIBILITY`, `1. PROJECT UNDERSTANDING`, `2. PRESERVE EXISTING FUNCTIONALITY` (+255 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **29 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -235,13 +235,13 @@ Nodes (3): autoload-dev, psr-4, Tests\\
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `App()` connect `Community 6` to `Community 1`?**
-  _High betweenness centrality (0.052) - this node is a cross-community bridge._
-- **What connects `name`, `private`, `version` to the rest of the system?**
-  _257 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _High betweenness centrality (0.051) - this node is a cross-community bridge._
+- **What connects `graphify`, `Workflow: graphify`, `ROLE AND RESPONSIBILITY` to the rest of the system?**
+  _260 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.08370221327967807 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07689873417721518 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.08687943262411348 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09851551956815115 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.047619047619047616 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
