@@ -1,4 +1,18 @@
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.TemporaryItems
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Xcode
+**/DerivedData/
+**/xcuserdata/
+*.xcuserstate
 
 # Local environment and credentials
 .env
@@ -15,5 +29,5 @@ backend/public/build/
 backend/database/*.sqlite
 backend/database/*.sqlite-*
 backend/storage/logs/*.log
-graphify-out
+graphify-out/
 graphify-out/.graphify_root
