@@ -79,7 +79,7 @@ export default function AddTrade() {
     gst: '18.00',
     sebi_charges: '2.00',
     stamp_duty: '3.00',
-    other_charges: '75.00',
+    other_charges: '',
     // Strategy & Journal
     entry_reason: 'Breakout above resistance',
     exit_reason: 'Booked profit at target',
@@ -1168,12 +1168,37 @@ export default function AddTrade() {
               {/* Row 2: Charges breakdown 4-column */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
                 <div>
-                  <label className="block text-slate-400 mb-1">Brokerage</label>
+                  <label className="block text-slate-400 mb-1">SEBI turnover fee</label>
                   <input
                     type="number"
                     step="0.01"
-                    name="brokerage"
-                    value={form.brokerage}
+                    name="sebi_charges"
+                    value={form.sebi_charges}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1">Exchange Charges</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="exchange_charges"
+                    value={form.exchange_charges}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                
+
+                <div>
+                  <label className="block text-slate-400 mb-1">Stamp Duty</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="stamp_duty"
+                    value={form.stamp_duty}
                     onChange={handleChange}
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500"
                   />
@@ -1191,18 +1216,10 @@ export default function AddTrade() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-slate-400 mb-1">Exchange Charges</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="exchange_charges"
-                    value={form.exchange_charges}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500"
-                  />
-                </div>
+              </div>
 
+              {/* Row 3: Charges breakdown 3-column */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
                   <label className="block text-slate-400 mb-1">GST</label>
                   <input
@@ -1214,35 +1231,22 @@ export default function AddTrade() {
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500"
                   />
                 </div>
-              </div>
+                
 
-              {/* Row 3: Charges breakdown 3-column */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                
                 <div>
-                  <label className="block text-slate-400 mb-1">SEBI Charges</label>
+                  <label className="block text-slate-400 mb-1">Brokerage</label>
                   <input
                     type="number"
                     step="0.01"
-                    name="sebi_charges"
-                    value={form.sebi_charges}
+                    name="brokerage"
+                    value={form.brokerage}
                     onChange={handleChange}
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-slate-400 mb-1">Stamp Duty</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    name="stamp_duty"
-                    value={form.stamp_duty}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
+                {/* <div>
                   <label className="block text-slate-400 mb-1">Other Charges</label>
                   <input
                     type="number"
@@ -1252,7 +1256,7 @@ export default function AddTrade() {
                     onChange={handleChange}
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500"
                   />
-                </div>
+                </div> */}
               </div>
 
               {/* Net P&L Highlight Box */}
