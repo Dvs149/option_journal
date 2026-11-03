@@ -499,20 +499,36 @@ export default function TradingCalendar() {
                   bgClass = 'bg-[#991b1b] hover:bg-[#b91c1c] text-white border border-[#7f1d1d] shadow-sm';
                 }
 
+                const colIndex = idx % 7;
+                const rowIndex = Math.floor(idx / 7);
+                const cellDate = new Date(currentDate.year, currentDate.month - 1, cell.day);
+                const monthName = cellDate.toLocaleString('default', { month: 'short' });
+                const weekdayName = data?.weekday ? data.weekday.slice(0, 3) : cellDate.toLocaleDateString('default', { weekday: 'short' });
+
                 return (
                   <div
                     key={idx}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`${cell.day} ${monthName}, ${hasTrades ? (isProfit ? 'Profit ' : 'Loss ') + formatINR(data.net_pnl, true) : 'No trades'}`}
+                    aria-describedby={`trading-cell-tooltip-${cell.day}`}
                     onClick={() => setSelectedDayNumber(cell.day)}
-                    className={`min-h-[64px] sm:min-h-[72px] p-1.5 rounded-xl cursor-pointer transition-all flex flex-col justify-between ${bgClass} ${
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedDayNumber(cell.day);
+                      }
+                    }}
+                    className={`group relative z-10 hover:z-30 focus:z-30 focus:outline-none min-h-[64px] sm:min-h-[72px] p-1.5 rounded-xl cursor-pointer transition-all flex flex-col justify-between ${bgClass} ${
                       isSelected ? 'ring-2 ring-blue-400 shadow-lg shadow-blue-500/30 transform scale-[1.02]' : ''
                     }`}
                   >
                     {/* Top Day Number */}
-                    <span className="text-[11px] font-bold opacity-90">{cell.day}</span>
+                    <span className="text-[11px] font-bold opacity-90 select-none">{cell.day}</span>
 
                     {/* Middle: Net P&L */}
                     {hasTrades ? (
-                      <div className="text-center my-0.5">
+                      <div className="text-center my-0.5 select-none">
                         <span className="text-xs sm:text-sm font-extrabold font-mono-numbers block tracking-tight">
                           {data.net_pnl > 0 ? `+${(data.net_pnl / 1000).toFixed(1)}K` : `${(data.net_pnl / 1000).toFixed(1)}K`}
                         </span>
@@ -523,6 +539,98 @@ export default function TradingCalendar() {
                     ) : (
                       <div className="h-6" />
                     )}
+
+                    {/* Rich Hover / Focus Tooltip (WCAG 1.4.13 Compliant) */}
+                    <div
+                      role="tooltip"
+                      id={`trading-cell-tooltip-${cell.day}`}
+                      className={`absolute z-50 pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-150 ease-out transform scale-95 group-hover:scale-100 group-focus-within:scale-100 w-56 p-2.5 rounded-xl bg-[#0b1322] light:bg-slate-900 text-white border border-slate-700/80 light:border-slate-800 shadow-2xl text-left select-none ${
+                        rowIndex < 2 ? 'top-[calc(100%+6px)]' : 'bottom-[calc(100%+6px)]'
+                      } ${
+                        colIndex <= 1 ? 'left-0' : colIndex >= 5 ? 'right-0' : 'left-1/2 -translate-x-1/2'
+                      }`}
+                    >
+                      {/* Header */}
+                      <div className="flex items-center justify-between gap-1 pb-1.5 mb-1.5 border-b border-slate-700/60 light:border-slate-800">
+                        <span className="text-[11px] font-semibold text-slate-200">
+                          {weekdayName}, {cell.day} {monthName}
+                        </span>
+                        <span
+                          className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded-full ${
+                            !hasTrades
+                              ? 'bg-slate-800 text-slate-400'
+                              : isProfit
+                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                              : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                          }`}
+                        >
+                          {hasTrades ? `${data.trade_count} ${data.trade_count === 1 ? 'trade' : 'trades'}` : 'No Trades'}
+                        </span>
+                      </div>
+
+                      {/* Body */}
+                      {hasTrades ? (
+                        <div className="space-y-1.5">
+                          <div className="flex items-baseline justify-between">
+                            <span className="text-[10px] text-slate-400">Net P&L:</span>
+                            <span
+                              className={`text-xs font-bold font-mono-numbers ${
+                                isProfit ? 'text-emerald-400' : 'text-rose-400'
+                              }`}
+                            >
+                              {isProfit ? '+' : ''}{formatINR(data.net_pnl, true)}
+                            </span>
+                          </div>
+
+                          {(data.gross_profit > 0 || data.gross_loss > 0 || data.total_charges > 0) && (
+                            <div className="pt-1.5 border-t border-slate-800/80 space-y-0.5 text-[10px] text-slate-400">
+                              {data.gross_profit > 0 && (
+                                <div className="flex justify-between items-center">
+                                  <span>Gross Profit:</span>
+                                  <span className="text-emerald-400 font-mono-numbers">
+                                    +{formatINR(data.gross_profit)}
+                                  </span>
+                                </div>
+                              )}
+                              {data.gross_loss > 0 && (
+                                <div className="flex justify-between items-center">
+                                  <span>Gross Loss:</span>
+                                  <span className="text-rose-400 font-mono-numbers">
+                                    -{formatINR(data.gross_loss)}
+                                  </span>
+                                </div>
+                              )}
+                              {data.total_charges > 0 && (
+                                <div className="flex justify-between items-center">
+                                  <span>Charges:</span>
+                                  <span className="text-amber-400/90 font-mono-numbers">
+                                    {formatINR(data.total_charges)}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          <div className="pt-1 text-[9px] text-blue-400/80 text-center font-medium">
+                            {isSelected ? 'Currently Selected' : 'Click to inspect day trades'}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-[10px] text-slate-400 italic">
+                          No trade activity recorded on this day.
+                        </div>
+                      )}
+
+                      {/* Arrow Pointer */}
+                      <div
+                        className={`absolute w-2 h-2 bg-[#0b1322] light:bg-slate-900 rotate-45 pointer-events-none ${
+                          rowIndex < 2
+                            ? '-top-1 border-t border-l border-slate-700/80'
+                            : '-bottom-1 border-b border-r border-slate-700/80'
+                        } ${
+                          colIndex <= 1 ? 'left-6' : colIndex >= 5 ? 'right-6' : 'left-1/2 -translate-x-1/2'
+                        }`}
+                      />
+                    </div>
                   </div>
                 );
               })}

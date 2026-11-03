@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
   TrendingDown,
@@ -38,6 +38,7 @@ import { MainStatsCard, CompactMetricCard } from '../components/common/StatsCard
 import { formatINR, formatCompactINR } from '../utils/formatters';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { filter, customFrom, customTo, setDateRangeDisplay } = useFilter();
   const { isKite } = useTheme();
   const [loading, setLoading] = useState(true);
@@ -147,6 +148,19 @@ export default function Dashboard() {
     : (Array.isArray(calendarData?.days)
         ? calendarData.days.reduce((acc, d) => acc + (Number(d.net_pnl) || 0), 0)
         : 0);
+
+  // Compact helper for the small calendar widget cell to prevent text overflow / clipping
+  const formatMiniCellPnl = (val) => {
+    if (val === null || val === undefined || isNaN(val)) return '';
+    const num = Number(val);
+    const isNegative = num < 0;
+    const abs = Math.abs(num);
+    const sign = isNegative ? '-' : '+';
+    if (abs >= 10000000) return `${sign}${(abs / 10000000).toFixed(1)}Cr`;
+    if (abs >= 100000) return `${sign}${(abs / 100000).toFixed(1)}L`;
+    if (abs >= 1000) return `${sign}${(abs / 1000).toFixed(1)}k`;
+    return `${sign}${abs.toFixed(0)}`;
+  };
 
   // Calendar rendering calculation
   const renderCalendarDays = () => {
@@ -483,7 +497,7 @@ export default function Dashboard() {
                 return (
                   <div
                     key={idx}
-                    className="h-10 rounded-lg bg-[#0e1626]/40 light:bg-slate-100/40 text-slate-600 light:text-slate-400 text-[11px] flex items-center justify-center"
+                    className="h-10 rounded-lg bg-[#0e1626]/40 light:bg-slate-100/40 text-slate-600 light:text-slate-400 text-[11px] flex items-center justify-center select-none"
                   >
                     {cell.day}
                   </div>
@@ -495,23 +509,134 @@ export default function Dashboard() {
               const isProfit = d && d.net_pnl > 0;
               const isLoss = d && d.net_pnl < 0;
 
+              const colIndex = idx % 7;
+              const rowIndex = Math.floor(idx / 7);
+              const cellDate = new Date(calendarMonth.year, calendarMonth.month - 1, cell.day);
+              const monthName = cellDate.toLocaleString('default', { month: 'short' });
+              const weekdayName = d?.weekday ? d.weekday.slice(0, 3) : cellDate.toLocaleDateString('default', { weekday: 'short' });
+
               return (
                 <div
                   key={idx}
-                  className={`h-10 rounded-lg p-0.5 flex flex-col items-center justify-center text-[10px] transition-all border ${
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`${cell.day} ${monthName}, ${hasTrade ? (isProfit ? 'Profit ' : 'Loss ') + formatINR(d.net_pnl, true) : 'No trades'}`}
+                  aria-describedby={`dashboard-calendar-tooltip-${cell.day}`}
+                  onClick={() => {
+                    navigate('/calendar');
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      navigate('/calendar');
+                    }
+                  }}
+                  className={`group relative z-10 hover:z-30 focus:z-30 focus:outline-none h-10 rounded-lg p-0.5 flex flex-col items-center justify-center text-[10px] transition-all cursor-pointer border ${
                     !hasTrade
-                      ? 'bg-[#152033] light:bg-slate-100 border-transparent text-slate-400'
+                      ? 'bg-[#152033] light:bg-slate-100 border-transparent text-slate-400 hover:border-slate-500/50'
                       : isProfit
-                      ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-400'
-                      : 'bg-rose-950/40 border-rose-500/40 text-rose-400'
+                      ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-400 hover:bg-emerald-900/50 hover:border-emerald-400'
+                      : 'bg-rose-950/40 border-rose-500/40 text-rose-400 hover:bg-rose-900/50 hover:border-rose-400'
                   }`}
                 >
-                  <span className="font-semibold text-[11px] leading-tight">{cell.day}</span>
+                  <span className="font-semibold text-[11px] leading-tight select-none">{cell.day}</span>
                   {hasTrade && (
-                    <span className="text-[9px] font-mono-numbers font-bold truncate max-w-full px-0.5">
-                      {isProfit ? '' : ''}{formatCompactINR(d.net_pnl)}
+                    <span className="text-[8px] sm:text-[8.5px] font-mono-numbers font-bold tracking-tight leading-none truncate max-w-full px-0.5 select-none">
+                      {formatMiniCellPnl(d.net_pnl)}
                     </span>
                   )}
+
+                  {/* Rich Hover / Focus Tooltip (WCAG 1.4.13 Compliant, positioned to prevent overflow clipping) */}
+                  <div
+                    role="tooltip"
+                    id={`dashboard-calendar-tooltip-${cell.day}`}
+                    className={`absolute z-50 pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-150 ease-out transform scale-95 group-hover:scale-100 group-focus-within:scale-100 w-52 p-2.5 rounded-xl bg-[#0b1322] light:bg-slate-900 text-white border border-slate-700/80 light:border-slate-800 shadow-2xl text-left select-none ${
+                      rowIndex < 2 ? 'top-[calc(100%+6px)]' : 'bottom-[calc(100%+6px)]'
+                    } ${
+                      colIndex <= 1 ? 'left-0' : colIndex >= 5 ? 'right-0' : 'left-1/2 -translate-x-1/2'
+                    }`}
+                  >
+                    {/* Header */}
+                    <div className="flex items-center justify-between gap-1 pb-1.5 mb-1.5 border-b border-slate-700/60 light:border-slate-800">
+                      <span className="text-[11px] font-semibold text-slate-200">
+                        {weekdayName}, {cell.day} {monthName}
+                      </span>
+                      <span
+                        className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded-full ${
+                          !hasTrade
+                            ? 'bg-slate-800 text-slate-400'
+                            : isProfit
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                            : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                        }`}
+                      >
+                        {hasTrade ? `${d.trade_count} ${d.trade_count === 1 ? 'trade' : 'trades'}` : 'No Trades'}
+                      </span>
+                    </div>
+
+                    {/* Body */}
+                    {hasTrade ? (
+                      <div className="space-y-1.5">
+                        <div className="flex items-baseline justify-between">
+                          <span className="text-[10px] text-slate-400">Net P&L:</span>
+                          <span
+                            className={`text-xs font-bold font-mono-numbers ${
+                              isProfit ? 'text-emerald-400' : 'text-rose-400'
+                            }`}
+                          >
+                            {isProfit ? '+' : ''}{formatINR(d.net_pnl, true)}
+                          </span>
+                        </div>
+
+                        {(d.gross_profit > 0 || d.gross_loss > 0 || d.total_charges > 0) && (
+                          <div className="pt-1.5 border-t border-slate-800/80 space-y-0.5 text-[10px] text-slate-400">
+                            {d.gross_profit > 0 && (
+                              <div className="flex justify-between items-center">
+                                <span>Gross Profit:</span>
+                                <span className="text-emerald-400 font-mono-numbers">
+                                  +{formatINR(d.gross_profit)}
+                                </span>
+                              </div>
+                            )}
+                            {d.gross_loss > 0 && (
+                              <div className="flex justify-between items-center">
+                                <span>Gross Loss:</span>
+                                <span className="text-rose-400 font-mono-numbers">
+                                  -{formatINR(d.gross_loss)}
+                                </span>
+                              </div>
+                            )}
+                            {d.total_charges > 0 && (
+                              <div className="flex justify-between items-center">
+                                <span>Charges:</span>
+                                <span className="text-amber-400/90 font-mono-numbers">
+                                  {formatINR(d.total_charges)}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        <div className="pt-1 text-[9px] text-blue-400/80 text-center font-medium">
+                          Click to open in Trading Calendar
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-[10px] text-slate-400 italic">
+                        No trade activity recorded on this day.
+                      </div>
+                    )}
+
+                    {/* Arrow Pointer */}
+                    <div
+                      className={`absolute w-2 h-2 bg-[#0b1322] light:bg-slate-900 rotate-45 pointer-events-none ${
+                        rowIndex < 2
+                          ? '-top-1 border-t border-l border-slate-700/80'
+                          : '-bottom-1 border-b border-r border-slate-700/80'
+                      } ${
+                        colIndex <= 1 ? 'left-4' : colIndex >= 5 ? 'right-4' : 'left-1/2 -translate-x-1/2'
+                      }`}
+                    />
+                  </div>
                 </div>
               );
             })}
