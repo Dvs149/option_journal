@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   TrendingUp,
@@ -39,8 +39,22 @@ import { formatINR, formatCompactINR } from '../utils/formatters';
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { filter, customFrom, customTo, setDateRangeDisplay } = useFilter();
+  const { filter, fromDate, customFrom, customTo, dateRangeDisplay, setDateRangeDisplay } = useFilter();
   const { isKite } = useTheme();
+
+  const filterLabel = useMemo(() => {
+    switch (filter) {
+      case 'today': return 'Today';
+      case 'yesterday': return 'Yesterday';
+      case 'this_week': return 'This Week';
+      case 'this_month': return 'This Month';
+      case 'last_month': return 'Last Month';
+      case 'this_year': return 'This Year';
+      case 'all': return 'All Time';
+      case 'custom': return dateRangeDisplay || 'Custom Range';
+      default: return 'This Month';
+    }
+  }, [filter, dateRangeDisplay]);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const today = new Date();
@@ -56,6 +70,25 @@ export default function Dashboard() {
   useEffect(() => {
     fetchCalendarData(calendarMonth.year, calendarMonth.month);
   }, [calendarMonth]);
+
+  // Sync mini calendar widget with global filter
+  useEffect(() => {
+    if (filter === 'all') return;
+    const dateStr = fromDate || customFrom;
+    if (dateStr) {
+      const parts = String(dateStr).split('-');
+      if (parts.length >= 2) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10);
+        if (!isNaN(y) && !isNaN(m)) {
+          setCalendarMonth((prev) => {
+            if (prev.year === y && prev.month === m) return prev;
+            return { year: y, month: m };
+          });
+        }
+      }
+    }
+  }, [filter, fromDate, customFrom]);
 
   const fetchDashboard = async () => {
     try {
@@ -311,7 +344,7 @@ export default function Dashboard() {
               Daily P&L
             </h3>
             <span className="text-[11px] font-medium text-slate-400 bg-[#162033] light:bg-slate-100 px-2 py-0.5 rounded-lg border border-[#1e293b] light:border-slate-200">
-              This Month
+              {filterLabel}
             </span>
           </div>
 
@@ -365,7 +398,7 @@ export default function Dashboard() {
               Cumulative P&L (Equity Curve)
             </h3>
             <span className="text-[11px] font-medium text-slate-400 bg-[#162033] light:bg-slate-100 px-2 py-0.5 rounded-lg border border-[#1e293b] light:border-slate-200">
-              This Month
+              {filterLabel}
             </span>
           </div>
 
@@ -744,7 +777,7 @@ export default function Dashboard() {
               Index-wise Performance
             </h3>
             <span className="text-[11px] font-medium text-slate-400 bg-[#162033] light:bg-slate-100 px-2 py-0.5 rounded-lg border border-[#1e293b] light:border-slate-200">
-              This Month
+              {filterLabel}
             </span>
           </div>
 
@@ -800,7 +833,7 @@ export default function Dashboard() {
               CE vs PE Performance
             </h3>
             <span className="text-[11px] font-medium text-slate-400 bg-[#162033] light:bg-slate-100 px-2 py-0.5 rounded-lg border border-[#1e293b] light:border-slate-200">
-              This Month
+              {filterLabel}
             </span>
           </div>
 
@@ -860,7 +893,7 @@ export default function Dashboard() {
                 Strategy Performance
               </h3>
               <span className="text-[11px] font-medium text-slate-400 bg-[#162033] light:bg-slate-100 px-2 py-0.5 rounded-lg border border-[#1e293b] light:border-slate-200">
-                This Month
+                {filterLabel}
               </span>
             </div>
 

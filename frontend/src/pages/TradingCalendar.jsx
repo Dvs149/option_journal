@@ -33,7 +33,26 @@ import {
 import api from '../api/client';
 import { formatINR, formatCompactINR, formatDate } from '../utils/formatters';
 import { useToast } from '../context/ToastContext';
+import { useFilter } from '../context/FilterContext';
 import EditTradeModal from '../components/trades/EditTradeModal';
+
+// Extract year, month, day from active global filter date
+const getTargetDateFromFilter = (filterType, from, customF) => {
+  const dateStr = from || customF;
+  if (dateStr) {
+    const parts = String(dateStr).split('-');
+    if (parts.length >= 2) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      const day = parts.length >= 3 ? parseInt(parts[2], 10) : 1;
+      if (!isNaN(year) && !isNaN(month)) {
+        return { year, month, day: isNaN(day) ? 1 : day };
+      }
+    }
+  }
+  const now = new Date();
+  return { year: now.getFullYear(), month: now.getMonth() + 1, day: now.getDate() };
+};
 
 // Compact Indian numbering helper for calendar heatmap cells (e.g. +1.4K, +27.6K, +1.2L)
 const formatCalendarCellPnl = (val) => {
@@ -50,16 +69,21 @@ const formatCalendarCellPnl = (val) => {
 
 export default function TradingCalendar() {
   const navigate = useNavigate();
+  const { filter, fromDate, toDate, customFrom, customTo, updateFilter, setDateRangeDisplay } = useFilter();
 
   const today = new Date();
   const calendarCardRef = useRef(null);
   const [hoveredDay, setHoveredDay] = useState(null);
+
+  const initialTarget = getTargetDateFromFilter(filter, fromDate, customFrom);
   const [currentDate, setCurrentDate] = useState({
-    year: today.getFullYear(),
-    month: today.getMonth() + 1,
+    year: initialTarget.year,
+    month: initialTarget.month,
   });
   const [calendarData, setCalendarData] = useState(null);
-  const [selectedDayNumber, setSelectedDayNumber] = useState(today.getDate());
+  const [selectedDayNumber, setSelectedDayNumber] = useState(
+    filter === 'today' || filter === 'yesterday' ? initialTarget.day : today.getDate()
+  );
   const [loading, setLoading] = useState(false);
   const [tradeToDelete, setTradeToDelete] = useState(null);
   const [tradeToEdit, setTradeToEdit] = useState(null);
@@ -67,6 +91,34 @@ export default function TradingCalendar() {
   const setFeedbackMessage = (msg, type = 'success') => {
     if (msg) showToast(msg, type);
   };
+
+  // Sync calendar when the global Navbar filter changes (e.g. Last Month, This Month, Today, Custom)
+  useEffect(() => {
+    if (filter === 'all') return;
+    const target = getTargetDateFromFilter(filter, fromDate, customFrom);
+    setCurrentDate((prev) => {
+      if (prev.year === target.year && prev.month === target.month) return prev;
+      return { year: target.year, month: target.month };
+    });
+    if (filter === 'today' || filter === 'yesterday') {
+      setSelectedDayNumber(target.day);
+    }
+  }, [filter, fromDate, customFrom]);
+
+  // When calendar data loads for a month, select the first trading day if current selection has no trades
+  useEffect(() => {
+    if (calendarData?.days && calendarData.days.length > 0) {
+      const currentHasTrades = calendarData.days.some((d) => d.day === selectedDayNumber);
+      if (!currentHasTrades) {
+        const isThisMonth = currentDate.year === today.getFullYear() && currentDate.month === today.getMonth() + 1;
+        if (isThisMonth) {
+          setSelectedDayNumber(today.getDate());
+        } else {
+          setSelectedDayNumber(calendarData.days[0].day);
+        }
+      }
+    }
+  }, [calendarData]);
 
   // Top Statistics state computed dynamically from real calendarData
   const stats = useMemo(() => {
@@ -326,6 +378,7 @@ export default function TradingCalendar() {
               const now = new Date();
               setCurrentDate({ year: now.getFullYear(), month: now.getMonth() + 1 });
               setSelectedDayNumber(now.getDate());
+              if (updateFilter) updateFilter('this_month');
             }}
             className="px-3.5 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 text-xs font-medium text-slate-300 light:text-slate-700 hover:text-white"
           >
