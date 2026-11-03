@@ -71,23 +71,23 @@ export function MainStatsCard({
   );
 
   return (
-    <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-2xl p-4 flex flex-col justify-between shadow-sm hover:border-slate-700 light:hover:border-slate-300 transition-all">
-      <div className="flex items-start justify-between mb-3">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${style.iconBg}`}>
-          {EffectiveIcon && <EffectiveIcon className="w-5 h-5 stroke-[2]" />}
+    <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-xl 2xl:rounded-2xl p-3 2xl:p-4 flex flex-col justify-between shadow-sm hover:border-slate-700 light:hover:border-slate-300 transition-all min-w-0">
+      <div className="flex items-center justify-between gap-1.5 mb-2.5 2xl:mb-3 min-w-0">
+        <div className={`w-8 h-8 2xl:w-10 2xl:h-10 rounded-lg 2xl:rounded-xl flex-shrink-0 flex items-center justify-center ${style.iconBg}`}>
+          {EffectiveIcon && <EffectiveIcon className="w-4 h-4 2xl:w-5 2xl:h-5 stroke-[2]" />}
         </div>
         {change && (
-          <span className={`inline-flex items-center gap-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${badgeStyle}`}>
-            {isNegative ? <ArrowDownRight className="w-3 h-3" /> : <ArrowUpRight className="w-3 h-3" />}
+          <span className={`inline-flex items-center gap-0.5 text-[10px] 2xl:text-xs font-semibold px-1.5 2xl:px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${badgeStyle}`}>
+            {isNegative ? <ArrowDownRight className="w-2.5 h-2.5 2xl:w-3 2xl:h-3 stroke-[2.5]" /> : <ArrowUpRight className="w-2.5 h-2.5 2xl:w-3 2xl:h-3 stroke-[2.5]" />}
             {change}
           </span>
         )}
       </div>
-      <div>
-        <span className="text-xs font-medium text-slate-400 light:text-slate-500 block mb-1">
+      <div className="min-w-0">
+        <span className="text-[11px] 2xl:text-xs font-medium text-slate-400 light:text-slate-500 block truncate mb-0.5 2xl:mb-1" title={title}>
           {title}
         </span>
-        <div className={`text-xl md:text-2xl font-bold font-mono-numbers tracking-tight ${resolvedValueColor}`}>
+        <div className={`text-base sm:text-lg xl:text-[17px] 2xl:text-2xl font-bold font-mono-numbers whitespace-nowrap tracking-tight ${resolvedValueColor}`}>
           {value}
         </div>
       </div>
@@ -97,11 +97,11 @@ export function MainStatsCard({
 
 export function CompactMetricCard({ label, value, valueColor = 'text-white' }) {
   return (
-    <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-xl px-3.5 py-2.5 flex flex-col justify-center shadow-sm">
-      <span className="text-[11px] font-medium text-slate-400 light:text-slate-500 truncate mb-1">
+    <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-xl px-2.5 2xl:px-3.5 py-2 2xl:py-2.5 flex flex-col justify-center shadow-sm min-w-0">
+      <span className="text-[11px] font-medium text-slate-400 light:text-slate-500 truncate mb-0.5" title={label}>
         {label}
       </span>
-      <span className={`text-base font-bold font-mono-numbers tracking-tight ${valueColor}`}>
+      <span className={`text-sm sm:text-base xl:text-[13px] 2xl:text-base font-bold font-mono-numbers whitespace-nowrap tracking-tight ${valueColor}`}>
         {value}
       </span>
     </div>

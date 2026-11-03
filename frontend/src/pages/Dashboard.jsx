@@ -195,7 +195,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 max-w-[1600px] mx-auto animate-fadeIn">
       {/* 1. Main Statistics Row (6 Cards) */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3.5">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2.5 2xl:gap-3.5">
         <MainStatsCard
           title="Total Net Profit"
           value={formatINR(stats.total_net_profit)}
@@ -247,7 +247,7 @@ export default function Dashboard() {
       </div>
 
       {/* 2. Secondary Metrics Row (8 Cards) */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2.5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-2 2xl:gap-2.5">
         <CompactMetricCard
           label="Total Trading Days"
           value={stats.total_trading_days || 0}
