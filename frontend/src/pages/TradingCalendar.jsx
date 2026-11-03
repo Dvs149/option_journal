@@ -485,8 +485,8 @@ export default function TradingCalendar() {
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-sm md:text-base font-bold text-white light:text-slate-900 tracking-tight">
+                <div className="w-36 sm:w-44 flex items-center justify-center text-center">
+                  <h2 className="text-sm md:text-base font-bold text-white light:text-slate-900 tracking-tight whitespace-nowrap text-center select-none">
                     {currentMonthName} {currentDate.year}
                   </h2>
                 </div>

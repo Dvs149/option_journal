@@ -458,11 +458,10 @@ export default function Dashboard() {
           className="lg:col-span-4 bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-2xl p-4 flex flex-col justify-between shadow-sm relative"
         >
           <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-            <h3 className="text-sm font-bold text-white light:text-slate-900 tracking-tight shrink-0">
-              Trading Calendar
-            </h3>
-            
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-2 min-w-0">
+              <h3 className="text-sm font-bold text-white light:text-slate-900 tracking-tight shrink-0">
+                Trading Calendar
+              </h3>
               {calendarMonthlyPnl !== 0 && (
                 <span
                   className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full font-mono-numbers shrink-0 transition-colors ${
@@ -475,6 +474,9 @@ export default function Dashboard() {
                   {calendarMonthlyPnl > 0 ? `+${formatINR(calendarMonthlyPnl)}` : formatINR(calendarMonthlyPnl)}
                 </span>
               )}
+            </div>
+            
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 onClick={() => {
                   setCalendarMonth((prev) => {
@@ -489,18 +491,12 @@ export default function Dashboard() {
                 <ChevronLeft className="w-4 h-4" />
               </button>
 
-
-              
-              <div className="flex items-center gap-1.5 px-0.5">
-                
-                <span className="text-xs font-semibold text-slate-200 light:text-slate-800 whitespace-nowrap">
-                  {new Date(calendarMonth.year, calendarMonth.month - 1).toLocaleString('default', {
-                    month: 'long',
-                    year: 'numeric',
-                  })}
-                </span>
-                
-              </div>
+              <span className="text-xs font-semibold text-slate-200 light:text-slate-800 w-28 text-center select-none block truncate">
+                {new Date(calendarMonth.year, calendarMonth.month - 1).toLocaleString('default', {
+                  month: 'long',
+                  year: 'numeric',
+                })}
+              </span>
 
               <button
                 onClick={() => {
