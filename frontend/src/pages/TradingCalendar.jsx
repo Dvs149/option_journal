@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
@@ -35,10 +35,25 @@ import { formatINR, formatCompactINR, formatDate } from '../utils/formatters';
 import { useToast } from '../context/ToastContext';
 import EditTradeModal from '../components/trades/EditTradeModal';
 
+// Compact Indian numbering helper for calendar heatmap cells (e.g. +1.4K, +27.6K, +1.2L)
+const formatCalendarCellPnl = (val) => {
+  if (val === null || val === undefined || isNaN(val)) return '';
+  const num = Number(val);
+  const isNegative = num < 0;
+  const abs = Math.abs(num);
+  const sign = isNegative ? '-' : '+';
+  if (abs >= 10000000) return `${sign}${(abs / 10000000).toFixed(1)}Cr`;
+  if (abs >= 100000) return `${sign}${(abs / 100000).toFixed(1)}L`;
+  if (abs >= 1000) return `${sign}${(abs / 1000).toFixed(1)}K`;
+  return `${sign}${abs.toFixed(0)}`;
+};
+
 export default function TradingCalendar() {
   const navigate = useNavigate();
 
   const today = new Date();
+  const calendarCardRef = useRef(null);
+  const [hoveredDay, setHoveredDay] = useState(null);
   const [currentDate, setCurrentDate] = useState({
     year: today.getFullYear(),
     month: today.getMonth() + 1,
@@ -402,9 +417,13 @@ export default function TradingCalendar() {
         {/* Left Column (7 cols): Calendar Heatmap & Day Trades */}
         <div className="lg:col-span-7 space-y-6">
           {/* Calendar Heatmap Card */}
-          <div className="p-5 md:p-6 rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-4">
+          <div
+            ref={calendarCardRef}
+            onMouseLeave={() => setHoveredDay(null)}
+            className="p-3.5 sm:p-5 md:p-6 rounded-2xl sm:rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-3 sm:space-y-4 relative"
+          >
             {/* Calendar Controls */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex items-center gap-2">
                 <button
                   onClick={prevMonth}
@@ -472,7 +491,7 @@ export default function TradingCalendar() {
             </div>
 
             {/* Calendar Days Heatmap Grid */}
-            <div className="grid grid-cols-7 gap-1.5">
+            <div className="grid grid-cols-7 gap-1 sm:gap-1.5">
               {calendarCells.map((cell, idx) => {
                 const isSelected = cell.isCurrentMonth && cell.day === selectedDayNumber;
                 const data = cell.data;
@@ -481,9 +500,9 @@ export default function TradingCalendar() {
                   return (
                     <div
                       key={idx}
-                      className="min-h-[64px] sm:min-h-[72px] p-1.5 rounded-xl bg-[#0e1626]/50 light:bg-slate-50 border border-[#1e293b]/30 text-slate-600 light:text-slate-300 text-xs font-medium flex flex-col justify-between select-none"
+                      className="min-h-[58px] sm:min-h-[72px] p-1 sm:p-1.5 rounded-lg sm:rounded-xl bg-[#0e1626]/50 light:bg-slate-50 border border-[#1e293b]/30 text-slate-600 light:text-slate-300 text-xs font-medium flex flex-col justify-between select-none"
                     >
-                      <span>{cell.day}</span>
+                      <span className="text-[10px] sm:text-xs leading-none">{cell.day}</span>
                     </div>
                   );
                 }
@@ -508,133 +527,153 @@ export default function TradingCalendar() {
                 return (
                   <div
                     key={idx}
-                    tabIndex={0}
                     role="button"
+                    tabIndex={0}
                     aria-label={`${cell.day} ${monthName}, ${hasTrades ? (isProfit ? 'Profit ' : 'Loss ') + formatINR(data.net_pnl, true) : 'No trades'}`}
-                    aria-describedby={`trading-cell-tooltip-${cell.day}`}
                     onClick={() => setSelectedDayNumber(cell.day)}
+                    onMouseEnter={(e) => {
+                      if (!hasTrades) return;
+                      const parent = calendarCardRef.current;
+                      if (!parent) return;
+                      const targetRect = e.currentTarget.getBoundingClientRect();
+                      const parentRect = parent.getBoundingClientRect();
+                      setHoveredDay({
+                        day: cell.day,
+                        data,
+                        colIndex,
+                        rowIndex,
+                        monthName,
+                        weekdayName,
+                        cellLeft: targetRect.left - parentRect.left,
+                        cellRight: targetRect.right - parentRect.left,
+                        cellWidth: targetRect.width,
+                        cellTop: targetRect.top - parentRect.top,
+                        cellBottom: targetRect.bottom - parentRect.top,
+                      });
+                    }}
+                    onMouseLeave={() => setHoveredDay(null)}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
                         setSelectedDayNumber(cell.day);
                       }
                     }}
-                    className={`group relative z-10 hover:z-30 focus:z-30 focus:outline-none min-h-[64px] sm:min-h-[72px] p-1.5 rounded-xl cursor-pointer transition-all flex flex-col justify-between ${bgClass} ${
+                    className={`min-h-[58px] sm:min-h-[72px] p-1 sm:p-1.5 rounded-lg sm:rounded-xl cursor-pointer transition-all flex flex-col justify-between ${bgClass} ${
                       isSelected ? 'ring-2 ring-blue-400 shadow-lg shadow-blue-500/30 transform scale-[1.02]' : ''
                     }`}
                   >
                     {/* Top Day Number */}
-                    <span className="text-[11px] font-bold opacity-90 select-none">{cell.day}</span>
+                    <span className="text-[10px] sm:text-[11px] font-bold opacity-90 select-none leading-none">{cell.day}</span>
 
                     {/* Middle: Net P&L */}
                     {hasTrades ? (
-                      <div className="text-center my-0.5 select-none">
-                        <span className="text-xs sm:text-sm font-extrabold font-mono-numbers block tracking-tight">
-                          {data.net_pnl > 0 ? `+${(data.net_pnl / 1000).toFixed(1)}K` : `${(data.net_pnl / 1000).toFixed(1)}K`}
+                      <div className="text-center my-auto py-0.5 select-none overflow-hidden">
+                        <span className="text-[10.5px] sm:text-xs md:text-sm font-bold font-mono-numbers block tracking-tight leading-tight truncate px-0.5">
+                          {formatCalendarCellPnl(data.net_pnl)}
                         </span>
-                        <span className="text-[9px] opacity-80 block">
-                          {data.trade_count} {data.trade_count === 1 ? 'trade' : 'trades'}
+                        <span className="text-[7.5px] sm:text-[9px] opacity-85 block truncate max-w-full px-0.5 leading-tight whitespace-nowrap mt-0.5">
+                          <span className="hidden sm:inline">{data.trade_count} {data.trade_count === 1 ? 'trade' : 'trades'}</span>
+                          <span className="sm:hidden">{data.trade_count} tr</span>
                         </span>
                       </div>
                     ) : (
-                      <div className="h-6" />
+                      <div className="h-4 sm:h-6" />
                     )}
-
-                    {/* Rich Hover / Focus Tooltip (WCAG 1.4.13 Compliant) */}
-                    <div
-                      role="tooltip"
-                      id={`trading-cell-tooltip-${cell.day}`}
-                      className={`absolute z-50 pointer-events-none opacity-0 invisible group-hover:opacity-100 group-hover:visible group-focus-within:opacity-100 group-focus-within:visible transition-all duration-150 ease-out transform scale-95 group-hover:scale-100 group-focus-within:scale-100 w-56 p-2.5 rounded-xl bg-[#0b1322] light:bg-slate-900 text-white border border-slate-700/80 light:border-slate-800 shadow-2xl text-left select-none ${
-                        rowIndex < 2 ? 'top-[calc(100%+6px)]' : 'bottom-[calc(100%+6px)]'
-                      } ${
-                        colIndex <= 1 ? 'left-0' : colIndex >= 5 ? 'right-0' : 'left-1/2 -translate-x-1/2'
-                      }`}
-                    >
-                      {/* Header */}
-                      <div className="flex items-center justify-between gap-1 pb-1.5 mb-1.5 border-b border-slate-700/60 light:border-slate-800">
-                        <span className="text-[11px] font-semibold text-slate-200">
-                          {weekdayName}, {cell.day} {monthName}
-                        </span>
-                        <span
-                          className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded-full ${
-                            !hasTrades
-                              ? 'bg-slate-800 text-slate-400'
-                              : isProfit
-                              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                              : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
-                          }`}
-                        >
-                          {hasTrades ? `${data.trade_count} ${data.trade_count === 1 ? 'trade' : 'trades'}` : 'No Trades'}
-                        </span>
-                      </div>
-
-                      {/* Body */}
-                      {hasTrades ? (
-                        <div className="space-y-1.5">
-                          <div className="flex items-baseline justify-between">
-                            <span className="text-[10px] text-slate-400">Net P&L:</span>
-                            <span
-                              className={`text-xs font-bold font-mono-numbers ${
-                                isProfit ? 'text-emerald-400' : 'text-rose-400'
-                              }`}
-                            >
-                              {isProfit ? '+' : ''}{formatINR(data.net_pnl, true)}
-                            </span>
-                          </div>
-
-                          {(data.gross_profit > 0 || data.gross_loss > 0 || data.total_charges > 0) && (
-                            <div className="pt-1.5 border-t border-slate-800/80 space-y-0.5 text-[10px] text-slate-400">
-                              {data.gross_profit > 0 && (
-                                <div className="flex justify-between items-center">
-                                  <span>Gross Profit:</span>
-                                  <span className="text-emerald-400 font-mono-numbers">
-                                    +{formatINR(data.gross_profit)}
-                                  </span>
-                                </div>
-                              )}
-                              {data.gross_loss > 0 && (
-                                <div className="flex justify-between items-center">
-                                  <span>Gross Loss:</span>
-                                  <span className="text-rose-400 font-mono-numbers">
-                                    -{formatINR(data.gross_loss)}
-                                  </span>
-                                </div>
-                              )}
-                              {data.total_charges > 0 && (
-                                <div className="flex justify-between items-center">
-                                  <span>Charges:</span>
-                                  <span className="text-amber-400/90 font-mono-numbers">
-                                    {formatINR(data.total_charges)}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          <div className="pt-1 text-[9px] text-blue-400/80 text-center font-medium">
-                            {isSelected ? 'Currently Selected' : 'Click to inspect day trades'}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-[10px] text-slate-400 italic">
-                          No trade activity recorded on this day.
-                        </div>
-                      )}
-
-                      {/* Arrow Pointer */}
-                      <div
-                        className={`absolute w-2 h-2 bg-[#0b1322] light:bg-slate-900 rotate-45 pointer-events-none ${
-                          rowIndex < 2
-                            ? '-top-1 border-t border-l border-slate-700/80'
-                            : '-bottom-1 border-b border-r border-slate-700/80'
-                        } ${
-                          colIndex <= 1 ? 'left-6' : colIndex >= 5 ? 'right-6' : 'left-1/2 -translate-x-1/2'
-                        }`}
-                      />
-                    </div>
                   </div>
                 );
               })}
             </div>
+
+            {/* Single Floating Tooltip at Calendar Level - WCAG 1.4.13 Compliant, Never Clipped by Grid Cells */}
+            {hoveredDay && hoveredDay.data && (
+              <div
+                role="tooltip"
+                className="absolute z-50 pointer-events-none w-56 p-2.5 rounded-xl bg-[#0b1322] light:bg-slate-900 text-white border border-slate-700/80 light:border-slate-800 shadow-2xl text-left select-none animate-fadeIn transition-all duration-75"
+                style={{
+                  ...(hoveredDay.rowIndex < 2
+                    ? { top: `${hoveredDay.cellBottom + 8}px` }
+                    : { bottom: `${(calendarCardRef.current?.offsetHeight || 0) - hoveredDay.cellTop + 8}px` }),
+                  ...(hoveredDay.colIndex <= 1
+                    ? { left: `${hoveredDay.cellLeft}px` }
+                    : hoveredDay.colIndex >= 5
+                    ? { left: `${hoveredDay.cellRight}px`, transform: 'translateX(-100%)' }
+                    : { left: `${hoveredDay.cellLeft + hoveredDay.cellWidth / 2}px`, transform: 'translateX(-50%)' }),
+                }}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between gap-1 pb-1.5 mb-1.5 border-b border-slate-700/60 light:border-slate-800">
+                  <span className="text-[11px] font-semibold text-slate-200">
+                    {hoveredDay.weekdayName}, {hoveredDay.day} {hoveredDay.monthName}
+                  </span>
+                  <span
+                    className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded-full ${
+                      hoveredDay.data.net_pnl > 0
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                        : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                    }`}
+                  >
+                    {hoveredDay.data.trade_count} {hoveredDay.data.trade_count === 1 ? 'trade' : 'trades'}
+                  </span>
+                </div>
+
+                {/* Body */}
+                <div className="space-y-1.5">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[10px] text-slate-400">Net P&L:</span>
+                    <span
+                      className={`text-xs font-bold font-mono-numbers ${
+                        hoveredDay.data.net_pnl > 0 ? 'text-emerald-400' : 'text-rose-400'
+                      }`}
+                    >
+                      {hoveredDay.data.net_pnl > 0 ? '+' : ''}{formatINR(hoveredDay.data.net_pnl, true)}
+                    </span>
+                  </div>
+
+                  {(hoveredDay.data.gross_profit > 0 || hoveredDay.data.gross_loss > 0 || hoveredDay.data.total_charges > 0) && (
+                    <div className="pt-1.5 border-t border-slate-800/80 space-y-0.5 text-[10px] text-slate-400">
+                      {hoveredDay.data.gross_profit > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span>Gross Profit:</span>
+                          <span className="text-emerald-400 font-mono-numbers">
+                            +{formatINR(hoveredDay.data.gross_profit)}
+                          </span>
+                        </div>
+                      )}
+                      {hoveredDay.data.gross_loss > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span>Gross Loss:</span>
+                          <span className="text-rose-400 font-mono-numbers">
+                            -{formatINR(hoveredDay.data.gross_loss)}
+                          </span>
+                        </div>
+                      )}
+                      {hoveredDay.data.total_charges > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span>Charges:</span>
+                          <span className="text-amber-400/90 font-mono-numbers">
+                            {formatINR(hoveredDay.data.total_charges)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="pt-1 text-[9px] text-blue-400/80 text-center font-medium">
+                    {selectedDayNumber === hoveredDay.day ? 'Currently Selected' : 'Click to inspect day trades'}
+                  </div>
+                </div>
+
+                {/* Arrow Pointer */}
+                <div
+                  className={`absolute w-2 h-2 bg-[#0b1322] light:bg-slate-900 rotate-45 pointer-events-none ${
+                    hoveredDay.rowIndex < 2
+                      ? '-top-1 border-t border-l border-slate-700/80'
+                      : '-bottom-1 border-b border-r border-slate-700/80'
+                  } ${
+                    hoveredDay.colIndex <= 1 ? 'left-6' : hoveredDay.colIndex >= 5 ? 'right-6' : 'left-1/2 -translate-x-1/2'
+                  }`}
+                />
+              </div>
+            )}
 
             {/* Heatmap Legend */}
             <div className="pt-2 flex items-center gap-5 text-xs text-slate-400">
