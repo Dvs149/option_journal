@@ -656,7 +656,7 @@ export default function TradingCalendar() {
                 {/* Header */}
                 <div className="flex items-center justify-between gap-1 pb-1.5 mb-1.5 border-b border-slate-700/60 light:border-slate-800">
                   <span className="text-[11px] font-semibold text-slate-200">
-                    {hoveredDay.weekdayName}, {hoveredDay.day} {hoveredDay.monthName}
+                    {hoveredDay.weekdayName}, {formatDate(`${currentDate.year}-${String(currentDate.month).padStart(2, '0')}-${String(hoveredDay.day).padStart(2, '0')}`)}
                   </span>
                   <span
                     className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded-full ${
@@ -749,7 +749,7 @@ export default function TradingCalendar() {
           <div className="p-5 md:p-6 rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-sm md:text-base font-bold text-white light:text-slate-900">
-                Trades on {selectedDayNumber} {currentMonthName} {currentDate.year}
+                Trades on {formatDate(`${currentDate.year}-${String(currentDate.month).padStart(2, '0')}-${String(selectedDayNumber).padStart(2, '0')}`)}
               </h2>
               {selectedDayData.net_pnl !== 0 && (
                 <span

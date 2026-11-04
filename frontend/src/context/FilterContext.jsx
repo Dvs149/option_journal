@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
+import { formatDate } from '../utils/formatters';
 
 const FilterContext = createContext();
 
@@ -10,7 +11,11 @@ export const formatDateISO = (d) => {
 };
 
 export const formatDisplayDate = (d) => {
-  return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  if (!d) return '';
+  if (typeof d === 'string') return formatDate(d);
+  const day = String(d.getDate()).padStart(2, '0');
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
 };
 
 export const getDisplayDateRangeForFilter = (filterType, from, to) => {
@@ -51,7 +56,7 @@ export const getDisplayDateRangeForFilter = (filterType, from, to) => {
       return 'All Time';
     case 'custom':
       if (from && to) {
-        return `${formatDisplayDate(new Date(from))} - ${formatDisplayDate(new Date(to))}`;
+        return `${formatDisplayDate(from)} - ${formatDisplayDate(to)}`;
       }
       return 'Custom Range';
     default:

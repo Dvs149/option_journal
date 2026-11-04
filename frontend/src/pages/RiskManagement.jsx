@@ -812,7 +812,7 @@ export default function RiskManagement() {
                 ) : (
                   dailyRiskRows.map((row) => (
                     <tr key={row.date} className="hover:bg-[#162033]/50">
-                      <td className="py-2.5 text-slate-300 light:text-slate-700">{row.date}</td>
+                      <td className="py-2.5 text-slate-300 light:text-slate-700">{formatDate(row.date)}</td>
                       <td className="py-2.5 text-right font-mono-numbers text-slate-400">{row.trades}</td>
                       <td
                         className={`py-2.5 text-right font-mono-numbers font-bold ${

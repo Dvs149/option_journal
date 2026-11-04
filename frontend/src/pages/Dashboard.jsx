@@ -35,7 +35,7 @@ import api from '../api/client';
 import { useFilter } from '../context/FilterContext';
 import { useTheme } from '../context/ThemeContext';
 import { MainStatsCard, CompactMetricCard } from '../components/common/StatsCard';
-import { formatINR, formatCompactINR } from '../utils/formatters';
+import { formatINR, formatCompactINR, formatDate } from '../utils/formatters';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -367,7 +367,7 @@ export default function Dashboard() {
                       const isProfit = d.pnl >= 0;
                       return (
                         <div className="bg-[#162033] light:bg-white p-2.5 rounded-xl border border-[#1e293b] light:border-slate-200 shadow-xl text-xs font-mono-numbers">
-                          <p className="text-slate-400 font-sans">{d.date}</p>
+                          <p className="text-slate-400 font-sans">{formatDate(d.date)}</p>
                           <p className={`font-bold mt-1 ${isProfit ? 'text-emerald-400' : 'text-rose-400'}`}>
                             Net P&L: {formatINR(d.pnl)}
                           </p>
@@ -425,7 +425,7 @@ export default function Dashboard() {
                       const d = payload[0].payload;
                       return (
                         <div className="bg-[#162033] light:bg-white p-2.5 rounded-xl border border-[#1e293b] light:border-slate-200 shadow-xl text-xs font-mono-numbers">
-                          <p className="text-slate-400 font-sans">{d.date}</p>
+                          <p className="text-slate-400 font-sans">{formatDate(d.date)}</p>
                           <p className="text-blue-400 font-bold mt-1">
                             Cumulative: {formatINR(d.cumulative_pnl)}
                           </p>
@@ -624,7 +624,7 @@ export default function Dashboard() {
               {/* Header */}
               <div className="flex items-center justify-between gap-1 pb-1.5 mb-1.5 border-b border-slate-700/60 light:border-slate-800">
                 <span className="text-[11px] font-semibold text-slate-200">
-                  {hoveredDay.weekdayName}, {hoveredDay.day} {hoveredDay.monthName}
+                  {hoveredDay.weekdayName}, {formatDate(`${calendarMonth.year}-${String(calendarMonth.month).padStart(2, '0')}-${String(hoveredDay.day).padStart(2, '0')}`)}
                 </span>
                 <span
                   className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded-full ${
@@ -1069,7 +1069,7 @@ export default function Dashboard() {
                   {recentTrades.map((t) => (
                     <tr key={t.id} className="hover:bg-[#162033]/40 light:hover:bg-slate-50">
                       <td className="py-2 text-slate-300 light:text-slate-600 font-sans text-[11px]">
-                        {t.display_date || t.trade_date}
+                        {formatDate(t.trade_date || t.display_date)}
                       </td>
                       <td className="py-2 font-semibold text-white light:text-slate-900">
                         {t.index_name}

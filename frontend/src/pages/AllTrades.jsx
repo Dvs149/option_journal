@@ -407,12 +407,12 @@ export default function AllTrades() {
 
       const rows = list.map((t, idx) => ({
         '#': idx + 1,
-        'Date': t.trade_date,
+        'Date': formatDate(t.trade_date),
         'Index / Symbol': t.index_name,
         'Trading Type': t.trading_type || 'Intraday',
         'Option Type': t.option_type,
         'Strike Price': t.strike_price || '',
-        'Expiry Date': t.expiry_date || '',
+        'Expiry Date': t.expiry_date ? formatDate(t.expiry_date) : '',
         'Lots': t.lots || 1,
         'Quantity': t.quantity || '',
         'Entry Premium (₹)': Number(t.entry_premium || 0),

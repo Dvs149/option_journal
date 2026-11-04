@@ -74,13 +74,13 @@ class ExportService
                     foreach ($trades as $trade) {
                         fputcsv($handle, [
                             $trade->id,
-                            $trade->trade_date,
+                            $trade->trade_date ? \Carbon\Carbon::parse($trade->trade_date)->format('d M Y') : '',
                             $trade->index_name,
                             $trade->trading_type,
                             $trade->strategy_name,
                             $trade->option_type,
                             $trade->strike_price,
-                            $trade->expiry_date,
+                            $trade->expiry_date ? \Carbon\Carbon::parse($trade->expiry_date)->format('d M Y') : '',
                             $trade->entry_premium,
                             $trade->exit_premium,
                             $trade->quantity,

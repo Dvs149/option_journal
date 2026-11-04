@@ -36,7 +36,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import api from '../api/client';
-import { formatINR, formatCompactINR } from '../utils/formatters';
+import { formatINR, formatCompactINR, formatDate } from '../utils/formatters';
 import { useFilter } from '../context/FilterContext';
 
 export default function EquityCurve() {
@@ -102,7 +102,7 @@ export default function EquityCurve() {
     const list = data?.dashboard?.charts?.equity_curve;
     if (list && list.length > 0) {
       return list.map((item) => ({
-        date: item.date || item.display_date,
+        date: formatDate(item.date || item.display_date),
         capital: item.balance || item.capital || 500000,
         deposit: null,
         withdrawal: null,
@@ -282,7 +282,7 @@ export default function EquityCurve() {
           <span className="text-base font-bold text-white light:text-slate-900 font-mono-numbers block tracking-tight">
             {formatINR(stats.highest_capital)}
           </span>
-          <span className="text-[10px] text-slate-400 block">{stats.highest_capital_date}</span>
+          <span className="text-[10px] text-slate-400 block">{stats.highest_capital_date && stats.highest_capital_date !== '-' ? formatDate(stats.highest_capital_date) : '-'}</span>
         </div>
 
         {/* Max Drawdown */}
@@ -588,7 +588,7 @@ export default function EquityCurve() {
               <tbody className="divide-y divide-[#1e293b]/60 light:divide-slate-100">
                 {transactions.map((tx) => (
                   <tr key={tx.id} className="hover:bg-[#162033]/50">
-                    <td className="py-2.5 text-slate-300 light:text-slate-700">{tx.date}</td>
+                    <td className="py-2.5 text-slate-300 light:text-slate-700">{formatDate(tx.transaction_date || tx.date)}</td>
                     <td className="py-2.5">
                       <span
                         className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
@@ -705,7 +705,7 @@ export default function EquityCurve() {
               <tbody className="divide-y divide-[#1e293b]/60 light:divide-slate-100">
                 {dailyEquityRows.map((row) => (
                   <tr key={row.date} className="hover:bg-[#162033]/50">
-                    <td className="py-2.5 text-slate-300 light:text-slate-700">{row.date}</td>
+                    <td className="py-2.5 text-slate-300 light:text-slate-700">{formatDate(row.date)}</td>
                     <td className="py-2.5 text-right font-mono-numbers text-slate-400">{formatINR(row.opening)}</td>
                     <td
                       className={`py-2.5 text-right font-mono-numbers font-bold ${

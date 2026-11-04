@@ -477,7 +477,7 @@ export default function TradingJournal() {
               +{formatINR(stats.best_trade_pnl)}
             </span>
             <span className="text-[10px] text-slate-400 block mt-0.5">
-              {stats.best_trade_date}
+              {stats.best_trade_date && stats.best_trade_date !== '-' ? formatDate(stats.best_trade_date) : '-'}
             </span>
           </div>
         </div>
@@ -495,7 +495,7 @@ export default function TradingJournal() {
               {formatINR(stats.worst_trade_pnl)}
             </span>
             <span className="text-[10px] text-slate-400 block mt-0.5">
-              {stats.worst_trade_date}
+              {stats.worst_trade_date && stats.worst_trade_date !== '-' ? formatDate(stats.worst_trade_date) : '-'}
             </span>
           </div>
         </div>

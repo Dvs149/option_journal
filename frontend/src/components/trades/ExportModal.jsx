@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import api from '../../api/client';
+import { formatDate } from '../../utils/formatters';
 import { useToast } from '../../context/ToastContext';
 import { useDropdown } from '../../context/DropdownContext';
 
@@ -344,7 +345,7 @@ export default function ExportModal({
           selectedColumns.forEach((colId) => {
             switch (colId) {
               case 'date':
-                row['Date'] = t.trade_date;
+                row['Date'] = formatDate(t.trade_date);
                 break;
               case 'index_name':
                 row['Index / Symbol'] = t.index_name;
@@ -359,7 +360,7 @@ export default function ExportModal({
                 row['Strike Price'] = t.strike_price ? Number(t.strike_price) : '';
                 break;
               case 'expiry_date':
-                row['Expiry Date'] = t.expiry_date || '';
+                row['Expiry Date'] = t.expiry_date ? formatDate(t.expiry_date) : '';
                 break;
               case 'lots':
                 row['Lots'] = Number(t.lots || 1);
@@ -444,7 +445,7 @@ export default function ExportModal({
           selectedColumns.forEach((colId) => {
             switch (colId) {
               case 'date':
-                row['Date'] = d.date;
+                row['Date'] = formatDate(d.date);
                 break;
               case 'trades_count':
                 row['Total Trades'] = d.trades;

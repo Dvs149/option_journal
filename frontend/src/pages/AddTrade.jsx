@@ -17,7 +17,7 @@ import {
   Info,
 } from 'lucide-react';
 import api from '../api/client';
-import { formatINR } from '../utils/formatters';
+import { formatINR, formatDate } from '../utils/formatters';
 import { useLotSizes } from '../context/LotSizeContext';
 import { useToast } from '../context/ToastContext';
 import { useBrokerage } from '../context/BrokerageContext';
@@ -621,7 +621,7 @@ export default function AddTrade() {
           <span>Trade Details</span>
         </button>
 
-        <button
+        {/* <button
           type="button"
           onClick={() => scrollToSection('pnl_charges')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer ${
@@ -636,9 +636,9 @@ export default function AddTrade() {
         >
           <Receipt className="w-3.5 h-3.5" />
           <span>P&L & Charges</span>
-        </button>
+        </button> */}
 
-        <button
+        {/* <button
           type="button"
           onClick={() => scrollToSection('strategy_journal')}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer ${
@@ -653,7 +653,7 @@ export default function AddTrade() {
         >
           <BookOpen className="w-3.5 h-3.5" />
           <span>Strategy & Journal</span>
-        </button>
+        </button> */}
 
         <button
           type="button"
@@ -1543,7 +1543,7 @@ export default function AddTrade() {
               <div className="py-2 flex items-center justify-between text-slate-400">
                 <span>Expiry Date</span>
                 <span className="font-semibold text-white light:text-slate-900">
-                  {form.expiry_date || '-'}
+                  {form.expiry_date ? formatDate(form.expiry_date) : '-'}
                 </span>
               </div>
               <div className="py-2 flex items-center justify-between text-slate-400">
@@ -1707,7 +1707,7 @@ export default function AddTrade() {
                     {form.index_name} {form.strike_price} {form.option_type}
                   </span>
                   <span className="text-[11px] text-slate-400">
-                    {form.strategy_name} • {form.trading_type} • {form.trade_date}
+                    {form.strategy_name} • {form.trading_type} • {form.trade_date ? formatDate(form.trade_date) : '-'}
                   </span>
                 </div>
                 <div className="text-right">

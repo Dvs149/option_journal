@@ -45,14 +45,45 @@ export function formatPct(val) {
 
 export function formatDate(dateStr) {
   if (!dateStr) return '';
-  const match = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (match) {
-    const [, y, m, d] = match;
+  const str = String(dateStr).trim();
+
+  // 1. Matches YYYY-MM-DD or YYYY/MM/DD (with optional time or ISO suffix)
+  const ymdMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (ymdMatch) {
+    const [, y, m, d] = ymdMatch;
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${d} ${months[parseInt(m, 10) - 1]} ${y}`;
+    const monthNum = parseInt(m, 10);
+    if (monthNum >= 1 && monthNum <= 12) {
+      const day = String(d).padStart(2, '0');
+      return `${day} ${months[monthNum - 1]} ${y}`;
+    }
   }
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
+
+  // 2. Matches DD-MM-YYYY or DD/MM/YYYY
+  const dmyMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (dmyMatch) {
+    const [, d, m, y] = dmyMatch;
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthNum = parseInt(m, 10);
+    if (monthNum >= 1 && monthNum <= 12) {
+      const day = String(d).padStart(2, '0');
+      return `${day} ${months[monthNum - 1]} ${y}`;
+    }
+  }
+
+  // 3. Matches e.g. "3 November 2026" or "03 Nov 2026" or "31 Nov 2026"
+  const namedMatch = str.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+  if (namedMatch) {
+    const [, d, monStr, y] = namedMatch;
+    const day = String(d).padStart(2, '0');
+    const shortMon = monStr.slice(0, 3);
+    const capitalizedMon = shortMon.charAt(0).toUpperCase() + shortMon.slice(1).toLowerCase();
+    return `${day} ${capitalizedMon} ${y}`;
+  }
+
+  // 4. Fallback: Parse with Date object
+  const d = new Date(str);
+  if (isNaN(d.getTime())) return str;
   return d.toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',

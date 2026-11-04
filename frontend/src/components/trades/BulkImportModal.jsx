@@ -25,6 +25,7 @@ import { useLotSizes } from '../../context/LotSizeContext';
 import { useToast } from '../../context/ToastContext';
 import { useFilter } from '../../context/FilterContext';
 import { useNavigate } from 'react-router-dom';
+import { formatDate } from '../../utils/formatters';
 import api from '../../api/client';
 
 export default function BulkImportModal({ isOpen, onClose, onImportSuccess }) {
@@ -85,7 +86,7 @@ export default function BulkImportModal({ isOpen, onClose, onImportSuccess }) {
       .filter(Boolean)
       .sort();
     if (dates.length === 0) return '';
-    return `${dates[0]} to ${dates[dates.length - 1]}`;
+    return `${formatDate(dates[0])} to ${formatDate(dates[dates.length - 1])}`;
   }, [validRows]);
 
   // Rows to display based on tab filter
@@ -353,7 +354,7 @@ export default function BulkImportModal({ isOpen, onClose, onImportSuccess }) {
                             </span>
                           </td>
                           <td className="py-2 px-3 text-slate-300 light:text-slate-700 whitespace-nowrap text-[11px]">
-                            {tr.trade_date}
+                            {formatDate(tr.trade_date)}
                           </td>
                           <td className="py-2 px-3 font-semibold text-white light:text-slate-900 whitespace-nowrap">
                             {tr.index_name}
@@ -667,7 +668,7 @@ export default function BulkImportModal({ isOpen, onClose, onImportSuccess }) {
 
                                 {/* Trade Date */}
                                 <td className="py-2 px-3 text-slate-300 light:text-slate-700 whitespace-nowrap text-[11px]">
-                                  {tr?.trade_date || '-'}
+                                  {tr?.trade_date ? formatDate(tr.trade_date) : '-'}
                                 </td>
 
                                 {/* Index Name */}
