@@ -22,4 +22,14 @@ class OptionChainController extends Controller
 
         return response()->json($data);
     }
+
+    public function atmStrikes(Request $request): JsonResponse
+    {
+        $data = $this->optionChainService->getAtmStrikes();
+
+        return response()->json([
+            'success' => true,
+            'data' => $data,
+        ]);
+    }
 }

@@ -67,6 +67,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/calendar', [CalendarController::class, 'index']);
 
     // Real-Time Option Chain (NSE & BSE)
+    Route::get('/option-chain/atm-strikes', [OptionChainController::class, 'atmStrikes']);
     Route::get('/option-chain', [OptionChainController::class, 'index']);
 
     // Risk Management

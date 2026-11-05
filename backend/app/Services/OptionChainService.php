@@ -65,6 +65,36 @@ class OptionChainService
     ];
 
     /**
+     * Get real-time ATM strike, spot price, strike step, and upcoming expiries for all supported indices.
+     */
+    public function getAtmStrikes(): array
+    {
+        $result = [];
+        foreach ($this->indexMeta as $sym => $meta) {
+            $spotData = $this->getSpotMarketData($sym);
+            $spotPrice = (float) ($spotData['price'] ?? 24000);
+            $step = (int) ($meta['strike_step'] ?? 50);
+            $atmStrike = (int) (round($spotPrice / $step) * $step);
+            $expiries = $this->generateUpcomingExpiries($meta['expiry_day']);
+            $nearestExpiry = $expiries[0]['date'] ?? null;
+
+            $result[$sym] = [
+                'symbol' => $sym,
+                'name' => $meta['name'],
+                'exchange' => $meta['exchange'],
+                'spot_price' => $spotPrice,
+                'atm_strike' => $atmStrike,
+                'strike_step' => $step,
+                'default_lot' => $meta['default_lot'],
+                'nearest_expiry' => $nearestExpiry,
+                'expiries' => $expiries,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
      * Fetch complete Option Chain for index and selected expiry date.
      */
     public function getOptionChain(string $symbol = 'NIFTY', ?string $targetExpiry = null): array

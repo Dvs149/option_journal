@@ -19,6 +19,7 @@ import { useBrokerage } from '../../context/BrokerageContext';
 import { useDropdown } from '../../context/DropdownContext';
 import { useTheme } from '../../context/ThemeContext';
 import { formatINR } from '../../utils/formatters';
+import { getIndexAtmStrike, getIndexStrikeStep } from '../../utils/marketData';
 import OptionChainModal from './OptionChainModal';
 
 const getLegPrices = (trade) => {
@@ -782,7 +783,21 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-slate-400 font-medium">Strike Price</label>
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-slate-400 font-medium">Strike Price</label>
+                      <button
+                        type="button"
+                        onClick={() => handleEditFieldChange('strike_price', String(getIndexAtmStrike(editForm.index_name)))}
+                        className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold transition-all cursor-pointer ${
+                          String(editForm.strike_price) === String(getIndexAtmStrike(editForm.index_name))
+                            ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-[#1e293b] text-slate-400 hover:text-[#ff5722] border border-transparent'
+                        }`}
+                        title="Set to ATM Strike"
+                      >
+                        ATM: {getIndexAtmStrike(editForm.index_name)}
+                      </button>
+                    </div>
                     <button
                       type="button"
                       onClick={() => setShowOptionChainModal(true)}
@@ -795,9 +810,9 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
                   </div>
                   <input
                     type="number"
-                    step="any"
+                    step={getIndexStrikeStep(editForm.index_name)}
                     min="0"
-                    placeholder="25000"
+                    placeholder={String(getIndexAtmStrike(editForm.index_name))}
                     value={editForm.strike_price || ''}
                     onChange={(e) => handleEditFieldChange('strike_price', e.target.value)}
                     onKeyDown={blockNegativeKeys}

@@ -3401,9 +3401,9 @@ export default function AllTrades() {
                       <label className="block text-slate-400 mb-1 font-medium">Strike Price</label>
                       <input
                         type="number"
-                        step="50"
+                        step="any"
                         min="0"
-                        placeholder="25000"
+                        placeholder="ATM Strike"
                         value={editForm.strike_price || ''}
                         onChange={(e) => handleAllTradesEditFieldChange('strike_price', e.target.value)}
                         onKeyDown={blockNegativeKeys}

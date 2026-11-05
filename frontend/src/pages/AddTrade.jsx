@@ -30,6 +30,12 @@ import { useTheme } from '../context/ThemeContext';
 import BulkImportModal from '../components/trades/BulkImportModal';
 import ImageOrderImportModal from '../components/trades/ImageOrderImportModal';
 import OptionChainModal from '../components/trades/OptionChainModal';
+import {
+  DEFAULT_INDEX_CONFIG,
+  getIndexAtmStrike,
+  getIndexStrikeStep,
+  getIndexNearestExpiry,
+} from '../utils/marketData';
 
 export default function AddTrade() {
   const navigate = useNavigate();
@@ -164,13 +170,16 @@ export default function AddTrade() {
     }
   };
 
-  // Form State
+  // Live ATM Strikes and Expiries from NSE/BSE
+  const [atmStrikesData, setAtmStrikesData] = useState({});
+
+  // Form State - defaults to ATM strike of initial index (NIFTY)
   const [form, setForm] = useState({
     trade_date: new Date().toISOString().split('T')[0],
     index_name: 'NIFTY',
     trading_type: 'Intraday',
     option_type: 'CE',
-    strike_price: '25000',
+    strike_price: String(getIndexAtmStrike('NIFTY')),
     expiry_date: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0],
     // Both Option Type (CE + PE) leg prices
     ce_entry_price: '',
@@ -206,9 +215,52 @@ export default function AddTrade() {
     personal_notes: 'N/A',
   });
 
+  // Fetch live ATM strikes and upcoming expiries across all indices on mount
+  useEffect(() => {
+    let isMounted = true;
+    api.get('/option-chain/atm-strikes')
+      .then((res) => {
+        if (!isMounted) return;
+        const map = res.data?.data || res.data;
+        if (map && typeof map === 'object') {
+          setAtmStrikesData(map);
+          const curIdx = form.index_name || 'NIFTY';
+          const liveAtm = map[curIdx]?.atm_strike;
+          if (liveAtm) {
+            setForm((prev) => {
+              const prevClean = prev.strike_price ? String(prev.strike_price) : '';
+              const fallbackAtm = String(DEFAULT_INDEX_CONFIG[curIdx]?.atm_strike || '24350');
+              if (!prevClean || prevClean === '25000' || prevClean === fallbackAtm) {
+                return {
+                  ...prev,
+                  strike_price: String(liveAtm),
+                  expiry_date: map[curIdx]?.nearest_expiry || prev.expiry_date,
+                };
+              }
+              return prev;
+            });
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn('Could not fetch live ATM strikes, using fallback index ATM strikes', err);
+      });
+    return () => { isMounted = false; };
+  }, []);
+
   const { getLotSize, calculateQuantity, calculateLots, lotSizes } = useLotSizes();
 
   const currentLotSize = getLotSize(form.index_name);
+
+  const currentAtmStrike = useMemo(
+    () => getIndexAtmStrike(form.index_name, atmStrikesData),
+    [form.index_name, atmStrikesData]
+  );
+
+  const currentStrikeStep = useMemo(
+    () => getIndexStrikeStep(form.index_name, atmStrikesData),
+    [form.index_name, atmStrikesData]
+  );
 
   // Sync quantity automatically whenever index or lots or dynamic lot size changes
   useEffect(() => {
@@ -219,15 +271,20 @@ export default function AddTrade() {
     }));
   }, [form.index_name, currentLotSize]);
 
-  // Handle Index Change
+  // Handle Index Change - automatically switches to ATM strike of newly selected index
   const handleIndexChange = (e) => {
     const newIndex = e.target.value;
     const lotSize = getLotSize(newIndex);
     const currentLots = parseInt(form.lots, 10) || 1;
+    const newAtm = getIndexAtmStrike(newIndex, atmStrikesData);
+    const nearestExp = getIndexNearestExpiry(newIndex, atmStrikesData);
+
     setForm((prev) => ({
       ...prev,
       index_name: newIndex,
+      strike_price: newAtm ? String(newAtm) : prev.strike_price,
       quantity: (currentLots * lotSize).toString(),
+      ...(nearestExp ? { expiry_date: nearestExp } : {}),
     }));
   };
 
@@ -557,13 +614,16 @@ export default function AddTrade() {
 
   // Reset form
   const handleReset = () => {
+    const defaultAtm = getIndexAtmStrike('NIFTY', atmStrikesData);
+    const defaultExp = getIndexNearestExpiry('NIFTY', atmStrikesData) || new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+
     setForm({
       trade_date: new Date().toISOString().split('T')[0],
       index_name: 'NIFTY',
       trading_type: 'Intraday',
       option_type: 'CE',
-      strike_price: '',
-      expiry_date: '',
+      strike_price: defaultAtm ? String(defaultAtm) : '',
+      expiry_date: defaultExp,
       ce_entry_price: '',
       pe_entry_price: '',
       ce_exit_price: '',
@@ -706,10 +766,12 @@ export default function AddTrade() {
       setSuccessMessage('Trade successfully saved and recorded in journal!');
 
       if (keepOpen) {
+        const curIdx = form.index_name || 'NIFTY';
+        const defaultAtm = getIndexAtmStrike(curIdx, atmStrikesData);
         // Reset premiums and strike price for next trade, keep index & date
         setForm((prev) => ({
           ...prev,
-          strike_price: '',
+          strike_price: defaultAtm ? String(defaultAtm) : '',
           ce_entry_price: '',
           pe_entry_price: '',
           ce_exit_price: '',
@@ -1073,9 +1135,25 @@ export default function AddTrade() {
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-slate-400 font-medium">
-                      Strike Price
-                    </label>
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-slate-400 font-medium">
+                        Strike Price
+                      </label>
+                      {currentAtmStrike && (
+                        <button
+                          type="button"
+                          onClick={() => setForm((prev) => ({ ...prev, strike_price: String(currentAtmStrike) }))}
+                          className={`text-[10px] px-1.5 py-0.5 rounded font-mono font-bold transition-all cursor-pointer ${
+                            String(form.strike_price) === String(currentAtmStrike)
+                              ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                              : 'bg-[#1e293b] text-slate-400 hover:text-[#ff5722] hover:border-[#ff5722]/50 border border-transparent'
+                          }`}
+                          title={`Click to set ATM Strike (${currentAtmStrike})`}
+                        >
+                          ATM: {currentAtmStrike}
+                        </button>
+                      )}
+                    </div>
                     <button
                       type="button"
                       onClick={() => setShowOptionChainModal(true)}
@@ -1088,9 +1166,9 @@ export default function AddTrade() {
                   </div>
                   <input
                     type="number"
-                    step="50"
+                    step={currentStrikeStep}
                     min="0"
-                    placeholder="25000"
+                    placeholder={currentAtmStrike ? String(currentAtmStrike) : "ATM Strike"}
                     name="strike_price"
                     value={form.strike_price}
                     onChange={handleChange}
