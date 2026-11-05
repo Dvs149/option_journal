@@ -731,10 +731,12 @@ class TradeController extends Controller
         }
 
         $ids = $query->pluck('id');
+        $totalNetPnl = (float) $query->sum('net_pnl');
 
         return response()->json([
             'ids' => $ids,
             'count' => count($ids),
+            'total_net_pnl' => round($totalNetPnl, 2),
         ]);
     }
 

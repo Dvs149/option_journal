@@ -273,7 +273,52 @@ export default function AllTrades() {
   // Reset selection when primary search/filters change (preserves across page changes)
   useEffect(() => {
     setSelectedRowIds(new Set());
+    setAllPagesTotalNetPnl(null);
   }, [selectedIndex, selectedTradingType, selectedOption, selectedStrategy, search]);
+
+  // Cache known trades to compute P&L even when switching pages
+  const [knownTradesMap, setKnownTradesMap] = useState(new Map());
+  const [allPagesTotalNetPnl, setAllPagesTotalNetPnl] = useState(null);
+
+  useEffect(() => {
+    if (!trades || trades.length === 0) return;
+    setKnownTradesMap((prev) => {
+      const next = new Map(prev);
+      trades.forEach((t) => next.set(t.id, t));
+      return next;
+    });
+  }, [trades]);
+
+  useEffect(() => {
+    if (selectedRowIds.size === 0) {
+      setAllPagesTotalNetPnl(null);
+    }
+  }, [selectedRowIds.size]);
+
+  // Total Net P&L of currently selected trades
+  const selectedTotalNetPnl = useMemo(() => {
+    if (!selectedRowIds || selectedRowIds.size === 0) return 0;
+    if (allPagesTotalNetPnl !== null && selectedRowIds.size === pagination.total) {
+      return allPagesTotalNetPnl;
+    }
+    let sum = 0;
+    selectedRowIds.forEach((id) => {
+      const t = knownTradesMap.get(id) || trades.find((x) => x.id === id);
+      if (t) {
+        if (t.status === 'OPEN') {
+          const net = parseFloat(t.net_pnl);
+          if (!isNaN(net) && net !== 0) {
+            sum += net;
+          } else {
+            sum -= Math.abs(parseFloat(t.total_charges) || 0);
+          }
+        } else {
+          sum += parseFloat(t.net_pnl) || 0;
+        }
+      }
+    });
+    return Math.round(sum * 100) / 100;
+  }, [selectedRowIds, knownTradesMap, trades, allPagesTotalNetPnl, pagination.total]);
 
   // Selected IDs specifically on the current page
   const selectedOnCurrentPageCount = useMemo(() => {
@@ -378,6 +423,9 @@ export default function AllTrades() {
         },
       });
       const ids = res.data?.ids || [];
+      if (res.data?.total_net_pnl !== undefined) {
+        setAllPagesTotalNetPnl(parseFloat(res.data.total_net_pnl) || 0);
+      }
       setSelectedRowIds(new Set(ids));
       setFeedbackMessage(`Selected all ${ids.length} trade(s) across all pages.`);
     } catch (err) {
@@ -1775,7 +1823,24 @@ export default function AllTrades() {
                   </button>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
+                {/* Total Net P&L Badge */}
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs">
+                  <span className="text-slate-400 font-sans text-[11px]">Net P&L:</span>
+                  <span
+                    className={`font-mono font-bold text-xs ${
+                      selectedTotalNetPnl > 0
+                        ? 'text-emerald-400'
+                        : selectedTotalNetPnl < 0
+                        ? 'text-rose-400'
+                        : 'text-slate-300 light:text-slate-700'
+                    }`}
+                  >
+                    {selectedTotalNetPnl > 0 ? '+' : ''}
+                    {formatINR(selectedTotalNetPnl, Math.abs(selectedTotalNetPnl % 1) > 0.001)}
+                  </span>
+                </div>
+
                 <button
                   type="button"
                   onClick={() => setSelectedRowIds(new Set())}
@@ -3206,17 +3271,35 @@ export default function AllTrades() {
               Selected
             </span>
           </div>
+
+          {/* Total Net P&L Badge */}
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0e1626]/80 light:bg-slate-100 border border-[#1e293b] light:border-slate-200">
+            <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap">Total Net P&L:</span>
+            <span
+              className={`font-mono font-bold text-xs whitespace-nowrap ${
+                selectedTotalNetPnl > 0
+                  ? 'text-emerald-400'
+                  : selectedTotalNetPnl < 0
+                  ? 'text-rose-400'
+                  : 'text-slate-300 light:text-slate-700'
+              }`}
+            >
+              {selectedTotalNetPnl > 0 ? '+' : ''}
+              {formatINR(selectedTotalNetPnl, Math.abs(selectedTotalNetPnl % 1) > 0.001)}
+            </span>
+          </div>
+
           <button
             type="button"
             onClick={() => setSelectedRowIds(new Set())}
-            className="text-slate-400 hover:text-white light:text-slate-500 light:hover:text-slate-900 text-xs font-medium px-2 py-1"
+            className="text-slate-400 hover:text-white light:text-slate-500 light:hover:text-slate-900 text-xs font-medium px-2 py-1 transition-colors cursor-pointer"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={() => setShowBulkDeleteModal(true)}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-all shadow-md active:scale-95"
+            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap"
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span>Delete ({selectedRowIds.size})</span>
