@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Calendar,
   Upload,
+  Camera,
   Image as ImageIcon,
   ChevronRight,
   Sparkles,
@@ -26,6 +27,7 @@ import { useBrokerage } from '../context/BrokerageContext';
 import { useDropdown } from '../context/DropdownContext';
 import { useTheme } from '../context/ThemeContext';
 import BulkImportModal from '../components/trades/BulkImportModal';
+import ImageOrderImportModal from '../components/trades/ImageOrderImportModal';
 
 export default function AddTrade() {
   const navigate = useNavigate();
@@ -46,12 +48,68 @@ export default function AddTrade() {
   const [tradeMode, setTradeMode] = useState('CLOSED');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
+  const [showImageOrderModal, setShowImageOrderModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { showToast } = useToast();
   const setSuccessMessage = (msg) => { if (msg) showToast(msg, 'success'); };
   const setErrorMessage = (msg) => { if (msg) showToast(msg, 'error'); };
   const [selectedScreenshots, setSelectedScreenshots] = useState([]);
   const [viewingLightboxUrl, setViewingLightboxUrl] = useState(null);
+
+  // Apply parsed order(s) from screenshot modal directly into AddTrade form
+  const handleApplyOrdersToForm = (selectedOrders) => {
+    if (!selectedOrders || selectedOrders.length === 0) return;
+
+    const buys = selectedOrders.filter((o) => o.type === 'BUY');
+    const sells = selectedOrders.filter((o) => o.type === 'SELL');
+
+    if (buys.length > 0 && sells.length > 0) {
+      const buy = buys[0];
+      const sell = sells[0];
+      setTradeMode('CLOSED');
+      setForm((prev) => ({
+        ...prev,
+        trade_date: buy.trade_date || prev.trade_date,
+        index_name: buy.index_name || prev.index_name,
+        strike_price: String(buy.strike_price || prev.strike_price),
+        option_type: buy.option_type || prev.option_type,
+        expiry_date: buy.expiry_date || prev.expiry_date,
+        quantity: String(buy.quantity || prev.quantity),
+        lots: String(buy.lots || prev.lots),
+        entry_premium: String(buy.price || prev.entry_premium),
+        exit_premium: String(sell.price || prev.exit_premium),
+      }));
+    } else {
+      const ord = selectedOrders[0];
+      const isBuy = ord.type === 'BUY';
+      if (isBuy) {
+        setTradeMode('OPEN');
+        setForm((prev) => ({
+          ...prev,
+          trade_date: ord.trade_date || prev.trade_date,
+          index_name: ord.index_name || prev.index_name,
+          strike_price: String(ord.strike_price || prev.strike_price),
+          option_type: ord.option_type || prev.option_type,
+          expiry_date: ord.expiry_date || prev.expiry_date,
+          quantity: String(ord.quantity || prev.quantity),
+          lots: String(ord.lots || prev.lots),
+          entry_premium: String(ord.price || prev.entry_premium),
+          exit_premium: '',
+        }));
+      } else {
+        setForm((prev) => ({
+          ...prev,
+          index_name: ord.index_name || prev.index_name,
+          strike_price: String(ord.strike_price || prev.strike_price),
+          option_type: ord.option_type || prev.option_type,
+          expiry_date: ord.expiry_date || prev.expiry_date,
+          quantity: String(ord.quantity || prev.quantity),
+          lots: String(ord.lots || prev.lots),
+          exit_premium: String(ord.price || prev.exit_premium),
+        }));
+      }
+    }
+  };
 
   // Form State
   const [form, setForm] = useState({
@@ -695,6 +753,20 @@ export default function AddTrade() {
         >
           <Eye className="w-3.5 h-3.5" />
           <span>Preview</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setShowImageOrderModal(true)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            isKite
+              ? 'text-cyan-400 border border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/10'
+              : 'text-cyan-400 hover:text-cyan-300 hover:bg-cyan-600/10 border border-cyan-500/30 bg-cyan-500/5 shadow-sm'
+          }`}
+          title="Import executed orders from order book screenshot (Zerodha Kite, Groww, etc.)"
+        >
+          <Camera className="w-3.5 h-3.5 text-cyan-400" />
+          <span>Image Orders</span>
         </button>
 
         <button
@@ -1890,6 +1962,16 @@ export default function AddTrade() {
         onImportSuccess={() => {
           // Keep modal open on the Success Results screen so user can review imported entries
         }}
+      />
+
+      {/* Image Order Import Modal */}
+      <ImageOrderImportModal
+        isOpen={showImageOrderModal}
+        onClose={() => setShowImageOrderModal(false)}
+        onImportSuccess={() => {
+          navigate('/all-trades');
+        }}
+        onApplyToForm={handleApplyOrdersToForm}
       />
 
       {/* Lightbox Modal for enlarged view */}

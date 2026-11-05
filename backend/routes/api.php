@@ -48,6 +48,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/trades/all-ids', [TradeController::class, 'allIds']);
     Route::post('/trades/bulk-delete', [TradeController::class, 'bulkDestroy']);
     Route::post('/trades/bulk-import', [TradeController::class, 'bulkImport']);
+    Route::post('/trades/parse-screenshot', [TradeController::class, 'parseScreenshot']);
+    Route::post('/trades/import-screenshot-orders', [TradeController::class, 'importScreenshotOrders']);
     Route::post('/trades/reset-all-data', [TradeController::class, 'resetAllData']);
     Route::post('/trades/estimate-charges', [TradeController::class, 'estimateCharges']);
     Route::post('/trades/{trade}/duplicate', [TradeController::class, 'duplicate']);

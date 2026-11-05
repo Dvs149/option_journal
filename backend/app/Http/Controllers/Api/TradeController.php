@@ -18,7 +18,8 @@ use Illuminate\Support\Facades\Storage;
 class TradeController extends Controller
 {
     public function __construct(
-        protected TradingCalculationService $calcService
+        protected TradingCalculationService $calcService,
+        protected \App\Services\OrderScreenshotParserService $screenshotParserService
     ) {}
 
     public function index(Request $request): JsonResponse
@@ -1377,6 +1378,54 @@ class TradeController extends Controller
     {
         if ($trade->user_id !== $user->id) {
             abort(403, 'Unauthorized access to trade record.');
+        }
+    }
+
+    public function parseScreenshot(Request $request): JsonResponse
+    {
+        $request->validate([
+            'screenshot' => 'required|file|image|max:10240',
+        ]);
+
+        try {
+            $result = $this->screenshotParserService->parseScreenshot(
+                $request->file('screenshot'),
+                $request->user()
+            );
+
+            return response()->json($result);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to parse screenshot: ' . $e->getMessage(),
+            ], 422);
+        }
+    }
+
+    public function importScreenshotOrders(Request $request): JsonResponse
+    {
+        $request->validate([
+            'orders' => 'required|array|min:1',
+            'trade_date' => 'required|date',
+            'import_mode' => 'nullable|string|in:smart,individual',
+            'trading_account_id' => 'nullable|integer',
+        ]);
+
+        try {
+            $result = $this->screenshotParserService->importOrders(
+                $request->user(),
+                $request->input('orders'),
+                $request->input('trade_date'),
+                $request->input('trading_account_id'),
+                $request->input('import_mode', 'smart')
+            );
+
+            return response()->json($result);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to import orders: ' . $e->getMessage(),
+            ], 422);
         }
     }
 }

@@ -32,6 +32,7 @@ import {
   Image as ImageIcon,
   RotateCw,
   Upload,
+  Camera,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -52,6 +53,7 @@ import { useBrokerage } from '../context/BrokerageContext';
 import { useDropdown } from '../context/DropdownContext';
 import { useTheme } from '../context/ThemeContext';
 import BulkImportModal from '../components/trades/BulkImportModal';
+import ImageOrderImportModal from '../components/trades/ImageOrderImportModal';
 import ExportModal from '../components/trades/ExportModal';
 import PartialExitModal from '../components/trades/PartialExitModal';
 import EditOrderModal from '../components/trades/EditOrderModal';
@@ -132,6 +134,7 @@ export default function AllTrades() {
   const [selectedRowIds, setSelectedRowIds] = useState(new Set());
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
+  const [showImageOrderModal, setShowImageOrderModal] = useState(false);
   const [deletingBulk, setDeletingBulk] = useState(false);
   const selectAllRef = useRef(null);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -1593,6 +1596,16 @@ export default function AllTrades() {
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Trade</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowImageOrderModal(true)}
+              className="px-3.5 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-cyan-500/30 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-600/10 text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer shadow-sm"
+              title="Import executed orders from order book screenshot (Zerodha Kite, Groww, etc.)"
+            >
+              <Camera className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Image Orders</span>
             </button>
 
             <button
@@ -4121,6 +4134,16 @@ export default function AllTrades() {
       <BulkImportModal
         isOpen={showBulkImportModal}
         onClose={() => setShowBulkImportModal(false)}
+        onImportSuccess={() => {
+          fetchTrades();
+          fetchStats();
+        }}
+      />
+
+      {/* Image Order Import Modal */}
+      <ImageOrderImportModal
+        isOpen={showImageOrderModal}
+        onClose={() => setShowImageOrderModal(false)}
         onImportSuccess={() => {
           fetchTrades();
           fetchStats();
