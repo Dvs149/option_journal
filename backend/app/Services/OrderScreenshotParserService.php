@@ -137,20 +137,21 @@ class OrderScreenshotParserService
             $expiryDate = $this->resolveExpiryDate($expDay, $expMon);
 
             // Extract Quantity (e.g., 845 / 845 or 340 / 340)
-            preg_match("/(\d+)\s*\/\s*(\d+)/", $lineText, $qm);
-            $quantity = isset($qm[1]) ? (int)$qm[1] : 0;
+            preg_match("/-?(\d+)\s*\/\s*(\d+)/", $lineText, $qm);
+            $quantity = isset($qm[1]) ? abs((int)$qm[1]) : 0;
             if ($quantity <= 0) {
                 // Fallback: look for integer preceded or followed by product
-                preg_match("/\b(\d{2,6})\b/", $lineText, $anyIntM);
-                $quantity = isset($anyIntM[1]) ? (int)$anyIntM[1] : 1;
+                preg_match("/\b-?(\d{2,6})\b/", $lineText, $anyIntM);
+                $quantity = isset($anyIntM[1]) ? abs((int)$anyIntM[1]) : 1;
             }
+            $quantity = max(1, $quantity);
 
             // Extract Price (e.g., 152.40, 466.00)
             preg_match("/\b(\d{1,6}\.\d{2})\b/", $lineText, $pm);
-            $price = isset($pm[1]) ? (float)$pm[1] : 0.0;
+            $price = isset($pm[1]) ? abs((float)$pm[1]) : 0.0;
             if ($price <= 0.0) {
                 preg_match("/\b(\d{1,6}\.\d{1})\b/", $lineText, $pm1);
-                $price = isset($pm1[1]) ? (float)$pm1[1] : 0.0;
+                $price = isset($pm1[1]) ? abs((float)$pm1[1]) : 0.0;
             }
 
             // Extract Product (NRML, MIS, CNC)
@@ -314,11 +315,11 @@ class OrderScreenshotParserService
         $strike = $buy['strike_price'] ?? null;
         $optType = strtoupper($buy['option_type'] ?? 'CE');
         $expiryDate = $buy['expiry_date'] ?? null;
-        $quantity = min((int)($buy['quantity'] ?? 1), (int)($sell['quantity'] ?? 1));
-        $lots = max(1, (int)($buy['lots'] ?? 1));
+        $quantity = max(1, min(abs((int)($buy['quantity'] ?? 1)), abs((int)($sell['quantity'] ?? 1))));
+        $lots = max(1, abs((int)($buy['lots'] ?? 1)));
 
-        $buyPrice = (float)($buy['price'] ?? 0);
-        $sellPrice = (float)($sell['price'] ?? 0);
+        $buyPrice = max(0.0, abs((float)($buy['price'] ?? 0)));
+        $sellPrice = max(0.0, abs((float)($sell['price'] ?? 0)));
 
         // Determine which order was executed first based on time
         $buyTime = $buy['time'] ?? '09:30:00';
@@ -447,9 +448,9 @@ class OrderScreenshotParserService
         $strike = $ord['strike_price'] ?? null;
         $optType = strtoupper($ord['option_type'] ?? 'CE');
         $expiryDate = $ord['expiry_date'] ?? null;
-        $quantity = (int)($ord['quantity'] ?? 1);
-        $lots = max(1, (int)($ord['lots'] ?? 1));
-        $price = (float)($ord['price'] ?? 0);
+        $quantity = max(1, abs((int)($ord['quantity'] ?? 1)));
+        $lots = max(1, abs((int)($ord['lots'] ?? 1)));
+        $price = max(0.0, abs((float)($ord['price'] ?? 0)));
         $type = strtoupper($ord['type'] ?? 'BUY');
         $orderTime = $ord['time'] ?? '09:30:00';
 

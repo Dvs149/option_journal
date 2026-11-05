@@ -12,6 +12,7 @@ import {
   Calendar,
   Upload,
   Camera,
+  Layers,
   Image as ImageIcon,
   ChevronRight,
   Sparkles,
@@ -28,6 +29,7 @@ import { useDropdown } from '../context/DropdownContext';
 import { useTheme } from '../context/ThemeContext';
 import BulkImportModal from '../components/trades/BulkImportModal';
 import ImageOrderImportModal from '../components/trades/ImageOrderImportModal';
+import OptionChainModal from '../components/trades/OptionChainModal';
 
 export default function AddTrade() {
   const navigate = useNavigate();
@@ -49,12 +51,50 @@ export default function AddTrade() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [showImageOrderModal, setShowImageOrderModal] = useState(false);
+  const [showOptionChainModal, setShowOptionChainModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { showToast } = useToast();
   const setSuccessMessage = (msg) => { if (msg) showToast(msg, 'success'); };
   const setErrorMessage = (msg) => { if (msg) showToast(msg, 'error'); };
   const [selectedScreenshots, setSelectedScreenshots] = useState([]);
   const [viewingLightboxUrl, setViewingLightboxUrl] = useState(null);
+
+  // Auto-fill form from Option Chain selection
+  const handleSelectOptionFromChain = (opt) => {
+    if (!opt) return;
+    const lotSz = getLotSize(opt.index_name) || opt.lot_size || 50;
+    const lotsNum = Math.max(1, parseInt(form.lots, 10) || 1);
+    const calculatedQty = lotsNum * lotSz;
+    const isBoth = opt.option_type === 'Both';
+
+    setForm((prev) => {
+      const cePrice = opt.ce_price != null ? String(opt.ce_price) : (opt.option_type === 'CE' ? String(opt.price) : '');
+      const pePrice = opt.pe_price != null ? String(opt.pe_price) : (opt.option_type === 'PE' ? String(opt.price) : '');
+      const totalEntry = isBoth
+        ? String(((Number(opt.ce_price) || 0) + (Number(opt.pe_price) || 0)).toFixed(2))
+        : (opt.price > 0 ? String(opt.price) : prev.entry_premium);
+
+      return {
+        ...prev,
+        index_name: opt.index_name || prev.index_name,
+        strike_price: String(opt.strike_price || prev.strike_price),
+        option_type: opt.option_type || prev.option_type,
+        expiry_date: opt.expiry_date || prev.expiry_date,
+        entry_premium: totalEntry,
+        ce_entry_price: isBoth ? cePrice : (opt.option_type === 'CE' ? cePrice : ''),
+        pe_entry_price: isBoth ? pePrice : (opt.option_type === 'PE' ? pePrice : ''),
+        strategy_name: isBoth && (!prev.strategy_name || prev.strategy_name === 'ALL') ? 'Long Straddle' : prev.strategy_name,
+        quantity: String(calculatedQty),
+        lots: String(lotsNum),
+      };
+    });
+  };
+
+  const blockNegativeKeys = (e) => {
+    if (e.key === '-' || e.key === 'Minus' || e.key === 'e' || e.key === 'E' || e.key === '+') {
+      e.preventDefault();
+    }
+  };
 
   // Apply parsed order(s) from screenshot modal directly into AddTrade form
   const handleApplyOrdersToForm = (selectedOrders) => {
@@ -67,45 +107,58 @@ export default function AddTrade() {
       const buy = buys[0];
       const sell = sells[0];
       setTradeMode('CLOSED');
+      const buyQty = Math.max(1, Math.abs(parseInt(buy.quantity, 10) || 1));
+      const sellQty = Math.max(1, Math.abs(parseInt(sell.quantity, 10) || 1));
+      const cleanQty = Math.min(buyQty, sellQty);
+      const cleanLots = Math.max(1, Math.abs(parseInt(buy.lots, 10) || parseInt(sell.lots, 10) || Math.round(cleanQty / currentLotSize) || 1));
+      const buyPrice = Math.max(0, Math.abs(parseFloat(buy.price) || 0));
+      const sellPrice = Math.max(0, Math.abs(parseFloat(sell.price) || 0));
+      const cleanStrike = Math.max(0, Math.abs(parseFloat(buy.strike_price || sell.strike_price || form.strike_price) || 0));
+
       setForm((prev) => ({
         ...prev,
         trade_date: buy.trade_date || prev.trade_date,
         index_name: buy.index_name || prev.index_name,
-        strike_price: String(buy.strike_price || prev.strike_price),
+        strike_price: String(cleanStrike),
         option_type: buy.option_type || prev.option_type,
         expiry_date: buy.expiry_date || prev.expiry_date,
-        quantity: String(buy.quantity || prev.quantity),
-        lots: String(buy.lots || prev.lots),
-        entry_premium: String(buy.price || prev.entry_premium),
-        exit_premium: String(sell.price || prev.exit_premium),
+        quantity: String(cleanQty),
+        lots: String(cleanLots),
+        entry_premium: String(buyPrice),
+        exit_premium: String(sellPrice),
       }));
     } else {
       const ord = selectedOrders[0];
       const isBuy = ord.type === 'BUY';
+      const cleanQty = Math.max(1, Math.abs(parseInt(ord.quantity, 10) || 1));
+      const cleanLots = Math.max(1, Math.abs(parseInt(ord.lots, 10) || Math.round(cleanQty / currentLotSize) || 1));
+      const cleanPrice = Math.max(0, Math.abs(parseFloat(ord.price) || 0));
+      const cleanStrike = Math.max(0, Math.abs(parseFloat(ord.strike_price || form.strike_price) || 0));
+
       if (isBuy) {
         setTradeMode('OPEN');
         setForm((prev) => ({
           ...prev,
           trade_date: ord.trade_date || prev.trade_date,
           index_name: ord.index_name || prev.index_name,
-          strike_price: String(ord.strike_price || prev.strike_price),
+          strike_price: String(cleanStrike),
           option_type: ord.option_type || prev.option_type,
           expiry_date: ord.expiry_date || prev.expiry_date,
-          quantity: String(ord.quantity || prev.quantity),
-          lots: String(ord.lots || prev.lots),
-          entry_premium: String(ord.price || prev.entry_premium),
+          quantity: String(cleanQty),
+          lots: String(cleanLots),
+          entry_premium: String(cleanPrice),
           exit_premium: '',
         }));
       } else {
         setForm((prev) => ({
           ...prev,
           index_name: ord.index_name || prev.index_name,
-          strike_price: String(ord.strike_price || prev.strike_price),
+          strike_price: String(cleanStrike),
           option_type: ord.option_type || prev.option_type,
           expiry_date: ord.expiry_date || prev.expiry_date,
-          quantity: String(ord.quantity || prev.quantity),
-          lots: String(ord.lots || prev.lots),
-          exit_premium: String(ord.price || prev.exit_premium),
+          quantity: String(cleanQty),
+          lots: String(cleanLots),
+          exit_premium: String(cleanPrice),
         }));
       }
     }
@@ -180,48 +233,93 @@ export default function AddTrade() {
 
   // Handle Lots Change - automatically calculates Quantity
   const handleLotsChange = (e) => {
-    const val = e.target.value;
-    const numLots = parseInt(val, 10) || 0;
+    let raw = e.target.value.replace(/[^0-9]/g, '');
+    if (raw === '') {
+      setForm((prev) => ({
+        ...prev,
+        lots: '',
+        quantity: '0',
+      }));
+      return;
+    }
+    const numLots = Math.max(1, Math.abs(parseInt(raw, 10) || 1));
     setForm((prev) => ({
       ...prev,
-      lots: val,
+      lots: numLots.toString(),
       quantity: (numLots * currentLotSize).toString(),
     }));
   };
 
   // Handle Quantity Change - automatically calculates Lots
   const handleQuantityChange = (e) => {
-    const val = e.target.value;
-    const numQty = parseInt(val, 10) || 0;
+    let raw = e.target.value.replace(/[^0-9]/g, '');
+    if (raw === '') {
+      setForm((prev) => ({
+        ...prev,
+        quantity: '',
+        lots: '1',
+      }));
+      return;
+    }
+    const numQty = Math.max(1, Math.abs(parseInt(raw, 10) || 1));
     const calcLots = Math.max(1, Math.round(numQty / currentLotSize));
     setForm((prev) => ({
       ...prev,
-      quantity: val,
+      quantity: numQty.toString(),
       lots: calcLots.toString(),
     }));
   };
 
+  const nonNegativeNumericFields = [
+    'strike_price',
+    'entry_premium',
+    'exit_premium',
+    'gross_profit',
+    'gross_loss',
+    'total_charges',
+    'brokerage',
+    'stt',
+    'exchange_charges',
+    'gst',
+    'sebi_charges',
+    'stamp_duty',
+    'other_charges',
+    'ce_entry_price',
+    'pe_entry_price',
+    'ce_exit_price',
+    'pe_exit_price',
+  ];
+
   // Generic Field Change
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    let cleanValue = value;
+    if (nonNegativeNumericFields.includes(name)) {
+      cleanValue = value.replace(/-/g, '').replace(/[^0-9.]/g, '');
+      const parts = cleanValue.split('.');
+      if (parts.length > 2) {
+        cleanValue = parts[0] + '.' + parts.slice(1).join('');
+      }
+    }
+    setForm((prev) => ({ ...prev, [name]: cleanValue }));
   };
 
   // Both Option Type (CE & PE) Prices Change
   const handleBothPricesChange = (e) => {
     const { name, value } = e.target;
+    const cleanVal = value.replace(/-/g, '').replace(/[^0-9.]/g, '');
     setForm((prev) => {
-      const next = { ...prev, [name]: value };
+      const next = { ...prev, [name]: cleanVal };
 
       if (name === 'ce_entry_price' || name === 'pe_entry_price') {
-        const ce = parseFloat(name === 'ce_entry_price' ? value : next.ce_entry_price) || 0;
-        const pe = parseFloat(name === 'pe_entry_price' ? value : next.pe_entry_price) || 0;
+        const ce = Math.max(0, parseFloat(name === 'ce_entry_price' ? cleanVal : next.ce_entry_price) || 0);
+        const pe = Math.max(0, parseFloat(name === 'pe_entry_price' ? cleanVal : next.pe_entry_price) || 0);
         next.entry_premium = (ce + pe).toFixed(2);
       }
 
       if (name === 'ce_exit_price' || name === 'pe_exit_price') {
-        const ce = parseFloat(name === 'ce_exit_price' ? value : next.ce_exit_price) || 0;
-        const pe = parseFloat(name === 'pe_exit_price' ? value : next.pe_exit_price) || 0;
+        const ce = Math.max(0, parseFloat(name === 'ce_exit_price' ? cleanVal : next.ce_exit_price) || 0);
+        const pe = Math.max(0, parseFloat(name === 'pe_exit_price' ? cleanVal : next.pe_exit_price) || 0);
         next.exit_premium = (ce + pe).toFixed(2);
       }
 
@@ -336,26 +434,26 @@ export default function AddTrade() {
   // Gross Profit & Gross Loss calculation
   const computedGrossProfit = useMemo(() => {
     if (tradeMode === 'OPEN') return '0.00';
-    const entry = parseFloat(form.entry_premium) || 0;
-    const exit = parseFloat(form.exit_premium) || 0;
-    const qty = parseFloat(form.quantity) || 0;
+    const entry = Math.max(0, parseFloat(form.entry_premium) || 0);
+    const exit = Math.max(0, parseFloat(form.exit_premium) || 0);
+    const qty = Math.max(0, parseFloat(form.quantity) || 0);
     if (entry > 0 && exit > 0 && qty > 0) {
       const diff = (exit - entry) * qty;
       return diff > 0 ? diff.toFixed(2) : '0.00';
     }
-    return parseFloat(form.gross_profit || 0).toFixed(2);
+    return Math.max(0, parseFloat(form.gross_profit || 0)).toFixed(2);
   }, [tradeMode, form.entry_premium, form.exit_premium, form.quantity, form.gross_profit]);
 
   const computedGrossLoss = useMemo(() => {
     if (tradeMode === 'OPEN') return '0.00';
-    const entry = parseFloat(form.entry_premium) || 0;
-    const exit = parseFloat(form.exit_premium) || 0;
-    const qty = parseFloat(form.quantity) || 0;
+    const entry = Math.max(0, parseFloat(form.entry_premium) || 0);
+    const exit = Math.max(0, parseFloat(form.exit_premium) || 0);
+    const qty = Math.max(0, parseFloat(form.quantity) || 0);
     if (entry > 0 && exit > 0 && qty > 0) {
       const diff = (exit - entry) * qty;
       return diff < 0 ? Math.abs(diff).toFixed(2) : '0.00';
     }
-    return parseFloat(form.gross_loss || 0).toFixed(2);
+    return Math.max(0, parseFloat(form.gross_loss || 0)).toFixed(2);
   }, [tradeMode, form.entry_premium, form.exit_premium, form.quantity, form.gross_loss]);
 
   // Net P&L Computed
@@ -757,6 +855,20 @@ export default function AddTrade() {
 
         <button
           type="button"
+          onClick={() => setShowOptionChainModal(true)}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+            isKite
+              ? 'text-indigo-400 border border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10'
+              : 'text-indigo-400 hover:text-indigo-300 hover:bg-indigo-600/10 border border-indigo-500/30 bg-indigo-500/5 shadow-sm'
+          }`}
+          title="Live NSE & BSE Option Chain with real spot prices, Greeks, and ATM strikes"
+        >
+          <Layers className="w-3.5 h-3.5 text-indigo-400" />
+          <span>Option Chain</span>
+        </button>
+
+        <button
+          type="button"
           onClick={() => setShowImageOrderModal(true)}
           className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
             isKite
@@ -960,16 +1072,29 @@ export default function AddTrade() {
                 </div>
 
                 <div>
-                  <label className="block text-slate-400 mb-1 font-medium">
-                    Strike Price
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-slate-400 font-medium">
+                      Strike Price
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setShowOptionChainModal(true)}
+                      className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors cursor-pointer"
+                      title="View live Option Chain"
+                    >
+                      <Layers className="w-3 h-3" />
+                      <span>Option Chain</span>
+                    </button>
+                  </div>
                   <input
                     type="number"
                     step="50"
+                    min="0"
                     placeholder="25000"
                     name="strike_price"
                     value={form.strike_price}
                     onChange={handleChange}
+                    onKeyDown={blockNegativeKeys}
                     className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
@@ -1007,10 +1132,12 @@ export default function AddTrade() {
                           <input
                             type="number"
                             step="0.05"
+                            min="0"
                             placeholder="CE Entry"
                             name="ce_entry_price"
                             value={form.ce_entry_price}
                             onChange={handleBothPricesChange}
+                            onKeyDown={blockNegativeKeys}
                             className="w-full pl-2.5 pr-8 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
                           />
                           <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 pointer-events-none">
@@ -1021,10 +1148,12 @@ export default function AddTrade() {
                           <input
                             type="number"
                             step="0.05"
+                            min="0"
                             placeholder="PE Entry"
                             name="pe_entry_price"
                             value={form.pe_entry_price}
                             onChange={handleBothPricesChange}
+                            onKeyDown={blockNegativeKeys}
                             className="w-full pl-2.5 pr-8 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
                           />
                           <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-rose-400 pointer-events-none">
@@ -1060,10 +1189,12 @@ export default function AddTrade() {
                             <input
                               type="number"
                               step="0.05"
+                              min="0"
                               placeholder="CE Exit"
                               name="ce_exit_price"
                               value={form.ce_exit_price}
                               onChange={handleBothPricesChange}
+                              onKeyDown={blockNegativeKeys}
                               className="w-full pl-2.5 pr-8 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
                             />
                             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 pointer-events-none">
@@ -1074,10 +1205,12 @@ export default function AddTrade() {
                             <input
                               type="number"
                               step="0.05"
+                              min="0"
                               placeholder="PE Exit"
                               name="pe_exit_price"
                               value={form.pe_exit_price}
                               onChange={handleBothPricesChange}
+                              onKeyDown={blockNegativeKeys}
                               className="w-full pl-2.5 pr-8 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
                             />
                             <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-rose-400 pointer-events-none">
@@ -1097,10 +1230,12 @@ export default function AddTrade() {
                       <input
                         type="number"
                         step="0.05"
+                        min="0"
                         placeholder="123.00"
                         name="entry_premium"
                         value={form.entry_premium}
                         onChange={handleChange}
+                        onKeyDown={blockNegativeKeys}
                         className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
                       />
                     </div>
@@ -1123,10 +1258,12 @@ export default function AddTrade() {
                         <input
                           type="number"
                           step="0.05"
+                          min="0"
                           placeholder="156.00"
                           name="exit_premium"
                           value={form.exit_premium}
                           onChange={handleChange}
+                          onKeyDown={blockNegativeKeys}
                           className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
                         />
                       </div>
@@ -1141,10 +1278,12 @@ export default function AddTrade() {
                   <input
                     type="number"
                     step={currentLotSize}
+                    min="1"
                     placeholder="50"
                     name="quantity"
                     value={form.quantity}
                     onChange={handleQuantityChange}
+                    onKeyDown={blockNegativeKeys}
                     className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>
@@ -1162,6 +1301,7 @@ export default function AddTrade() {
                     name="lots"
                     value={form.lots}
                     onChange={handleLotsChange}
+                    onKeyDown={blockNegativeKeys}
                     className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
                   />
                   <span className="text-[10px] text-slate-500 light:text-slate-400 mt-1 block">
@@ -1277,9 +1417,11 @@ export default function AddTrade() {
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     name="gross_profit"
                     value={computedGrossProfit}
                     onChange={handleChange}
+                    onKeyDown={blockNegativeKeys}
                     className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-emerald-50/40 border border-emerald-500/40 text-xs text-emerald-400 font-mono-numbers font-semibold focus:outline-none focus:border-emerald-500 transition-colors"
                   />
                 </div>
@@ -1291,9 +1433,11 @@ export default function AddTrade() {
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     name="gross_loss"
                     value={computedGrossLoss}
                     onChange={handleChange}
+                    onKeyDown={blockNegativeKeys}
                     className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-rose-400 font-mono-numbers focus:outline-none focus:border-rose-500 transition-colors"
                   />
                 </div>
@@ -1305,6 +1449,7 @@ export default function AddTrade() {
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     name="total_charges"
                     value={computedTotalCharges}
                     readOnly
@@ -1331,9 +1476,11 @@ export default function AddTrade() {
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     name="sebi_charges"
                     value={form.sebi_charges}
                     onChange={handleChange}
+                    onKeyDown={blockNegativeKeys}
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -1342,9 +1489,11 @@ export default function AddTrade() {
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     name="exchange_charges"
                     value={form.exchange_charges}
                     onChange={handleChange}
+                    onKeyDown={blockNegativeKeys}
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -1356,9 +1505,11 @@ export default function AddTrade() {
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     name="stamp_duty"
                     value={form.stamp_duty}
                     onChange={handleChange}
+                    onKeyDown={blockNegativeKeys}
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -1368,9 +1519,11 @@ export default function AddTrade() {
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     name="stt"
                     value={form.stt}
                     onChange={handleChange}
+                    onKeyDown={blockNegativeKeys}
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -1384,9 +1537,11 @@ export default function AddTrade() {
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     name="gst"
                     value={form.gst}
                     onChange={handleChange}
+                    onKeyDown={blockNegativeKeys}
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -1398,9 +1553,11 @@ export default function AddTrade() {
                   <input
                     type="number"
                     step="0.01"
+                    min="0"
                     name="brokerage"
                     value={form.brokerage}
                     onChange={handleChange}
+                    onKeyDown={blockNegativeKeys}
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500"
                   />
                 </div>
@@ -1972,6 +2129,17 @@ export default function AddTrade() {
           navigate('/all-trades');
         }}
         onApplyToForm={handleApplyOrdersToForm}
+      />
+
+      {/* Real-Time Option Chain Modal (NSE & BSE) */}
+      <OptionChainModal
+        isOpen={showOptionChainModal}
+        onClose={() => setShowOptionChainModal(false)}
+        initialSymbol={form.index_name}
+        initialStrike={form.strike_price}
+        initialOptionType={form.option_type}
+        initialExpiry={form.expiry_date}
+        onSelectOption={handleSelectOptionFromChain}
       />
 
       {/* Lightbox Modal for enlarged view */}

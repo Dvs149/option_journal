@@ -9,20 +9,20 @@ class TradingCalculationService
      */
     public function calculate(array $data): array
     {
-        $brokerage = round((float) ($data['brokerage'] ?? 0), 2);
-        $stt = round((float) ($data['stt'] ?? 0), 2);
-        $exchangeCharges = round((float) ($data['exchange_charges'] ?? 0), 2);
-        $gst = round((float) ($data['gst'] ?? 0), 2);
-        $sebiCharges = round((float) ($data['sebi_charges'] ?? 0), 2);
-        $stampDuty = round((float) ($data['stamp_duty'] ?? 0), 2);
-        $otherCharges = round((float) ($data['other_charges'] ?? 0), 2);
+        $brokerage = round(max(0.0, abs((float) ($data['brokerage'] ?? 0))), 2);
+        $stt = round(max(0.0, abs((float) ($data['stt'] ?? 0))), 2);
+        $exchangeCharges = round(max(0.0, abs((float) ($data['exchange_charges'] ?? 0))), 2);
+        $gst = round(max(0.0, abs((float) ($data['gst'] ?? 0))), 2);
+        $sebiCharges = round(max(0.0, abs((float) ($data['sebi_charges'] ?? 0))), 2);
+        $stampDuty = round(max(0.0, abs((float) ($data['stamp_duty'] ?? 0))), 2);
+        $otherCharges = round(max(0.0, abs((float) ($data['other_charges'] ?? 0))), 2);
 
         $totalCharges = round($brokerage + $stt + $exchangeCharges + $gst + $sebiCharges + $stampDuty + $otherCharges, 2);
 
         $status = $data['status'] ?? null;
-        $entryPremium = isset($data['entry_premium']) && $data['entry_premium'] !== '' ? (float) $data['entry_premium'] : null;
-        $exitPremium = isset($data['exit_premium']) && $data['exit_premium'] !== '' ? (float) $data['exit_premium'] : null;
-        $quantity = isset($data['quantity']) && $data['quantity'] !== '' ? (int) $data['quantity'] : null;
+        $entryPremium = isset($data['entry_premium']) && $data['entry_premium'] !== '' ? max(0.0, abs((float) $data['entry_premium'])) : null;
+        $exitPremium = isset($data['exit_premium']) && $data['exit_premium'] !== '' ? max(0.0, abs((float) $data['exit_premium'])) : null;
+        $quantity = isset($data['quantity']) && $data['quantity'] !== '' ? max(1, abs((int) $data['quantity'])) : null;
 
         $isOpen = ($status === 'OPEN') || (
             empty($exitPremium) &&

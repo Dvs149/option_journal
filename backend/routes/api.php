@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ExportController;
 use App\Http\Controllers\Api\JournalController;
 use App\Http\Controllers\Api\LotSizeController;
 use App\Http\Controllers\Api\ModuleVisibilityController;
+use App\Http\Controllers\Api\OptionChainController;
 use App\Http\Controllers\Api\PineScriptController;
 use App\Http\Controllers\Api\RiskController;
 use App\Http\Controllers\Api\StrategyController;
@@ -64,6 +65,9 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Trading Calendar & Heatmap
     Route::get('/calendar', [CalendarController::class, 'index']);
+
+    // Real-Time Option Chain (NSE & BSE)
+    Route::get('/option-chain', [OptionChainController::class, 'index']);
 
     // Risk Management
     Route::get('/risk', [RiskController::class, 'index']);

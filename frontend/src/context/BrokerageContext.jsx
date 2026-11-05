@@ -109,16 +109,16 @@ export function BrokerageProvider({ children }) {
   const calculateCharges = useCallback(
     (params = {}) => {
       const optionType = params.optionType || 'CE';
-      let entry = parseFloat(params.entry) || 0;
-      let exit = parseFloat(params.exit) || 0;
-      const qty = parseInt(params.quantity, 10) || 0;
+      let entry = Math.max(0, Math.abs(parseFloat(params.entry) || 0));
+      let exit = Math.max(0, Math.abs(parseFloat(params.exit) || 0));
+      const qty = Math.max(0, Math.abs(parseInt(params.quantity, 10) || 0));
 
       // Handle leg prices for Both
       if (optionType === 'Both') {
-        const ceEn = parseFloat(params.ceEntry) || 0;
-        const peEn = parseFloat(params.peEntry) || 0;
-        const ceEx = parseFloat(params.ceExit) || 0;
-        const peEx = parseFloat(params.peExit) || 0;
+        const ceEn = Math.max(0, Math.abs(parseFloat(params.ceEntry) || 0));
+        const peEn = Math.max(0, Math.abs(parseFloat(params.peEntry) || 0));
+        const ceEx = Math.max(0, Math.abs(parseFloat(params.ceExit) || 0));
+        const peEx = Math.max(0, Math.abs(parseFloat(params.peExit) || 0));
         if ((ceEn > 0 || peEn > 0) && (ceEx > 0 || peEx > 0)) {
           entry = ceEn + peEn;
           exit = ceEx + peEx;
@@ -143,10 +143,12 @@ export function BrokerageProvider({ children }) {
         ? (optionType === 'Both' ? 2 : 1)
         : (optionType === 'Both' ? 4 : 2);
 
-      const numOrders =
+      const numOrders = Math.max(
+        1,
         params.executedOrders != null
-          ? parseInt(params.executedOrders, 10)
-          : defaultOrders;
+          ? Math.abs(parseInt(params.executedOrders, 10) || defaultOrders)
+          : defaultOrders
+      );
 
       // Exchange detection
       const indexUpper = (params.indexName || '').toUpperCase();
@@ -160,39 +162,42 @@ export function BrokerageProvider({ children }) {
       }
       const isBse = exchange.toUpperCase() === 'BSE';
 
-      const turnoverBuy = entry * qty;
-      const turnoverSell = exit * qty;
+      const turnoverBuy = Math.max(0, entry * qty);
+      const turnoverSell = Math.max(0, exit * qty);
       const totalTurnover = turnoverBuy + turnoverSell;
 
       // 1. Brokerage: Flat ₹20 per executed order
-      const brokeragePerOrder = parseFloat(rates.brokerage_per_order) || 20.00;
-      const brokerage = Math.round(brokeragePerOrder * Math.max(1, numOrders) * 100) / 100;
+      const brokeragePerOrder = Math.max(0, parseFloat(rates.brokerage_per_order) || 20.00);
+      const brokerage = Math.max(0, Math.round(brokeragePerOrder * Math.max(1, numOrders) * 100) / 100);
 
       // 2. STT: 0.15% on sell side (on premium)
       const sttRate = (parseFloat(rates.stt_rate_percent) || 0.15) / 100;
-      const stt = Math.round(turnoverSell * sttRate * 100) / 100;
+      const stt = Math.max(0, Math.round(turnoverSell * sttRate * 100) / 100);
 
       // 3. Exchange Transaction Charges: NSE 0.03553% | BSE 0.0325% on total premium turnover
       const txnRate = isBse
         ? (parseFloat(rates.bse_txn_rate_percent) || 0.0325) / 100
         : (parseFloat(rates.nse_txn_rate_percent) || 0.03553) / 100;
-      const exchangeCharges = Math.round(totalTurnover * txnRate * 100) / 100;
+      const exchangeCharges = Math.max(0, Math.round(totalTurnover * txnRate * 100) / 100);
 
       // 4. SEBI Charges: ₹10 per crore (0.0001%)
       const sebiPerCr = parseFloat(rates.sebi_per_crore) || 10.00;
-      const sebiCharges = Math.round(totalTurnover * (sebiPerCr / 10000000) * 100) / 100;
+      const sebiCharges = Math.max(0, Math.round(totalTurnover * (sebiPerCr / 10000000) * 100) / 100);
 
       // 5. Stamp Duty: 0.003% (₹300 per crore) on buy side
       const stampDutyRate = (parseFloat(rates.stamp_duty_rate_percent) || 0.003) / 100;
-      const stampDuty = Math.round(turnoverBuy * stampDutyRate * 100) / 100;
+      const stampDuty = Math.max(0, Math.round(turnoverBuy * stampDutyRate * 100) / 100);
 
       // 6. GST: 18% on (brokerage + SEBI charges + transaction charges)
       const gstRate = (parseFloat(rates.gst_rate_percent) || 18.0) / 100;
-      const gst = Math.round((brokerage + exchangeCharges + sebiCharges) * gstRate * 100) / 100;
+      const gst = Math.max(0, Math.round((brokerage + exchangeCharges + sebiCharges) * gstRate * 100) / 100);
 
-      const totalCharges = Math.round(
-        (brokerage + stt + exchangeCharges + sebiCharges + stampDuty + gst) * 100
-      ) / 100;
+      const totalCharges = Math.max(
+        0,
+        Math.round(
+          (brokerage + stt + exchangeCharges + sebiCharges + stampDuty + gst) * 100
+        ) / 100
+      );
 
       // Realized Gross P&L is only present when an exit has been executed
       const hasExit = exit > 0 && params.status !== 'OPEN' && !params.isOpen;

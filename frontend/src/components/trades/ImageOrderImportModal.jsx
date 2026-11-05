@@ -123,18 +123,26 @@ export default function ImageOrderImportModal({
       });
 
       if (res.data?.success && res.data.orders?.length > 0) {
-        // Enforce lot size calculations if available
+        // Enforce lot size calculations if available and sanitize non-negative numbers
         const enrichedOrders = res.data.orders.map((ord, idx) => {
-          const lotSize = getLotSize(ord.index_name) || ord.lot_size || 50;
-          const qty = ord.quantity || lotSize;
-          const lots = Math.max(1, Math.round(qty / lotSize));
+          const lotSize = Math.max(1, Math.abs(parseInt(getLotSize(ord.index_name) || ord.lot_size || 50, 10)));
+          const rawQty = ord.quantity != null ? Math.abs(parseInt(ord.quantity, 10)) : lotSize;
+          const qty = Math.max(1, rawQty || lotSize);
+          const rawLots = ord.lots != null ? Math.abs(parseInt(ord.lots, 10)) : Math.round(qty / lotSize);
+          const lots = Math.max(1, rawLots || 1);
+          const price = Math.max(0, Math.abs(parseFloat(ord.price) || 0));
+          const strike = ord.strike_price != null ? Math.max(0, Math.abs(parseFloat(ord.strike_price) || 0)) : null;
+
           return {
             ...ord,
             id: ord.id || idx + 1,
             selected: true,
+            quantity: qty,
             lots,
+            price,
+            strike_price: strike,
             lot_size: lotSize,
-            turnover: Math.round(qty * (ord.price || 0)),
+            turnover: Math.round(qty * price),
           };
         });
 
@@ -168,15 +176,27 @@ export default function ImageOrderImportModal({
     setDetectedOrders((prev) => prev.map((o) => ({ ...o, selected: !allSelected })));
   };
 
+  const blockNegativeKeys = (e) => {
+    if (e.key === '-' || e.key === 'Minus' || e.key === 'e' || e.key === 'E' || e.key === '+') {
+      e.preventDefault();
+    }
+  };
+
   // Edit order field inline
   const handleUpdateOrderField = (id, field, value) => {
     setDetectedOrders((prev) =>
       prev.map((ord) => {
         if (ord.id !== id) return ord;
-        const updated = { ...ord, [field]: value };
+        let cleanVal = value;
+        if (field === 'quantity') {
+          cleanVal = Math.max(1, Math.abs(parseInt(String(value).replace(/[^0-9]/g, ''), 10) || 1));
+        } else if (field === 'price' || field === 'strike_price') {
+          cleanVal = Math.max(0, Math.abs(parseFloat(String(value).replace(/-/g, '')) || 0));
+        }
+        const updated = { ...ord, [field]: cleanVal };
         if (field === 'quantity' || field === 'price') {
-          const q = Number(field === 'quantity' ? value : updated.quantity) || 0;
-          const p = Number(field === 'price' ? value : updated.price) || 0;
+          const q = Number(updated.quantity) || 0;
+          const p = Number(updated.price) || 0;
           updated.turnover = Math.round(q * p);
           const lotSize = getLotSize(updated.index_name) || 50;
           updated.lots = Math.max(1, Math.round(q / lotSize));
@@ -640,8 +660,10 @@ export default function ImageOrderImportModal({
                             <div className="flex items-center gap-1">
                               <input
                                 type="number"
+                                min="1"
                                 value={ord.quantity}
                                 onChange={(e) => handleUpdateOrderField(ord.id, 'quantity', e.target.value)}
+                                onKeyDown={blockNegativeKeys}
                                 className="w-16 px-2 py-1 rounded bg-[#0b101b] light:bg-slate-100 border border-[#1e293b] text-white light:text-slate-900 font-mono-numbers text-xs"
                               />
                               <span className="text-[10px] text-slate-400 font-semibold">
@@ -657,8 +679,10 @@ export default function ImageOrderImportModal({
                               <input
                                 type="number"
                                 step="0.05"
+                                min="0"
                                 value={ord.price}
                                 onChange={(e) => handleUpdateOrderField(ord.id, 'price', e.target.value)}
+                                onKeyDown={blockNegativeKeys}
                                 className="w-20 px-2 py-1 rounded bg-[#0b101b] light:bg-slate-100 border border-[#1e293b] text-white light:text-slate-900 font-mono-numbers text-xs font-bold"
                               />
                             </div>

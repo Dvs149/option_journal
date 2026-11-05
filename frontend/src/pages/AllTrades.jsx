@@ -33,6 +33,7 @@ import {
   RotateCw,
   Upload,
   Camera,
+  Layers,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -57,6 +58,7 @@ import ImageOrderImportModal from '../components/trades/ImageOrderImportModal';
 import ExportModal from '../components/trades/ExportModal';
 import PartialExitModal from '../components/trades/PartialExitModal';
 import EditOrderModal from '../components/trades/EditOrderModal';
+import OptionChainModal from '../components/trades/OptionChainModal';
 import * as XLSX from 'xlsx';
 
 // Helper to resolve individual CE and PE leg prices
@@ -135,6 +137,7 @@ export default function AllTrades() {
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [showImageOrderModal, setShowImageOrderModal] = useState(false);
+  const [showOptionChainModal, setShowOptionChainModal] = useState(false);
   const [deletingBulk, setDeletingBulk] = useState(false);
   const selectAllRef = useRef(null);
   const [showExportMenu, setShowExportMenu] = useState(false);
@@ -613,15 +616,67 @@ export default function AllTrades() {
     }
   };
 
+  const blockNegativeKeys = (e) => {
+    if (e.key === '-' || e.key === 'Minus' || e.key === 'e' || e.key === 'E' || e.key === '+') {
+      e.preventDefault();
+    }
+  };
+
+  const handleAllTradesEditFieldChange = (name, value) => {
+    let cleanVal = value;
+    const nonNegNumeric = [
+      'strike_price', 'entry_premium', 'exit_premium', 'gross_profit', 'gross_loss',
+      'brokerage', 'stt', 'exchange_charges', 'gst', 'sebi_charges', 'stamp_duty',
+      'other_charges', 'ce_entry_price', 'pe_entry_price', 'ce_exit_price', 'pe_exit_price'
+    ];
+    if (nonNegNumeric.includes(name)) {
+      cleanVal = value.replace(/-/g, '').replace(/[^0-9.]/g, '');
+      const parts = cleanVal.split('.');
+      if (parts.length > 2) cleanVal = parts[0] + '.' + parts.slice(1).join('');
+    }
+    setEditForm((prev) => ({ ...prev, [name]: cleanVal }));
+  };
+
+  const handleAllTradesEditLotsChange = (value) => {
+    let raw = value.replace(/[^0-9]/g, '');
+    if (raw === '') {
+      setEditForm((prev) => ({ ...prev, lots: '', quantity: '0' }));
+      return;
+    }
+    const numLots = Math.max(1, Math.abs(parseInt(raw, 10) || 1));
+    const lotSize = getLotSize(editForm.index_name || 'NIFTY');
+    setEditForm((prev) => ({
+      ...prev,
+      lots: numLots.toString(),
+      quantity: (numLots * lotSize).toString(),
+    }));
+  };
+
+  const handleAllTradesEditQuantityChange = (value) => {
+    let raw = value.replace(/[^0-9]/g, '');
+    if (raw === '') {
+      setEditForm((prev) => ({ ...prev, quantity: '', lots: '1' }));
+      return;
+    }
+    const numQty = Math.max(1, Math.abs(parseInt(raw, 10) || 1));
+    const lotSize = getLotSize(editForm.index_name || 'NIFTY');
+    const calcLots = Math.max(1, Math.round(numQty / lotSize));
+    setEditForm((prev) => ({
+      ...prev,
+      quantity: numQty.toString(),
+      lots: calcLots.toString(),
+    }));
+  };
+
   // Computed fields for edit modal
   const editComputedTotalCharges = useMemo(() => {
-    const b = parseFloat(editForm.brokerage) || 0;
-    const s = parseFloat(editForm.stt) || 0;
-    const ex = parseFloat(editForm.exchange_charges) || 0;
-    const g = parseFloat(editForm.gst) || 0;
-    const seb = parseFloat(editForm.sebi_charges) || 0;
-    const st = parseFloat(editForm.stamp_duty) || 0;
-    const o = parseFloat(editForm.other_charges) || 0;
+    const b = Math.max(0, parseFloat(editForm.brokerage) || 0);
+    const s = Math.max(0, parseFloat(editForm.stt) || 0);
+    const ex = Math.max(0, parseFloat(editForm.exchange_charges) || 0);
+    const g = Math.max(0, parseFloat(editForm.gst) || 0);
+    const seb = Math.max(0, parseFloat(editForm.sebi_charges) || 0);
+    const st = Math.max(0, parseFloat(editForm.stamp_duty) || 0);
+    const o = Math.max(0, parseFloat(editForm.other_charges) || 0);
     return (b + s + ex + g + seb + st + o).toFixed(2);
   }, [
     editForm.brokerage,
@@ -635,26 +690,26 @@ export default function AllTrades() {
 
   const editComputedGrossProfit = useMemo(() => {
     if (editForm.status === 'OPEN' || !editForm.exit_premium) return '0.00';
-    const entry = parseFloat(editForm.entry_premium) || 0;
-    const exit = parseFloat(editForm.exit_premium) || 0;
-    const qty = parseFloat(editForm.quantity) || 0;
+    const entry = Math.max(0, parseFloat(editForm.entry_premium) || 0);
+    const exit = Math.max(0, parseFloat(editForm.exit_premium) || 0);
+    const qty = Math.max(0, parseFloat(editForm.quantity) || 0);
     if (entry > 0 && exit > 0 && qty > 0) {
       const diff = (exit - entry) * qty;
       return diff > 0 ? diff.toFixed(2) : '0.00';
     }
-    return parseFloat(editForm.gross_profit || 0).toFixed(2);
+    return Math.max(0, parseFloat(editForm.gross_profit || 0)).toFixed(2);
   }, [editForm.status, editForm.entry_premium, editForm.exit_premium, editForm.quantity, editForm.gross_profit]);
 
   const editComputedGrossLoss = useMemo(() => {
     if (editForm.status === 'OPEN' || !editForm.exit_premium) return '0.00';
-    const entry = parseFloat(editForm.entry_premium) || 0;
-    const exit = parseFloat(editForm.exit_premium) || 0;
-    const qty = parseFloat(editForm.quantity) || 0;
+    const entry = Math.max(0, parseFloat(editForm.entry_premium) || 0);
+    const exit = Math.max(0, parseFloat(editForm.exit_premium) || 0);
+    const qty = Math.max(0, parseFloat(editForm.quantity) || 0);
     if (entry > 0 && exit > 0 && qty > 0) {
       const diff = (exit - entry) * qty;
       return diff < 0 ? Math.abs(diff).toFixed(2) : '0.00';
     }
-    return parseFloat(editForm.gross_loss || 0).toFixed(2);
+    return Math.max(0, parseFloat(editForm.gross_loss || 0)).toFixed(2);
   }, [editForm.status, editForm.entry_premium, editForm.exit_premium, editForm.quantity, editForm.gross_loss]);
 
   const editComputedNetPnl = useMemo(() => {
@@ -1606,6 +1661,16 @@ export default function AllTrades() {
             >
               <Camera className="w-3.5 h-3.5 text-cyan-400" />
               <span>Image Orders</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowOptionChainModal(true)}
+              className="px-3.5 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-indigo-500/30 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-600/10 text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer shadow-sm"
+              title="Live NSE & BSE Option Chain"
+            >
+              <Layers className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Option Chain</span>
             </button>
 
             <button
@@ -3337,9 +3402,11 @@ export default function AllTrades() {
                       <input
                         type="number"
                         step="50"
+                        min="0"
                         placeholder="25000"
                         value={editForm.strike_price || ''}
-                        onChange={(e) => setEditForm({ ...editForm, strike_price: e.target.value })}
+                        onChange={(e) => handleAllTradesEditFieldChange('strike_price', e.target.value)}
+                        onKeyDown={blockNegativeKeys}
                         className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers focus:outline-none focus:border-blue-500"
                       />
                     </div>
@@ -3371,17 +3438,20 @@ export default function AllTrades() {
                               <input
                                 type="number"
                                 step="0.05"
+                                min="0"
                                 placeholder="CE Entry"
                                 value={editForm.ce_entry_price || ''}
                                 onChange={(e) => {
-                                  const ce = parseFloat(e.target.value) || 0;
-                                  const pe = parseFloat(editForm.pe_entry_price) || 0;
-                                  setEditForm({
-                                    ...editForm,
-                                    ce_entry_price: e.target.value,
+                                  const cleanVal = e.target.value.replace(/-/g, '').replace(/[^0-9.]/g, '');
+                                  const ce = Math.max(0, parseFloat(cleanVal) || 0);
+                                  const pe = Math.max(0, parseFloat(editForm.pe_entry_price) || 0);
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    ce_entry_price: cleanVal,
                                     entry_premium: (ce + pe).toFixed(2),
-                                  });
+                                  }));
                                 }}
+                                onKeyDown={blockNegativeKeys}
                                 className="w-full pl-2.5 pr-7 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers text-xs"
                               />
                               <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 pointer-events-none">
@@ -3392,17 +3462,20 @@ export default function AllTrades() {
                               <input
                                 type="number"
                                 step="0.05"
+                                min="0"
                                 placeholder="PE Entry"
                                 value={editForm.pe_entry_price || ''}
                                 onChange={(e) => {
-                                  const ce = parseFloat(editForm.ce_entry_price) || 0;
-                                  const pe = parseFloat(e.target.value) || 0;
-                                  setEditForm({
-                                    ...editForm,
-                                    pe_entry_price: e.target.value,
+                                  const cleanVal = e.target.value.replace(/-/g, '').replace(/[^0-9.]/g, '');
+                                  const ce = Math.max(0, parseFloat(editForm.ce_entry_price) || 0);
+                                  const pe = Math.max(0, parseFloat(cleanVal) || 0);
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    pe_entry_price: cleanVal,
                                     entry_premium: (ce + pe).toFixed(2),
-                                  });
+                                  }));
                                 }}
+                                onKeyDown={blockNegativeKeys}
                                 className="w-full pl-2.5 pr-7 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers text-xs"
                               />
                               <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-rose-400 pointer-events-none">
@@ -3425,17 +3498,20 @@ export default function AllTrades() {
                               <input
                                 type="number"
                                 step="0.05"
+                                min="0"
                                 placeholder="CE Exit"
                                 value={editForm.ce_exit_price || ''}
                                 onChange={(e) => {
-                                  const ce = parseFloat(e.target.value) || 0;
-                                  const pe = parseFloat(editForm.pe_exit_price) || 0;
-                                  setEditForm({
-                                    ...editForm,
-                                    ce_exit_price: e.target.value,
+                                  const cleanVal = e.target.value.replace(/-/g, '').replace(/[^0-9.]/g, '');
+                                  const ce = Math.max(0, parseFloat(cleanVal) || 0);
+                                  const pe = Math.max(0, parseFloat(editForm.pe_exit_price) || 0);
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    ce_exit_price: cleanVal,
                                     exit_premium: (ce + pe).toFixed(2),
-                                  });
+                                  }));
                                 }}
+                                onKeyDown={blockNegativeKeys}
                                 className="w-full pl-2.5 pr-7 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers text-xs"
                               />
                               <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 pointer-events-none">
@@ -3446,17 +3522,20 @@ export default function AllTrades() {
                               <input
                                 type="number"
                                 step="0.05"
+                                min="0"
                                 placeholder="PE Exit"
                                 value={editForm.pe_exit_price || ''}
                                 onChange={(e) => {
-                                  const ce = parseFloat(editForm.ce_exit_price) || 0;
-                                  const pe = parseFloat(e.target.value) || 0;
-                                  setEditForm({
-                                    ...editForm,
-                                    pe_exit_price: e.target.value,
+                                  const cleanVal = e.target.value.replace(/-/g, '').replace(/[^0-9.]/g, '');
+                                  const ce = Math.max(0, parseFloat(editForm.ce_exit_price) || 0);
+                                  const pe = Math.max(0, parseFloat(cleanVal) || 0);
+                                  setEditForm((prev) => ({
+                                    ...prev,
+                                    pe_exit_price: cleanVal,
                                     exit_premium: (ce + pe).toFixed(2),
-                                  });
+                                  }));
                                 }}
+                                onKeyDown={blockNegativeKeys}
                                 className="w-full pl-2.5 pr-7 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers text-xs"
                               />
                               <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-rose-400 pointer-events-none">
@@ -3473,9 +3552,11 @@ export default function AllTrades() {
                           <input
                             type="number"
                             step="0.05"
+                            min="0"
                             placeholder="123.00"
                             value={editForm.entry_premium || ''}
-                            onChange={(e) => setEditForm({ ...editForm, entry_premium: e.target.value })}
+                            onChange={(e) => handleAllTradesEditFieldChange('entry_premium', e.target.value)}
+                            onKeyDown={blockNegativeKeys}
                             className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers focus:outline-none focus:border-blue-500"
                           />
                         </div>
@@ -3484,9 +3565,11 @@ export default function AllTrades() {
                           <input
                             type="number"
                             step="0.05"
+                            min="0"
                             placeholder="156.00"
                             value={editForm.exit_premium || ''}
-                            onChange={(e) => setEditForm({ ...editForm, exit_premium: e.target.value })}
+                            onChange={(e) => handleAllTradesEditFieldChange('exit_premium', e.target.value)}
+                            onKeyDown={blockNegativeKeys}
                             className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers focus:outline-none focus:border-blue-500"
                           />
                         </div>
@@ -3497,19 +3580,11 @@ export default function AllTrades() {
                       <label className="block text-slate-400 mb-1 font-medium">Quantity (Shares)</label>
                       <input
                         type="number"
+                        min="1"
                         placeholder="50"
                         value={editForm.quantity || ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          const numQty = parseInt(val, 10) || 0;
-                          const ls = getLotSize(editForm.index_name || 'NIFTY');
-                          const calcLots = Math.max(1, Math.round(numQty / ls));
-                          setEditForm({
-                            ...editForm,
-                            quantity: val,
-                            lots: calcLots.toString(),
-                          });
-                        }}
+                        onChange={(e) => handleAllTradesEditQuantityChange(e.target.value)}
+                        onKeyDown={blockNegativeKeys}
                         className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers focus:outline-none focus:border-blue-500"
                       />
                     </div>
@@ -3528,16 +3603,8 @@ export default function AllTrades() {
                         type="number"
                         min="1"
                         value={editForm.lots || 1}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          const l = parseInt(val, 10) || 1;
-                          const ls = getLotSize(editForm.index_name || 'NIFTY');
-                          setEditForm({
-                            ...editForm,
-                            lots: val,
-                            quantity: (l * ls).toString(),
-                          });
-                        }}
+                        onChange={(e) => handleAllTradesEditLotsChange(e.target.value)}
+                        onKeyDown={blockNegativeKeys}
                         className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers focus:outline-none focus:border-blue-500"
                       />
                     </div>
@@ -3606,8 +3673,10 @@ export default function AllTrades() {
                       <input
                         type="number"
                         step="0.01"
+                        min="0"
                         value={editComputedGrossProfit}
-                        onChange={(e) => setEditForm({ ...editForm, gross_profit: e.target.value })}
+                        onChange={(e) => handleAllTradesEditFieldChange('gross_profit', e.target.value)}
+                        onKeyDown={blockNegativeKeys}
                         className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-emerald-500/40 text-emerald-400 font-mono-numbers font-semibold focus:outline-none focus:border-emerald-500"
                       />
                     </div>
@@ -3616,8 +3685,10 @@ export default function AllTrades() {
                       <input
                         type="number"
                         step="0.01"
+                        min="0"
                         value={editComputedGrossLoss}
-                        onChange={(e) => setEditForm({ ...editForm, gross_loss: e.target.value })}
+                        onChange={(e) => handleAllTradesEditFieldChange('gross_loss', e.target.value)}
+                        onKeyDown={blockNegativeKeys}
                         className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-rose-400 font-mono-numbers focus:outline-none focus:border-rose-500"
                       />
                     </div>
@@ -3626,6 +3697,7 @@ export default function AllTrades() {
                       <input
                         type="number"
                         step="0.01"
+                        min="0"
                         readOnly
                         value={editComputedTotalCharges}
                         className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-slate-300 font-mono-numbers focus:outline-none"
@@ -3650,8 +3722,10 @@ export default function AllTrades() {
                       <input
                         type="number"
                         step="0.01"
+                        min="0"
                         value={editForm.brokerage ?? '40.00'}
-                        onChange={(e) => setEditForm({ ...editForm, brokerage: e.target.value })}
+                        onChange={(e) => handleAllTradesEditFieldChange('brokerage', e.target.value)}
+                        onKeyDown={blockNegativeKeys}
                         className="w-full px-2.5 py-1.5 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers text-xs"
                       />
                     </div>
@@ -3660,8 +3734,10 @@ export default function AllTrades() {
                       <input
                         type="number"
                         step="0.01"
+                        min="0"
                         value={editForm.stt ?? '0.00'}
-                        onChange={(e) => setEditForm({ ...editForm, stt: e.target.value })}
+                        onChange={(e) => handleAllTradesEditFieldChange('stt', e.target.value)}
+                        onKeyDown={blockNegativeKeys}
                         className="w-full px-2.5 py-1.5 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers text-xs"
                       />
                     </div>
@@ -3670,8 +3746,10 @@ export default function AllTrades() {
                       <input
                         type="number"
                         step="0.01"
+                        min="0"
                         value={editForm.exchange_charges ?? '0.00'}
-                        onChange={(e) => setEditForm({ ...editForm, exchange_charges: e.target.value })}
+                        onChange={(e) => handleAllTradesEditFieldChange('exchange_charges', e.target.value)}
+                        onKeyDown={blockNegativeKeys}
                         className="w-full px-2.5 py-1.5 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers text-xs"
                       />
                     </div>
@@ -3680,8 +3758,10 @@ export default function AllTrades() {
                       <input
                         type="number"
                         step="0.01"
+                        min="0"
                         value={editForm.gst ?? '0.00'}
-                        onChange={(e) => setEditForm({ ...editForm, gst: e.target.value })}
+                        onChange={(e) => handleAllTradesEditFieldChange('gst', e.target.value)}
+                        onKeyDown={blockNegativeKeys}
                         className="w-full px-2.5 py-1.5 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers text-xs"
                       />
                     </div>
@@ -3694,8 +3774,10 @@ export default function AllTrades() {
                       <input
                         type="number"
                         step="0.01"
+                        min="0"
                         value={editForm.sebi_charges ?? '0.00'}
-                        onChange={(e) => setEditForm({ ...editForm, sebi_charges: e.target.value })}
+                        onChange={(e) => handleAllTradesEditFieldChange('sebi_charges', e.target.value)}
+                        onKeyDown={blockNegativeKeys}
                         className="w-full px-2.5 py-1.5 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers text-xs"
                       />
                     </div>
@@ -3704,8 +3786,10 @@ export default function AllTrades() {
                       <input
                         type="number"
                         step="0.01"
+                        min="0"
                         value={editForm.stamp_duty ?? '0.00'}
-                        onChange={(e) => setEditForm({ ...editForm, stamp_duty: e.target.value })}
+                        onChange={(e) => handleAllTradesEditFieldChange('stamp_duty', e.target.value)}
+                        onKeyDown={blockNegativeKeys}
                         className="w-full px-2.5 py-1.5 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers text-xs"
                       />
                     </div>
@@ -3714,8 +3798,10 @@ export default function AllTrades() {
                       <input
                         type="number"
                         step="0.01"
+                        min="0"
                         value={editForm.other_charges ?? '0.00'}
-                        onChange={(e) => setEditForm({ ...editForm, other_charges: e.target.value })}
+                        onChange={(e) => handleAllTradesEditFieldChange('other_charges', e.target.value)}
+                        onKeyDown={blockNegativeKeys}
                         className="w-full px-2.5 py-1.5 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers text-xs"
                       />
                     </div>
@@ -4166,6 +4252,11 @@ export default function AllTrades() {
         tradeTradingTypes={tradeTradingTypes}
         tradeOptionTypes={tradeOptionTypes}
         tradeStrategies={tradeStrategies}
+      />
+      {/* Option Chain Modal */}
+      <OptionChainModal
+        isOpen={showOptionChainModal}
+        onClose={() => setShowOptionChainModal(false)}
       />
     </div>
   );

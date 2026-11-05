@@ -12,12 +12,14 @@ import {
   Edit2,
   RotateCw,
   ChevronDown,
+  Layers,
 } from 'lucide-react';
 import api from '../../api/client';
 import { formatINR } from '../../utils/formatters';
 import { useBrokerage } from '../../context/BrokerageContext';
 import { useToast } from '../../context/ToastContext';
 import { useTheme } from '../../context/ThemeContext';
+import OptionChainModal from './OptionChainModal';
 
 export default function EditOrderModal({ trade, order, isOpen, onClose, onSuccess }) {
   const { isKite } = useTheme();
@@ -46,6 +48,13 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
   const [orderTime, setOrderTime] = useState('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showOptionChainModal, setShowOptionChainModal] = useState(false);
+
+  const handleSelectOptionFromChain = (opt) => {
+    if (opt?.price) {
+      setPrice(String(opt.price));
+    }
+  };
 
   // Charges state
   const [totalCharges, setTotalCharges] = useState('');
@@ -127,23 +136,30 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
     showToast('Charges auto-calculated via active schedule', 'info');
   };
 
+  const blockNegativeKeys = (e) => {
+    if (e.key === '-' || e.key === 'Minus' || e.key === 'e' || e.key === 'E' || e.key === '+') {
+      e.preventDefault();
+    }
+  };
+
   const handleBreakdownChange = (field, val) => {
+    const clean = val.replace(/-/g, '').replace(/[^0-9.]/g, '');
     const updated = {
-      brokerage: field === 'brokerage' ? val : brokerage,
-      stt: field === 'stt' ? val : stt,
-      exchangeCharges: field === 'exchangeCharges' ? val : exchangeCharges,
-      gst: field === 'gst' ? val : gst,
-      sebiCharges: field === 'sebiCharges' ? val : sebiCharges,
-      stampDuty: field === 'stampDuty' ? val : stampDuty,
-      otherCharges: field === 'otherCharges' ? val : otherCharges,
+      brokerage: field === 'brokerage' ? clean : brokerage,
+      stt: field === 'stt' ? clean : stt,
+      exchangeCharges: field === 'exchangeCharges' ? clean : exchangeCharges,
+      gst: field === 'gst' ? clean : gst,
+      sebiCharges: field === 'sebiCharges' ? clean : sebiCharges,
+      stampDuty: field === 'stampDuty' ? clean : stampDuty,
+      otherCharges: field === 'otherCharges' ? clean : otherCharges,
     };
-    if (field === 'brokerage') setBrokerage(val);
-    if (field === 'stt') setStt(val);
-    if (field === 'exchangeCharges') setExchangeCharges(val);
-    if (field === 'gst') setGst(val);
-    if (field === 'sebiCharges') setSebiCharges(val);
-    if (field === 'stampDuty') setStampDuty(val);
-    if (field === 'otherCharges') setOtherCharges(val);
+    if (field === 'brokerage') setBrokerage(clean);
+    if (field === 'stt') setStt(clean);
+    if (field === 'exchangeCharges') setExchangeCharges(clean);
+    if (field === 'gst') setGst(clean);
+    if (field === 'sebiCharges') setSebiCharges(clean);
+    if (field === 'stampDuty') setStampDuty(clean);
+    if (field === 'otherCharges') setOtherCharges(clean);
 
     const sum =
       (parseFloat(updated.brokerage) || 0) +
@@ -157,7 +173,8 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
   };
 
   const handleTotalChargesChange = (val) => {
-    setTotalCharges(val);
+    const clean = val.replace(/-/g, '').replace(/[^0-9.]/g, '');
+    setTotalCharges(clean);
   };
 
   const activeCharges = parseFloat(totalCharges) || 0;
@@ -273,7 +290,8 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                 min="1"
                 max={isSell ? maxPermissibleQty : undefined}
                 value={quantity}
-                onChange={(e) => setQuantity(e.target.value)}
+                onChange={(e) => setQuantity(e.target.value.replace(/[^0-9]/g, ''))}
+                onKeyDown={blockNegativeKeys}
                 placeholder="e.g. 50"
                 required
                 className="w-full px-3 py-2 text-sm rounded-xl bg-[#141e33] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono"
@@ -286,9 +304,20 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 light:text-slate-700 mb-1.5">
-                Execution Price (₹) <span className="text-rose-400">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-medium text-slate-300 light:text-slate-700">
+                  Execution Price (₹) <span className="text-rose-400">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowOptionChainModal(true)}
+                  className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors cursor-pointer"
+                  title="View live Option Chain"
+                >
+                  <Layers className="w-3 h-3" />
+                  <span>Option Chain</span>
+                </button>
+              </div>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">₹</span>
                 <input
@@ -296,7 +325,8 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                   step="0.05"
                   min="0"
                   value={price}
-                  onChange={(e) => setPrice(e.target.value)}
+                  onChange={(e) => setPrice(e.target.value.replace(/-/g, '').replace(/[^0-9.]/g, ''))}
+                  onKeyDown={blockNegativeKeys}
                   placeholder="0.00"
                   required
                   className="w-full pl-7 pr-3 py-2 text-sm rounded-xl bg-[#141e33] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono"
@@ -375,6 +405,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                 min="0"
                 value={totalCharges}
                 onChange={(e) => handleTotalChargesChange(e.target.value)}
+                onKeyDown={blockNegativeKeys}
                 placeholder="0.00"
                 className="w-full pl-7 pr-3 py-2 text-sm rounded-xl bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-300 text-amber-400 font-mono font-bold focus:outline-none focus:border-blue-500"
               />
@@ -392,6 +423,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                       min="0"
                       value={brokerage}
                       onChange={(e) => handleBreakdownChange('brokerage', e.target.value)}
+                      onKeyDown={blockNegativeKeys}
                       className="w-full px-2 py-1.5 rounded-lg bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 font-mono text-xs"
                     />
                   </div>
@@ -403,6 +435,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                       min="0"
                       value={stt}
                       onChange={(e) => handleBreakdownChange('stt', e.target.value)}
+                      onKeyDown={blockNegativeKeys}
                       className="w-full px-2 py-1.5 rounded-lg bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 font-mono text-xs"
                     />
                   </div>
@@ -414,6 +447,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                       min="0"
                       value={exchangeCharges}
                       onChange={(e) => handleBreakdownChange('exchangeCharges', e.target.value)}
+                      onKeyDown={blockNegativeKeys}
                       className="w-full px-2 py-1.5 rounded-lg bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 font-mono text-xs"
                     />
                   </div>
@@ -425,6 +459,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                       min="0"
                       value={gst}
                       onChange={(e) => handleBreakdownChange('gst', e.target.value)}
+                      onKeyDown={blockNegativeKeys}
                       className="w-full px-2 py-1.5 rounded-lg bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 font-mono text-xs"
                     />
                   </div>
@@ -439,6 +474,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                       min="0"
                       value={sebiCharges}
                       onChange={(e) => handleBreakdownChange('sebiCharges', e.target.value)}
+                      onKeyDown={blockNegativeKeys}
                       className="w-full px-2 py-1.5 rounded-lg bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 font-mono text-xs"
                     />
                   </div>
@@ -450,6 +486,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                       min="0"
                       value={stampDuty}
                       onChange={(e) => handleBreakdownChange('stampDuty', e.target.value)}
+                      onKeyDown={blockNegativeKeys}
                       className="w-full px-2 py-1.5 rounded-lg bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 font-mono text-xs"
                     />
                   </div>
@@ -461,6 +498,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                       min="0"
                       value={otherCharges}
                       onChange={(e) => handleBreakdownChange('otherCharges', e.target.value)}
+                      onKeyDown={blockNegativeKeys}
                       className="w-full px-2 py-1.5 rounded-lg bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 font-mono text-xs"
                     />
                   </div>
@@ -567,6 +605,17 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
           </div>
         </form>
       </div>
+
+      {/* Option Chain Modal */}
+      <OptionChainModal
+        isOpen={showOptionChainModal}
+        onClose={() => setShowOptionChainModal(false)}
+        initialSymbol={trade?.index_name}
+        initialStrike={trade?.strike_price}
+        initialOptionType={trade?.option_type}
+        initialExpiry={trade?.expiry_date}
+        onSelectOption={handleSelectOptionFromChain}
+      />
     </div>
   );
 }

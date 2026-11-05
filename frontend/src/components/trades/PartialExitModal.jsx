@@ -11,6 +11,7 @@ import {
   Receipt,
   SlidersHorizontal,
   RotateCw,
+  Layers,
 } from 'lucide-react';
 import api from '../../api/client';
 import { formatINR, formatDate } from '../../utils/formatters';
@@ -18,6 +19,7 @@ import { useLotSizes } from '../../context/LotSizeContext';
 import { useBrokerage } from '../../context/BrokerageContext';
 import { useToast } from '../../context/ToastContext';
 import { useTheme } from '../../context/ThemeContext';
+import OptionChainModal from './OptionChainModal';
 
 export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) {
   const { isKite } = useTheme();
@@ -47,6 +49,19 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
   const [notes, setNotes] = useState('');
   const [customCharges, setCustomCharges] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showOptionChainModal, setShowOptionChainModal] = useState(false);
+
+  const blockNegativeKeys = (e) => {
+    if (e.key === '-' || e.key === 'Minus' || e.key === 'e' || e.key === 'E' || e.key === '+') {
+      e.preventDefault();
+    }
+  };
+
+  const handleSelectOptionFromChain = (opt) => {
+    if (opt?.price) {
+      setExitPrice(String(Math.max(0, Math.abs(parseFloat(opt.price) || 0))));
+    }
+  };
 
   // Initialize defaults whenever modal opens
   useEffect(() => {
@@ -221,7 +236,8 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
                 max={openQty}
                 required
                 value={exitQty}
-                onChange={(e) => setExitQty(e.target.value)}
+                onChange={(e) => setExitQty(e.target.value.replace(/[^0-9]/g, ''))}
+                onKeyDown={blockNegativeKeys}
                 placeholder="Enter quantity to sell"
                 className="w-full px-3.5 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-white light:text-slate-900 text-sm font-mono-numbers focus:outline-none focus:border-blue-500"
               />
@@ -251,9 +267,20 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
 
           {/* Exit Price */}
           <div>
-            <label className="block text-xs font-medium text-slate-300 light:text-slate-700 mb-1.5">
-              Exit Price (₹ per share) <span className="text-rose-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-medium text-slate-300 light:text-slate-700">
+                Exit Price (₹ per share) <span className="text-rose-500">*</span>
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowOptionChainModal(true)}
+                className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors cursor-pointer"
+                title="View live Option Chain"
+              >
+                <Layers className="w-3 h-3" />
+                <span>Option Chain</span>
+              </button>
+            </div>
             <div className="relative">
               <input
                 type="number"
@@ -261,7 +288,8 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
                 min="0.05"
                 required
                 value={exitPrice}
-                onChange={(e) => setExitPrice(e.target.value)}
+                onChange={(e) => setExitPrice(e.target.value.replace(/-/g, '').replace(/[^0-9.]/g, ''))}
+                onKeyDown={blockNegativeKeys}
                 placeholder="e.g. 156.50"
                 className="w-full pl-8 pr-3.5 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-white light:text-slate-900 text-sm font-mono-numbers focus:outline-none focus:border-blue-500"
               />
@@ -332,7 +360,8 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
                   step="0.01"
                   min="0"
                   value={customCharges !== '' ? customCharges : estimatedSellCharges.toFixed(2)}
-                  onChange={(e) => setCustomCharges(e.target.value)}
+                  onChange={(e) => setCustomCharges(e.target.value.replace(/-/g, '').replace(/[^0-9.]/g, ''))}
+                  onKeyDown={blockNegativeKeys}
                   placeholder={estimatedSellCharges.toFixed(2)}
                   className="w-full px-2 py-1 text-right font-mono-numbers text-xs rounded-lg bg-[#141e33] light:bg-white border border-[#1e293b] light:border-slate-300 text-amber-400 font-bold focus:outline-none focus:border-blue-500"
                 />
@@ -397,6 +426,16 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
           </div>
         </form>
       </div>
+
+      <OptionChainModal
+        isOpen={showOptionChainModal}
+        onClose={() => setShowOptionChainModal(false)}
+        initialSymbol={trade?.index_name}
+        initialStrike={trade?.strike_price}
+        initialOptionType={trade?.option_type}
+        initialExpiry={trade?.expiry_date}
+        onSelectOption={handleSelectOptionFromChain}
+      />
     </div>
   );
 }
