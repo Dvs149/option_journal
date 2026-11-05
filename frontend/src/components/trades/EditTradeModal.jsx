@@ -682,7 +682,8 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
                     required
                     value={editForm.trade_date || ''}
                     onChange={(e) => setEditForm({ ...editForm, trade_date: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white focus:outline-none focus:border-blue-500 font-mono-numbers"
+                    onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                    className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white focus:outline-none focus:border-blue-500 font-mono-numbers cursor-pointer"
                   />
                 </div>
                 <div>
@@ -825,7 +826,8 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
                     type="date"
                     value={editForm.expiry_date || ''}
                     onChange={(e) => setEditForm({ ...editForm, expiry_date: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white focus:outline-none focus:border-blue-500 font-mono-numbers"
+                    onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                    className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white focus:outline-none focus:border-blue-500 font-mono-numbers cursor-pointer"
                   />
                 </div>
               </div>

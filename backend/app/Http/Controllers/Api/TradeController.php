@@ -1410,6 +1410,7 @@ class TradeController extends Controller
             'orders' => 'required|array|min:1',
             'trade_date' => 'required|date',
             'import_mode' => 'nullable|string|in:smart,individual',
+            'option_type' => 'nullable|string',
             'trading_account_id' => 'nullable|integer',
         ]);
 
@@ -1419,7 +1420,8 @@ class TradeController extends Controller
                 $request->input('orders'),
                 $request->input('trade_date'),
                 $request->input('trading_account_id'),
-                $request->input('import_mode', 'smart')
+                $request->input('import_mode', 'smart'),
+                $request->input('option_type', 'auto')
             );
 
             return response()->json($result);

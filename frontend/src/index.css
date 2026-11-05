@@ -103,6 +103,19 @@ select option {
   color: #0f172a;
 }
 
+/* Universal date & time input pointer cursor and clickable indicator */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  cursor: pointer;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
 /* Floating Toast Pop-up Animations */
 @keyframes toastSlideIn {
   from {

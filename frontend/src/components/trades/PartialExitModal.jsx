@@ -310,7 +310,8 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
                 required
                 value={orderDate}
                 onChange={(e) => setOrderDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-white light:text-slate-900 text-xs focus:outline-none focus:border-blue-500"
+                onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-white light:text-slate-900 text-xs focus:outline-none focus:border-blue-500 cursor-pointer"
               />
             </div>
             <div>
@@ -321,7 +322,8 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
                 type="time"
                 value={orderTime}
                 onChange={(e) => setOrderTime(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-white light:text-slate-900 text-xs focus:outline-none focus:border-blue-500"
+                onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-white light:text-slate-900 text-xs focus:outline-none focus:border-blue-500 cursor-pointer"
               />
             </div>
           </div>

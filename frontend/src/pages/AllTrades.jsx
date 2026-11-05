@@ -1505,7 +1505,8 @@ export default function AllTrades() {
                           type="date"
                           value={localFrom}
                           onChange={(e) => setLocalFrom(e.target.value)}
-                          className="w-full px-2 py-1 rounded-lg bg-[#162033] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-[11px] text-white light:text-slate-900 focus:outline-none focus:border-blue-500"
+                          onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                          className="w-full px-2 py-1 rounded-lg bg-[#162033] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-[11px] text-white light:text-slate-900 focus:outline-none focus:border-blue-500 cursor-pointer"
                         />
                       </div>
                       <div>
@@ -1514,7 +1515,8 @@ export default function AllTrades() {
                           type="date"
                           value={localTo}
                           onChange={(e) => setLocalTo(e.target.value)}
-                          className="w-full px-2 py-1 rounded-lg bg-[#162033] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-[11px] text-white light:text-slate-900 focus:outline-none focus:border-blue-500"
+                          onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                          className="w-full px-2 py-1 rounded-lg bg-[#162033] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-[11px] text-white light:text-slate-900 focus:outline-none focus:border-blue-500 cursor-pointer"
                         />
                       </div>
                     </div>
@@ -1785,76 +1787,87 @@ export default function AllTrades() {
 
           {/* Bulk Selection Action Bar */}
           {selectedRowIds.size > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-[#121b2d] light:bg-blue-50/80 border border-blue-500/30 light:border-blue-200 rounded-2xl shadow-sm animate-fadeIn">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center justify-center min-w-6 h-6 px-1.5 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 font-bold text-xs">
-                  {selectedRowIds.size}
-                </div>
-                <div className="text-xs">
-                  <span className="font-semibold text-white light:text-slate-900">
-                    {selectedRowIds.size} {selectedRowIds.size === 1 ? 'trade' : 'trades'} selected
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 bg-[#121b2d] light:bg-slate-100 border border-blue-500/30 light:border-blue-200 rounded-2xl shadow-sm animate-fadeIn">
+              {/* Left: Count, Net P&L Badge, and Pagination Links */}
+              <div className="flex flex-wrap items-center gap-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-lg bg-blue-600 text-white font-bold text-xs shadow-sm">
+                    {selectedRowIds.size}
                   </span>
-                  <span className="text-slate-400 light:text-slate-500 ml-2">
-                    (Page {pagination.current_page || page}: {selectedOnCurrentPageCount} of {trades.length} selected)
+                  <span className="text-xs font-bold text-white light:text-slate-900 whitespace-nowrap">
+                    {selectedRowIds.size === 1 ? '1 trade selected' : `${selectedRowIds.size} trades selected`}
                   </span>
                 </div>
-                {/* Option to select all on this page if not all on current page are selected */}
-                {!isAllOnPageSelected && trades.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={toggleSelectAllCurrentPage}
-                    className="text-xs text-blue-400 hover:text-blue-300 light:text-blue-600 underline font-medium"
-                  >
-                    Select all {trades.length} on page {pagination.current_page || page}
-                  </button>
-                )}
-                {/* Option to select ALL trades across all pages */}
-                {selectedRowIds.size < pagination.total && (
-                  <button
-                    type="button"
-                    disabled={loadingAllIds}
-                    onClick={handleSelectAllAcrossPages}
-                    className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 light:text-blue-600 font-semibold underline disabled:opacity-50"
-                  >
-                    {loadingAllIds ? (
-                      <RotateCw className="w-3 h-3 animate-spin inline" />
-                    ) : null}
-                    Select all {pagination.total} trades across all pages
-                  </button>
-                )}
-              </div>
-              <div className="flex items-center gap-2.5">
-                {/* Total Net P&L Badge */}
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs">
-                  <span className="text-slate-400 font-sans text-[11px]">Net P&L:</span>
-                  <span
-                    className={`font-mono font-bold text-xs ${
-                      selectedTotalNetPnl > 0
-                        ? 'text-emerald-400'
-                        : selectedTotalNetPnl < 0
-                        ? 'text-rose-400'
-                        : 'text-slate-300 light:text-slate-700'
-                    }`}
-                  >
+
+                {/* Net P&L Pill */}
+                <div
+                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-mono font-bold border transition-colors ${
+                    selectedTotalNetPnl > 0
+                      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                      : selectedTotalNetPnl < 0
+                      ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                      : 'bg-slate-800/50 text-slate-300 border-slate-700'
+                  }`}
+                >
+                  <span className="text-[10px] font-sans font-medium text-slate-400 uppercase tracking-wider">
+                    Net P&L:
+                  </span>
+                  <span>
                     {selectedTotalNetPnl > 0 ? '+' : ''}
                     {formatINR(selectedTotalNetPnl, Math.abs(selectedTotalNetPnl % 1) > 0.001)}
                   </span>
                 </div>
 
+                {/* Secondary pagination context & links */}
+                <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400 light:text-slate-500">
+                  <span>
+                    (Page {pagination.current_page || page}: {selectedOnCurrentPageCount} of {trades.length})
+                  </span>
+                  {!isAllOnPageSelected && trades.length > 0 && (
+                    <>
+                      <span className="text-slate-600">•</span>
+                      <button
+                        type="button"
+                        onClick={toggleSelectAllCurrentPage}
+                        className="text-blue-400 hover:text-blue-300 light:text-blue-600 hover:underline cursor-pointer font-medium"
+                      >
+                        Select all {trades.length} on page
+                      </button>
+                    </>
+                  )}
+                  {selectedRowIds.size < pagination.total && (
+                    <>
+                      <span className="text-slate-600">•</span>
+                      <button
+                        type="button"
+                        disabled={loadingAllIds}
+                        onClick={handleSelectAllAcrossPages}
+                        className="text-blue-400 hover:text-blue-300 light:text-blue-600 hover:underline cursor-pointer flex items-center gap-1 font-medium disabled:opacity-50"
+                      >
+                        {loadingAllIds && <RotateCw className="w-2.5 h-2.5 animate-spin inline" />}
+                        Select all {pagination.total} across all pages
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Right: Actions */}
+              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                 <button
                   type="button"
                   onClick={() => setSelectedRowIds(new Set())}
-                  className="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white light:text-slate-600 hover:bg-[#18233a] light:hover:bg-slate-200 transition-colors"
+                  className="px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white light:text-slate-600 hover:bg-[#18233a] light:hover:bg-slate-200 transition-colors cursor-pointer whitespace-nowrap"
                 >
                   Clear Selection
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowBulkDeleteModal(true)}
-                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-600/20 transition-all hover:scale-[1.02] active:scale-95"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-600/25 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer whitespace-nowrap"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                  <span>Delete Selected ({selectedRowIds.size})</span>
+                  <span>Delete ({selectedRowIds.size})</span>
                 </button>
               </div>
             </div>
@@ -3262,44 +3275,46 @@ export default function AllTrades() {
 
       {/* Floating Bottom Action Bar for Bulk Selection */}
       {selectedRowIds.size > 0 && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-5 py-2.5 bg-[#121b2d]/95 light:bg-white/95 backdrop-blur-md border border-blue-500/40 light:border-blue-300 rounded-full shadow-2xl shadow-black/60 text-xs animate-fadeIn">
-          <div className="flex items-center gap-2 pr-2 border-r border-slate-700 light:border-slate-300">
-            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[11px]">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 px-4 py-2 bg-[#121b2d]/95 light:bg-white/95 backdrop-blur-md border border-blue-500/40 light:border-blue-300 rounded-full shadow-2xl shadow-black/60 text-xs animate-fadeIn">
+          <div className="flex items-center gap-2 pr-2.5 border-r border-[#1e293b] light:border-slate-300">
+            <span className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[11px] shadow-sm">
               {selectedRowIds.size}
             </span>
-            <span className="text-white light:text-slate-900 font-medium whitespace-nowrap">
+            <span className="text-white light:text-slate-900 font-semibold whitespace-nowrap">
               Selected
             </span>
           </div>
 
           {/* Total Net P&L Badge */}
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0e1626]/80 light:bg-slate-100 border border-[#1e293b] light:border-slate-200">
-            <span className="text-[11px] text-slate-400 font-medium whitespace-nowrap">Total Net P&L:</span>
-            <span
-              className={`font-mono font-bold text-xs whitespace-nowrap ${
-                selectedTotalNetPnl > 0
-                  ? 'text-emerald-400'
-                  : selectedTotalNetPnl < 0
-                  ? 'text-rose-400'
-                  : 'text-slate-300 light:text-slate-700'
-              }`}
-            >
+          <div
+            className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold border transition-colors ${
+              selectedTotalNetPnl > 0
+                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                : selectedTotalNetPnl < 0
+                ? 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+                : 'bg-[#0e1626] text-slate-300 border-slate-700'
+            }`}
+          >
+            <span className="text-[10px] font-sans font-medium text-slate-400">Net P&L:</span>
+            <span className="whitespace-nowrap">
               {selectedTotalNetPnl > 0 ? '+' : ''}
               {formatINR(selectedTotalNetPnl, Math.abs(selectedTotalNetPnl % 1) > 0.001)}
             </span>
           </div>
 
+          <div className="h-4 w-px bg-[#1e293b] light:bg-slate-300 mx-0.5" />
+
           <button
             type="button"
             onClick={() => setSelectedRowIds(new Set())}
-            className="text-slate-400 hover:text-white light:text-slate-500 light:hover:text-slate-900 text-xs font-medium px-2 py-1 transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-white light:text-slate-600 light:hover:text-slate-900 text-xs font-medium px-2 py-1 transition-colors cursor-pointer whitespace-nowrap"
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={() => setShowBulkDeleteModal(true)}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-all shadow-md active:scale-95 cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-all shadow-md shadow-rose-600/30 hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
           >
             <Trash2 className="w-3.5 h-3.5" />
             <span>Delete ({selectedRowIds.size})</span>
@@ -3398,7 +3413,8 @@ export default function AllTrades() {
                         required
                         value={editForm.trade_date || ''}
                         onChange={(e) => setEditForm({ ...editForm, trade_date: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white focus:outline-none focus:border-blue-500"
+                        onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                        className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white focus:outline-none focus:border-blue-500 cursor-pointer"
                       />
                     </div>
                     <div>
@@ -3499,7 +3515,8 @@ export default function AllTrades() {
                         type="date"
                         value={editForm.expiry_date || ''}
                         onChange={(e) => setEditForm({ ...editForm, expiry_date: e.target.value })}
-                        className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white focus:outline-none focus:border-blue-500"
+                        onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                        className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white focus:outline-none focus:border-blue-500 cursor-pointer"
                       />
                     </div>
                   </div>

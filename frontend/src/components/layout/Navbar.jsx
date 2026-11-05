@@ -199,7 +199,8 @@ export default function Navbar({
                   type="date"
                   value={localFrom}
                   onChange={(e) => setLocalFrom(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 font-mono-numbers"
+                  onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 font-mono-numbers cursor-pointer"
                 />
               </div>
               <div>
@@ -208,7 +209,8 @@ export default function Navbar({
                   type="date"
                   value={localTo}
                   onChange={(e) => setLocalTo(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 font-mono-numbers"
+                  onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 font-mono-numbers cursor-pointer"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">

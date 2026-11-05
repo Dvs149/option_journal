@@ -46,6 +46,7 @@ export default function ImageOrderImportModal({
   const [detectedOrders, setDetectedOrders] = useState([]);
   const [tradeDate, setTradeDate] = useState(new Date().toISOString().split('T')[0]);
   const [importMode, setImportMode] = useState('smart'); // 'smart' | 'individual'
+  const [optionType, setOptionType] = useState('auto'); // 'auto' | 'Both' | 'CE' | 'PE'
   const [importResult, setImportResult] = useState(null);
 
   // Reset when opening
@@ -89,6 +90,7 @@ export default function ImageOrderImportModal({
     setImportResult(null);
     setTradeDate(new Date().toISOString().split('T')[0]);
     setImportMode('smart');
+    setOptionType('auto');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -147,6 +149,23 @@ export default function ImageOrderImportModal({
         });
 
         setDetectedOrders(enrichedOrders);
+
+        // Auto-detect if image contains orders of the same strike (CE + PE pair)
+        const hasSameStrikePair = enrichedOrders.some((o1, i) =>
+          enrichedOrders.some((o2, j) =>
+            i !== j &&
+            o1.strike_price &&
+            o2.strike_price &&
+            String(o1.strike_price) === String(o2.strike_price) &&
+            o1.index_name === o2.index_name
+          )
+        );
+        if (hasSameStrikePair) {
+          setOptionType('Both');
+        } else {
+          setOptionType('auto');
+        }
+
         setStep('REVIEW');
         showToast(`✓ Detected ${enrichedOrders.length} executed orders from screenshot!`, 'success');
       } else {
@@ -251,6 +270,37 @@ export default function ImageOrderImportModal({
     [selectedOrders]
   );
 
+  // Handle Option Type Change (Both, CE, PE, auto)
+  const handleOptionTypeChange = (newType) => {
+    setOptionType(newType);
+    if (newType === 'CE') {
+      setDetectedOrders((prev) => prev.map((o) => ({ ...o, option_type: 'CE' })));
+    } else if (newType === 'PE') {
+      setDetectedOrders((prev) => prev.map((o) => ({ ...o, option_type: 'PE' })));
+    } else if (newType === 'Both') {
+      // If we have pairs with the same strike where both are CE or both are PE, ensure one is CE and one is PE
+      setDetectedOrders((prev) => {
+        const groups = {};
+        prev.forEach((o) => {
+          const k = `${o.index_name}_${o.strike_price}`;
+          if (!groups[k]) groups[k] = [];
+          groups[k].push(o);
+        });
+
+        return prev.map((o) => {
+          const k = `${o.index_name}_${o.strike_price}`;
+          const items = groups[k];
+          if (items && items.length === 2 && items[0].option_type === items[1].option_type) {
+            if (o.id === items[1].id) {
+              return { ...o, option_type: items[0].option_type === 'CE' ? 'PE' : 'CE' };
+            }
+          }
+          return o;
+        });
+      });
+    }
+  };
+
   // Execute Import
   const handleExecuteImport = async () => {
     if (selectedCount === 0) {
@@ -264,6 +314,7 @@ export default function ImageOrderImportModal({
         orders: selectedOrders,
         trade_date: tradeDate,
         import_mode: importMode,
+        option_type: optionType,
       };
 
       const res = await api.post('/trades/import-screenshot-orders', payload);
@@ -294,7 +345,7 @@ export default function ImageOrderImportModal({
       return;
     }
     if (onApplyToForm) {
-      onApplyToForm(selectedOrders);
+      onApplyToForm(selectedOrders, optionType);
       showToast('✓ Order details applied to trade form!', 'success');
       onClose();
     }
@@ -483,7 +534,7 @@ export default function ImageOrderImportModal({
               )}
 
               {/* Execution Preferences Bar */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-[#0e1626]/80 light:bg-slate-50 border border-[#1e293b] light:border-slate-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 p-3.5 rounded-2xl bg-[#0e1626]/80 light:bg-slate-50 border border-[#1e293b] light:border-slate-200">
                 {/* Trade Execution Date */}
                 <div>
                   <label className="text-[10px] text-slate-400 font-medium block mb-1">
@@ -494,7 +545,8 @@ export default function ImageOrderImportModal({
                       type="date"
                       value={tradeDate}
                       onChange={(e) => setTradeDate(e.target.value)}
-                      className="w-full px-3 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-cyan-500 font-mono-numbers"
+                      onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                      className="w-full px-3 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-cyan-500 font-mono-numbers cursor-pointer"
                     />
                   </div>
                 </div>
@@ -518,6 +570,23 @@ export default function ImageOrderImportModal({
                   </select>
                 </div>
 
+                {/* Option Type Selector */}
+                <div>
+                  <label className="text-[10px] text-slate-400 font-medium block mb-1">
+                    Option Type
+                  </label>
+                  <select
+                    value={optionType}
+                    onChange={(e) => handleOptionTypeChange(e.target.value)}
+                    className="w-full px-3 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-cyan-500 font-semibold"
+                  >
+                    <option value="Both">Both (Combine same-strike into 1 entry)</option>
+                    <option value="auto">Auto (As Detected)</option>
+                    <option value="CE">CE</option>
+                    <option value="PE">PE</option>
+                  </select>
+                </div>
+
                 {/* Quick Add Row Button */}
                 <div className="flex items-end">
                   <button
@@ -530,6 +599,16 @@ export default function ImageOrderImportModal({
                   </button>
                 </div>
               </div>
+
+              {/* Informative Banner when Both mode is active */}
+              {optionType === 'Both' && (
+                <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-medium animate-fade-in">
+                  <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse flex-shrink-0" />
+                  <span>
+                    <strong>Option Type "Both" Active:</strong> Two orders with the same strike (CE & PE) will be added into a single <strong>Both (Straddle)</strong> entry.
+                  </span>
+                </div>
+              )}
 
               {/* Orders Table */}
               <div className="rounded-2xl border border-[#1e293b] light:border-slate-200 overflow-hidden bg-[#121b2d] light:bg-white shadow-sm">
@@ -761,6 +840,11 @@ export default function ImageOrderImportModal({
           <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-t border-[#1e293b] light:border-slate-200 bg-[#121b2d]/80 light:bg-slate-50/80">
             <div className="text-xs text-slate-400">
               <strong className="text-cyan-400">{selectedCount}</strong> of {totalCount} orders selected
+              {optionType === 'Both' && selectedCount >= 2 && (
+                <span className="text-orange-400 font-semibold ml-2">
+                  (Combine matching into 1 "Both" entry)
+                </span>
+              )}
             </div>
 
             <div className="flex items-center gap-3">
@@ -781,7 +865,7 @@ export default function ImageOrderImportModal({
                   title="Fill the Add Trade form using the selected order"
                 >
                   <ArrowRight className="w-3.5 h-3.5" />
-                  <span>Apply Selected to Form</span>
+                  <span>{optionType === 'Both' ? 'Apply as "Both" to Form' : 'Apply Selected to Form'}</span>
                 </button>
               )}
 

@@ -927,7 +927,8 @@ export default function ExportModal({
                     type="date"
                     value={customFrom}
                     onChange={(e) => setCustomFrom(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500"
+                    onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                    className="w-full px-3 py-2 rounded-xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 cursor-pointer"
                   />
                 </div>
                 <div>
@@ -936,7 +937,8 @@ export default function ExportModal({
                     type="date"
                     value={customTo}
                     onChange={(e) => setCustomTo(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500"
+                    onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                    className="w-full px-3 py-2 rounded-xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 cursor-pointer"
                   />
                 </div>
               </div>

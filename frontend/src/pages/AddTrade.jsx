@@ -102,11 +102,93 @@ export default function AddTrade() {
   };
 
   // Apply parsed order(s) from screenshot modal directly into AddTrade form
-  const handleApplyOrdersToForm = (selectedOrders) => {
+  const handleApplyOrdersToForm = (selectedOrders, chosenOptionType = 'auto') => {
     if (!selectedOrders || selectedOrders.length === 0) return;
 
+    const ceOrders = selectedOrders.filter((o) => (o.option_type || '').toUpperCase() === 'CE');
+    const peOrders = selectedOrders.filter((o) => (o.option_type || '').toUpperCase() === 'PE');
     const buys = selectedOrders.filter((o) => o.type === 'BUY');
     const sells = selectedOrders.filter((o) => o.type === 'SELL');
+
+    // Check if we should combine same-strike orders into "Both" (Straddle)
+    const hasMatchingStrike =
+      ceOrders.length > 0 &&
+      peOrders.length > 0 &&
+      ceOrders.some((c) => peOrders.some((p) => String(c.strike_price) === String(p.strike_price)));
+
+    const shouldCombineBoth =
+      chosenOptionType === 'Both' ||
+      (chosenOptionType === 'auto' && hasMatchingStrike);
+
+    if (shouldCombineBoth && (ceOrders.length > 0 || peOrders.length > 0 || selectedOrders.length >= 2)) {
+      const ceOrd = ceOrders[0] || selectedOrders.find((o) => (o.option_type || '').toUpperCase() === 'CE') || selectedOrders[0];
+      const peOrd = peOrders[0] || selectedOrders.find((o) => (o.option_type || '').toUpperCase() === 'PE') || selectedOrders[1] || selectedOrders[0];
+      const commonIndex = ceOrd.index_name || peOrd.index_name || form.index_name;
+      const commonStrike = ceOrd.strike_price || peOrd.strike_price || form.strike_price;
+      const commonExpiry = ceOrd.expiry_date || peOrd.expiry_date || form.expiry_date;
+      const cleanLots = Math.max(1, parseInt(ceOrd.lots || peOrd.lots || 1, 10));
+      const cleanQty = Math.max(1, parseInt(ceOrd.quantity || peOrd.quantity || 1, 10));
+
+      const ceBuy = ceOrders.find((o) => o.type === 'BUY') || (ceOrd.type === 'BUY' ? ceOrd : null);
+      const ceSell = ceOrders.find((o) => o.type === 'SELL') || (ceOrd.type === 'SELL' ? ceOrd : null);
+      const peBuy = peOrders.find((o) => o.type === 'BUY') || (peOrd.type === 'BUY' ? peOrd : null);
+      const peSell = peOrders.find((o) => o.type === 'SELL') || (peOrd.type === 'SELL' ? peOrd : null);
+
+      const isClosed = ceBuy && ceSell && peBuy && peSell;
+
+      if (isClosed) {
+        setTradeMode('CLOSED');
+        const ceEntry = parseFloat(ceBuy.price) || 0;
+        const ceExit = parseFloat(ceSell.price) || 0;
+        const peEntry = parseFloat(peBuy.price) || 0;
+        const peExit = parseFloat(peSell.price) || 0;
+        const totalEntry = (ceEntry + peEntry).toFixed(2);
+        const totalExit = (ceExit + peExit).toFixed(2);
+
+        setForm((prev) => ({
+          ...prev,
+          trade_date: ceBuy.trade_date || ceBuy.order_date || prev.trade_date,
+          index_name: commonIndex,
+          option_type: 'Both',
+          strike_price: String(commonStrike),
+          expiry_date: commonExpiry || prev.expiry_date,
+          lots: String(cleanLots),
+          quantity: String(cleanQty),
+          ce_entry_price: String(ceEntry),
+          pe_entry_price: String(peEntry),
+          entry_premium: String(totalEntry),
+          ce_exit_price: String(ceExit),
+          pe_exit_price: String(peExit),
+          exit_premium: String(totalExit),
+          strategy_name: 'Long Straddle',
+        }));
+      } else {
+        // Open position (e.g. 2 BUY orders for CE & PE with same strike)
+        const ceEntry = parseFloat(ceBuy ? ceBuy.price : ceOrd.price) || 0;
+        const peEntry = parseFloat(peBuy ? peBuy.price : peOrd.price) || 0;
+        const totalEntry = (ceEntry + peEntry).toFixed(2);
+
+        setTradeMode('OPEN');
+        setForm((prev) => ({
+          ...prev,
+          trade_date: (ceBuy || ceOrd).trade_date || prev.trade_date,
+          index_name: commonIndex,
+          option_type: 'Both',
+          strike_price: String(commonStrike),
+          expiry_date: commonExpiry || prev.expiry_date,
+          lots: String(cleanLots),
+          quantity: String(cleanQty),
+          ce_entry_price: String(ceEntry),
+          pe_entry_price: String(peEntry),
+          entry_premium: String(totalEntry),
+          ce_exit_price: '',
+          pe_exit_price: '',
+          exit_premium: '',
+          strategy_name: 'Long Straddle',
+        }));
+      }
+      return;
+    }
 
     if (buys.length > 0 && sells.length > 0) {
       const buy = buys[0];
@@ -119,13 +201,14 @@ export default function AddTrade() {
       const buyPrice = Math.max(0, Math.abs(parseFloat(buy.price) || 0));
       const sellPrice = Math.max(0, Math.abs(parseFloat(sell.price) || 0));
       const cleanStrike = Math.max(0, Math.abs(parseFloat(buy.strike_price || sell.strike_price || form.strike_price) || 0));
+      const optType = chosenOptionType !== 'auto' ? chosenOptionType : (buy.option_type || form.option_type);
 
       setForm((prev) => ({
         ...prev,
         trade_date: buy.trade_date || prev.trade_date,
         index_name: buy.index_name || prev.index_name,
         strike_price: String(cleanStrike),
-        option_type: buy.option_type || prev.option_type,
+        option_type: optType,
         expiry_date: buy.expiry_date || prev.expiry_date,
         quantity: String(cleanQty),
         lots: String(cleanLots),
@@ -139,6 +222,7 @@ export default function AddTrade() {
       const cleanLots = Math.max(1, Math.abs(parseInt(ord.lots, 10) || Math.round(cleanQty / currentLotSize) || 1));
       const cleanPrice = Math.max(0, Math.abs(parseFloat(ord.price) || 0));
       const cleanStrike = Math.max(0, Math.abs(parseFloat(ord.strike_price || form.strike_price) || 0));
+      const optType = chosenOptionType !== 'auto' ? chosenOptionType : (ord.option_type || form.option_type);
 
       if (isBuy) {
         setTradeMode('OPEN');
@@ -147,7 +231,7 @@ export default function AddTrade() {
           trade_date: ord.trade_date || prev.trade_date,
           index_name: ord.index_name || prev.index_name,
           strike_price: String(cleanStrike),
-          option_type: ord.option_type || prev.option_type,
+          option_type: optType,
           expiry_date: ord.expiry_date || prev.expiry_date,
           quantity: String(cleanQty),
           lots: String(cleanLots),
@@ -159,7 +243,7 @@ export default function AddTrade() {
           ...prev,
           index_name: ord.index_name || prev.index_name,
           strike_price: String(cleanStrike),
-          option_type: ord.option_type || prev.option_type,
+          option_type: optType,
           expiry_date: ord.expiry_date || prev.expiry_date,
           quantity: String(cleanQty),
           lots: String(cleanLots),
@@ -1016,7 +1100,8 @@ export default function AddTrade() {
                       name="trade_date"
                       value={form.trade_date}
                       onChange={handleChange}
-                      className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 transition-colors"
+                      onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                      className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
                     />
                   </div>
                 </div>
@@ -1174,7 +1259,8 @@ export default function AddTrade() {
                     name="expiry_date"
                     value={form.expiry_date}
                     onChange={handleChange}
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 transition-colors"
+                    onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                    className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
                   />
                 </div>
               </div>

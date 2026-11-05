@@ -208,7 +208,8 @@ class OrderScreenshotParserService
         array $selectedOrders,
         string $tradeDate,
         ?int $accountId = null,
-        string $importMode = 'smart'
+        string $importMode = 'smart',
+        string $optionType = 'auto'
     ): array {
         if (empty($selectedOrders)) {
             return [
@@ -233,7 +234,69 @@ class OrderScreenshotParserService
 
         DB::beginTransaction();
         try {
-            if ($importMode === 'smart') {
+            if ($optionType === 'Both') {
+                // Group orders by instrument: index_name + strike_price + expiry_date (merging same-strike CE & PE)
+                $grouped = [];
+                foreach ($selectedOrders as $ord) {
+                    $key = sprintf(
+                        '%s_%s_%s',
+                        strtoupper($ord['index_name']),
+                        $ord['strike_price'] ?? '0',
+                        $ord['expiry_date'] ?? $tradeDate
+                    );
+                    $grouped[$key][] = $ord;
+                }
+
+                foreach ($grouped as $key => $items) {
+                    $ceOrders = array_values(array_filter($items, fn($o) => strtoupper($o['option_type'] ?? '') === 'CE'));
+                    $peOrders = array_values(array_filter($items, fn($o) => strtoupper($o['option_type'] ?? '') === 'PE'));
+
+                    // If neither or only one is tagged CE/PE but we have 2 items, treat first as CE and second as PE
+                    if ((empty($ceOrders) || empty($peOrders)) && count($items) === 2) {
+                        $items[0]['option_type'] = 'CE';
+                        $items[1]['option_type'] = 'PE';
+                        $ceOrders = [$items[0]];
+                        $peOrders = [$items[1]];
+                    }
+
+                    // Check for 4-order closed straddle (CE Buy + CE Sell + PE Buy + PE Sell)
+                    $ceBuys = array_values(array_filter($ceOrders, fn($o) => strtoupper($o['type']) === 'BUY'));
+                    $ceSells = array_values(array_filter($ceOrders, fn($o) => strtoupper($o['type']) === 'SELL'));
+                    $peBuys = array_values(array_filter($peOrders, fn($o) => strtoupper($o['type']) === 'BUY'));
+                    $peSells = array_values(array_filter($peOrders, fn($o) => strtoupper($o['type']) === 'SELL'));
+
+                    while (!empty($ceBuys) && !empty($ceSells) && !empty($peBuys) && !empty($peSells)) {
+                        $ceB = array_shift($ceBuys);
+                        $ceS = array_shift($ceSells);
+                        $peB = array_shift($peBuys);
+                        $peS = array_shift($peSells);
+
+                        $trade = $this->createClosedBothTrade($user, $account->id, $ceB, $ceS, $peB, $peS, $tradeDate, $rates);
+                        $importedTradeIds[] = $trade->id;
+                        $importedOrdersCount += 4;
+                    }
+
+                    // For remaining open legs (like in user screenshot: 1 CE BUY + 1 PE BUY)
+                    $remCe = array_merge($ceBuys, $ceSells);
+                    $remPe = array_merge($peBuys, $peSells);
+
+                    while (!empty($remCe) && !empty($remPe)) {
+                        $c = array_shift($remCe);
+                        $p = array_shift($remPe);
+
+                        $trade = $this->createBothTradeFromLegs($user, $account->id, $c, $p, $tradeDate, $rates);
+                        $importedTradeIds[] = $trade->id;
+                        $importedOrdersCount += 2;
+                    }
+
+                    // If any single unmatched order remains, create individual open trade
+                    foreach (array_merge($remCe, $remPe) as $unmatched) {
+                        $trade = $this->createOpenTradeFromOrder($user, $account->id, $unmatched, $tradeDate, $rates);
+                        $importedTradeIds[] = $trade->id;
+                        $importedOrdersCount += 1;
+                    }
+                }
+            } else if ($importMode === 'smart') {
                 // Group orders by instrument key: index_name + strike_price + option_type + expiry_date
                 $grouped = [];
                 foreach ($selectedOrders as $ord) {
@@ -513,6 +576,251 @@ class OrderScreenshotParserService
         TradeJournal::create([
             'trade_id' => $trade->id,
             'personal_notes' => 'Open Position from Order Book Screenshot',
+        ]);
+
+        return $trade;
+    }
+
+    /**
+     * Create an OPEN single "Both" trade combining CE and PE legs of the same strike.
+     */
+    protected function createBothTradeFromLegs(
+        User $user,
+        int $accountId,
+        array $ce,
+        array $pe,
+        string $tradeDate,
+        array $rates
+    ): Trade {
+        $indexName = strtoupper($ce['index_name'] ?? $pe['index_name'] ?? 'NIFTY');
+        $strike = $ce['strike_price'] ?? $pe['strike_price'] ?? null;
+        $expiryDate = $ce['expiry_date'] ?? $pe['expiry_date'] ?? null;
+        $quantity = max(1, min(abs((int)($ce['quantity'] ?? 1)), abs((int)($pe['quantity'] ?? 1))));
+        $lots = max(1, abs((int)($ce['lots'] ?? $pe['lots'] ?? 1)));
+
+        $cePrice = max(0.0, abs((float)($ce['price'] ?? 0)));
+        $pePrice = max(0.0, abs((float)($pe['price'] ?? 0)));
+        $entryPremium = $cePrice + $pePrice;
+
+        $ceType = strtoupper($ce['type'] ?? 'BUY');
+        $peType = strtoupper($pe['type'] ?? 'BUY');
+        $ceTime = $ce['time'] ?? '09:30:00';
+        $peTime = $pe['time'] ?? '09:30:00';
+
+        $exchange = in_array($indexName, ['SENSEX', 'BANKEX']) ? 'BSE' : 'NSE';
+
+        $ceCharges = $this->calcService->estimateSingleOrderCharges($ceType, $cePrice, $quantity, $exchange, $rates);
+        $peCharges = $this->calcService->estimateSingleOrderCharges($peType, $pePrice, $quantity, $exchange, $rates);
+
+        $brokerage = $ceCharges['brokerage'] + $peCharges['brokerage'];
+        $stt = $ceCharges['stt'] + $peCharges['stt'];
+        $exchangeCharges = $ceCharges['exchange_charges'] + $peCharges['exchange_charges'];
+        $gst = $ceCharges['gst'] + $peCharges['gst'];
+        $sebiCharges = $ceCharges['sebi_charges'] + $peCharges['sebi_charges'];
+        $stampDuty = $ceCharges['stamp_duty'] + $peCharges['stamp_duty'];
+        $totalCharges = $ceCharges['total_charges'] + $peCharges['total_charges'];
+
+        $trade = Trade::create([
+            'user_id' => $user->id,
+            'trading_account_id' => $accountId,
+            'trade_date' => $tradeDate,
+            'exit_date' => null,
+            'status' => 'OPEN',
+            'index_name' => $indexName,
+            'trading_type' => (($ce['product'] ?? '') === 'NRML' || ($pe['product'] ?? '') === 'NRML') ? 'BTST' : 'Intraday',
+            'strategy_name' => ($ceType === 'SELL' && $peType === 'SELL') ? 'Short Straddle' : 'Long Straddle',
+            'option_type' => 'Both',
+            'strike_price' => $strike,
+            'expiry_date' => $expiryDate,
+            'ce_entry_price' => $cePrice,
+            'pe_entry_price' => $pePrice,
+            'entry_premium' => $entryPremium,
+            'ce_exit_price' => null,
+            'pe_exit_price' => null,
+            'exit_premium' => null,
+            'quantity' => $quantity,
+            'open_quantity' => $quantity,
+            'lots' => $lots,
+            'gross_profit' => 0.00,
+            'gross_loss' => 0.00,
+            'brokerage' => $brokerage,
+            'stt' => $stt,
+            'exchange_charges' => $exchangeCharges,
+            'gst' => $gst,
+            'sebi_charges' => $sebiCharges,
+            'stamp_duty' => $stampDuty,
+            'other_charges' => 0.00,
+            'total_charges' => $totalCharges,
+            'net_pnl' => -$totalCharges,
+            'entry_reason' => 'Imported Straddle from Order Book Screenshot',
+            'notes' => "Straddle Both entry: CE @ ₹{$cePrice} ({$ceTime}) & PE @ ₹{$pePrice} ({$peTime})",
+        ]);
+
+        TradeOrder::create([
+            'trade_id' => $trade->id,
+            'user_id' => $user->id,
+            'order_type' => $ceType,
+            'order_date' => $tradeDate,
+            'order_time' => $ceTime,
+            'quantity' => $quantity,
+            'lots' => $lots,
+            'price' => $cePrice,
+            'brokerage' => $ceCharges['brokerage'],
+            'stt' => $ceCharges['stt'],
+            'exchange_charges' => $ceCharges['exchange_charges'],
+            'gst' => $ceCharges['gst'],
+            'sebi_charges' => $ceCharges['sebi_charges'],
+            'stamp_duty' => $ceCharges['stamp_duty'],
+            'other_charges' => 0.00,
+            'total_charges' => $ceCharges['total_charges'],
+            'notes' => "CE Leg ({$strike} CE)",
+        ]);
+
+        TradeOrder::create([
+            'trade_id' => $trade->id,
+            'user_id' => $user->id,
+            'order_type' => $peType,
+            'order_date' => $tradeDate,
+            'order_time' => $peTime,
+            'quantity' => $quantity,
+            'lots' => $lots,
+            'price' => $pePrice,
+            'brokerage' => $peCharges['brokerage'],
+            'stt' => $peCharges['stt'],
+            'exchange_charges' => $peCharges['exchange_charges'],
+            'gst' => $peCharges['gst'],
+            'sebi_charges' => $peCharges['sebi_charges'],
+            'stamp_duty' => $peCharges['stamp_duty'],
+            'other_charges' => 0.00,
+            'total_charges' => $peCharges['total_charges'],
+            'notes' => "PE Leg ({$strike} PE)",
+        ]);
+
+        TradeJournal::create([
+            'trade_id' => $trade->id,
+            'personal_notes' => "Imported Straddle (Both: {$strike} CE & PE) from Order Book Screenshot",
+        ]);
+
+        return $trade;
+    }
+
+    /**
+     * Create a CLOSED single "Both" trade combining CE (Buy+Sell) and PE (Buy+Sell) of same strike.
+     */
+    protected function createClosedBothTrade(
+        User $user,
+        int $accountId,
+        array $ceBuy,
+        array $ceSell,
+        array $peBuy,
+        array $peSell,
+        string $tradeDate,
+        array $rates
+    ): Trade {
+        $indexName = strtoupper($ceBuy['index_name'] ?? $peBuy['index_name'] ?? 'NIFTY');
+        $strike = $ceBuy['strike_price'] ?? $peBuy['strike_price'] ?? null;
+        $expiryDate = $ceBuy['expiry_date'] ?? $peBuy['expiry_date'] ?? null;
+        $quantity = max(1, min(
+            abs((int)($ceBuy['quantity'] ?? 1)),
+            abs((int)($ceSell['quantity'] ?? 1)),
+            abs((int)($peBuy['quantity'] ?? 1)),
+            abs((int)($peSell['quantity'] ?? 1))
+        ));
+        $lots = max(1, abs((int)($ceBuy['lots'] ?? 1)));
+
+        $ceEntry = max(0.0, abs((float)($ceBuy['price'] ?? 0)));
+        $ceExit = max(0.0, abs((float)($ceSell['price'] ?? 0)));
+        $peEntry = max(0.0, abs((float)($peBuy['price'] ?? 0)));
+        $peExit = max(0.0, abs((float)($peSell['price'] ?? 0)));
+
+        $entryPremium = $ceEntry + $peEntry;
+        $exitPremium = $ceExit + $peExit;
+
+        $tradeData = [
+            'index_name' => $indexName,
+            'trading_type' => 'Intraday',
+            'strategy_name' => 'Long Straddle',
+            'option_type' => 'Both',
+            'strike_price' => $strike,
+            'expiry_date' => $expiryDate,
+            'ce_entry_price' => $ceEntry,
+            'pe_entry_price' => $peEntry,
+            'entry_premium' => $entryPremium,
+            'ce_exit_price' => $ceExit,
+            'pe_exit_price' => $peExit,
+            'exit_premium' => $exitPremium,
+            'quantity' => $quantity,
+            'lots' => $lots,
+            'trade_date' => $tradeDate,
+        ];
+
+        $calc = $this->calcService->calculate($tradeData);
+
+        $trade = Trade::create([
+            'user_id' => $user->id,
+            'trading_account_id' => $accountId,
+            'trade_date' => $tradeDate,
+            'exit_date' => $tradeDate,
+            'status' => 'CLOSED',
+            'index_name' => $indexName,
+            'trading_type' => 'Intraday',
+            'strategy_name' => 'Long Straddle',
+            'option_type' => 'Both',
+            'strike_price' => $strike,
+            'expiry_date' => $expiryDate,
+            'ce_entry_price' => $ceEntry,
+            'pe_entry_price' => $peEntry,
+            'entry_premium' => $entryPremium,
+            'ce_exit_price' => $ceExit,
+            'pe_exit_price' => $peExit,
+            'exit_premium' => $exitPremium,
+            'quantity' => $quantity,
+            'open_quantity' => 0,
+            'lots' => $lots,
+            'gross_profit' => $calc['gross_profit'],
+            'gross_loss' => $calc['gross_loss'],
+            'brokerage' => $calc['brokerage'],
+            'stt' => $calc['stt'],
+            'exchange_charges' => $calc['exchange_charges'],
+            'gst' => $calc['gst'],
+            'sebi_charges' => $calc['sebi_charges'],
+            'stamp_duty' => $calc['stamp_duty'],
+            'other_charges' => 0.00,
+            'total_charges' => $calc['total_charges'],
+            'net_pnl' => $calc['net_pnl'],
+            'entry_reason' => 'Imported Closed Straddle from Order Book Screenshot',
+            'notes' => "Closed Straddle (Both: {$strike} CE & PE)",
+        ]);
+
+        $exchange = in_array($indexName, ['SENSEX', 'BANKEX']) ? 'BSE' : 'NSE';
+        foreach ([$ceBuy, $ceSell, $peBuy, $peSell] as $ord) {
+            $type = strtoupper($ord['type'] ?? 'BUY');
+            $price = (float)($ord['price'] ?? 0);
+            $chg = $this->calcService->estimateSingleOrderCharges($type, $price, $quantity, $exchange, $rates);
+            TradeOrder::create([
+                'trade_id' => $trade->id,
+                'user_id' => $user->id,
+                'order_type' => $type,
+                'order_date' => $tradeDate,
+                'order_time' => $ord['time'] ?? '09:30:00',
+                'quantity' => $quantity,
+                'lots' => $lots,
+                'price' => $price,
+                'brokerage' => $chg['brokerage'],
+                'stt' => $chg['stt'],
+                'exchange_charges' => $chg['exchange_charges'],
+                'gst' => $chg['gst'],
+                'sebi_charges' => $chg['sebi_charges'],
+                'stamp_duty' => $chg['stamp_duty'],
+                'other_charges' => 0.00,
+                'total_charges' => $chg['total_charges'],
+                'notes' => ($ord['option_type'] ?? '') . " " . $type,
+            ]);
+        }
+
+        TradeJournal::create([
+            'trade_id' => $trade->id,
+            'personal_notes' => "Imported Closed Straddle (Both: {$strike} CE & PE) from Order Book Screenshot",
         ]);
 
         return $trade;

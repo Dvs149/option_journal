@@ -347,7 +347,8 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                   type="date"
                   value={orderDate}
                   onChange={(e) => setOrderDate(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#141e33] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 focus:outline-none focus:border-blue-500"
+                  onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                  className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[#141e33] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 focus:outline-none focus:border-blue-500 cursor-pointer"
                 />
               </div>
             </div>

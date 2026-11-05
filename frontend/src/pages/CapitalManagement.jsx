@@ -1340,7 +1340,8 @@ export default function CapitalManagement() {
                   type="date"
                   value={txDate}
                   onChange={(e) => setTxDate(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white text-xs font-mono-numbers focus:outline-none focus:border-blue-500"
+                  onClick={(e) => { try { e.target.showPicker?.(); } catch {} }}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white text-xs font-mono-numbers focus:outline-none focus:border-blue-500 cursor-pointer"
                   required
                 />
               </div>

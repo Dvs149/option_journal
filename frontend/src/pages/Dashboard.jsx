@@ -60,6 +60,8 @@ export default function Dashboard() {
   const today = new Date();
   const calendarCardRef = useRef(null);
   const [hoveredDay, setHoveredDay] = useState(null);
+  const [hoveredIndexSlice, setHoveredIndexSlice] = useState(null);
+  const [hoveredCePeSlice, setHoveredCePeSlice] = useState(null);
   const [calendarMonth, setCalendarMonth] = useState({ year: today.getFullYear(), month: today.getMonth() + 1 });
   const [calendarData, setCalendarData] = useState(null);
 
@@ -779,7 +781,7 @@ export default function Dashboard() {
 
           <div className="relative flex items-center justify-center h-44">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart onMouseLeave={() => setHoveredIndexSlice(null)}>
                 <Pie
                   data={charts.index_performance?.items || []}
                   innerRadius={52}
@@ -787,20 +789,31 @@ export default function Dashboard() {
                   paddingAngle={3}
                   dataKey="percentage"
                   nameKey="name"
+                  onMouseEnter={(_, index) => setHoveredIndexSlice(index)}
+                  onMouseLeave={() => setHoveredIndexSlice(null)}
                 >
                   {(charts.index_performance?.items || []).map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color || indexColors[index % indexColors.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={entry.color || indexColors[index % indexColors.length]}
+                      opacity={hoveredIndexSlice === null || hoveredIndexSlice === index ? 1 : 0.4}
+                      style={{ transition: 'opacity 0.2s ease', cursor: 'pointer' }}
+                    />
                   ))}
                 </Pie>
                 <Tooltip
+                  wrapperStyle={{ zIndex: 50, pointerEvents: 'none' }}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const d = payload[0].payload;
                       return (
-                        <div className="bg-[#0b1322] light:bg-white p-2.5 rounded-xl border border-[#1e293b] light:border-slate-200 shadow-xl text-xs font-mono-numbers">
-                          <p className="text-slate-300 light:text-slate-700 font-sans font-bold">{d.name}</p>
-                          <p className="text-white light:text-slate-900 font-bold mt-0.5">
-                            {d.percentage}% <span className={d.net_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}>({formatINR(d.net_pnl)})</span>
+                        <div className="bg-[#0b1322] light:bg-white p-2.5 rounded-xl border border-[#1e293b] light:border-slate-200 shadow-2xl text-xs font-mono-numbers">
+                          <p className="text-slate-300 light:text-slate-700 font-sans font-bold flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: d.color || '#3b82f6' }} />
+                            <span>{d.name}</span>
+                          </p>
+                          <p className="text-white light:text-slate-900 font-bold mt-1">
+                            {d.percentage}% <span className={d.net_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}>({d.net_pnl >= 0 ? '+' : ''}{formatINR(d.net_pnl)})</span>
                           </p>
                         </div>
                       );
@@ -811,8 +824,8 @@ export default function Dashboard() {
               </PieChart>
             </ResponsiveContainer>
 
-            {/* Center Label */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            {/* Center Label - fades out when a slice is hovered to prevent overlapping with Tooltip */}
+            <div className={`absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0 transition-opacity duration-150 ${hoveredIndexSlice !== null ? 'opacity-0' : 'opacity-100'}`}>
               <span className="text-[10px] text-slate-400 uppercase font-semibold">Total</span>
               <span className="text-xs font-bold font-mono-numbers text-white light:text-slate-900">
                 {formatINR(charts.index_performance?.total_net_pnl || stats.total_net_profit)}
@@ -823,7 +836,12 @@ export default function Dashboard() {
           {/* Slices legend */}
           <div className="grid grid-cols-3 gap-1.5 pt-2 border-t border-[#1e293b] light:border-slate-200 text-[11px]">
             {(charts.index_performance?.items || []).map((idx, i) => (
-              <div key={idx.name} className="flex items-center gap-1.5 truncate">
+              <div
+                key={idx.name}
+                className={`flex items-center gap-1.5 truncate cursor-pointer transition-opacity ${hoveredIndexSlice === null || hoveredIndexSlice === i ? 'opacity-100' : 'opacity-40'}`}
+                onMouseEnter={() => setHoveredIndexSlice(i)}
+                onMouseLeave={() => setHoveredIndexSlice(null)}
+              >
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: idx.color }} />
                 <span className="text-slate-400 truncate">{idx.name}</span>
                 <span className="font-semibold text-white light:text-slate-800 ml-auto font-mono-numbers">{idx.percentage}%</span>
@@ -845,7 +863,7 @@ export default function Dashboard() {
 
           <div className="relative flex items-center justify-center h-44">
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart onMouseLeave={() => setHoveredCePeSlice(null)}>
                 <Pie
                   data={charts.ce_pe_performance?.items || []}
                   innerRadius={52}
@@ -853,20 +871,31 @@ export default function Dashboard() {
                   paddingAngle={3}
                   dataKey="percentage"
                   nameKey="name"
+                  onMouseEnter={(_, index) => setHoveredCePeSlice(index)}
+                  onMouseLeave={() => setHoveredCePeSlice(null)}
                 >
-                  {(charts.ce_pe_performance?.items || []).map((entry) => (
-                    <Cell key={entry.name} fill={cePeColors[entry.name] || '#64748b'} />
+                  {(charts.ce_pe_performance?.items || []).map((entry, index) => (
+                    <Cell
+                      key={entry.name}
+                      fill={cePeColors[entry.name] || '#64748b'}
+                      opacity={hoveredCePeSlice === null || hoveredCePeSlice === index ? 1 : 0.4}
+                      style={{ transition: 'opacity 0.2s ease', cursor: 'pointer' }}
+                    />
                   ))}
                 </Pie>
                 <Tooltip
+                  wrapperStyle={{ zIndex: 50, pointerEvents: 'none' }}
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const d = payload[0].payload;
                       return (
-                        <div className="bg-[#0b1322] light:bg-white p-2.5 rounded-xl border border-[#1e293b] light:border-slate-200 shadow-xl text-xs font-mono-numbers">
-                          <p className="text-slate-300 light:text-slate-700 font-sans font-bold">{d.name}</p>
-                          <p className="text-white light:text-slate-900 font-bold mt-0.5">
-                            {d.percentage}% <span className={d.net_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}>({formatINR(d.net_pnl)})</span>
+                        <div className="bg-[#0b1322] light:bg-white p-2.5 rounded-xl border border-[#1e293b] light:border-slate-200 shadow-2xl text-xs font-mono-numbers">
+                          <p className="text-slate-300 light:text-slate-700 font-sans font-bold flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: cePeColors[d.name] || '#64748b' }} />
+                            <span>{d.name}</span>
+                          </p>
+                          <p className="text-white light:text-slate-900 font-bold mt-1">
+                            {d.percentage}% <span className={d.net_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}>({d.net_pnl >= 0 ? '+' : ''}{formatINR(d.net_pnl)})</span>
                           </p>
                         </div>
                       );
@@ -877,8 +906,8 @@ export default function Dashboard() {
               </PieChart>
             </ResponsiveContainer>
 
-            {/* Center Label */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            {/* Center Label - fades out when a slice is hovered to prevent overlapping with Tooltip */}
+            <div className={`absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0 transition-opacity duration-150 ${hoveredCePeSlice !== null ? 'opacity-0' : 'opacity-100'}`}>
               <span className="text-[10px] text-slate-400 uppercase font-semibold">Total</span>
               <span className="text-xs font-bold font-mono-numbers text-white light:text-slate-900">
                 {formatINR(charts.ce_pe_performance?.total_net_pnl || stats.total_net_profit)}
@@ -888,8 +917,13 @@ export default function Dashboard() {
 
           {/* Slices legend */}
           <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#1e293b] light:border-slate-200 text-[11px]">
-            {(charts.ce_pe_performance?.items || []).map((item) => (
-              <div key={item.name} className="flex items-center gap-1.5 truncate">
+            {(charts.ce_pe_performance?.items || []).map((item, i) => (
+              <div
+                key={item.name}
+                className={`flex items-center gap-1.5 truncate cursor-pointer transition-opacity ${hoveredCePeSlice === null || hoveredCePeSlice === i ? 'opacity-100' : 'opacity-40'}`}
+                onMouseEnter={() => setHoveredCePeSlice(i)}
+                onMouseLeave={() => setHoveredCePeSlice(null)}
+              >
                 <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: cePeColors[item.name] }} />
                 <span className="text-slate-400">{item.name}</span>
                 <span className="font-semibold text-white light:text-slate-800 ml-auto font-mono-numbers">{item.percentage}%</span>
