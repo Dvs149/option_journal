@@ -51,6 +51,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/trades/reset-all-data', [TradeController::class, 'resetAllData']);
     Route::post('/trades/estimate-charges', [TradeController::class, 'estimateCharges']);
     Route::post('/trades/{trade}/duplicate', [TradeController::class, 'duplicate']);
+    Route::post('/trades/{trade}/orders', [TradeController::class, 'addOrder']);
+    Route::put('/trades/{trade}/orders/{order}', [TradeController::class, 'updateOrder']);
+    Route::delete('/trades/{trade}/orders/{order}', [TradeController::class, 'destroyOrder']);
     Route::post('/trades/{trade}/screenshot', [TradeController::class, 'uploadScreenshot']);
     Route::delete('/trades/{trade}/screenshot', [TradeController::class, 'deleteScreenshot']);
     Route::post('/trades/{trade}/screenshots', [TradeController::class, 'uploadScreenshots']);

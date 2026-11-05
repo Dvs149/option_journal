@@ -17,8 +17,10 @@ class Trade extends Model
         'user_id',
         'trading_account_id',
         'trade_date',
+        'exit_date',
         'index_name',
         'trading_type',
+        'status',
         'strategy_name',
         'option_type',
         'strike_price',
@@ -29,8 +31,11 @@ class Trade extends Model
         'ce_exit_price',
         'pe_exit_price',
         'exit_premium',
+        'avg_entry_price',
+        'avg_exit_price',
         'quantity',
         'lots',
+        'open_quantity',
         'gross_profit',
         'gross_loss',
         'brokerage',
@@ -52,7 +57,9 @@ class Trade extends Model
     {
         return [
             'trade_date' => 'date:Y-m-d',
+            'exit_date' => 'date:Y-m-d',
             'expiry_date' => 'date:Y-m-d',
+            'status' => 'string',
             'strike_price' => 'decimal:2',
             'ce_entry_price' => 'decimal:2',
             'pe_entry_price' => 'decimal:2',
@@ -60,8 +67,11 @@ class Trade extends Model
             'ce_exit_price' => 'decimal:2',
             'pe_exit_price' => 'decimal:2',
             'exit_premium' => 'decimal:2',
+            'avg_entry_price' => 'decimal:2',
+            'avg_exit_price' => 'decimal:2',
             'quantity' => 'integer',
             'lots' => 'integer',
+            'open_quantity' => 'integer',
             'gross_profit' => 'decimal:2',
             'gross_loss' => 'decimal:2',
             'brokerage' => 'decimal:2',
@@ -141,6 +151,26 @@ class Trade extends Model
     public function journal(): HasOne
     {
         return $this->hasOne(TradeJournal::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(TradeOrder::class)->orderBy('order_date', 'asc')->orderBy('id', 'asc');
+    }
+
+    public function scopeOpen($query)
+    {
+        return $query->where('status', 'OPEN');
+    }
+
+    public function scopeClosed($query)
+    {
+        return $query->where('status', 'CLOSED');
+    }
+
+    public function scopePartiallyClosed($query)
+    {
+        return $query->where('status', 'PARTIALLY_CLOSED');
     }
 
     protected function serializeDate(\DateTimeInterface $date): string

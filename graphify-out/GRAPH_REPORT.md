@@ -1,16 +1,16 @@
-# Graph Report - option_journal  (2026-11-03)
+# Graph Report - option_journal  (2026-11-04)
 
 ## Corpus Check
-- 209 files · ~200,132 words
+- 214 files · ~210,833 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2398 nodes · 4203 edges · 220 communities (146 shown, 74 thin omitted)
+- 2429 nodes · 4289 edges · 216 communities (141 shown, 75 thin omitted)
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 194 edges (avg confidence: 0.84)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `8adec25a`
+- Built from commit: `11e80cb0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -151,7 +151,6 @@
 - [[_COMMUNITY_Community 142|Community 142]]
 - [[_COMMUNITY_Community 143|Community 143]]
 - [[_COMMUNITY_Community 144|Community 144]]
-- [[_COMMUNITY_Community 145|Community 145]]
 - [[_COMMUNITY_Community 146|Community 146]]
 - [[_COMMUNITY_Community 147|Community 147]]
 - [[_COMMUNITY_Community 160|Community 160]]
@@ -159,11 +158,9 @@
 - [[_COMMUNITY_Community 162|Community 162]]
 - [[_COMMUNITY_Community 163|Community 163]]
 - [[_COMMUNITY_Community 164|Community 164]]
-- [[_COMMUNITY_Community 165|Community 165]]
 - [[_COMMUNITY_Community 166|Community 166]]
 - [[_COMMUNITY_Community 167|Community 167]]
 - [[_COMMUNITY_Community 168|Community 168]]
-- [[_COMMUNITY_Community 169|Community 169]]
 - [[_COMMUNITY_Community 170|Community 170]]
 - [[_COMMUNITY_Community 171|Community 171]]
 - [[_COMMUNITY_Community 172|Community 172]]
@@ -177,20 +174,18 @@
 - [[_COMMUNITY_Community 180|Community 180]]
 - [[_COMMUNITY_Community 181|Community 181]]
 - [[_COMMUNITY_Community 205|Community 205]]
-- [[_COMMUNITY_Community 206|Community 206]]
 - [[_COMMUNITY_Community 207|Community 207]]
 - [[_COMMUNITY_Community 208|Community 208]]
-- [[_COMMUNITY_Community 209|Community 209]]
-- [[_COMMUNITY_Community 210|Community 210]]
-- [[_COMMUNITY_Community 211|Community 211]]
 - [[_COMMUNITY_Community 212|Community 212]]
 - [[_COMMUNITY_Community 213|Community 213]]
-- [[_COMMUNITY_Community 214|Community 214]]
 - [[_COMMUNITY_Community 215|Community 215]]
-- [[_COMMUNITY_Community 216|Community 216]]
 - [[_COMMUNITY_Community 217|Community 217]]
 - [[_COMMUNITY_Community 218|Community 218]]
+- [[_COMMUNITY_Community 219|Community 219]]
+- [[_COMMUNITY_Community 220|Community 220]]
+- [[_COMMUNITY_Community 221|Community 221]]
 - [[_COMMUNITY_Community 222|Community 222]]
+- [[_COMMUNITY_Community 226|Community 226]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `Color` - 66 edges
@@ -198,25 +193,25 @@
 3. `react` - 36 edges
 4. `Trade` - 32 edges
 5. `Controller` - 31 edges
-6. `User` - 29 edges
-7. `App()` - 28 edges
-8. `lucide-react` - 27 edges
-9. `useToast()` - 26 edges
-10. `useToast()` - 26 edges
+6. `useToast()` - 30 edges
+7. `useTheme()` - 29 edges
+8. `formatINR()` - 29 edges
+9. `User` - 29 edges
+10. `App()` - 28 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `2.1 State Management via React Context` --references--> `DropdownOption`  [INFERRED]
   ARCHITECTURE.md → backend/app/Models/DropdownOption.php
 - `3.3 Controller Inventory` --references--> `AnalyticsController`  [INFERRED]
   ARCHITECTURE.md → backend/app/Http/Controllers/Api/AnalyticsController.php
-- `3.3 Controller Inventory` --references--> `StrategyController`  [INFERRED]
-  ARCHITECTURE.md → backend/app/Http/Controllers/Api/StrategyController.php
+- `3.3 Controller Inventory` --references--> `JournalController`  [INFERRED]
+  ARCHITECTURE.md → backend/app/Http/Controllers/Api/JournalController.php
 - `3.3 Controller Inventory` --references--> `PineScriptController`  [INFERRED]
   ARCHITECTURE.md → backend/app/Http/Controllers/Api/PineScriptController.php
 - `3.3 Controller Inventory` --references--> `CapitalController`  [INFERRED]
   ARCHITECTURE.md → backend/app/Http/Controllers/Api/CapitalController.php
 
-## Communities (220 total, 74 thin omitted)
+## Communities (216 total, 75 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.07
@@ -247,8 +242,8 @@ Cohesion: 0.07
 Nodes (38): frontend/package.json, dependencies, axios, clsx, date-fns, lucide-react, react, react-dom (+30 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.18
-Nodes (5): {closure#3}(), TradeController, Trade, DateTimeInterface, Illuminate\Http\Request
+Cohesion: 0.16
+Nodes (6): JournalController, {closure#3}(), TradeController, Trade, DateTimeInterface, Illuminate\Http\Request
 
 ### Community 10 - "Community 10"
 Cohesion: 0.15
@@ -259,8 +254,8 @@ Cohesion: 0.22
 Nodes (8): 1. Executive Summary, 2. Target Audience & Market Domain, 3. Technology Stack & Operational Environment, 4. Key Functional Subsystems, 5. System Constraints & Assumptions, 6. Developer Tooling & Codebase Knowledge Graph (Graphify), Default Ports & Development Servers, PROJECT CONTEXT — TradeJournal
 
 ### Community 12 - "Community 12"
-Cohesion: 0.17
-Nodes (4): AnalyticsController, StrategyController, TradingAnalyticsService, Illuminate\Support\Collection
+Cohesion: 0.12
+Nodes (7): 3.3 Controller Inventory, CalendarController, DashboardController, RiskController, StrategyController, TradingAnalyticsService, Illuminate\Support\Collection
 
 ### Community 13 - "Community 13"
 Cohesion: 0.11
@@ -269,6 +264,10 @@ Nodes (25): backend/package.json, devDependencies, concurrently, laravel-vite-pl
 ### Community 14 - "Community 14"
 Cohesion: 0.15
 Nodes (12): 1. Feature Status Matrix, 2.1 Dashboard & Visual Analytics, 2.2 Trade Logging Engine (`AddTrade.jsx`), 2.3 All Trades Explorer (`AllTrades.jsx`), 2.4 Trading Journal & Reflection Drawer (`TradingJournal.jsx`), 2.5 Pine Script Manager (`PineScriptManager.jsx`), 2.6 Dynamic Dropdown Manager (`DropdownManager.jsx`), 2.7 Document Generation & Export (`ExportModal.jsx`) (+4 more)
+
+### Community 15 - "Community 15"
+Cohesion: 0.19
+Nodes (3): {closure#2}(), ModuleVisibilityController, Illuminate\Support\Facades\DB
 
 ### Community 16 - "Community 16"
 Cohesion: 0.12
@@ -279,8 +278,8 @@ Cohesion: 0.16
 Nodes (5): CapitalController, LotSizeController, PineScriptController, PineScript, Illuminate\Http\JsonResponse
 
 ### Community 18 - "Community 18"
-Cohesion: 0.11
-Nodes (26): api, token, useBrokerage(), DropdownContext, DropdownProvider(), MODULE_METADATA, useDropdown(), DEFAULT_LOT_SIZES (+18 more)
+Cohesion: 0.05
+Nodes (82): api, token, ErrorBoundary, CompactMetricCard(), MainStatsCard(), AuthContext, AuthProvider(), useAuth() (+74 more)
 
 ### Community 19 - "Community 19"
 Cohesion: 0.32
@@ -324,7 +323,7 @@ Nodes (36): displayedRows, errorRows, [file, setFile], fileInputRef, { getLotSiz
 
 ### Community 30 - "Community 30"
 Cohesion: 0.12
-Nodes (36): Codable, AccountLimits, AdvancedAnalyticsResponse, AdvancedComparisons, AdvancedMetrics, CalendarDayTrade, CalendarResponse, CePePerformanceContainer (+28 more)
+Nodes (31): Codable, AccountLimits, AdvancedAnalyticsResponse, AdvancedComparisons, AdvancedMetrics, CalendarResponse, CePePerformanceContainer, DashboardChartsData (+23 more)
 
 ### Community 31 - "Community 31"
 Cohesion: 0.06
@@ -342,13 +341,9 @@ Nodes (29): 10. ERROR HANDLING AND DEBUGGING, 11. AI DEVELOPMENT BEST PRACTICES,
 Cohesion: 0.25
 Nodes (6): Feature/ExampleTest.php, ExampleTest, TradeApiTest, TestCase, Illuminate\Foundation\Testing\RefreshDatabase, Illuminate\Foundation\Testing\TestCase
 
-### Community 36 - "Community 36"
-Cohesion: 0.10
-Nodes (3): {closure#2}(), ModuleVisibilityController, Illuminate\Support\Facades\DB
-
 ### Community 37 - "Community 37"
-Cohesion: 0.20
-Nodes (8): Decodable, EmptyResponse, HTTPMethod, delete, get, patch, post, put
+Cohesion: 0.05
+Nodes (30): DateRangeFilter, allTime, custom, lastMonth, thisMonth, thisWeek, thisYear, today (+22 more)
 
 ### Community 38 - "Community 38"
 Cohesion: 0.22
@@ -376,11 +371,11 @@ Nodes (8): 1. Core Guiding Principles, 4. Database Safety Rules, 5. Security Che
 
 ### Community 45 - "Community 45"
 Cohesion: 0.22
-Nodes (3): {closure#1}(), {closure#1}(), Illuminate\Database\Migrations\Migration
+Nodes (3): {closure#1}(), {closure#1}(), Illuminate\Support\Facades\Schema
 
 ### Community 47 - "Community 47"
-Cohesion: 0.10
-Nodes (7): 3.3 Controller Inventory, CalendarController, DashboardController, JournalController, RiskController, Controller, Carbon\Carbon
+Cohesion: 0.15
+Nodes (3): AnalyticsController, Controller, Carbon\Carbon
 
 ### Community 48 - "Community 48"
 Cohesion: 0.32
@@ -400,7 +395,7 @@ Nodes (4): Priority 0: Stability, Quality Control & Security (Immediate), Priori
 
 ### Community 65 - "Community 65"
 Cohesion: 0.15
-Nodes (3): ExportController, ExportService, Symfony\Component\HttpFoundation\StreamedResponse
+Nodes (4): ExportController, ExportService, 3. Backend Development Standards (Laravel 12 / PHP 8.3+), Symfony\Component\HttpFoundation\StreamedResponse
 
 ### Community 66 - "Community 66"
 Cohesion: 0.09
@@ -411,16 +406,16 @@ Cohesion: 0.10
 Nodes (19): 1. Prerequisites & Environment Setup, 2. Architecture & Code Conventions, 3. Swift Concurrency & Best Practices, 4. UI Design System Guidelines (Zerodha Kite Dark Theme), 5. Local Networking & App Transport Security (ATS), 6. Testing Strategy, 7. Recommended Daily Workflow, code:bash (open macos/OptionJournal/OptionJournal.xcodeproj) (+11 more)
 
 ### Community 68 - "Community 68"
-Cohesion: 0.16
+Cohesion: 0.17
 Nodes (7): User, Illuminate\Database\Eloquent\Relations\HasMany, Illuminate\Database\Eloquent\Relations\HasOne, Illuminate\Database\Eloquent\SoftDeletes, Illuminate\Foundation\Auth\User, Illuminate\Notifications\Notifiable, Laravel\Sanctum\HasApiTokens
 
 ### Community 69 - "Community 69"
 Cohesion: 0.06
-Nodes (25): MetricCard, RecentTradeRow, SummaryStrip, JournalReflectionSheet, ContentView, SettingsView, MainSplitView, SidebarRow (+17 more)
+Nodes (25): AddTransactionSheet, MetricCard, RecentTradeRow, SummaryStrip, ContentView, SettingsView, MainSplitView, SidebarRow (+17 more)
 
 ### Community 70 - "Community 70"
-Cohesion: 0.17
-Nodes (6): TradingCalculationService, Unit/ExampleTest.php, ExampleTest, FinancialCalculationTest, 3. Backend Development Standards (Laravel 12 / PHP 8.3+), PHPUnit\Framework\TestCase
+Cohesion: 0.19
+Nodes (5): TradingCalculationService, Unit/ExampleTest.php, ExampleTest, FinancialCalculationTest, PHPUnit\Framework\TestCase
 
 ### Community 71 - "Community 71"
 Cohesion: 0.33
@@ -430,9 +425,9 @@ Nodes (3): {closure#1}(), {closure#2}(), {closure#3}()
 Cohesion: 0.20
 Nodes (4): {closure#1}(), {closure#2}(), Illuminate\Support\Str, Pdo\Mysql
 
-### Community 76 - "Community 76"
-Cohesion: 0.12
-Nodes (8): CalendarDayItem, EquityPoint, AuthResponse, FlexibleDouble, GenericMessageResponse, LoginRequest, TradingAccount, UserProfileResponse
+### Community 75 - "Community 75"
+Cohesion: 0.22
+Nodes (3): {closure#1}(), {closure#1}(), Illuminate\Database\Migrations\Migration
 
 ### Community 77 - "Community 77"
 Cohesion: 0.12
@@ -447,8 +442,8 @@ Cohesion: 0.12
 Nodes (15): 1. Build Configurations & Architectures, 2. App Sandbox & Entitlements, 3. Code Signing & Hardened Runtime, 4. Apple Notarization (Direct Distribution), 5. DMG Packaging, 6. Release Checklist, Build Configurations, Build & Release Guide — OptionJournal macOS (+7 more)
 
 ### Community 81 - "Community 81"
-Cohesion: 0.14
-Nodes (9): {closure#3}(), IndexLotSize, DatabaseSeeder, LotSizeSeeder, {closure#2}(), Illuminate\Database\Seeder, Illuminate\Foundation\Inspiring, Illuminate\Support\Facades\Artisan (+1 more)
+Cohesion: 0.15
+Nodes (8): {closure#3}(), IndexLotSize, DatabaseSeeder, LotSizeSeeder, {closure#2}(), Illuminate\Database\Seeder, Illuminate\Foundation\Inspiring, Illuminate\Support\Facades\Artisan
 
 ### Community 83 - "Community 83"
 Cohesion: 0.14
@@ -470,13 +465,17 @@ Nodes (12): 1. Feature Status Matrix, 2.1 Dashboard & Visual Analytics, 2.2 Trad
 Cohesion: 0.15
 Nodes (12): LocalizedError, GenericErrorResponse, NetworkError, connectionFailed, decodingFailed, emptyResponse, invalidURL, serverError (+4 more)
 
+### Community 91 - "Community 91"
+Cohesion: 0.11
+Nodes (5): AuthResponse, GenericMessageResponse, LoginRequest, User, UserProfileResponse
+
 ### Community 92 - "Community 92"
 Cohesion: 0.17
 Nodes (10): BadgeVariant, buy, callOption, custom, loss, neutral, putOption, sell (+2 more)
 
 ### Community 93 - "Community 93"
-Cohesion: 0.16
-Nodes (13): Identifiable, DailyBarItem, MonthlySummaryRow, CalendarGridCell, CalendarTradeRow, CapitalHistoryRow, makeRow(), PositionSizeRow (+5 more)
+Cohesion: 0.11
+Nodes (25): Hashable, Identifiable, CalendarDayTrade, CePePerformanceItem, DailyPnlPoint, EquityPoint, IndexPerformanceItem, MonthlyPnlPoint (+17 more)
 
 ### Community 95 - "Community 95"
 Cohesion: 0.18
@@ -485,10 +484,6 @@ Nodes (5): App, AppLogoView, PulseWaveformShape, MyApp, Shape
 ### Community 96 - "Community 96"
 Cohesion: 0.18
 Nodes (10): 1. Core Guiding Principles, 2. Frontend Development Standards (React 19 + Tailwind v4), 3. Backend Development Standards (Laravel 13 / PHP 8.3+), 4. Database Safety Rules, 5. Security Checklist, 6. Change Management & Risk Assessment, 7. Automatic Documentation Maintenance, 8. Codebase Dependency Analysis with Graphify (+2 more)
-
-### Community 102 - "Community 102"
-Cohesion: 0.20
-Nodes (17): useFilter(), AllTrades(), AnalyticsReports(), CapitalManagement(), EquityCurve(), RiskManagement(), STRATEGY_THEME, StrategyAnalysis() (+9 more)
 
 ### Community 103 - "Community 103"
 Cohesion: 0.15
@@ -514,13 +509,9 @@ Nodes (7): DropdownOptionItem, DropdownOptionsResponse, ToggleDropdownStatusRequ
 Cohesion: 0.33
 Nodes (4): Field, login, password, LoginView
 
-### Community 119 - "Community 119"
-Cohesion: 0.20
-Nodes (13): CompactMetricCard(), MainStatsCard(), APP_MODULES, DEFAULT_VISIBILITY, ModuleContext, ModuleProvider(), useModules(), ThemeContext (+5 more)
-
 ### Community 120 - "Community 120"
-Cohesion: 0.16
-Nodes (5): UpdateJournalRequest, JournalService, JournalServiceProtocol, DetailedJournalEntry, TradingJournalViewModel
+Cohesion: 0.13
+Nodes (7): JournalResponse, JournalSummaryStats, UpdateJournalRequest, JournalService, JournalServiceProtocol, DetailedJournalEntry, TradingJournalViewModel
 
 ### Community 121 - "Community 121"
 Cohesion: 0.33
@@ -529,10 +520,6 @@ Nodes (5): Priority 0: Stability, Quality Control & Security (Immediate), Priori
 ### Community 122 - "Community 122"
 Cohesion: 0.40
 Nodes (4): colors, info, author, version
-
-### Community 129 - "Community 129"
-Cohesion: 0.19
-Nodes (11): AuthContext, AuthProvider(), useAuth(), BrokerageContext, BrokerageProvider(), DEFAULT_BROKERAGE_RATES, ThemeProvider(), Navbar() (+3 more)
 
 ### Community 130 - "Community 130"
 Cohesion: 0.29
@@ -546,21 +533,13 @@ Nodes (3): info, author, version
 Cohesion: 0.40
 Nodes (5): [1.12.0] - 2026-11-01, Added & Imported, Fixed & Enhanced, Fixed & Enhanced, Fixed & Enhanced
 
-### Community 145 - "Community 145"
-Cohesion: 0.21
-Nodes (3): AuthController, Illuminate\Support\Facades\Route, Illuminate\Validation\ValidationException
-
 ### Community 146 - "Community 146"
 Cohesion: 0.22
 Nodes (4): CreatePineScriptRequest, PineScript, PineScriptResponse, PineScriptStats
 
-### Community 165 - "Community 165"
-Cohesion: 0.17
-Nodes (8): ErrorBoundary, FilterContext, FilterProvider(), formatDateISO(), formatDisplayDate(), getDisplayDateRangeForFilter(), getISODateRangeForFilter(), AppLayout()
-
-### Community 169 - "Community 169"
-Cohesion: 0.22
-Nodes (3): {closure#1}(), {closure#1}(), Illuminate\Support\Facades\Schema
+### Community 162 - "Community 162"
+Cohesion: 0.07
+Nodes (5): EquityCurveView, CapitalManagementView, Color, BreakdownItem, TradesTableView
 
 ### Community 170 - "Community 170"
 Cohesion: 0.50
@@ -594,56 +573,48 @@ Nodes (4): [1.9.0] - 2026-11-01, Added, Added, Added
 Cohesion: 0.40
 Nodes (4): images, info, author, version
 
-### Community 208 - "Community 208"
-Cohesion: 0.22
-Nodes (3): AppState, ObservableObject, PreferencesManager
-
-### Community 210 - "Community 210"
-Cohesion: 0.22
-Nodes (9): DateRangeFilter, allTime, custom, lastMonth, thisMonth, thisWeek, thisYear, today (+1 more)
-
 ### Community 213 - "Community 213"
 Cohesion: 0.33
 Nodes (3): {closure#1}(), {closure#2}(), {closure#3}()
 
-### Community 214 - "Community 214"
-Cohesion: 0.40
-Nodes (5): CaseIterable, ExportFormat, csv, excel, pdf
-
 ### Community 215 - "Community 215"
-Cohesion: 0.08
-Nodes (24): CePePerformanceDonutCard, CumulativeEquityChartCard, DailyPnlChartCard, DailyPnlTooltipView, DashboardCardModifier, DashboardNumberFormatter, DashboardPalette, DonutRingWidget (+16 more)
-
-### Community 216 - "Community 216"
-Cohesion: 0.40
-Nodes (4): AppAppearance, dark, light, system
+Cohesion: 0.11
+Nodes (21): CePePerformanceDonutCard, CumulativeEquityChartCard, DailyPnlChartCard, DailyPnlTooltipView, DashboardCardModifier, DashboardPalette, DonutRingWidget, DonutSlice (+13 more)
 
 ### Community 217 - "Community 217"
+Cohesion: 0.22
+Nodes (3): AppState, ObservableObject, PreferencesManager
+
+### Community 221 - "Community 221"
 Cohesion: 0.40
-Nodes (4): StrategySortCriteria, pnl, totalTrades, winRate
+Nodes (4): chat.tools.terminal.autoApprove, /^git add \\. && git commit -m \"Update dashboard and calendar UI\" -m \"Co-authored-by: Copilot <223556219\\+Copilot@users\\.noreply\\.github\\.com>\"$/, approve, matchCommandLine
 
 ### Community 222 - "Community 222"
-Cohesion: 0.11
-Nodes (12): DashboardView, Hashable, DailyPnlPoint, MonthlyPnlPoint, RecentTradeItem, StrategyPerformanceItem, CapitalGrowthPoint, CapitalTransaction (+4 more)
+Cohesion: 0.33
+Nodes (5): StrategyScatterPoint, StrategySortCriteria, pnl, totalTrades, winRate
+
+### Community 226 - "Community 226"
+Cohesion: 0.67
+Nodes (3): CapitalHistoryRow, makeRow(), PositionSizeRow
 
 ## Knowledge Gaps
-- **487 isolated node(s):** `get`, `post`, `put`, `delete`, `patch` (+482 more)
+- **489 isolated node(s):** `get`, `post`, `put`, `delete`, `patch` (+484 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **74 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **75 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `3. Backend Development Standards (Laravel 12 / PHP 8.3+)` connect `Community 70` to `Community 65`, `Community 43`, `Community 12`?**
+- **Why does `DEVELOPMENT RULES & CODING STANDARDS — TradeJournal` connect `Community 43` to `Community 0`, `Community 65`?**
+  _High betweenness centrality (0.028) - this node is a cross-community bridge._
+- **Why does `3. Backend Development Standards (Laravel 12 / PHP 8.3+)` connect `Community 65` to `Community 43`, `Community 12`, `Community 70`?**
   _High betweenness centrality (0.026) - this node is a cross-community bridge._
 - **Why does `2. Frontend Development Standards (React 19 + Tailwind v4)` connect `Community 0` to `Community 43`?**
-  _High betweenness centrality (0.025) - this node is a cross-community bridge._
-- **Why does `DEVELOPMENT RULES & CODING STANDARDS — TradeJournal` connect `Community 43` to `Community 0`, `Community 70`?**
-  _High betweenness centrality (0.025) - this node is a cross-community bridge._
+  _High betweenness centrality (0.024) - this node is a cross-community bridge._
 - **Are the 61 inferred relationships involving `Color` (e.g. with `.makeBody()` and `.journalKpiCard()`) actually correct?**
   _`Color` has 61 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `get`, `post`, `put` to the rest of the system?**
-  _487 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _489 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.07211598550181228 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**

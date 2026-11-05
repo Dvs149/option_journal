@@ -793,10 +793,20 @@ export default function Dashboard() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(val, name, item) => [
-                    `${val}% (${formatINR(item.payload.net_pnl)})`,
-                    name,
-                  ]}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const d = payload[0].payload;
+                      return (
+                        <div className="bg-[#0b1322] light:bg-white p-2.5 rounded-xl border border-[#1e293b] light:border-slate-200 shadow-xl text-xs font-mono-numbers">
+                          <p className="text-slate-300 light:text-slate-700 font-sans font-bold">{d.name}</p>
+                          <p className="text-white light:text-slate-900 font-bold mt-0.5">
+                            {d.percentage}% <span className={d.net_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}>({formatINR(d.net_pnl)})</span>
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -849,10 +859,20 @@ export default function Dashboard() {
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(val, name, item) => [
-                    `${val}% (${formatINR(item.payload.net_pnl)})`,
-                    name,
-                  ]}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const d = payload[0].payload;
+                      return (
+                        <div className="bg-[#0b1322] light:bg-white p-2.5 rounded-xl border border-[#1e293b] light:border-slate-200 shadow-xl text-xs font-mono-numbers">
+                          <p className="text-slate-300 light:text-slate-700 font-sans font-bold">{d.name}</p>
+                          <p className="text-white light:text-slate-900 font-bold mt-0.5">
+                            {d.percentage}% <span className={d.net_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}>({formatINR(d.net_pnl)})</span>
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>

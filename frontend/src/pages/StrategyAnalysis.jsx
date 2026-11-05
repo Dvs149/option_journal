@@ -583,7 +583,22 @@ export default function StrategyAnalysis() {
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const d = payload[0].payload;
+                        return (
+                          <div className="bg-[#0b1322] light:bg-white p-2.5 rounded-xl border border-[#1e293b] light:border-slate-200 shadow-xl text-xs font-mono-numbers">
+                            <p className="text-slate-300 light:text-slate-700 font-sans font-bold">{d.name}</p>
+                            <p className="text-white light:text-slate-900 font-bold mt-0.5">
+                              {d.value} trades ({d.pct})
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
             )}

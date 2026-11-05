@@ -44,7 +44,7 @@ import {
   Cell,
 } from 'recharts';
 import api from '../api/client';
-import { formatINR, formatDate } from '../utils/formatters';
+import { formatINR, formatDate, formatTime, formatDateTime } from '../utils/formatters';
 import { useLotSizes } from '../context/LotSizeContext';
 import { useToast } from '../context/ToastContext';
 import { useFilter } from '../context/FilterContext';
@@ -53,6 +53,8 @@ import { useDropdown } from '../context/DropdownContext';
 import { useTheme } from '../context/ThemeContext';
 import BulkImportModal from '../components/trades/BulkImportModal';
 import ExportModal from '../components/trades/ExportModal';
+import PartialExitModal from '../components/trades/PartialExitModal';
+import EditOrderModal from '../components/trades/EditOrderModal';
 import * as XLSX from 'xlsx';
 
 // Helper to resolve individual CE and PE leg prices
@@ -120,6 +122,10 @@ export default function AllTrades() {
   const [selectedTradingType, setSelectedTradingType] = useState('ALL');
   const [selectedOption, setSelectedOption] = useState('ALL');
   const [selectedStrategy, setSelectedStrategy] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'OPEN_OR_PARTIAL' | 'CLOSED'
+  const [partialExitTrade, setPartialExitTrade] = useState(null);
+  const [editingOrderData, setEditingOrderData] = useState(null); // { trade, order }
+  const [expandedTradeIds, setExpandedTradeIds] = useState(new Set());
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -176,7 +182,7 @@ export default function AllTrades() {
 
   useEffect(() => {
     fetchTrades();
-  }, [filter, fromDate, toDate, customFrom, customTo, selectedIndex, selectedTradingType, selectedOption, selectedStrategy, page, perPage, sortBy, sortOrder]);
+  }, [filter, fromDate, toDate, customFrom, customTo, selectedIndex, selectedTradingType, selectedOption, selectedStrategy, statusFilter, page, perPage, sortBy, sortOrder]);
 
   const fetchStats = async () => {
     try {
@@ -215,6 +221,7 @@ export default function AllTrades() {
           trading_type: selectedTradingType === 'ALL' ? undefined : selectedTradingType,
           option_type: selectedOption === 'ALL' ? undefined : selectedOption,
           strategy_name: selectedStrategy === 'ALL' ? undefined : selectedStrategy,
+          status: statusFilter === 'ALL' ? undefined : statusFilter,
           search: search || undefined,
           sort_by: sortBy,
           sort_order: sortOrder,
@@ -296,6 +303,48 @@ export default function AllTrades() {
     setSelectedRowIds(next);
   };
 
+  const toggleExpandTrade = (tradeId, e) => {
+    if (e) e.stopPropagation();
+    setExpandedTradeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(tradeId)) {
+        next.delete(tradeId);
+      } else {
+        next.add(tradeId);
+      }
+      return next;
+    });
+  };
+
+  const handleOpenEditOrder = (trade, order, e) => {
+    if (e) e.stopPropagation();
+    setEditingOrderData({ trade, order });
+  };
+
+  const handleDeleteOrder = async (trade, order, e) => {
+    if (e) e.stopPropagation();
+    if ((trade.orders?.length || 0) <= 1) {
+      showToast('Cannot delete the initial order. You can delete the entire trade instead.', 'warning');
+      return;
+    }
+    const confirmed = window.confirm(
+      `Delete order #${order.id} (${order.order_type} ${order.quantity} Qty @ ₹${parseFloat(order.price).toFixed(2)})?\nAll trade quantities, average prices, and net P&L will recalculate.`
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await api.delete(`/trades/${trade.id}/orders/${order.id}`);
+      showToast('Order deleted successfully', 'success');
+      fetchTrades();
+      if (selectedTrade?.id === trade.id) {
+        setSelectedTrade(res.data?.trade || null);
+      }
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to delete order';
+      showToast(msg, 'error');
+    }
+  };
+
   const toggleSelectRow = (id, e) => {
     e.stopPropagation();
     const next = new Set(selectedRowIds);
@@ -318,6 +367,7 @@ export default function AllTrades() {
           trading_type: selectedTradingType === 'ALL' ? undefined : selectedTradingType,
           option_type: selectedOption === 'ALL' ? undefined : selectedOption,
           strategy_name: selectedStrategy === 'ALL' ? undefined : selectedStrategy,
+          status: statusFilter === 'ALL' ? undefined : statusFilter,
           search: search || undefined,
         },
       });
@@ -391,6 +441,7 @@ export default function AllTrades() {
           trading_type: selectedTradingType === 'ALL' ? undefined : selectedTradingType,
           option_type: selectedOption === 'ALL' ? undefined : selectedOption,
           strategy_name: selectedStrategy === 'ALL' ? undefined : selectedStrategy,
+          status: statusFilter === 'ALL' ? undefined : statusFilter,
           search: search || undefined,
           sort_by: sortBy,
           sort_order: sortOrder,
@@ -502,6 +553,7 @@ export default function AllTrades() {
           trading_type: selectedTradingType === 'ALL' ? undefined : selectedTradingType,
           option_type: selectedOption === 'ALL' ? undefined : selectedOption,
           strategy_name: selectedStrategy === 'ALL' ? undefined : selectedStrategy,
+          status: statusFilter === 'ALL' ? undefined : statusFilter,
           search: search || undefined,
           sort_by: sortBy,
           sort_order: sortOrder,
@@ -579,6 +631,7 @@ export default function AllTrades() {
   ]);
 
   const editComputedGrossProfit = useMemo(() => {
+    if (editForm.status === 'OPEN' || !editForm.exit_premium) return '0.00';
     const entry = parseFloat(editForm.entry_premium) || 0;
     const exit = parseFloat(editForm.exit_premium) || 0;
     const qty = parseFloat(editForm.quantity) || 0;
@@ -587,9 +640,10 @@ export default function AllTrades() {
       return diff > 0 ? diff.toFixed(2) : '0.00';
     }
     return parseFloat(editForm.gross_profit || 0).toFixed(2);
-  }, [editForm.entry_premium, editForm.exit_premium, editForm.quantity, editForm.gross_profit]);
+  }, [editForm.status, editForm.entry_premium, editForm.exit_premium, editForm.quantity, editForm.gross_profit]);
 
   const editComputedGrossLoss = useMemo(() => {
+    if (editForm.status === 'OPEN' || !editForm.exit_premium) return '0.00';
     const entry = parseFloat(editForm.entry_premium) || 0;
     const exit = parseFloat(editForm.exit_premium) || 0;
     const qty = parseFloat(editForm.quantity) || 0;
@@ -598,14 +652,18 @@ export default function AllTrades() {
       return diff < 0 ? Math.abs(diff).toFixed(2) : '0.00';
     }
     return parseFloat(editForm.gross_loss || 0).toFixed(2);
-  }, [editForm.entry_premium, editForm.exit_premium, editForm.quantity, editForm.gross_loss]);
+  }, [editForm.status, editForm.entry_premium, editForm.exit_premium, editForm.quantity, editForm.gross_loss]);
 
   const editComputedNetPnl = useMemo(() => {
+    if (editForm.status === 'OPEN' || !editForm.exit_premium) {
+      const ch = parseFloat(editComputedTotalCharges) || 0;
+      return (-ch).toFixed(2);
+    }
     const gp = parseFloat(editComputedGrossProfit) || 0;
     const gl = parseFloat(editComputedGrossLoss) || 0;
     const ch = parseFloat(editComputedTotalCharges) || 0;
     return (gp - gl - ch).toFixed(2);
-  }, [editComputedGrossProfit, editComputedGrossLoss, editComputedTotalCharges]);
+  }, [editForm.status, editForm.exit_premium, editComputedGrossProfit, editComputedGrossLoss, editComputedTotalCharges]);
 
   // Automatically calculate P&L and charges in real-time whenever trade fields change
   useEffect(() => {
@@ -630,6 +688,8 @@ export default function AllTrades() {
         quantity: qty,
         optionType: editForm.option_type,
         indexName: editForm.index_name,
+        isOpen: editForm.status === 'OPEN' || !exit,
+        status: editForm.status,
         ceEntry: editForm.ce_entry_price,
         peEntry: editForm.pe_entry_price,
         ceExit: editForm.ce_exit_price,
@@ -639,6 +699,9 @@ export default function AllTrades() {
       setEditForm((prev) => {
         const other = parseFloat(prev.other_charges) || 0;
         const total = (est.total_charges + other).toFixed(2);
+        const isOpenTrade = prev.status === 'OPEN' || !exit;
+        const grossP = isOpenTrade ? '0.00' : (est.gross_profit > 0 ? est.gross_profit.toFixed(2) : '0.00');
+        const grossL = isOpenTrade ? '0.00' : (est.gross_loss > 0 ? est.gross_loss.toFixed(2) : '0.00');
 
         if (
           prev.brokerage === est.brokerage.toFixed(2) &&
@@ -648,8 +711,8 @@ export default function AllTrades() {
           prev.sebi_charges === est.sebi_charges.toFixed(2) &&
           prev.stamp_duty === est.stamp_duty.toFixed(2) &&
           prev.total_charges === total &&
-          prev.gross_profit === (est.gross_profit > 0 ? est.gross_profit.toFixed(2) : '0.00') &&
-          prev.gross_loss === (est.gross_loss > 0 ? est.gross_loss.toFixed(2) : '0.00')
+          prev.gross_profit === grossP &&
+          prev.gross_loss === grossL
         ) {
           return prev;
         }
@@ -663,12 +726,13 @@ export default function AllTrades() {
           sebi_charges: est.sebi_charges.toFixed(2),
           stamp_duty: est.stamp_duty.toFixed(2),
           total_charges: total,
-          gross_profit: est.gross_profit > 0 ? est.gross_profit.toFixed(2) : '0.00',
-          gross_loss: est.gross_loss > 0 ? est.gross_loss.toFixed(2) : '0.00',
+          gross_profit: grossP,
+          gross_loss: grossL,
         };
       });
     }
   }, [
+    editForm.status,
     editForm.entry_premium,
     editForm.exit_premium,
     editForm.quantity,
@@ -683,13 +747,15 @@ export default function AllTrades() {
   ]);
 
   const handleEditAutoCalculate = async () => {
+    const isOpen = editForm.status === 'OPEN' || !editForm.exit_premium;
     const entry = parseFloat(editForm.entry_premium) || 0;
-    const exit = parseFloat(editForm.exit_premium) || 0;
+    const exit = isOpen ? 0 : (parseFloat(editForm.exit_premium) || 0);
     const qty = parseInt(editForm.quantity, 10) || 0;
+    const numOrders = isOpen ? (editForm.option_type === 'Both' ? 2 : 1) : (editForm.option_type === 'Both' ? 4 : 2);
 
     let gp = '0.00';
     let gl = '0.00';
-    if (entry > 0 && exit > 0 && qty > 0) {
+    if (!isOpen && entry > 0 && exit > 0 && qty > 0) {
       const diff = (exit - entry) * qty;
       if (diff >= 0) {
         gp = diff.toFixed(2);
@@ -707,10 +773,13 @@ export default function AllTrades() {
         quantity: qty,
         option_type: editForm.option_type,
         index_name: editForm.index_name,
+        isOpen,
+        status: editForm.status,
+        executed_orders: numOrders,
         ce_entry_price: editForm.ce_entry_price,
         pe_entry_price: editForm.pe_entry_price,
-        ce_exit_price: editForm.ce_exit_price,
-        pe_exit_price: editForm.pe_exit_price,
+        ce_exit_price: isOpen ? undefined : editForm.ce_exit_price,
+        pe_exit_price: isOpen ? undefined : editForm.pe_exit_price,
       });
 
       if (res.data) {
@@ -736,10 +805,13 @@ export default function AllTrades() {
         quantity: qty,
         optionType: editForm.option_type,
         indexName: editForm.index_name,
+        isOpen,
+        status: editForm.status,
+        executedOrders: numOrders,
         ceEntry: editForm.ce_entry_price,
         peEntry: editForm.pe_entry_price,
-        ceExit: editForm.ce_exit_price,
-        peExit: editForm.pe_exit_price,
+        ceExit: isOpen ? undefined : editForm.ce_exit_price,
+        peExit: isOpen ? undefined : editForm.pe_exit_price,
       });
 
       setEditForm((prev) => ({
@@ -1552,6 +1624,39 @@ export default function AllTrades() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Table Container (takes 8 cols if drawer is active, or full 12 cols) */}
         <div className={selectedTrade ? 'lg:col-span-8 space-y-4' : 'lg:col-span-12 space-y-4'}>
+          {/* Status Filter Tabs */}
+          <div className="flex items-center gap-2 border-b border-[#1e293b] light:border-slate-200 pb-2">
+            {[
+              { id: 'ALL', label: 'All Trades' },
+              { id: 'OPEN_OR_PARTIAL', label: 'Open Positions' },
+              { id: 'CLOSED', label: 'Closed Trades' },
+            ].map((tab) => {
+              const active = statusFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter(tab.id);
+                    setPage(1);
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 ${
+                    active
+                      ? tab.id === 'OPEN_OR_PARTIAL'
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 shadow-sm'
+                        : 'bg-blue-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white light:hover:text-slate-900 hover:bg-[#121b2d] light:hover:bg-slate-100'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  {tab.id === 'OPEN_OR_PARTIAL' && (
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
           {/* Bulk Selection Action Bar */}
           {selectedRowIds.size > 0 && (
             <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 bg-[#121b2d] light:bg-blue-50/80 border border-blue-500/30 light:border-blue-200 rounded-2xl shadow-sm animate-fadeIn">
@@ -1643,6 +1748,7 @@ export default function AllTrades() {
                     </th>
                     <th className="py-3 px-3">Index</th>
                     <th className="py-3 px-2">Type</th>
+                    <th className="py-3 px-2">Status</th>
                     <th className="py-3 px-2">CE/PE</th>
                     <th
                       onClick={() => handleSort('strike_price')}
@@ -1709,7 +1815,7 @@ export default function AllTrades() {
                 <tbody className="divide-y divide-[#1e293b]/60 light:divide-slate-100">
                   {loading ? (
                     <tr>
-                      <td colSpan="15" className="py-12 text-center text-slate-400">
+                      <td colSpan="16" className="py-12 text-center text-slate-400">
                         <div className="flex items-center justify-center gap-2">
                           <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                           <span>Loading trades...</span>
@@ -1718,7 +1824,7 @@ export default function AllTrades() {
                     </tr>
                   ) : trades.length === 0 ? (
                     <tr>
-                      <td colSpan="15" className="py-12 text-center text-slate-400">
+                      <td colSpan="16" className="py-12 text-center text-slate-400">
                         No trades found matching current filters.
                       </td>
                     </tr>
@@ -1728,120 +1834,339 @@ export default function AllTrades() {
                       const grossPnl = parseFloat(trade.gross_profit) - parseFloat(trade.gross_loss);
                       const isSelected = selectedTrade?.id === trade.id;
                       const tLegs = getLegPrices(trade);
+                      const isOpen = trade.status === 'OPEN';
+                      const isPartial = trade.status === 'PARTIALLY_CLOSED';
+                      const isExpanded = expandedTradeIds.has(trade.id);
+                      const hasMultipleOrders = trade.orders && trade.orders.length > 1;
 
                       return (
-                        <tr
-                          key={trade.id}
-                          onClick={() => setSelectedTrade(trade)}
-                          className={`cursor-pointer transition-colors ${
-                            isSelected
-                              ? 'bg-blue-600/10 light:bg-blue-50/60'
-                              : 'hover:bg-[#162033]/60 light:hover:bg-slate-50'
-                          }`}
-                        >
-                          <td className="py-2.5 px-3.5" onClick={(e) => e.stopPropagation()}>
-                            <input
-                              type="checkbox"
-                              checked={selectedRowIds.has(trade.id)}
-                              onChange={(e) => toggleSelectRow(trade.id, e)}
-                              className="rounded bg-[#0e1626] border-[#1e293b] text-blue-600 focus:ring-0 cursor-pointer"
-                            />
-                          </td>
-                          <td className="py-2.5 px-3 text-slate-300 light:text-slate-700 font-sans">
-                            {formatDate(trade.trade_date)}
-                          </td>
-                          <td className="py-2.5 px-3 font-semibold text-white light:text-slate-900">
-                            {trade.index_name}
-                          </td>
-                          <td className="py-2.5 px-2 text-slate-400 text-[11px]">
-                            {trade.trading_type}
-                          </td>
-                          <td className="py-2.5 px-2">
-                            <span
-                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                                trade.option_type === 'CE'
-                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                  : trade.option_type === 'PE'
-                                  ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                                  : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                        <React.Fragment key={trade.id}>
+                          <tr
+                            onClick={() => setSelectedTrade(trade)}
+                            className={`cursor-pointer transition-colors ${
+                              isSelected
+                                ? 'bg-blue-600/10 light:bg-blue-50/60'
+                                : 'hover:bg-[#162033]/60 light:hover:bg-slate-50'
+                            }`}
+                          >
+                            <td className="py-2.5 px-3.5" onClick={(e) => e.stopPropagation()}>
+                              <input
+                                type="checkbox"
+                                checked={selectedRowIds.has(trade.id)}
+                                onChange={(e) => toggleSelectRow(trade.id, e)}
+                                className="rounded bg-[#0e1626] border-[#1e293b] text-blue-600 focus:ring-0 cursor-pointer"
+                              />
+                            </td>
+                            <td className="py-2.5 px-3 text-slate-300 light:text-slate-700 font-sans">
+                              <div className="flex items-center gap-1.5">
+                                {hasMultipleOrders ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => toggleExpandTrade(trade.id, e)}
+                                    className="p-0.5 rounded hover:bg-[#1e293b] light:hover:bg-slate-200 text-slate-400 hover:text-blue-400 transition-colors"
+                                    title={isExpanded ? "Collapse executions" : "Expand partial orders"}
+                                  >
+                                    {isExpanded ? (
+                                      <ChevronDown className="w-3.5 h-3.5 text-blue-400" />
+                                    ) : (
+                                      <ChevronRight className="w-3.5 h-3.5" />
+                                    )}
+                                  </button>
+                                ) : null}
+                                <span>{formatDate(trade.trade_date)}</span>
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3 font-semibold text-white light:text-slate-900">
+                              {trade.index_name}
+                            </td>
+                            <td className="py-2.5 px-2 text-slate-400 text-[11px]">
+                              {trade.trading_type}
+                            </td>
+                            <td className="py-2.5 px-2">
+                              <div>
+                                <span
+                                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded inline-block ${
+                                    isOpen
+                                      ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+                                      : isPartial
+                                      ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                                      : 'bg-slate-500/15 text-slate-400 border border-slate-500/20'
+                                  }`}
+                                >
+                                  {isPartial
+                                    ? `PARTIAL (${trade.open_quantity})`
+                                    : trade.status || 'CLOSED'}
+                                </span>
+                                {hasMultipleOrders && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => toggleExpandTrade(trade.id, e)}
+                                    className="text-[9px] font-mono-numbers px-1 py-0.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 flex items-center gap-0.5 mt-0.5 transition-colors"
+                                    title="Click to view partial orders executed inline"
+                                  >
+                                    <span>{trade.orders.length} Orders</span>
+                                    {isExpanded ? (
+                                      <ChevronUp className="w-2.5 h-2.5" />
+                                    ) : (
+                                      <ChevronDown className="w-2.5 h-2.5" />
+                                    )}
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-2">
+                              <span
+                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                  trade.option_type === 'CE'
+                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                    : trade.option_type === 'PE'
+                                    ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                    : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                }`}
+                              >
+                                {trade.option_type}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-2 font-mono-numbers text-slate-300 light:text-slate-700">
+                              {trade.strike_price ? Math.round(trade.strike_price) : '-'}
+                            </td>
+                            <td className="py-2.5 px-2 text-slate-400 text-[11px]">
+                              {trade.expiry_date ? formatDate(trade.expiry_date) : '-'}
+                            </td>
+                            <td className="py-2.5 px-2 text-right font-mono-numbers text-slate-300 light:text-slate-700">
+                              {trade.lots}
+                            </td>
+                            <td className="py-2.5 px-2 text-right font-mono-numbers text-slate-300 light:text-slate-700">
+                              <div>{trade.entry_premium ? parseFloat(trade.entry_premium).toFixed(2) : '-'}</div>
+                              {trade.option_type === 'Both' && (tLegs.ceEntry != null || tLegs.peEntry != null) && (
+                                <div className="text-[9px] font-normal flex items-center justify-end gap-1 mt-0.5 whitespace-nowrap">
+                                  <span className="text-emerald-400 font-semibold">C:{tLegs.ceEntry != null ? Math.round(tLegs.ceEntry * 100) / 100 : '-'}</span>
+                                  <span className="text-rose-400 font-semibold">P:{tLegs.peEntry != null ? Math.round(tLegs.peEntry * 100) / 100 : '-'}</span>
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-2 text-right font-mono-numbers text-slate-300 light:text-slate-700">
+                              {isOpen ? (
+                                <span className="text-amber-400 font-semibold text-[11px]">Open</span>
+                              ) : (
+                                <>
+                                  <div>{trade.exit_premium ? parseFloat(trade.exit_premium).toFixed(2) : '-'}</div>
+                                  {isPartial && (
+                                    <div className="text-[9px] text-amber-400 font-normal">partial</div>
+                                  )}
+                                  {trade.option_type === 'Both' && (tLegs.ceExit != null || tLegs.peExit != null) && (
+                                    <div className="text-[9px] font-normal flex items-center justify-end gap-1 mt-0.5 whitespace-nowrap">
+                                      <span className="text-emerald-400 font-semibold">C:{tLegs.ceExit != null ? Math.round(tLegs.ceExit * 100) / 100 : '-'}</span>
+                                      <span className="text-rose-400 font-semibold">P:{tLegs.peExit != null ? Math.round(tLegs.peExit * 100) / 100 : '-'}</span>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </td>
+                            <td
+                              className={`py-2.5 px-3 text-right font-mono-numbers font-semibold ${
+                                isOpen
+                                  ? 'text-slate-500'
+                                  : grossPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
                               }`}
                             >
-                              {trade.option_type}
-                            </span>
-                          </td>
-                          <td className="py-2.5 px-2 font-mono-numbers text-slate-300 light:text-slate-700">
-                            {trade.strike_price ? Math.round(trade.strike_price) : '-'}
-                          </td>
-                          <td className="py-2.5 px-2 text-slate-400 text-[11px]">
-                            {trade.expiry_date ? formatDate(trade.expiry_date) : '-'}
-                          </td>
-                          <td className="py-2.5 px-2 text-right font-mono-numbers text-slate-300 light:text-slate-700">
-                            {trade.lots}
-                          </td>
-                          <td className="py-2.5 px-2 text-right font-mono-numbers text-slate-300 light:text-slate-700">
-                            <div>{trade.entry_premium ? parseFloat(trade.entry_premium).toFixed(2) : '-'}</div>
-                            {trade.option_type === 'Both' && (tLegs.ceEntry != null || tLegs.peEntry != null) && (
-                              <div className="text-[9px] font-normal flex items-center justify-end gap-1 mt-0.5 whitespace-nowrap">
-                                <span className="text-emerald-400 font-semibold">C:{tLegs.ceEntry != null ? Math.round(tLegs.ceEntry * 100) / 100 : '-'}</span>
-                                <span className="text-rose-400 font-semibold">P:{tLegs.peEntry != null ? Math.round(tLegs.peEntry * 100) / 100 : '-'}</span>
+                              {isOpen ? '₹0.00' : `${grossPnl >= 0 ? '+' : ''}${formatINR(grossPnl)}`}
+                            </td>
+                            <td className="py-2.5 px-2 text-right font-mono-numbers text-slate-400">
+                              {formatINR(trade.total_charges)}
+                            </td>
+                            <td
+                              className={`py-2.5 px-3 text-right font-mono-numbers font-bold ${
+                                isOpen
+                                  ? 'text-amber-400'
+                                  : netVal >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                              }`}
+                            >
+                              {isOpen
+                                ? `Open (-${formatINR(trade.total_charges)})`
+                                : `${netVal >= 0 ? '+' : ''}${formatINR(netVal)}`}
+                            </td>
+                            <td className="py-2.5 px-3 text-slate-300 light:text-slate-700 text-[11px]">
+                              {trade.strategy_name}
+                            </td>
+                            <td className="py-2.5 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-center gap-1">
+                                {(isOpen || isPartial) && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setPartialExitTrade(trade);
+                                    }}
+                                    className="p-1 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-colors"
+                                    title="Execute Exit / Partial Order"
+                                  >
+                                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleOpenEdit(trade, e)}
+                                  className="p-1 rounded hover:bg-[#1e293b] light:hover:bg-slate-200 text-slate-400 hover:text-blue-400 transition-colors"
+                                  title="Edit Trade"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setTradeToDelete(trade);
+                                  }}
+                                  className="p-1 rounded hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 transition-colors"
+                                  title="Delete Trade"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                               </div>
-                            )}
-                          </td>
-                          <td className="py-2.5 px-2 text-right font-mono-numbers text-slate-300 light:text-slate-700">
-                            <div>{trade.exit_premium ? parseFloat(trade.exit_premium).toFixed(2) : '-'}</div>
-                            {trade.option_type === 'Both' && (tLegs.ceExit != null || tLegs.peExit != null) && (
-                              <div className="text-[9px] font-normal flex items-center justify-end gap-1 mt-0.5 whitespace-nowrap">
-                                <span className="text-emerald-400 font-semibold">C:{tLegs.ceExit != null ? Math.round(tLegs.ceExit * 100) / 100 : '-'}</span>
-                                <span className="text-rose-400 font-semibold">P:{tLegs.peExit != null ? Math.round(tLegs.peExit * 100) / 100 : '-'}</span>
-                              </div>
-                            )}
-                          </td>
-                          <td
-                            className={`py-2.5 px-3 text-right font-mono-numbers font-semibold ${
-                              grossPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                            }`}
-                          >
-                            {grossPnl >= 0 ? '+' : ''}
-                            {formatINR(grossPnl)}
-                          </td>
-                          <td className="py-2.5 px-2 text-right font-mono-numbers text-slate-400">
-                            {formatINR(trade.total_charges)}
-                          </td>
-                          <td
-                            className={`py-2.5 px-3 text-right font-mono-numbers font-bold ${
-                              netVal >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                            }`}
-                          >
-                            {netVal >= 0 ? '+' : ''}
-                            {formatINR(netVal)}
-                          </td>
-                          <td className="py-2.5 px-3 text-slate-300 light:text-slate-700 text-[11px]">
-                            {trade.strategy_name}
-                          </td>
-                          <td className="py-2.5 px-3 text-center" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-center gap-1">
-                              <button
-                                type="button"
-                                onClick={(e) => handleOpenEdit(trade, e)}
-                                className="p-1 rounded hover:bg-[#1e293b] light:hover:bg-slate-200 text-slate-400 hover:text-blue-400 transition-colors"
-                                title="Edit Trade"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setTradeToDelete(trade);
-                                }}
-                                className="p-1 rounded hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 transition-colors"
-                                title="Delete Trade"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                            </td>
+                          </tr>
+
+                          {/* Inline Expanded Orders Breakdown Row */}
+                          {isExpanded && (
+                            <tr className="bg-[#0b1322]/90 light:bg-slate-100/80 border-b border-[#1e293b]">
+                              <td colSpan="16" className="py-3 px-5 sm:px-8">
+                                <div className="space-y-2.5">
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                                    <div className="flex flex-wrap items-center gap-2.5">
+                                      <span className="font-bold text-slate-200 light:text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                                        <SlidersHorizontal className="w-3.5 h-3.5 text-blue-400" />
+                                        Executed Orders Breakdown ({trade.orders?.length || 0})
+                                      </span>
+                                      <span className="text-[11px] text-slate-400 font-mono-numbers">
+                                        Avg Entry: ₹{trade.avg_entry_price || trade.entry_premium}
+                                        {trade.avg_exit_price ? ` • Avg Exit: ₹${trade.avg_exit_price}` : ''}
+                                        {trade.open_quantity > 0 ? (
+                                          <strong className="text-amber-400 ml-1">
+                                            • Open: {trade.open_quantity} Qty
+                                          </strong>
+                                        ) : ''}
+                                      </span>
+                                    </div>
+                                    {(isOpen || isPartial) && (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setPartialExitTrade(trade);
+                                        }}
+                                        className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] flex items-center gap-1 shadow-sm transition-all self-start sm:self-auto"
+                                      >
+                                        <Plus className="w-3 h-3" />
+                                        <span>Execute Partial Exit</span>
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  {/* Sub-table of orders */}
+                                  <div className="rounded-2xl border border-[#1e293b] light:border-slate-200 overflow-hidden bg-[#0e1626] light:bg-white shadow-inner">
+                                    <table className="w-full text-left text-xs whitespace-nowrap">
+                                      <thead className="bg-[#121b2d] light:bg-slate-50 border-b border-[#1e293b] light:border-slate-200 text-slate-400 text-[10px] uppercase font-semibold">
+                                        <tr>
+                                          <th className="py-2 px-3">#</th>
+                                          <th className="py-2 px-3">Side</th>
+                                          <th className="py-2 px-3">Date & Time</th>
+                                          <th className="py-2 px-3 text-right">Quantity</th>
+                                          <th className="py-2 px-3 text-right">Price</th>
+                                          <th className="py-2 px-3 text-right">Turnover</th>
+                                          <th className="py-2 px-3 text-right">Charges</th>
+                                          <th className="py-2 px-3 text-right">Realized P&L</th>
+                                          <th className="py-2 px-3">Notes</th>
+                                          <th className="py-2 px-3 text-right">Actions</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-[#1e293b]/50 light:divide-slate-100">
+                                        {trade.orders && trade.orders.length > 0 ? (
+                                          trade.orders.map((ord, oIdx) => {
+                                            const isBuy = ord.order_type === 'BUY';
+                                            const turnover = parseFloat(ord.price) * parseInt(ord.quantity, 10);
+                                            const pnl = parseFloat(ord.realized_pnl || 0);
+
+                                            return (
+                                              <tr key={ord.id || oIdx} className="hover:bg-[#162033]/40 light:hover:bg-slate-50 transition-colors">
+                                                <td className="py-2 px-3 text-slate-500 font-mono-numbers">
+                                                  #{oIdx + 1}
+                                                </td>
+                                                <td className="py-2 px-3">
+                                                  <span
+                                                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                                      isBuy
+                                                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                                                        : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                                                    }`}
+                                                  >
+                                                    {ord.order_type}
+                                                  </span>
+                                                </td>
+                                                <td className="py-2 px-3 text-slate-300 light:text-slate-700">
+                                                  {formatDateTime(ord.order_date, ord.order_time)}
+                                                </td>
+                                                <td className="py-2 px-3 text-right font-mono-numbers font-semibold text-white light:text-slate-900">
+                                                  {ord.quantity} Qty
+                                                </td>
+                                                <td className="py-2 px-3 text-right font-mono-numbers text-slate-200 light:text-slate-800">
+                                                  ₹{parseFloat(ord.price).toFixed(2)}
+                                                </td>
+                                                <td className="py-2 px-3 text-right font-mono-numbers text-slate-400">
+                                                  ₹{formatINR(turnover)}
+                                                </td>
+                                                <td className="py-2 px-3 text-right font-mono-numbers text-slate-400">
+                                                  ₹{parseFloat(ord.total_charges || 0).toFixed(2)}
+                                                </td>
+                                                <td className="py-2 px-3 text-right font-mono-numbers font-bold">
+                                                  {isBuy ? (
+                                                    <span className="text-slate-500">-</span>
+                                                  ) : (
+                                                    <span className={pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                                                      {pnl >= 0 ? '+' : ''}₹{formatINR(pnl)}
+                                                    </span>
+                                                  )}
+                                                </td>
+                                                <td className="py-2 px-3 text-slate-400 text-[11px] truncate max-w-[200px]">
+                                                  {ord.notes || '-'}
+                                                </td>
+                                                <td className="py-2 px-3 text-right" onClick={(e) => e.stopPropagation()}>
+                                                  <div className="flex items-center justify-end gap-1">
+                                                    <button
+                                                      onClick={(e) => handleOpenEditOrder(trade, ord, e)}
+                                                      title="Edit Order"
+                                                      className="p-1 rounded text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                                                    >
+                                                      <Edit2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button
+                                                      onClick={(e) => handleDeleteOrder(trade, ord, e)}
+                                                      title="Delete Order"
+                                                      disabled={(trade.orders?.length || 0) <= 1}
+                                                      className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                                                    >
+                                                      <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                  </div>
+                                                </td>
+                                              </tr>
+                                            );
+                                          })
+                                        ) : (
+                                          <tr>
+                                            <td colSpan="10" className="py-3 px-4 text-center text-slate-500">
+                                              No individual executions found.
+                                            </td>
+                                          </tr>
+                                        )}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
                       );
                     })
                   )}
@@ -1969,8 +2294,33 @@ export default function AllTrades() {
               </div>
             </div>
 
-            {/* 3 Drawer Tabs: Details / Charges / Journal */}
-            <div className="grid grid-cols-3 gap-1 p-1 bg-[#0e1626] light:bg-slate-100 rounded-xl border border-[#1e293b] text-xs">
+            {/* Open Position Banner */}
+            {(selectedTrade.status === 'OPEN' || selectedTrade.status === 'PARTIALLY_CLOSED') && (
+              <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                    <span className="text-xs font-bold text-amber-400">
+                      {selectedTrade.status === 'OPEN' ? 'OPEN POSITION' : 'PARTIALLY CLOSED'}
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-300 mt-0.5 font-mono-numbers">
+                    Open: <strong className="text-amber-300">{selectedTrade.open_quantity ?? selectedTrade.quantity} Qty</strong> (Avg: ₹{selectedTrade.avg_entry_price || selectedTrade.entry_premium})
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPartialExitTrade(selectedTrade)}
+                  className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5 whitespace-nowrap"
+                >
+                  <SlidersHorizontal className="w-3.5 h-3.5" />
+                  <span>Execute Exit</span>
+                </button>
+              </div>
+            )}
+
+            {/* 4 Drawer Tabs: Details / Orders / Charges / Journal */}
+            <div className="grid grid-cols-4 gap-1 p-1 bg-[#0e1626] light:bg-slate-100 rounded-xl border border-[#1e293b] text-xs">
               <button
                 onClick={() => setDrawerTab('details')}
                 className={`py-1.5 rounded-lg transition-all cursor-pointer ${
@@ -1984,6 +2334,20 @@ export default function AllTrades() {
                 }`}
               >
                 Details
+              </button>
+              <button
+                onClick={() => setDrawerTab('orders')}
+                className={`py-1.5 rounded-lg transition-all cursor-pointer ${
+                  drawerTab === 'orders'
+                    ? isKite
+                      ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                      : 'bg-blue-600 text-white shadow-sm font-semibold'
+                    : isKite
+                      ? 'text-[#9b9b9b] hover:text-white font-medium'
+                      : 'text-slate-400 hover:text-white font-medium'
+                }`}
+              >
+                Orders ({selectedTrade.orders?.length || 0})
               </button>
               <button
                 onClick={() => setDrawerTab('charges')}
@@ -2193,31 +2557,39 @@ export default function AllTrades() {
                   <div className="flex items-center justify-between text-slate-400">
                     <span>Gross Profit</span>
                     <span className="font-bold text-emerald-400 font-mono-numbers">
-                      {formatINR(selectedTrade.gross_profit)}
+                      {formatINR(selectedTrade.status === 'OPEN' ? 0 : selectedTrade.gross_profit)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-slate-400">
                     <span>Gross Loss</span>
                     <span className="font-bold text-rose-400 font-mono-numbers">
-                      {formatINR(selectedTrade.gross_loss)}
+                      {formatINR(selectedTrade.status === 'OPEN' ? 0 : selectedTrade.gross_loss)}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-slate-400">
-                    <span>Total Charges</span>
+                    <span>{selectedTrade.status === 'OPEN' ? 'Entry Charges' : 'Total Charges'}</span>
                     <span className="font-semibold text-slate-300 light:text-slate-700 font-mono-numbers">
                       {formatINR(selectedTrade.total_charges)}
                     </span>
                   </div>
                   <div className="pt-2 border-t border-[#1e293b] light:border-slate-200 flex items-center justify-between">
-                    <span className="font-bold text-slate-200 light:text-slate-800">Net P&L</span>
-                    <span
-                      className={`text-lg font-black font-mono-numbers ${
-                        parseFloat(selectedTrade.net_pnl) >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                      }`}
-                    >
-                      {parseFloat(selectedTrade.net_pnl) >= 0 ? '+' : ''}
-                      {formatINR(selectedTrade.net_pnl)}
+                    <span className="font-bold text-slate-200 light:text-slate-800">
+                      {selectedTrade.status === 'OPEN' ? 'Position P&L' : 'Net P&L'}
                     </span>
+                    {selectedTrade.status === 'OPEN' ? (
+                      <span className="text-lg font-bold font-mono-numbers text-amber-400">
+                        Open (-{formatINR(selectedTrade.total_charges)})
+                      </span>
+                    ) : (
+                      <span
+                        className={`text-lg font-black font-mono-numbers ${
+                          parseFloat(selectedTrade.net_pnl) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                        }`}
+                      >
+                        {parseFloat(selectedTrade.net_pnl) >= 0 ? '+' : ''}
+                        {formatINR(selectedTrade.net_pnl)}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -2322,6 +2694,102 @@ export default function AllTrades() {
                       <span className="text-[11px] font-medium">
                         {uploadingDrawerScreenshot ? 'Uploading...' : 'Click to upload chart screenshots (multiple)'}
                       </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Tab: Orders (Execution History) */}
+            {drawerTab === 'orders' && (
+              <div className="space-y-3 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    Executions Timeline
+                  </span>
+                  {(selectedTrade.status === 'OPEN' || selectedTrade.status === 'PARTIALLY_CLOSED') && (
+                    <button
+                      type="button"
+                      onClick={() => setPartialExitTrade(selectedTrade)}
+                      className="px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/40 text-[10px] font-bold flex items-center gap-1 transition-colors"
+                    >
+                      <Plus className="w-3 h-3" />
+                      <span>New Exit Order</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+                  {selectedTrade.orders && selectedTrade.orders.length > 0 ? (
+                    selectedTrade.orders.map((ord, idx) => (
+                      <div
+                        key={ord.id || idx}
+                        className="p-3 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 space-y-1.5"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                ord.order_type === 'BUY'
+                                  ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                                  : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                              }`}
+                            >
+                              #{idx + 1} {ord.order_type}
+                            </span>
+                            <span className="font-bold text-white light:text-slate-900 font-mono-numbers text-xs">
+                              {ord.quantity} Qty @ ₹{parseFloat(ord.price).toFixed(2)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            {ord.order_type === 'SELL' && (
+                              <span
+                                className={`font-mono-numbers font-bold text-xs ${
+                                  parseFloat(ord.realized_pnl) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                                }`}
+                              >
+                                {parseFloat(ord.realized_pnl) >= 0 ? '+' : ''}₹{parseFloat(ord.realized_pnl).toFixed(2)}
+                              </span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => handleOpenEditOrder(selectedTrade, ord, e)}
+                              title="Edit Order"
+                              className="p-1 rounded text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition-colors ml-1"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => handleDeleteOrder(selectedTrade, ord, e)}
+                              title="Delete Order"
+                              disabled={(selectedTrade.orders?.length || 0) <= 1}
+                              className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-slate-400">
+                          <span>
+                            {formatDateTime(ord.order_date, ord.order_time)}
+                          </span>
+                          <span className="font-mono-numbers">
+                            Charges: ₹{parseFloat(ord.total_charges || 0).toFixed(2)}
+                          </span>
+                        </div>
+
+                        {ord.notes && (
+                          <div className="text-[10px] text-slate-500 italic pt-1 border-t border-[#1e293b]/60 light:border-slate-200">
+                            {ord.notes}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-4 text-center text-slate-500 bg-[#0e1626] rounded-xl border border-[#1e293b]">
+                      No individual orders found for this trade.
                     </div>
                   )}
                 </div>
@@ -2447,14 +2915,25 @@ export default function AllTrades() {
                 <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} />
                 <YAxis stroke="#64748b" fontSize={11} tickLine={false} tickFormatter={(v) => `${v}K`} />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0e1626',
-                    border: '1px solid #1e293b',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                    color: '#fff',
+                  content={({ active, payload, label }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="bg-[#0b1322] light:bg-white p-2.5 rounded-xl border border-[#1e293b] light:border-slate-200 shadow-xl text-xs space-y-1 min-w-[120px]">
+                          <p className="text-slate-300 light:text-slate-700 font-bold border-b border-[#1e293b] light:border-slate-200 pb-1">{label}</p>
+                          {payload.map((entry) => (
+                            <div key={entry.name} className="flex items-center justify-between gap-4 font-mono-numbers pt-0.5">
+                              <span className="text-slate-400 capitalize">{entry.name}:</span>
+                              <span className={`font-bold ${entry.name === 'profit' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                ₹{entry.value}K
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    }
+                    return null;
                   }}
-                  formatter={(val, name) => [`₹${val}K`, name === 'profit' ? 'Profit' : 'Loss']}
+                  cursor={{ fill: 'rgba(255, 255, 255, 0.05)', radius: 4 }}
                 />
                 <Bar dataKey="profit" fill="#10b981" radius={[4, 4, 0, 0]} barSize={18} />
                 <Bar dataKey="loss" fill="#f43f5e" radius={[4, 4, 0, 0]} barSize={18} />
@@ -3610,6 +4089,33 @@ export default function AllTrades() {
           </div>
         </div>
       )}
+
+      {/* Partial Exit Modal */}
+      <PartialExitModal
+        trade={partialExitTrade}
+        isOpen={Boolean(partialExitTrade)}
+        onClose={() => setPartialExitTrade(null)}
+        onSuccess={(updated) => {
+          fetchTrades();
+          if (selectedTrade?.id === updated?.id) {
+            setSelectedTrade(updated);
+          }
+        }}
+      />
+
+      {/* Edit Executed Order Modal */}
+      <EditOrderModal
+        trade={editingOrderData?.trade}
+        order={editingOrderData?.order}
+        isOpen={Boolean(editingOrderData)}
+        onClose={() => setEditingOrderData(null)}
+        onSuccess={(updated) => {
+          fetchTrades();
+          if (selectedTrade?.id === updated?.id) {
+            setSelectedTrade(updated);
+          }
+        }}
+      />
 
       {/* Bulk Import Modal */}
       <BulkImportModal

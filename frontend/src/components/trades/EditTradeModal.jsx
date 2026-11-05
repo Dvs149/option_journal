@@ -123,6 +123,8 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
       id: trade.id,
       trade_date: trade.trade_date ? trade.trade_date.split('T')[0].split(' ')[0] : new Date().toISOString().split('T')[0],
       index_name: trade.index_name || 'NIFTY',
+      status: trade.status || 'CLOSED',
+      open_quantity: trade.open_quantity != null ? trade.open_quantity.toString() : (trade.status === 'OPEN' ? (trade.quantity ? trade.quantity.toString() : '0') : '0'),
       trading_type: trade.trading_type || 'Intraday',
       option_type: trade.option_type || 'CE',
       strike_price: trade.strike_price != null ? trade.strike_price.toString() : '',
@@ -182,7 +184,12 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
     editForm.other_charges,
   ]);
 
+  const isTradeOpen = editForm.status === 'OPEN' || !editForm.exit_premium;
+
   const computedGrossProfit = useMemo(() => {
+    if (editForm.status === 'OPEN' || !editForm.exit_premium) {
+      return '0.00';
+    }
     const entry = parseFloat(editForm.entry_premium) || 0;
     const exit = parseFloat(editForm.exit_premium) || 0;
     const qty = parseFloat(editForm.quantity) || 0;
@@ -191,9 +198,12 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
       return diff > 0 ? diff.toFixed(2) : '0.00';
     }
     return parseFloat(editForm.gross_profit || 0).toFixed(2);
-  }, [editForm.entry_premium, editForm.exit_premium, editForm.quantity, editForm.gross_profit]);
+  }, [editForm.status, editForm.entry_premium, editForm.exit_premium, editForm.quantity, editForm.gross_profit]);
 
   const computedGrossLoss = useMemo(() => {
+    if (editForm.status === 'OPEN' || !editForm.exit_premium) {
+      return '0.00';
+    }
     const entry = parseFloat(editForm.entry_premium) || 0;
     const exit = parseFloat(editForm.exit_premium) || 0;
     const qty = parseFloat(editForm.quantity) || 0;
@@ -202,30 +212,39 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
       return diff < 0 ? Math.abs(diff).toFixed(2) : '0.00';
     }
     return parseFloat(editForm.gross_loss || 0).toFixed(2);
-  }, [editForm.entry_premium, editForm.exit_premium, editForm.quantity, editForm.gross_loss]);
+  }, [editForm.status, editForm.entry_premium, editForm.exit_premium, editForm.quantity, editForm.gross_loss]);
 
   const computedNetPnl = useMemo(() => {
+    if (editForm.status === 'OPEN' || !editForm.exit_premium) {
+      const ch = parseFloat(computedTotalCharges) || 0;
+      return (-ch).toFixed(2);
+    }
     const gp = parseFloat(computedGrossProfit) || 0;
     const gl = parseFloat(computedGrossLoss) || 0;
     const ch = parseFloat(computedTotalCharges) || 0;
     return (gp - gl - ch).toFixed(2);
-  }, [computedGrossProfit, computedGrossLoss, computedTotalCharges]);
+  }, [editForm.status, editForm.exit_premium, computedGrossProfit, computedGrossLoss, computedTotalCharges]);
 
   // Automatically calculate P&L and charges in real-time whenever trade fields change
   useEffect(() => {
+    const isOpen = editForm.status === 'OPEN' || !editForm.exit_premium;
     let entry = parseFloat(editForm.entry_premium) || 0;
-    let exit = parseFloat(editForm.exit_premium) || 0;
+    let exit = isOpen ? 0 : (parseFloat(editForm.exit_premium) || 0);
 
     if (editForm.option_type === 'Both') {
       const ceEn = parseFloat(editForm.ce_entry_price) || 0;
       const peEn = parseFloat(editForm.pe_entry_price) || 0;
-      const ceEx = parseFloat(editForm.ce_exit_price) || 0;
-      const peEx = parseFloat(editForm.pe_exit_price) || 0;
       if (ceEn > 0 || peEn > 0) entry = ceEn + peEn;
-      if (ceEx > 0 || peEx > 0) exit = ceEx + peEx;
+
+      if (!isOpen) {
+        const ceEx = parseFloat(editForm.ce_exit_price) || 0;
+        const peEx = parseFloat(editForm.pe_exit_price) || 0;
+        if (ceEx > 0 || peEx > 0) exit = ceEx + peEx;
+      }
     }
 
     const qty = parseInt(editForm.quantity, 10) || 0;
+    const numOrders = isOpen ? (editForm.option_type === 'Both' ? 2 : 1) : (editForm.option_type === 'Both' ? 4 : 2);
 
     if (qty > 0 && (entry > 0 || exit > 0)) {
       const est = calculateCharges({
@@ -234,15 +253,20 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
         quantity: qty,
         optionType: editForm.option_type,
         indexName: editForm.index_name,
+        isOpen,
+        status: editForm.status,
+        executedOrders: numOrders,
         ceEntry: editForm.ce_entry_price,
         peEntry: editForm.pe_entry_price,
-        ceExit: editForm.ce_exit_price,
-        peExit: editForm.pe_exit_price,
+        ceExit: isOpen ? undefined : editForm.ce_exit_price,
+        peExit: isOpen ? undefined : editForm.pe_exit_price,
       });
 
       setEditForm((prev) => {
         const other = parseFloat(prev.other_charges) || 0;
         const total = (est.total_charges + other).toFixed(2);
+        const grossP = isOpen ? '0.00' : (est.gross_profit > 0 ? est.gross_profit.toFixed(2) : '0.00');
+        const grossL = isOpen ? '0.00' : (est.gross_loss > 0 ? est.gross_loss.toFixed(2) : '0.00');
 
         if (
           prev.brokerage === est.brokerage.toFixed(2) &&
@@ -252,8 +276,8 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
           prev.sebi_charges === est.sebi_charges.toFixed(2) &&
           prev.stamp_duty === est.stamp_duty.toFixed(2) &&
           prev.total_charges === total &&
-          prev.gross_profit === (est.gross_profit > 0 ? est.gross_profit.toFixed(2) : '0.00') &&
-          prev.gross_loss === (est.gross_loss > 0 ? est.gross_loss.toFixed(2) : '0.00')
+          prev.gross_profit === grossP &&
+          prev.gross_loss === grossL
         ) {
           return prev;
         }
@@ -267,12 +291,13 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
           sebi_charges: est.sebi_charges.toFixed(2),
           stamp_duty: est.stamp_duty.toFixed(2),
           total_charges: total,
-          gross_profit: est.gross_profit > 0 ? est.gross_profit.toFixed(2) : '0.00',
-          gross_loss: est.gross_loss > 0 ? est.gross_loss.toFixed(2) : '0.00',
+          gross_profit: grossP,
+          gross_loss: grossL,
         };
       });
     }
   }, [
+    editForm.status,
     editForm.entry_premium,
     editForm.exit_premium,
     editForm.quantity,
@@ -287,13 +312,15 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
   ]);
 
   const handleAutoCalculateCharges = async () => {
+    const isOpen = editForm.status === 'OPEN' || !editForm.exit_premium;
     const entry = parseFloat(editForm.entry_premium) || 0;
-    const exit = parseFloat(editForm.exit_premium) || 0;
+    const exit = isOpen ? 0 : (parseFloat(editForm.exit_premium) || 0);
     const qty = parseInt(editForm.quantity, 10) || 0;
+    const numOrders = isOpen ? (editForm.option_type === 'Both' ? 2 : 1) : (editForm.option_type === 'Both' ? 4 : 2);
 
     let gp = '0.00';
     let gl = '0.00';
-    if (entry > 0 && exit > 0 && qty > 0) {
+    if (!isOpen && entry > 0 && exit > 0 && qty > 0) {
       const diff = (exit - entry) * qty;
       if (diff >= 0) {
         gp = diff.toFixed(2);
@@ -311,10 +338,13 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
         quantity: qty,
         option_type: editForm.option_type,
         index_name: editForm.index_name,
+        isOpen,
+        status: editForm.status,
+        executed_orders: numOrders,
         ce_entry_price: editForm.ce_entry_price,
         pe_entry_price: editForm.pe_entry_price,
-        ce_exit_price: editForm.ce_exit_price,
-        pe_exit_price: editForm.pe_exit_price,
+        ce_exit_price: isOpen ? undefined : editForm.ce_exit_price,
+        pe_exit_price: isOpen ? undefined : editForm.pe_exit_price,
       });
 
       if (res.data) {
@@ -342,10 +372,12 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
         quantity: qty,
         optionType: editForm.option_type,
         indexName: editForm.index_name,
+        isOpen,
+        status: editForm.status,
         ceEntry: editForm.ce_entry_price,
         peEntry: editForm.pe_entry_price,
-        ceExit: editForm.ce_exit_price,
-        peExit: editForm.pe_exit_price,
+        ceExit: isOpen ? undefined : editForm.ce_exit_price,
+        peExit: isOpen ? undefined : editForm.pe_exit_price,
       });
 
       setEditForm((prev) => ({
@@ -371,6 +403,8 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
       const strategyFinal = editForm.strategy_name === 'CUSTOM' ? editForm.custom_strategy : editForm.strategy_name;
       const payload = {
         ...editForm,
+        status: editForm.status || trade.status || 'CLOSED',
+        open_quantity: editForm.open_quantity != null ? parseInt(editForm.open_quantity, 10) : trade.open_quantity,
         strategy_name: strategyFinal || 'Intraday Options',
         strike_price: editForm.strike_price ? parseFloat(editForm.strike_price) : null,
         entry_premium: editForm.entry_premium ? parseFloat(editForm.entry_premium) : null,

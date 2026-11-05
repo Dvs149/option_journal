@@ -15,6 +15,8 @@ import {
   ChevronRight,
   Sparkles,
   Info,
+  TrendingUp,
+  SlidersHorizontal,
 } from 'lucide-react';
 import api from '../api/client';
 import { formatINR, formatDate } from '../utils/formatters';
@@ -40,6 +42,8 @@ export default function AddTrade() {
 
   // Active section tab: 'trade_details' | 'pnl_charges' | 'strategy_journal' | 'preview'
   const [activeTab, setActiveTab] = useState('trade_details');
+  // Trade position mode: 'CLOSED' (round-trip) or 'OPEN' (open position / partial orders)
+  const [tradeMode, setTradeMode] = useState('CLOSED');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [showBulkImportModal, setShowBulkImportModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -170,16 +174,19 @@ export default function AddTrade() {
   // Automatically calculate P&L and trading charges whenever any trade input field changes
   useEffect(() => {
     let entry = parseFloat(form.entry_premium) || 0;
-    let exit = parseFloat(form.exit_premium) || 0;
+    let exit = tradeMode === 'OPEN' ? 0 : (parseFloat(form.exit_premium) || 0);
 
     // For Both, prioritize leg prices sum if populated
     if (form.option_type === 'Both') {
       const ceEn = parseFloat(form.ce_entry_price) || 0;
       const peEn = parseFloat(form.pe_entry_price) || 0;
-      const ceEx = parseFloat(form.ce_exit_price) || 0;
-      const peEx = parseFloat(form.pe_exit_price) || 0;
       if (ceEn > 0 || peEn > 0) entry = ceEn + peEn;
-      if (ceEx > 0 || peEx > 0) exit = ceEx + peEx;
+
+      if (tradeMode !== 'OPEN') {
+        const ceEx = parseFloat(form.ce_exit_price) || 0;
+        const peEx = parseFloat(form.pe_exit_price) || 0;
+        if (ceEx > 0 || peEx > 0) exit = ceEx + peEx;
+      }
     }
 
     const qty = parseInt(form.quantity, 10) || 0;
@@ -191,15 +198,18 @@ export default function AddTrade() {
         quantity: qty,
         optionType: form.option_type,
         indexName: form.index_name,
+        executedOrders: tradeMode === 'OPEN' ? (form.option_type === 'Both' ? 2 : 1) : undefined,
         ceEntry: form.ce_entry_price,
         peEntry: form.pe_entry_price,
-        ceExit: form.ce_exit_price,
-        peExit: form.pe_exit_price,
+        ceExit: tradeMode === 'OPEN' ? undefined : form.ce_exit_price,
+        peExit: tradeMode === 'OPEN' ? undefined : form.pe_exit_price,
       });
 
       setForm((prev) => {
         const other = parseFloat(prev.other_charges) || 0;
         const total = (est.total_charges + other).toFixed(2);
+        const grossP = tradeMode === 'OPEN' ? '0.00' : (est.gross_profit > 0 ? est.gross_profit.toFixed(2) : '0.00');
+        const grossL = tradeMode === 'OPEN' ? '0.00' : (est.gross_loss > 0 ? est.gross_loss.toFixed(2) : '0.00');
 
         // Guard against redundant state updates to avoid unnecessary renders
         if (
@@ -210,8 +220,8 @@ export default function AddTrade() {
           prev.sebi_charges === est.sebi_charges.toFixed(2) &&
           prev.stamp_duty === est.stamp_duty.toFixed(2) &&
           prev.total_charges === total &&
-          prev.gross_profit === (est.gross_profit > 0 ? est.gross_profit.toFixed(2) : '0.00') &&
-          prev.gross_loss === (est.gross_loss > 0 ? est.gross_loss.toFixed(2) : '0.00')
+          prev.gross_profit === grossP &&
+          prev.gross_loss === grossL
         ) {
           return prev;
         }
@@ -225,12 +235,13 @@ export default function AddTrade() {
           sebi_charges: est.sebi_charges.toFixed(2),
           stamp_duty: est.stamp_duty.toFixed(2),
           total_charges: total,
-          gross_profit: est.gross_profit > 0 ? est.gross_profit.toFixed(2) : '0.00',
-          gross_loss: est.gross_loss > 0 ? est.gross_loss.toFixed(2) : '0.00',
+          gross_profit: grossP,
+          gross_loss: grossL,
         };
       });
     }
   }, [
+    tradeMode,
     form.entry_premium,
     form.exit_premium,
     form.quantity,
@@ -266,6 +277,7 @@ export default function AddTrade() {
 
   // Gross Profit & Gross Loss calculation
   const computedGrossProfit = useMemo(() => {
+    if (tradeMode === 'OPEN') return '0.00';
     const entry = parseFloat(form.entry_premium) || 0;
     const exit = parseFloat(form.exit_premium) || 0;
     const qty = parseFloat(form.quantity) || 0;
@@ -274,9 +286,10 @@ export default function AddTrade() {
       return diff > 0 ? diff.toFixed(2) : '0.00';
     }
     return parseFloat(form.gross_profit || 0).toFixed(2);
-  }, [form.entry_premium, form.exit_premium, form.quantity, form.gross_profit]);
+  }, [tradeMode, form.entry_premium, form.exit_premium, form.quantity, form.gross_profit]);
 
   const computedGrossLoss = useMemo(() => {
+    if (tradeMode === 'OPEN') return '0.00';
     const entry = parseFloat(form.entry_premium) || 0;
     const exit = parseFloat(form.exit_premium) || 0;
     const qty = parseFloat(form.quantity) || 0;
@@ -285,15 +298,19 @@ export default function AddTrade() {
       return diff < 0 ? Math.abs(diff).toFixed(2) : '0.00';
     }
     return parseFloat(form.gross_loss || 0).toFixed(2);
-  }, [form.entry_premium, form.exit_premium, form.quantity, form.gross_loss]);
+  }, [tradeMode, form.entry_premium, form.exit_premium, form.quantity, form.gross_loss]);
 
   // Net P&L Computed
   const computedNetPnl = useMemo(() => {
+    if (tradeMode === 'OPEN') {
+      const ch = parseFloat(computedTotalCharges) || 0;
+      return (-ch).toFixed(2);
+    }
     const gp = parseFloat(computedGrossProfit) || 0;
     const gl = parseFloat(computedGrossLoss) || 0;
     const ch = parseFloat(computedTotalCharges) || 0;
     return (gp - gl - ch).toFixed(2);
-  }, [computedGrossProfit, computedGrossLoss, computedTotalCharges]);
+  }, [tradeMode, computedGrossProfit, computedGrossLoss, computedTotalCharges]);
 
   // Auto Calculate Charges & P&L dynamically based on Brokerage & Regulatory settings
   const handleAutoCalculate = async () => {
@@ -301,9 +318,12 @@ export default function AddTrade() {
     const exit = parseFloat(form.exit_premium) || 0;
     const qty = parseInt(form.quantity, 10) || 0;
 
+    const isOpen = tradeMode === 'OPEN';
+    const numOrders = isOpen ? (form.option_type === 'Both' ? 2 : 1) : (form.option_type === 'Both' ? 4 : 2);
+
     let gp = '0.00';
     let gl = '0.00';
-    if (entry > 0 && exit > 0 && qty > 0) {
+    if (!isOpen && entry > 0 && exit > 0 && qty > 0) {
       const diff = (exit - entry) * qty;
       if (diff >= 0) {
         gp = diff.toFixed(2);
@@ -317,14 +337,17 @@ export default function AddTrade() {
     try {
       const res = await api.post('/trades/estimate-charges', {
         entry_premium: entry,
-        exit_premium: exit,
+        exit_premium: isOpen ? 0 : exit,
         quantity: qty,
         option_type: form.option_type,
         index_name: form.index_name,
+        isOpen,
+        status: isOpen ? 'OPEN' : 'CLOSED',
+        executed_orders: numOrders,
         ce_entry_price: form.ce_entry_price,
         pe_entry_price: form.pe_entry_price,
-        ce_exit_price: form.ce_exit_price,
-        pe_exit_price: form.pe_exit_price,
+        ce_exit_price: isOpen ? undefined : form.ce_exit_price,
+        pe_exit_price: isOpen ? undefined : form.pe_exit_price,
       });
 
       if (res.data) {
@@ -466,6 +489,7 @@ export default function AddTrade() {
     try {
       const payload = {
         trade_date: form.trade_date,
+        status: tradeMode,
         index_name: form.index_name,
         trading_type: form.trading_type,
         strategy_name: form.strategy_name === 'CUSTOM' ? form.custom_strategy : form.strategy_name,
@@ -475,13 +499,14 @@ export default function AddTrade() {
         ce_entry_price: form.option_type === 'Both' && form.ce_entry_price ? parseFloat(form.ce_entry_price) : null,
         pe_entry_price: form.option_type === 'Both' && form.pe_entry_price ? parseFloat(form.pe_entry_price) : null,
         entry_premium: form.entry_premium || null,
-        ce_exit_price: form.option_type === 'Both' && form.ce_exit_price ? parseFloat(form.ce_exit_price) : null,
-        pe_exit_price: form.option_type === 'Both' && form.pe_exit_price ? parseFloat(form.pe_exit_price) : null,
-        exit_premium: form.exit_premium || null,
+        ce_exit_price: tradeMode === 'OPEN' ? null : (form.option_type === 'Both' && form.ce_exit_price ? parseFloat(form.ce_exit_price) : null),
+        pe_exit_price: tradeMode === 'OPEN' ? null : (form.option_type === 'Both' && form.pe_exit_price ? parseFloat(form.pe_exit_price) : null),
+        exit_premium: tradeMode === 'OPEN' ? null : (form.exit_premium || null),
+        exit_date: tradeMode === 'OPEN' ? null : (form.trade_date),
         quantity: parseInt(form.quantity, 10) || null,
         lots: parseInt(form.lots, 10) || 1,
-        gross_profit: parseFloat(computedGrossProfit) || 0,
-        gross_loss: parseFloat(computedGrossLoss) || 0,
+        gross_profit: tradeMode === 'OPEN' ? 0 : (parseFloat(computedGrossProfit) || 0),
+        gross_loss: tradeMode === 'OPEN' ? 0 : (parseFloat(computedGrossLoss) || 0),
         brokerage: parseFloat(form.brokerage) || 0,
         stt: parseFloat(form.stt) || 0,
         exchange_charges: parseFloat(form.exchange_charges) || 0,
@@ -493,7 +518,7 @@ export default function AddTrade() {
         // Journal & Analysis
         market_conditions: form.market_conditions,
         entry_reason: form.entry_reason,
-        exit_reason: form.exit_reason,
+        exit_reason: tradeMode === 'OPEN' ? null : form.exit_reason,
         trade_setup: form.trade_setup,
         what_went_right: form.what_went_right,
         what_went_wrong: form.what_went_wrong,
@@ -706,6 +731,44 @@ export default function AddTrade() {
             </div>
 
             <div className="space-y-4 text-xs">
+              {/* Position Mode Selector: Closed vs Open Position */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-[#0e1626]/80 light:bg-slate-50 border border-[#1e293b] light:border-slate-200">
+                <div>
+                  <span className="text-xs font-bold text-white light:text-slate-900 block">
+                    Position Mode
+                  </span>
+                  <span className="text-[11px] text-slate-400">
+                    Choose closed round-trip trade or an open position (with partial exits)
+                  </span>
+                </div>
+                <div className="inline-flex p-1 rounded-xl bg-[#121b2d] light:bg-slate-200/70 border border-[#1e293b] light:border-slate-300">
+                  <button
+                    type="button"
+                    onClick={() => setTradeMode('CLOSED')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                      tradeMode === 'CLOSED'
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white light:hover:text-slate-900'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Closed (Round-Trip)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTradeMode('OPEN')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+                      tradeMode === 'OPEN'
+                        ? 'bg-amber-600 text-white shadow-sm'
+                        : 'text-slate-400 hover:text-white light:hover:text-slate-900'
+                    }`}
+                  >
+                    <TrendingUp className="w-3.5 h-3.5" />
+                    <span>Open Position (BTST/Partial)</span>
+                  </button>
+                </div>
+              </div>
+
               {/* Row 1: Trading Date, Index, Trading Type */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
@@ -899,47 +962,59 @@ export default function AddTrade() {
                       </div>
                     </div>
 
-                    {/* Both: CE & PE Exit Prices */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-slate-400 font-medium">
-                          Exit Premium
+                    {/* Both: CE & PE Exit Prices or Open Notice */}
+                    {tradeMode === 'OPEN' ? (
+                      <div>
+                        <label className="block text-slate-400 mb-1 font-medium">
+                          Exit Status
                         </label>
-                        <span className="text-[10px] text-blue-400 font-mono-numbers font-semibold">
-                          Total: ₹{form.exit_premium || '0.00'}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="relative">
-                          <input
-                            type="number"
-                            step="0.05"
-                            placeholder="CE Exit"
-                            name="ce_exit_price"
-                            value={form.ce_exit_price}
-                            onChange={handleBothPricesChange}
-                            className="w-full pl-2.5 pr-8 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
-                          />
-                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 pointer-events-none">
-                            CE
-                          </span>
-                        </div>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            step="0.05"
-                            placeholder="PE Exit"
-                            name="pe_exit_price"
-                            value={form.pe_exit_price}
-                            onChange={handleBothPricesChange}
-                            className="w-full pl-2.5 pr-8 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
-                          />
-                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-rose-400 pointer-events-none">
-                            PE
-                          </span>
+                        <div className="px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-center gap-1.5 font-medium min-h-[42px]">
+                          <Info className="w-4 h-4 shrink-0 text-amber-400" />
+                          <span>Open Position (Execute exits from All Trades)</span>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-slate-400 font-medium">
+                            Exit Premium
+                          </label>
+                          <span className="text-[10px] text-blue-400 font-mono-numbers font-semibold">
+                            Total: ₹{form.exit_premium || '0.00'}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="relative">
+                            <input
+                              type="number"
+                              step="0.05"
+                              placeholder="CE Exit"
+                              name="ce_exit_price"
+                              value={form.ce_exit_price}
+                              onChange={handleBothPricesChange}
+                              className="w-full pl-2.5 pr-8 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 pointer-events-none">
+                              CE
+                            </span>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              step="0.05"
+                              placeholder="PE Exit"
+                              name="pe_exit_price"
+                              value={form.pe_exit_price}
+                              onChange={handleBothPricesChange}
+                              className="w-full pl-2.5 pr-8 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
+                            />
+                            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-rose-400 pointer-events-none">
+                              PE
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
@@ -958,20 +1033,32 @@ export default function AddTrade() {
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-slate-400 mb-1 font-medium">
-                        Exit Premium
-                      </label>
-                      <input
-                        type="number"
-                        step="0.05"
-                        placeholder="156.00"
-                        name="exit_premium"
-                        value={form.exit_premium}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
-                      />
-                    </div>
+                    {tradeMode === 'OPEN' ? (
+                      <div>
+                        <label className="block text-slate-400 mb-1 font-medium">
+                          Exit Status
+                        </label>
+                        <div className="px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-center gap-1.5 font-medium min-h-[42px]">
+                          <Info className="w-4 h-4 shrink-0 text-amber-400" />
+                          <span>Open Position (Record partial exits from All Trades)</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="block text-slate-400 mb-1 font-medium">
+                          Exit Premium
+                        </label>
+                        <input
+                          type="number"
+                          step="0.05"
+                          placeholder="156.00"
+                          name="exit_premium"
+                          value={form.exit_premium}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
+                        />
+                      </div>
+                    )}
                   </>
                 )}
 
@@ -1517,6 +1604,18 @@ export default function AddTrade() {
             {/* Spec details table */}
             <div className="divide-y divide-[#1e293b]/60 light:divide-slate-200 text-xs">
               <div className="py-2 flex items-center justify-between text-slate-400">
+                <span>Status</span>
+                <span
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                    tradeMode === 'OPEN'
+                      ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                      : 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+                  }`}
+                >
+                  {tradeMode === 'OPEN' ? 'OPEN (Holding)' : 'CLOSED'}
+                </span>
+              </div>
+              <div className="py-2 flex items-center justify-between text-slate-400">
                 <span>Index</span>
                 <span className="font-semibold text-white light:text-slate-900 font-sans">
                   {form.index_name}
@@ -1570,11 +1669,17 @@ export default function AddTrade() {
               <div className="py-2 text-slate-400">
                 <div className="flex items-center justify-between">
                   <span>Exit Premium</span>
-                  <span className="font-semibold text-white light:text-slate-900 font-mono-numbers">
-                    {form.exit_premium ? formatINR(form.exit_premium) : '-'}
-                  </span>
+                  {tradeMode === 'OPEN' ? (
+                    <span className="text-amber-400 font-semibold text-[11px]">
+                      Pending Exit (Open)
+                    </span>
+                  ) : (
+                    <span className="font-semibold text-white light:text-slate-900 font-mono-numbers">
+                      {form.exit_premium ? formatINR(form.exit_premium) : '-'}
+                    </span>
+                  )}
                 </div>
-                {form.option_type === 'Both' && (form.ce_exit_price || form.pe_exit_price) && (
+                {tradeMode !== 'OPEN' && form.option_type === 'Both' && (form.ce_exit_price || form.pe_exit_price) && (
                   <div className="flex items-center justify-between mt-1 text-[11px] font-mono-numbers px-2 py-1 rounded-lg bg-[#0e1626] border border-[#1e293b]">
                     <span className="text-emerald-400 font-semibold">CE: ₹{form.ce_exit_price || '0.00'}</span>
                     <span className="text-slate-600">|</span>
@@ -1589,17 +1694,19 @@ export default function AddTrade() {
               <div className="py-2 flex items-center justify-between">
                 <span className="text-slate-400">Gross Profit</span>
                 <span className="font-bold text-emerald-400 font-mono-numbers">
-                  {formatINR(computedGrossProfit)}
+                  {tradeMode === 'OPEN' ? '₹0.00' : formatINR(computedGrossProfit)}
                 </span>
               </div>
               <div className="py-2 flex items-center justify-between">
                 <span className="text-slate-400">Gross Loss</span>
                 <span className="font-bold text-rose-400 font-mono-numbers">
-                  {formatINR(computedGrossLoss)}
+                  {tradeMode === 'OPEN' ? '₹0.00' : formatINR(computedGrossLoss)}
                 </span>
               </div>
               <div className="py-2 flex items-center justify-between">
-                <span className="text-slate-400">Total Charges</span>
+                <span className="text-slate-400">
+                  {tradeMode === 'OPEN' ? 'Entry Charges' : 'Total Charges'}
+                </span>
                 <span className="font-bold text-slate-300 light:text-slate-700 font-mono-numbers">
                   {formatINR(computedTotalCharges)}
                 </span>
@@ -1609,16 +1716,27 @@ export default function AddTrade() {
             {/* Net P&L in Summary */}
             <div className="pt-3 border-t border-[#1e293b] light:border-slate-200 flex items-center justify-between">
               <span className="text-xs font-bold text-slate-300 light:text-slate-700">
-                Net P&L
+                {tradeMode === 'OPEN' ? 'Position Status' : 'Net P&L'}
               </span>
-              <span
-                className={`text-xl font-black font-mono-numbers ${
-                  parseFloat(computedNetPnl) >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                }`}
-              >
-                {parseFloat(computedNetPnl) >= 0 ? '+' : ''}
-                {formatINR(computedNetPnl)}
-              </span>
+              {tradeMode === 'OPEN' ? (
+                <div className="text-right">
+                  <span className="text-base font-black font-mono-numbers text-amber-400 block">
+                    OPEN POSITION
+                  </span>
+                  <span className="text-[10px] text-slate-400 block">
+                    Pending exit executions
+                  </span>
+                </div>
+              ) : (
+                <span
+                  className={`text-xl font-black font-mono-numbers ${
+                    parseFloat(computedNetPnl) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                  }`}
+                >
+                  {parseFloat(computedNetPnl) >= 0 ? '+' : ''}
+                  {formatINR(computedNetPnl)}
+                </span>
+              )}
             </div>
           </div>
 

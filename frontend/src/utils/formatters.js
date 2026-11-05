@@ -90,3 +90,68 @@ export function formatDate(dateStr) {
     year: 'numeric',
   });
 }
+
+/**
+ * Format a time string (e.g. "19:42:00", "19:42", "07:42", "09:30") to 12-hour format with AM/PM (e.g. "07:42 PM", "09:30 AM")
+ */
+export function formatTime(timeStr) {
+  if (!timeStr) return '';
+  const str = String(timeStr).trim();
+
+  // If already contains AM/PM
+  if (/am|pm/i.test(str)) {
+    return str.toUpperCase();
+  }
+
+  // Matches HH:MM or HH:MM:SS
+  const match = str.match(/^(\d{1,2}):(\d{2})(?::\d{2})?/);
+  if (match) {
+    let hours = parseInt(match[1], 10);
+    const minutes = match[2];
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    hours = hours % 12;
+    hours = hours ? hours : 12; // 0 becomes 12
+    const strHours = String(hours).padStart(2, '0');
+    return `${strHours}:${minutes} ${ampm}`;
+  }
+
+  // Attempt parse as Date/timestamp
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) {
+    return d.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+
+  return str;
+}
+
+/**
+ * Format Date and Time combined into "DD MMM YYYY hh:mm A"
+ * e.g. ("2026-11-04", "19:42:00") -> "04 Nov 2026 07:42 PM"
+ */
+export function formatDateTime(dateStr, timeStr) {
+  if (!dateStr && !timeStr) return '';
+
+  if (timeStr) {
+    const d = formatDate(dateStr);
+    const t = formatTime(timeStr);
+    if (d && t) return `${d} ${t}`;
+    return d || t || '';
+  }
+
+  const str = String(dateStr).trim();
+  const hasTime = /(?:T|\s+)(\d{1,2}:\d{2})/.test(str);
+  if (hasTime) {
+    const timePart = str.match(/(?:T|\s+)(\d{1,2}:\d{2}(?::\d{2})?)/)?.[1];
+    const datePart = str.split(/[T\s]/)[0];
+    const d = formatDate(datePart);
+    const t = formatTime(timePart);
+    return `${d} ${t}`.trim();
+  }
+
+  return formatDate(str);
+}
+

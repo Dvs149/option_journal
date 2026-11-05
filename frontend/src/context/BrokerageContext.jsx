@@ -125,13 +125,28 @@ export function BrokerageProvider({ children }) {
         }
       }
 
-      // Executed orders: 2 for single leg (Buy + Sell); 4 for Both (CE buy/sell + PE buy/sell)
+      // Check if trade is an open position
+      const isOpen = Boolean(
+        params.isOpen ||
+        params.status === 'OPEN' ||
+        (!exit && !params.ceExit && !params.peExit)
+      );
+
+      if (isOpen) {
+        exit = 0;
+      }
+
+      // Executed orders:
+      // Open position: 1 order for single leg (Buy only); 2 for Both (CE buy + PE buy)
+      // Closed position: 2 orders for single leg (Buy + Sell); 4 for Both (CE buy/sell + PE buy/sell)
+      const defaultOrders = isOpen
+        ? (optionType === 'Both' ? 2 : 1)
+        : (optionType === 'Both' ? 4 : 2);
+
       const numOrders =
         params.executedOrders != null
           ? parseInt(params.executedOrders, 10)
-          : optionType === 'Both'
-          ? 4
-          : 2;
+          : defaultOrders;
 
       // Exchange detection
       const indexUpper = (params.indexName || '').toUpperCase();
@@ -179,8 +194,10 @@ export function BrokerageProvider({ children }) {
         (brokerage + stt + exchangeCharges + sebiCharges + stampDuty + gst) * 100
       ) / 100;
 
-      const grossPnl = Math.round((turnoverSell - turnoverBuy) * 100) / 100;
-      const netPnl = Math.round((grossPnl - totalCharges) * 100) / 100;
+      // Realized Gross P&L is only present when an exit has been executed
+      const hasExit = exit > 0 && params.status !== 'OPEN' && !params.isOpen;
+      const grossPnl = hasExit ? Math.round((turnoverSell - turnoverBuy) * 100) / 100 : 0;
+      const netPnl = hasExit ? Math.round((grossPnl - totalCharges) * 100) / 100 : -totalCharges;
 
       return {
         brokerage,

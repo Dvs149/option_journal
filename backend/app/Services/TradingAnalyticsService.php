@@ -113,9 +113,10 @@ class TradingAnalyticsService
         // Lifetime Peak and Drawdown calculation
         $drawdownStats = $this->calculateDrawdown($account->initial_capital, $capitalTransactions, $allTrades);
 
-        // Core aggregate stats on filtered trades
-        $totalGrossProfit = (float) $filteredTrades->sum('gross_profit');
-        $totalGrossLoss = (float) $filteredTrades->sum('gross_loss');
+        // Core aggregate stats on filtered trades (only realized profit/loss from closed trades or closed positions)
+        $closedTrades = $filteredTrades->filter(fn($t) => $t->status !== 'OPEN');
+        $totalGrossProfit = (float) $closedTrades->sum('gross_profit');
+        $totalGrossLoss = (float) $closedTrades->sum('gross_loss');
         $totalCharges = (float) $filteredTrades->sum('total_charges');
         $totalNetProfit = (float) $filteredTrades->sum('net_pnl');
 
@@ -144,10 +145,18 @@ class TradingAnalyticsService
 
         // Daily grouping for win rate and daily stats
         $dailyGrouped = $filteredTrades->groupBy(fn($t) => Carbon::parse($t->trade_date)->toDateString())->map(function ($trades, $date) {
+            $closed = $trades->filter(fn($t) => $t->status !== 'OPEN');
+            $hasClosed = $closed->isNotEmpty();
             $net = (float) $trades->sum('net_pnl');
-            $grossP = (float) $trades->sum('gross_profit');
-            $grossL = (float) $trades->sum('gross_loss');
+            $grossP = (float) $closed->sum('gross_profit');
+            $grossL = (float) $closed->sum('gross_loss');
             $charges = (float) $trades->sum('total_charges');
+
+            $status = 'breakeven';
+            if ($hasClosed) {
+                $status = $net > 0 ? 'win' : ($net < 0 ? 'loss' : 'breakeven');
+            }
+
             return [
                 'date' => $date,
                 'net_pnl' => round($net, 2),
@@ -155,7 +164,7 @@ class TradingAnalyticsService
                 'gross_loss' => round($grossL, 2),
                 'total_charges' => round($charges, 2),
                 'trades_count' => $trades->count(),
-                'status' => $net > 0 ? 'win' : ($net < 0 ? 'loss' : 'breakeven'),
+                'status' => $status,
             ];
         })->sortBy('date')->values();
 
@@ -172,10 +181,11 @@ class TradingAnalyticsService
         $avgDailyProfit = $winningDays > 0 ? round($winningDaysCollection->sum('net_pnl') / $winningDays, 2) : 0.00;
         $avgDailyLoss = $losingDays > 0 ? round(abs($losingDaysCollection->sum('net_pnl')) / $losingDays, 2) : 0.00;
 
-        // Trade-level win rate
-        $totalClosedTrades = $filteredTrades->count();
-        $winningTrades = $filteredTrades->where('net_pnl', '>', 0)->count();
-        $losingTrades = $filteredTrades->where('net_pnl', '<', 0)->count();
+        // Trade-level win rate (only counting closed or partially-closed trades)
+        $closedTrades = $filteredTrades->where('status', '!=', 'OPEN');
+        $totalClosedTrades = $closedTrades->count();
+        $winningTrades = $closedTrades->where('net_pnl', '>', 0)->count();
+        $losingTrades = $closedTrades->where('net_pnl', '<', 0)->count();
         $tradeWinRate = $totalClosedTrades > 0 ? round(($winningTrades / $totalClosedTrades) * 100, 1) : 0.0;
 
         // Daily P&L Series for Chart
@@ -661,12 +671,24 @@ class TradingAnalyticsService
         $tradingDays = $daily->count();
         $winDays = $daily->where('status', 'profit')->count();
         $lossDays = $daily->where('status', 'loss')->count();
+        $initialCapital = $account ? (float) $account->initial_capital : 0.0;
+        $totalTrades = $trades->count();
+        $winTrades = $trades->filter(fn($t) => (float) $t->net_pnl > 0)->count();
+        $lossTrades = $trades->filter(fn($t) => (float) $t->net_pnl < 0)->count();
+        $tradeWinRate = $totalTrades > 0 ? round(($winTrades / $totalTrades) * 100, 1) : 0.0;
+        $roi = $initialCapital > 0 ? round(($totalNet / $initialCapital) * 100, 2) : 0.0;
 
         return [
             'year' => $year,
             'month' => $month,
             'month_name' => Carbon::createFromDate($year, $month, 1)->format('F'),
             'total_net_pnl' => round($totalNet, 2),
+            'initial_capital' => $initialCapital,
+            'roi' => $roi,
+            'total_trades' => $totalTrades,
+            'winning_trades' => $winTrades,
+            'losing_trades' => $lossTrades,
+            'trade_win_rate' => $tradeWinRate,
             'total_trading_days' => $tradingDays,
             'winning_days' => $winDays,
             'losing_days' => $lossDays,

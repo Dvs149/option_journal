@@ -31,7 +31,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import api from '../api/client';
-import { formatINR, formatCompactINR, formatDate } from '../utils/formatters';
+import { formatINR, formatCompactINR, formatDate, formatTime } from '../utils/formatters';
 import { useToast } from '../context/ToastContext';
 import { useFilter } from '../context/FilterContext';
 import EditTradeModal from '../components/trades/EditTradeModal';
@@ -66,6 +66,109 @@ const formatCalendarCellPnl = (val) => {
   if (abs >= 1000) return `${sign}${(abs / 1000).toFixed(1)}K`;
   return `${sign}${abs.toFixed(0)}`;
 };
+
+// Custom Tooltip for Monthly Performance Bar Chart
+function MonthlyBarTooltip({ active, payload, label }) {
+  if (!active || !payload || !payload.length) return null;
+  const data = payload[0].payload;
+  const rawPnl = data.rawPnl != null ? data.rawPnl : payload[0].value * 1000;
+  const isProfit = rawPnl > 0;
+  const isLoss = rawPnl < 0;
+
+  return (
+    <div className="px-3.5 py-2.5 rounded-2xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-2xl space-y-1.5 min-w-[155px]">
+      <div className="flex items-center justify-between gap-3 border-b border-[#1e293b] light:border-slate-200 pb-1.5">
+        <span className="text-xs font-bold text-slate-100 light:text-slate-900 tracking-tight">
+          {data.fullDate || label}
+        </span>
+        {data.tradesCount > 0 && (
+          <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-[#162033] light:bg-slate-100 text-slate-300 light:text-slate-600 font-mono-numbers border border-[#1e293b]/70 light:border-slate-300">
+            {data.tradesCount} {data.tradesCount === 1 ? 'trade' : 'trades'}
+          </span>
+        )}
+      </div>
+      <div className="flex items-center justify-between gap-3 pt-0.5">
+        <span className="text-[11px] text-slate-400 font-medium">Daily P&L:</span>
+        <span
+          className={`text-xs font-bold font-mono-numbers ${
+            isProfit
+              ? 'text-emerald-400'
+              : isLoss
+              ? 'text-rose-400'
+              : 'text-slate-300 light:text-slate-700'
+          }`}
+        >
+          {isProfit ? '+' : ''}
+          {formatINR(rawPnl, true)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// Custom Tooltip for Daily P&L Trend (Equity Area Curve)
+function DailyTrendTooltip({ active, payload, label }) {
+  if (!active || !payload || !payload.length) return null;
+  const data = payload[0].payload;
+  const total = data.rawTotal != null ? data.rawTotal : payload[0].value * 1000;
+  const isProfit = total > 0;
+  const isLoss = total < 0;
+
+  return (
+    <div className="px-3.5 py-2.5 rounded-2xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-2xl space-y-1.5 min-w-[165px]">
+      <div className="text-xs font-bold text-slate-100 light:text-slate-900 border-b border-[#1e293b] light:border-slate-200 pb-1.5">
+        {data.fullDate || label}
+      </div>
+      <div className="flex items-center justify-between gap-3 pt-0.5">
+        <span className="text-[11px] text-slate-400 font-medium">Cumulative P&L:</span>
+        <span
+          className={`text-xs font-bold font-mono-numbers ${
+            isProfit
+              ? 'text-emerald-400'
+              : isLoss
+              ? 'text-rose-400'
+              : 'text-slate-300 light:text-slate-700'
+          }`}
+        >
+          {isProfit ? '+' : ''}
+          {formatINR(total, true)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// Custom Tooltip for Weekday Performance
+function WeekdayTooltip({ active, payload, label }) {
+  if (!active || !payload || !payload.length) return null;
+  const data = payload[0].payload;
+  const rawPnl = data.rawPnl != null ? data.rawPnl : payload[0].value * 1000;
+  const isProfit = rawPnl > 0;
+  const isLoss = rawPnl < 0;
+
+  return (
+    <div className="px-3.5 py-2.5 rounded-2xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-2xl space-y-1.5 min-w-[145px]">
+      <div className="text-xs font-bold text-slate-100 light:text-slate-900 border-b border-[#1e293b] light:border-slate-200 pb-1.5">
+        {label}
+      </div>
+      <div className="flex items-center justify-between gap-3 pt-0.5">
+        <span className="text-[11px] text-slate-400 font-medium">Net P&L:</span>
+        <span
+          className={`text-xs font-bold font-mono-numbers ${
+            isProfit
+              ? 'text-emerald-400'
+              : isLoss
+              ? 'text-rose-400'
+              : 'text-slate-300 light:text-slate-700'
+          }`}
+        >
+          {isProfit ? '+' : ''}
+          {formatINR(rawPnl, true)}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 export default function TradingCalendar() {
   const navigate = useNavigate();
@@ -145,7 +248,25 @@ export default function TradingCalendar() {
     }
     const days = calendarData.days || [];
     const monthly_pnl = calendarData.total_net_pnl || 0;
-    const total_trades = days.reduce((sum, d) => sum + (d.trade_count || 0), 0);
+    const allTrades = days.flatMap((d) => d.trades || []);
+    const total_trades = calendarData.total_trades ?? (allTrades.length || days.reduce((sum, d) => sum + (d.trade_count || 0), 0));
+    const winTrades = calendarData.winning_trades ?? allTrades.filter((t) => (t.net_pnl || 0) > 0).length;
+    const tradeWinRate = calendarData.trade_win_rate ?? (total_trades > 0 ? ((winTrades / total_trades) * 100).toFixed(1) : '0.0');
+
+    // Calculate ROI
+    const initialCapital = calendarData.initial_capital || 0;
+    let monthly_pnl_pct = '+0.0%';
+    if (calendarData.roi !== undefined && calendarData.roi !== null) {
+      monthly_pnl_pct = `${calendarData.roi >= 0 ? '+' : ''}${calendarData.roi}% ROI`;
+    } else if (initialCapital > 0) {
+      const roi = ((monthly_pnl / initialCapital) * 100).toFixed(2);
+      monthly_pnl_pct = `${roi >= 0 ? '+' : ''}${roi}% ROI`;
+    } else {
+      monthly_pnl_pct = monthly_pnl >= 0 ? 'Net Profit' : 'Net Loss';
+    }
+
+    const total_trades_pct = `${tradeWinRate}% Win Rate`;
+
     const profitable_days = calendarData.winning_days || 0;
     const losing_days = calendarData.losing_days || 0;
     const total_trading_days = calendarData.total_trading_days || 0;
@@ -156,6 +277,9 @@ export default function TradingCalendar() {
     const total_charges = days.reduce((sum, d) => sum + (d.total_charges || 0), 0);
     const avg_daily_pnl = total_trading_days > 0 ? (monthly_pnl / total_trading_days) : 0;
 
+    const daysInMonth = new Date(currentDate.year, currentDate.month, 0).getDate();
+    const no_trade_days = Math.max(0, daysInMonth - total_trading_days);
+
     let bestDay = null;
     let worstDay = null;
     days.forEach((d) => {
@@ -165,14 +289,14 @@ export default function TradingCalendar() {
 
     return {
       monthly_pnl,
-      monthly_pnl_pct: monthly_pnl >= 0 ? '+0.0%' : '-0.0%',
+      monthly_pnl_pct,
       total_trades,
-      total_trades_pct: '0.0%',
+      total_trades_pct,
       profitable_days,
       profitable_days_pct: `${winRate}%`,
       losing_days,
       losing_days_pct: `${lossRate}%`,
-      no_trade_days: Math.max(0, 30 - total_trading_days),
+      no_trade_days,
       best_day_pnl: bestDay && bestDay.net_pnl > 0 ? bestDay.net_pnl : 0,
       best_day_date: bestDay && bestDay.net_pnl > 0 ? formatDate(bestDay.date) : '-',
       worst_day_pnl: worstDay && worstDay.net_pnl < 0 ? worstDay.net_pnl : 0,
@@ -182,7 +306,7 @@ export default function TradingCalendar() {
       total_charges,
       avg_daily_pnl,
     };
-  }, [calendarData]);
+  }, [calendarData, currentDate]);
 
   useEffect(() => {
     fetchCalendar(currentDate.year, currentDate.month);
@@ -285,42 +409,79 @@ export default function TradingCalendar() {
     return cells;
   }, [currentDate, dayMap]);
 
-  // Monthly Performance Bar Chart Data (31 days)
+  // Monthly Performance Bar Chart Data (days in current month)
   const monthlyPerformanceData = useMemo(() => {
-    return Array.from({ length: 31 }, (_, i) => {
+    const daysInMonth = new Date(currentDate.year, currentDate.month, 0).getDate();
+    const shortMonth = currentMonthName.slice(0, 3);
+    return Array.from({ length: daysInMonth }, (_, i) => {
       const d = i + 1;
       const dayInfo = dayMap[d];
+      const netPnl = dayInfo ? dayInfo.net_pnl : 0;
       return {
-        day: `${d} Aug`,
-        pnl: dayInfo ? dayInfo.net_pnl / 1000 : 0, // In thousands (K)
+        dayNumber: d,
+        day: `${d} ${shortMonth}`,
+        fullDate: `${String(d).padStart(2, '0')} ${currentMonthName} ${currentDate.year}`,
+        pnl: netPnl / 1000, // In thousands (K)
+        rawPnl: netPnl,
+        tradesCount: dayInfo ? (dayInfo.trades_count || dayInfo.trades?.length || 0) : 0,
       };
     });
-  }, [dayMap]);
+  }, [currentDate, currentMonthName, dayMap]);
+
+  // Max absolute value for dynamic Y-axis scaling with 15% headroom
+  const maxMonthlyAbs = useMemo(() => {
+    const vals = monthlyPerformanceData.map((d) => Math.abs(d.pnl));
+    const maxVal = Math.max(10, ...vals);
+    return Math.ceil(maxVal * 1.15);
+  }, [monthlyPerformanceData]);
 
   // Daily P&L Trend (Cumulative curve)
   const dailyPnlTrendData = useMemo(() => {
+    const daysInMonth = new Date(currentDate.year, currentDate.month, 0).getDate();
+    const shortMonth = currentMonthName.slice(0, 3);
     let runningTotal = 0;
-    return Array.from({ length: 31 }, (_, i) => {
+    return Array.from({ length: daysInMonth }, (_, i) => {
       const d = i + 1;
       const dayInfo = dayMap[d];
       if (dayInfo) {
         runningTotal += dayInfo.net_pnl;
       }
       return {
-        day: `${d} Aug`,
+        dayNumber: d,
+        day: `${d} ${shortMonth}`,
+        fullDate: `${String(d).padStart(2, '0')} ${currentMonthName} ${currentDate.year}`,
         total: Math.round(runningTotal / 1000), // in Thousands
+        rawTotal: runningTotal,
       };
     });
-  }, [dayMap]);
+  }, [currentDate, currentMonthName, dayMap]);
 
-  // Weekday Performance Chart Data
-  const weekdayData = [
-    { day: 'Mon', pnl: 8.4, positive: true },
-    { day: 'Tue', pnl: 12.6, positive: true },
-    { day: 'Wed', pnl: 6.2, positive: true },
-    { day: 'Thu', pnl: -3.1, positive: false },
-    { day: 'Fri', pnl: 18.5, positive: true },
-  ];
+  // Weekday Performance Chart Data (aggregated dynamically from current month's trades)
+  const weekdayData = useMemo(() => {
+    const pnlByDay = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }; // 1=Mon ... 5=Fri
+    const countByDay = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+    Object.entries(dayMap).forEach(([dayNum, info]) => {
+      const date = new Date(currentDate.year, currentDate.month - 1, parseInt(dayNum, 10));
+      const dayOfWeek = date.getDay();
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+        pnlByDay[dayOfWeek] += info.net_pnl || 0;
+        countByDay[dayOfWeek] += info.trades_count || (info.trades?.length || 0);
+      }
+    });
+
+    const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+    return dayLabels.map((lbl, idx) => {
+      const dow = idx + 1;
+      const pnl = pnlByDay[dow] || 0;
+      return {
+        day: lbl,
+        pnl: Math.round((pnl / 1000) * 10) / 10,
+        rawPnl: pnl,
+        positive: pnl >= 0,
+      };
+    });
+  }, [currentDate, dayMap]);
 
   // Delete trade from day view with confirmation
   const [isDeleting, setIsDeleting] = useState(false);
@@ -395,8 +556,14 @@ export default function TradingCalendar() {
           <span className="text-base font-bold text-white light:text-slate-900 font-mono-numbers block tracking-tight">
             {formatINR(stats.monthly_pnl)}
           </span>
-          <span className="text-[10px] font-semibold text-emerald-400 flex items-center gap-0.5">
-            <TrendingUp className="w-3 h-3 inline" /> {stats.monthly_pnl_pct}
+          <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${
+            stats.monthly_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
+          }`}>
+            {stats.monthly_pnl >= 0 ? (
+              <TrendingUp className="w-3 h-3 inline" />
+            ) : (
+              <TrendingDown className="w-3 h-3 inline" />
+            )} {stats.monthly_pnl_pct}
           </span>
         </div>
 
@@ -789,7 +956,7 @@ export default function TradingCalendar() {
                       return (
                         <tr key={t.id || idx} className="hover:bg-[#162033]/60 transition-colors">
                           <td className="py-2.5 px-3 text-slate-400 font-mono-numbers">
-                            {t.time || '09:30'}
+                            {formatTime(t.time || '09:30')}
                           </td>
                           <td className="py-2.5 px-3 font-semibold text-white light:text-slate-900">
                             {t.index_name}
@@ -883,18 +1050,12 @@ export default function TradingCalendar() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlyPerformanceData} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} vertical={false} />
-                  <XAxis dataKey="day" stroke="#64748b" fontSize={10} tickLine={false} interval={6} />
-                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => `${v}K`} domain={[-30, 30]} />
+                  <XAxis dataKey="day" stroke="#64748b" fontSize={10} tickLine={false} interval={5} />
+                  <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => `${v}K`} domain={[-maxMonthlyAbs, maxMonthlyAbs]} />
                   <ReferenceLine y={0} stroke="#334155" />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#0e1626',
-                      border: '1px solid #1e293b',
-                      borderRadius: '12px',
-                      fontSize: '11px',
-                      color: '#fff',
-                    }}
-                    formatter={(val) => [`₹${(val * 1000).toLocaleString()}`, 'Daily P&L']}
+                    content={<MonthlyBarTooltip />}
+                    cursor={{ fill: 'rgba(255, 255, 255, 0.05)', radius: 4 }}
                   />
                   <Bar dataKey="pnl" radius={[2, 2, 0, 0]}>
                     {monthlyPerformanceData.map((entry, index) => (
@@ -927,17 +1088,11 @@ export default function TradingCalendar() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} vertical={false} />
-                  <XAxis dataKey="day" stroke="#64748b" fontSize={10} tickLine={false} interval={6} />
+                  <XAxis dataKey="day" stroke="#64748b" fontSize={10} tickLine={false} interval={5} />
                   <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => `${v}K`} />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#0e1626',
-                      border: '1px solid #1e293b',
-                      borderRadius: '12px',
-                      fontSize: '11px',
-                      color: '#fff',
-                    }}
-                    formatter={(val) => [`₹${(val * 1000).toLocaleString()}`, 'Cumulative P&L']}
+                    content={<DailyTrendTooltip />}
+                    cursor={{ stroke: '#3b82f6', strokeWidth: 1.5, strokeDasharray: '3 3' }}
                   />
                   <Area
                     type="monotone"
@@ -966,14 +1121,8 @@ export default function TradingCalendar() {
                   <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => `${v}K`} />
                   <ReferenceLine y={0} stroke="#334155" />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#0e1626',
-                      border: '1px solid #1e293b',
-                      borderRadius: '12px',
-                      fontSize: '11px',
-                      color: '#fff',
-                    }}
-                    formatter={(val) => [`₹${val}K`, 'Net P&L']}
+                    content={<WeekdayTooltip />}
+                    cursor={{ fill: 'rgba(255, 255, 255, 0.05)', radius: 4 }}
                   />
                   <Bar dataKey="pnl" radius={[4, 4, 0, 0]} barSize={26}>
                     {weekdayData.map((entry, index) => (

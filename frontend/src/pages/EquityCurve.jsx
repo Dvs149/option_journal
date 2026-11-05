@@ -371,14 +371,20 @@ export default function EquityCurve() {
                 <XAxis dataKey="date" stroke="#64748b" fontSize={11} tickLine={false} />
                 <YAxis stroke="#64748b" fontSize={11} tickLine={false} tickFormatter={(v) => `${(v / 100000).toFixed(0)}L`} domain={[400000, 800000]} />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0e1626',
-                    border: '1px solid #1e293b',
-                    borderRadius: '12px',
-                    fontSize: '11px',
-                    color: '#fff',
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const d = payload[0].payload;
+                      return (
+                        <div className="bg-[#0b1322] light:bg-white p-2.5 rounded-xl border border-[#1e293b] light:border-slate-200 shadow-xl text-xs font-mono-numbers">
+                          <p className="text-slate-400 font-sans">{d.date}</p>
+                          <p className="text-blue-400 font-bold mt-1 text-sm">
+                            Capital: {formatINR(d.capital)}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return null;
                   }}
-                  formatter={(val) => [formatINR(val), 'Capital']}
                 />
                 <Area type="monotone" dataKey="capital" stroke="#3b82f6" strokeWidth={2.5} fill="url(#equityGrad)" />
               </AreaChart>

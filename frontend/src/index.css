@@ -376,3 +376,71 @@ html.theme-kite ::-webkit-scrollbar-thumb:hover {
   background: #4a4a4a;
 }
 
+/* Recharts Global Tooltip Styles & High-Contrast Typography Fixes */
+.recharts-default-tooltip {
+  background-color: #0b1322 !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5) !important;
+  padding: 8px 12px !important;
+}
+
+.recharts-tooltip-label {
+  color: #f1f5f9 !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  margin-bottom: 4px !important;
+}
+
+.recharts-tooltip-item {
+  color: #f8fafc !important;
+  font-size: 12px !important;
+  padding: 2px 0 !important;
+}
+
+.recharts-tooltip-item-name,
+.recharts-tooltip-item-separator {
+  color: #94a3b8 !important;
+}
+
+.recharts-tooltip-item-value {
+  color: #f8fafc !important;
+  font-weight: 700 !important;
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+.recharts-tooltip-cursor {
+  fill: rgba(255, 255, 255, 0.05) !important;
+  stroke: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Light mode overrides for Recharts default tooltip */
+html.light .recharts-default-tooltip {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+}
+
+html.light .recharts-tooltip-label {
+  color: #0f172a !important;
+}
+
+html.light .recharts-tooltip-item {
+  color: #0f172a !important;
+}
+
+html.light .recharts-tooltip-item-name,
+html.light .recharts-tooltip-item-separator {
+  color: #64748b !important;
+}
+
+html.light .recharts-tooltip-item-value {
+  color: #0f172a !important;
+}
+
+html.light .recharts-tooltip-cursor {
+  fill: rgba(0, 0, 0, 0.04) !important;
+  stroke: rgba(0, 0, 0, 0.1) !important;
+}
+
+

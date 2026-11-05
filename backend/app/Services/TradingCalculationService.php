@@ -19,9 +19,37 @@ class TradingCalculationService
 
         $totalCharges = round($brokerage + $stt + $exchangeCharges + $gst + $sebiCharges + $stampDuty + $otherCharges, 2);
 
+        $status = $data['status'] ?? null;
         $entryPremium = isset($data['entry_premium']) && $data['entry_premium'] !== '' ? (float) $data['entry_premium'] : null;
         $exitPremium = isset($data['exit_premium']) && $data['exit_premium'] !== '' ? (float) $data['exit_premium'] : null;
         $quantity = isset($data['quantity']) && $data['quantity'] !== '' ? (int) $data['quantity'] : null;
+
+        $isOpen = ($status === 'OPEN') || (
+            empty($exitPremium) &&
+            empty($data['ce_exit_price']) &&
+            empty($data['pe_exit_price']) &&
+            empty($data['net_pnl_manual'])
+        );
+
+        if ($isOpen) {
+            $grossProfit = 0.00;
+            $grossLoss = 0.00;
+            $netPnl = round(-$totalCharges, 2);
+
+            return [
+                'gross_profit' => $grossProfit,
+                'gross_loss' => $grossLoss,
+                'brokerage' => $brokerage,
+                'stt' => $stt,
+                'exchange_charges' => $exchangeCharges,
+                'gst' => $gst,
+                'sebi_charges' => $sebiCharges,
+                'stamp_duty' => $stampDuty,
+                'other_charges' => $otherCharges,
+                'total_charges' => $totalCharges,
+                'net_pnl' => $netPnl,
+            ];
+        }
 
         $grossProfit = round((float) ($data['gross_profit'] ?? 0), 2);
         $grossLoss = round((float) ($data['gross_loss'] ?? 0), 2);
@@ -82,7 +110,8 @@ class TradingCalculationService
         int $quantity,
         int $orders = 2,
         string $exchange = 'NSE',
-        ?array $rates = null
+        ?array $rates = null,
+        bool $isOpen = false
     ): array {
         // Fallback to official defaults
         $brokeragePerOrder = (float) ($rates['brokerage_per_order'] ?? 20.00);
@@ -94,10 +123,10 @@ class TradingCalculationService
         $stampDutyRatePercent = (float) ($rates['stamp_duty_rate_percent'] ?? 0.00300);
 
         $turnoverBuy = $entryPremium * $quantity;
-        $turnoverSell = $exitPremium * $quantity;
+        $turnoverSell = $isOpen ? 0.0 : ($exitPremium * $quantity);
         $totalTurnover = $turnoverBuy + $turnoverSell;
 
-        // 1. Brokerage: Flat ₹20 per executed order (default 2 orders for round-trip)
+        // 1. Brokerage: Flat ₹20 per executed order (1 order for open buy position, 2 for round-trip)
         $numOrders = max(1, $orders);
         $brokerage = round($brokeragePerOrder * $numOrders, 2);
 
@@ -142,6 +171,52 @@ class TradingCalculationService
                 'sebi_per_crore' => $sebiPerCrore,
                 'stamp_duty_rate_percent' => $stampDutyRatePercent,
             ],
+        ];
+    }
+
+    /**
+     * Helper to compute regulatory charges for an individual BUY or SELL order execution.
+     */
+    public function estimateSingleOrderCharges(
+        string $side,
+        float $price,
+        int $quantity,
+        string $exchange = 'NSE',
+        ?array $rates = null
+    ): array {
+        $brokeragePerOrder = (float) ($rates['brokerage_per_order'] ?? 20.00);
+        $sttRatePercent = (float) ($rates['stt_rate_percent'] ?? 0.15000);
+        $nseRatePercent = (float) ($rates['nse_txn_rate_percent'] ?? 0.03553);
+        $bseRatePercent = (float) ($rates['bse_txn_rate_percent'] ?? 0.03250);
+        $gstRatePercent = (float) ($rates['gst_rate_percent'] ?? 18.00);
+        $sebiPerCrore = (float) ($rates['sebi_per_crore'] ?? 10.00);
+        $stampDutyRatePercent = (float) ($rates['stamp_duty_rate_percent'] ?? 0.00300);
+
+        $turnover = round($price * $quantity, 2);
+        $isBuy = strtoupper(trim($side)) === 'BUY';
+        $isBse = strtoupper(trim($exchange)) === 'BSE';
+        $exchangeRatePercent = $isBse ? $bseRatePercent : $nseRatePercent;
+
+        $brokerage = round($brokeragePerOrder, 2);
+        $stt = $isBuy ? 0.00 : round($turnover * ($sttRatePercent / 100), 2);
+        $stampDuty = $isBuy ? round($turnover * ($stampDutyRatePercent / 100), 2) : 0.00;
+        $exchangeCharges = round($turnover * ($exchangeRatePercent / 100), 2);
+        $sebiCharges = round($turnover * ($sebiPerCrore / 10000000), 2);
+        $gst = round(($brokerage + $exchangeCharges + $sebiCharges) * ($gstRatePercent / 100), 2);
+
+        $totalCharges = round($brokerage + $stt + $exchangeCharges + $sebiCharges + $stampDuty + $gst, 2);
+
+        return [
+            'order_type' => $isBuy ? 'BUY' : 'SELL',
+            'turnover' => $turnover,
+            'brokerage' => $brokerage,
+            'stt' => $stt,
+            'exchange_charges' => $exchangeCharges,
+            'gst' => $gst,
+            'sebi_charges' => $sebiCharges,
+            'stamp_duty' => $stampDuty,
+            'other_charges' => 0.00,
+            'total_charges' => $totalCharges,
         ];
     }
 }
