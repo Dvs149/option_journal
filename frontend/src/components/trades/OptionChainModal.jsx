@@ -242,18 +242,18 @@ export default function OptionChainModal({
                 <button
                   key={idx.id}
                   onClick={() => handleSymbolChange(idx.id)}
-                  className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-xl font-bold transition-all cursor-pointer flex items-center gap-1.5 bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-300 ${
                     active
-                      ? isKite
-                        ? 'bg-[#ff5722] text-white shadow-md shadow-[#ff5722]/30'
-                        : 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                      : 'bg-[#121b2d] light:bg-white text-slate-400 hover:text-white light:hover:text-slate-900 border border-[#1e293b] light:border-slate-300'
+                      ? 'text-[#ff5722]'
+                      : 'text-slate-400 hover:text-white light:hover:text-slate-900'
                   }`}
                 >
                   <span>{idx.id}</span>
                   <span
-                    className={`text-[9px] px-1 py-0.2 rounded font-semibold ${
-                      active ? 'bg-black/20 text-white' : 'bg-[#1e293b] text-slate-400'
+                    className={`text-[9px] px-1.5 py-0.5 rounded font-semibold bg-[#1e293b] ${
+                      active
+                        ? 'text-[#ff5722]'
+                        : 'text-slate-400'
                     }`}
                   >
                     {idx.exch}
@@ -274,10 +274,10 @@ export default function OptionChainModal({
                     key={exp.date || exp.raw}
                     type="button"
                     onClick={() => handleExpiryChange(exp.date)}
-                    className={`px-2.5 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                    className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-300 ${
                       isSel
-                        ? 'bg-blue-600/25 text-blue-400 border border-blue-500/70 shadow-sm'
-                        : 'bg-[#121b2d] light:bg-white text-slate-400 hover:text-white light:hover:text-slate-900 border border-[#1e293b] light:border-slate-300'
+                        ? 'text-[#ff5722]'
+                        : 'text-slate-400 hover:text-white light:hover:text-slate-900'
                     }`}
                   >
                     {exp.display}
@@ -291,7 +291,7 @@ export default function OptionChainModal({
               <select
                 value={selectedExpiry}
                 onChange={(e) => handleExpiryChange(e.target.value)}
-                className="px-3 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 font-bold text-xs focus:outline-none focus:border-cyan-500 cursor-pointer"
+                className="px-3 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 font-bold text-xs focus:outline-none focus:border-[#ff5722] cursor-pointer"
                 title="Select from all upcoming expiries"
               >
                 {data?.expiries?.map((exp) => (
@@ -309,7 +309,7 @@ export default function OptionChainModal({
                 onClick={() => setViewMode('standard')}
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                   viewMode === 'standard'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-[#1e293b] text-[#ff5722]'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
@@ -320,7 +320,7 @@ export default function OptionChainModal({
                 onClick={() => setViewMode('greeks')}
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
                   viewMode === 'greeks'
-                    ? 'bg-indigo-600 text-white'
+                    ? 'bg-[#1e293b] text-[#ff5722]'
                     : 'text-slate-400 hover:text-white'
                 }`}
               >
