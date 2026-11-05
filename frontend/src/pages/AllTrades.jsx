@@ -3437,7 +3437,7 @@ export default function AllTrades() {
                             <div className="relative">
                               <input
                                 type="number"
-                                step="0.05"
+                                step="any"
                                 min="0"
                                 placeholder="CE Entry"
                                 value={editForm.ce_entry_price || ''}
@@ -3461,7 +3461,7 @@ export default function AllTrades() {
                             <div className="relative">
                               <input
                                 type="number"
-                                step="0.05"
+                                step="any"
                                 min="0"
                                 placeholder="PE Entry"
                                 value={editForm.pe_entry_price || ''}
@@ -3497,7 +3497,7 @@ export default function AllTrades() {
                             <div className="relative">
                               <input
                                 type="number"
-                                step="0.05"
+                                step="any"
                                 min="0"
                                 placeholder="CE Exit"
                                 value={editForm.ce_exit_price || ''}
@@ -3521,7 +3521,7 @@ export default function AllTrades() {
                             <div className="relative">
                               <input
                                 type="number"
-                                step="0.05"
+                                step="any"
                                 min="0"
                                 placeholder="PE Exit"
                                 value={editForm.pe_exit_price || ''}
@@ -3551,7 +3551,7 @@ export default function AllTrades() {
                           <label className="block text-slate-400 mb-1 font-medium">Entry Premium</label>
                           <input
                             type="number"
-                            step="0.05"
+                            step="any"
                             min="0"
                             placeholder="123.00"
                             value={editForm.entry_premium || ''}
@@ -3564,7 +3564,7 @@ export default function AllTrades() {
                           <label className="block text-slate-400 mb-1 font-medium">Exit Premium</label>
                           <input
                             type="number"
-                            step="0.05"
+                            step="any"
                             min="0"
                             placeholder="156.00"
                             value={editForm.exit_premium || ''}
@@ -3672,7 +3672,7 @@ export default function AllTrades() {
                       <label className="block text-slate-400 mb-1 font-medium">Gross Profit</label>
                       <input
                         type="number"
-                        step="0.01"
+                        step="any"
                         min="0"
                         value={editComputedGrossProfit}
                         onChange={(e) => handleAllTradesEditFieldChange('gross_profit', e.target.value)}
@@ -3684,7 +3684,7 @@ export default function AllTrades() {
                       <label className="block text-slate-400 mb-1 font-medium">Gross Loss</label>
                       <input
                         type="number"
-                        step="0.01"
+                        step="any"
                         min="0"
                         value={editComputedGrossLoss}
                         onChange={(e) => handleAllTradesEditFieldChange('gross_loss', e.target.value)}
@@ -3696,7 +3696,7 @@ export default function AllTrades() {
                       <label className="block text-slate-400 mb-1 font-medium">Total Charges</label>
                       <input
                         type="number"
-                        step="0.01"
+                        step="any"
                         min="0"
                         readOnly
                         value={editComputedTotalCharges}
@@ -3721,7 +3721,7 @@ export default function AllTrades() {
                       <label className="block text-slate-400 mb-1 text-[11px]">Brokerage</label>
                       <input
                         type="number"
-                        step="0.01"
+                        step="any"
                         min="0"
                         value={editForm.brokerage ?? '40.00'}
                         onChange={(e) => handleAllTradesEditFieldChange('brokerage', e.target.value)}
@@ -3733,7 +3733,7 @@ export default function AllTrades() {
                       <label className="block text-slate-400 mb-1 text-[11px]">STT / CTT</label>
                       <input
                         type="number"
-                        step="0.01"
+                        step="any"
                         min="0"
                         value={editForm.stt ?? '0.00'}
                         onChange={(e) => handleAllTradesEditFieldChange('stt', e.target.value)}
@@ -3745,7 +3745,7 @@ export default function AllTrades() {
                       <label className="block text-slate-400 mb-1 text-[11px]">Exchange Charges</label>
                       <input
                         type="number"
-                        step="0.01"
+                        step="any"
                         min="0"
                         value={editForm.exchange_charges ?? '0.00'}
                         onChange={(e) => handleAllTradesEditFieldChange('exchange_charges', e.target.value)}
@@ -3757,7 +3757,7 @@ export default function AllTrades() {
                       <label className="block text-slate-400 mb-1 text-[11px]">GST (18%)</label>
                       <input
                         type="number"
-                        step="0.01"
+                        step="any"
                         min="0"
                         value={editForm.gst ?? '0.00'}
                         onChange={(e) => handleAllTradesEditFieldChange('gst', e.target.value)}
@@ -3773,7 +3773,7 @@ export default function AllTrades() {
                       <label className="block text-slate-400 mb-1 text-[11px]">SEBI Charges</label>
                       <input
                         type="number"
-                        step="0.01"
+                        step="any"
                         min="0"
                         value={editForm.sebi_charges ?? '0.00'}
                         onChange={(e) => handleAllTradesEditFieldChange('sebi_charges', e.target.value)}
@@ -3785,7 +3785,7 @@ export default function AllTrades() {
                       <label className="block text-slate-400 mb-1 text-[11px]">Stamp Duty</label>
                       <input
                         type="number"
-                        step="0.01"
+                        step="any"
                         min="0"
                         value={editForm.stamp_duty ?? '0.00'}
                         onChange={(e) => handleAllTradesEditFieldChange('stamp_duty', e.target.value)}
@@ -3797,7 +3797,7 @@ export default function AllTrades() {
                       <label className="block text-slate-400 mb-1 text-[11px]">Other Charges</label>
                       <input
                         type="number"
-                        step="0.01"
+                        step="any"
                         min="0"
                         value={editForm.other_charges ?? '0.00'}
                         onChange={(e) => handleAllTradesEditFieldChange('other_charges', e.target.value)}

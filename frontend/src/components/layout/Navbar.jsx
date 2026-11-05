@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Calendar,
   ChevronDown,
@@ -8,6 +9,7 @@ import {
   ArrowUpRight,
   TrendingDown,
   TrendingUp,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -24,6 +26,16 @@ export default function Navbar({
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [showCustomModal, setShowCustomModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [localFrom, setLocalFrom] = useState(customFrom || '');
+  const [localTo, setLocalTo] = useState(customTo || '');
+
+  // Keep local dates in sync when custom modal opens or props change
+  useEffect(() => {
+    if (showCustomModal) {
+      setLocalFrom(customFrom || new Date().toISOString().split('T')[0]);
+      setLocalTo(customTo || new Date().toISOString().split('T')[0]);
+    }
+  }, [showCustomModal, customFrom, customTo]);
 
   const filterOptions = [
     { key: 'today', label: "Today" },
@@ -153,56 +165,78 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* Custom Date Range Modal */}
-      {showCustomModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-[#162033] light:bg-white border border-[#1e293b] light:border-slate-200 p-6 shadow-2xl">
-            <h3 className="text-sm font-bold text-white light:text-slate-900 mb-4">
-              Select Custom Date Range
-            </h3>
+      {/* Custom Date Range Modal rendered in document.body via Portal to escape header containing block */}
+      {showCustomModal && typeof document !== 'undefined' && createPortal(
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fadeIn"
+          onClick={() => setShowCustomModal(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-[#162033] light:bg-white border border-[#1e293b] light:border-slate-200 p-6 shadow-2xl relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-blue-400" />
+                <h3 className="text-sm font-bold text-white light:text-slate-900">
+                  Select Custom Date Range
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCustomModal(false)}
+                className="text-slate-400 hover:text-white light:hover:text-slate-900 p-1 rounded-lg transition-colors cursor-pointer"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
             <div className="space-y-4">
               <div>
                 <label className="block text-xs text-slate-400 mb-1">From Date</label>
                 <input
                   type="date"
-                  defaultValue={customFrom}
-                  id="custom_from_input"
-                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500"
+                  value={localFrom}
+                  onChange={(e) => setLocalFrom(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 font-mono-numbers"
                 />
               </div>
               <div>
                 <label className="block text-xs text-slate-400 mb-1">To Date</label>
                 <input
                   type="date"
-                  defaultValue={customTo}
-                  id="custom_to_input"
-                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500"
+                  value={localTo}
+                  onChange={(e) => setLocalTo(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 focus:outline-none focus:border-blue-500 font-mono-numbers"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowCustomModal(false)}
-                  className="px-3.5 py-1.5 rounded-xl text-xs text-slate-400 hover:text-white"
+                  className="px-3.5 py-1.5 rounded-xl text-xs text-slate-400 hover:text-white light:hover:text-slate-900 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
+                  disabled={!localFrom || !localTo}
                   onClick={() => {
-                    const from = document.getElementById('custom_from_input')?.value;
-                    const to = document.getElementById('custom_to_input')?.value;
-                    onCustomDateChange(from, to);
-                    setShowCustomModal(false);
+                    if (localFrom && localTo) {
+                      onCustomDateChange(localFrom, localTo);
+                      setShowCustomModal(false);
+                    }
                   }}
-                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/30"
+                  className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md shadow-blue-600/30 transition-all cursor-pointer"
                 >
                   Apply Range
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );

@@ -14,7 +14,6 @@ import {
   Camera,
   Layers,
   Image as ImageIcon,
-  ChevronRight,
   Sparkles,
   Info,
   TrendingUp,
@@ -820,19 +819,8 @@ export default function AddTrade() {
 
   return (
     <div className="space-y-6 pb-24 md:pb-12 text-slate-100 light:text-slate-800">
-      {/* Breadcrumb & Page Header */}
+      {/* Page Header */}
       <div>
-        <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-2">
-          <span
-            onClick={() => navigate('/dashboard')}
-            className="hover:text-white light:hover:text-slate-900 cursor-pointer transition-colors"
-          >
-            Home
-          </span>
-          <ChevronRight className="w-3.5 h-3.5 text-slate-600" />
-          <span className="text-slate-200 light:text-slate-700 font-medium">Add Trade</span>
-        </div>
-
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white light:text-slate-900">
@@ -1209,7 +1197,7 @@ export default function AddTrade() {
                         <div className="relative">
                           <input
                             type="number"
-                            step="0.05"
+                            step="any"
                             min="0"
                             placeholder="CE Entry"
                             name="ce_entry_price"
@@ -1225,7 +1213,7 @@ export default function AddTrade() {
                         <div className="relative">
                           <input
                             type="number"
-                            step="0.05"
+                            step="any"
                             min="0"
                             placeholder="PE Entry"
                             name="pe_entry_price"
@@ -1266,7 +1254,7 @@ export default function AddTrade() {
                           <div className="relative">
                             <input
                               type="number"
-                              step="0.05"
+                              step="any"
                               min="0"
                               placeholder="CE Exit"
                               name="ce_exit_price"
@@ -1282,7 +1270,7 @@ export default function AddTrade() {
                           <div className="relative">
                             <input
                               type="number"
-                              step="0.05"
+                              step="any"
                               min="0"
                               placeholder="PE Exit"
                               name="pe_exit_price"
@@ -1307,7 +1295,7 @@ export default function AddTrade() {
                       </label>
                       <input
                         type="number"
-                        step="0.05"
+                        step="any"
                         min="0"
                         placeholder="123.00"
                         name="entry_premium"
@@ -1335,7 +1323,7 @@ export default function AddTrade() {
                         </label>
                         <input
                           type="number"
-                          step="0.05"
+                          step="any"
                           min="0"
                           placeholder="156.00"
                           name="exit_premium"
@@ -1494,7 +1482,7 @@ export default function AddTrade() {
                   </label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     min="0"
                     name="gross_profit"
                     value={computedGrossProfit}
@@ -1510,7 +1498,7 @@ export default function AddTrade() {
                   </label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     min="0"
                     name="gross_loss"
                     value={computedGrossLoss}
@@ -1526,7 +1514,7 @@ export default function AddTrade() {
                   </label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     min="0"
                     name="total_charges"
                     value={computedTotalCharges}
@@ -1553,7 +1541,7 @@ export default function AddTrade() {
                   <label className="block text-slate-400 mb-1">SEBI turnover fee</label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     min="0"
                     name="sebi_charges"
                     value={form.sebi_charges}
@@ -1566,7 +1554,7 @@ export default function AddTrade() {
                   <label className="block text-slate-400 mb-1">Exchange Charges</label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     min="0"
                     name="exchange_charges"
                     value={form.exchange_charges}
@@ -1582,7 +1570,7 @@ export default function AddTrade() {
                   <label className="block text-slate-400 mb-1">Stamp Duty</label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     min="0"
                     name="stamp_duty"
                     value={form.stamp_duty}
@@ -1596,7 +1584,7 @@ export default function AddTrade() {
                   <label className="block text-slate-400 mb-1">STT</label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     min="0"
                     name="stt"
                     value={form.stt}
@@ -1614,7 +1602,7 @@ export default function AddTrade() {
                   <label className="block text-slate-400 mb-1">GST</label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     min="0"
                     name="gst"
                     value={form.gst}
@@ -1630,7 +1618,7 @@ export default function AddTrade() {
                   <label className="block text-slate-400 mb-1">Brokerage</label>
                   <input
                     type="number"
-                    step="0.01"
+                    step="any"
                     min="0"
                     name="brokerage"
                     value={form.brokerage}

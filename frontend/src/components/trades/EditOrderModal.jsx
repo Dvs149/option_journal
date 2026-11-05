@@ -322,7 +322,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">₹</span>
                 <input
                   type="number"
-                  step="0.05"
+                  step="any"
                   min="0"
                   value={price}
                   onChange={(e) => setPrice(e.target.value.replace(/-/g, '').replace(/[^0-9.]/g, ''))}
@@ -401,7 +401,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs">₹</span>
               <input
                 type="number"
-                step="0.01"
+                step="any"
                 min="0"
                 value={totalCharges}
                 onChange={(e) => handleTotalChargesChange(e.target.value)}
@@ -419,7 +419,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                     <label className="block text-slate-400 mb-1">Brokerage</label>
                     <input
                       type="number"
-                      step="0.01"
+                      step="any"
                       min="0"
                       value={brokerage}
                       onChange={(e) => handleBreakdownChange('brokerage', e.target.value)}
@@ -431,7 +431,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                     <label className="block text-slate-400 mb-1">STT / CTT</label>
                     <input
                       type="number"
-                      step="0.01"
+                      step="any"
                       min="0"
                       value={stt}
                       onChange={(e) => handleBreakdownChange('stt', e.target.value)}
@@ -443,7 +443,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                     <label className="block text-slate-400 mb-1">Exchange Txn</label>
                     <input
                       type="number"
-                      step="0.01"
+                      step="any"
                       min="0"
                       value={exchangeCharges}
                       onChange={(e) => handleBreakdownChange('exchangeCharges', e.target.value)}
@@ -455,7 +455,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                     <label className="block text-slate-400 mb-1">GST (18%)</label>
                     <input
                       type="number"
-                      step="0.01"
+                      step="any"
                       min="0"
                       value={gst}
                       onChange={(e) => handleBreakdownChange('gst', e.target.value)}
@@ -470,7 +470,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                     <label className="block text-slate-400 mb-1">SEBI Charges</label>
                     <input
                       type="number"
-                      step="0.01"
+                      step="any"
                       min="0"
                       value={sebiCharges}
                       onChange={(e) => handleBreakdownChange('sebiCharges', e.target.value)}
@@ -482,7 +482,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                     <label className="block text-slate-400 mb-1">Stamp Duty</label>
                     <input
                       type="number"
-                      step="0.01"
+                      step="any"
                       min="0"
                       value={stampDuty}
                       onChange={(e) => handleBreakdownChange('stampDuty', e.target.value)}
@@ -494,7 +494,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                     <label className="block text-slate-400 mb-1">Other Charges</label>
                     <input
                       type="number"
-                      step="0.01"
+                      step="any"
                       min="0"
                       value={otherCharges}
                       onChange={(e) => handleBreakdownChange('otherCharges', e.target.value)}

@@ -284,8 +284,8 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
             <div className="relative">
               <input
                 type="number"
-                step="0.05"
-                min="0.05"
+                step="any"
+                min="0"
                 required
                 value={exitPrice}
                 onChange={(e) => setExitPrice(e.target.value.replace(/-/g, '').replace(/[^0-9.]/g, ''))}

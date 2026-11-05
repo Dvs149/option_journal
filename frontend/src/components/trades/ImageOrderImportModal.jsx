@@ -678,7 +678,7 @@ export default function ImageOrderImportModal({
                               <span className="text-slate-400">₹</span>
                               <input
                                 type="number"
-                                step="0.05"
+                                step="any"
                                 min="0"
                                 value={ord.price}
                                 onChange={(e) => handleUpdateOrderField(ord.id, 'price', e.target.value)}
