@@ -9889,7 +9889,7 @@
       "label": ".bulkDestroy()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L743",
+      "source_location": "L745",
       "id": "api_tradecontroller_tradecontroller_bulkdestroy",
       "community": 53,
       "norm_label": ".bulkdestroy()"
@@ -9898,7 +9898,7 @@
       "label": ".duplicate()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L795",
+      "source_location": "L797",
       "id": "api_tradecontroller_tradecontroller_duplicate",
       "community": 53,
       "norm_label": ".duplicate()"
@@ -9907,7 +9907,7 @@
       "label": ".estimateCharges()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L824",
+      "source_location": "L826",
       "id": "api_tradecontroller_tradecontroller_estimatecharges",
       "community": 53,
       "norm_label": ".estimatecharges()"
@@ -9916,7 +9916,7 @@
       "label": ".resetAllData()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L885",
+      "source_location": "L887",
       "id": "api_tradecontroller_tradecontroller_resetalldata",
       "community": 53,
       "norm_label": ".resetalldata()"
@@ -9925,7 +9925,7 @@
       "label": ".bulkImport()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L933",
+      "source_location": "L935",
       "id": "api_tradecontroller_tradecontroller_bulkimport",
       "community": 53,
       "norm_label": ".bulkimport()"
@@ -9934,7 +9934,7 @@
       "label": ".addOrder()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1032",
+      "source_location": "L1034",
       "id": "api_tradecontroller_tradecontroller_addorder",
       "community": 53,
       "norm_label": ".addorder()"
@@ -9943,7 +9943,7 @@
       "label": ".updateOrder()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1147",
+      "source_location": "L1149",
       "id": "api_tradecontroller_tradecontroller_updateorder",
       "community": 53,
       "norm_label": ".updateorder()"
@@ -9952,7 +9952,7 @@
       "label": ".destroyOrder()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1265",
+      "source_location": "L1267",
       "id": "api_tradecontroller_tradecontroller_destroyorder",
       "community": 53,
       "norm_label": ".destroyorder()"
@@ -9961,7 +9961,7 @@
       "label": ".recalculateTradeFromOrders()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1289",
+      "source_location": "L1291",
       "id": "api_tradecontroller_tradecontroller_recalculatetradefromorders",
       "community": 53,
       "norm_label": ".recalculatetradefromorders()"
@@ -9970,7 +9970,7 @@
       "label": ".authorizeTrade()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1379",
+      "source_location": "L1381",
       "id": "api_tradecontroller_tradecontroller_authorizetrade",
       "community": 53,
       "norm_label": ".authorizetrade()"
@@ -9979,7 +9979,7 @@
       "label": ".parseScreenshot()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1386",
+      "source_location": "L1388",
       "id": "api_tradecontroller_tradecontroller_parsescreenshot",
       "community": 53,
       "norm_label": ".parsescreenshot()"
@@ -9988,7 +9988,7 @@
       "label": ".importScreenshotOrders()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1407",
+      "source_location": "L1409",
       "id": "api_tradecontroller_tradecontroller_importscreenshotorders",
       "community": 53,
       "norm_label": ".importscreenshotorders()"
@@ -20262,7 +20262,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 108,
+      "community": 73,
       "community_name": "ModuleVisibilityController.php",
       "file_type": "code",
       "metadata": {
@@ -20320,7 +20320,7 @@
       "label": "down()",
       "_callable": true,
       "_origin": "ast",
-      "community": 108,
+      "community": 73,
       "community_name": "ModuleVisibilityController.php",
       "file_type": "code",
       "metadata": {
@@ -20343,7 +20343,7 @@
       "label": "up()",
       "_callable": true,
       "_origin": "ast",
-      "community": 108,
+      "community": 73,
       "community_name": "ModuleVisibilityController.php",
       "file_type": "code",
       "metadata": {
@@ -20770,7 +20770,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 73,
+      "community": 108,
       "community_name": "Illuminate\\Database\\Migrations\\Migration",
       "file_type": "code",
       "metadata": {
@@ -20835,7 +20835,7 @@
       "label": "down()",
       "_callable": true,
       "_origin": "ast",
-      "community": 73,
+      "community": 108,
       "community_name": "Illuminate\\Database\\Migrations\\Migration",
       "file_type": "code",
       "metadata": {
@@ -20858,7 +20858,7 @@
       "label": "up()",
       "_callable": true,
       "_origin": "ast",
-      "community": 73,
+      "community": 108,
       "community_name": "Illuminate\\Database\\Migrations\\Migration",
       "file_type": "code",
       "metadata": {
@@ -26174,7 +26174,7 @@
     {
       "label": "2026_10_30_150000_create_trade_screenshots_table.php",
       "_origin": "ast",
-      "community": 108,
+      "community": 73,
       "community_name": "ModuleVisibilityController.php",
       "file_type": "code",
       "norm_label": "2026_10_30_150000_create_trade_screenshots_table.php",
@@ -26381,7 +26381,7 @@
     {
       "label": "2026_10_30_130000_create_index_lot_sizes_table.php",
       "_origin": "ast",
-      "community": 73,
+      "community": 108,
       "community_name": "Illuminate\\Database\\Migrations\\Migration",
       "file_type": "code",
       "norm_label": "2026_10_30_130000_create_index_lot_sizes_table.php",
@@ -39623,9 +39623,9 @@
       "source_file": "frontend/vite.config.js",
       "source_location": "L6",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "frontend_vite_config_js",
-      "target": "frontend_vite_config_lanhosts",
-      "confidence_score": 1.0
+      "target": "frontend_vite_config_lanhosts"
     },
     {
       "relation": "contains",
@@ -51138,9 +51138,9 @@
       "source_file": "scripts/macos/background_services.py",
       "source_location": "L47",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_macos_background_services_py",
-      "target": "macos_background_services_launchctl",
-      "confidence_score": 1.0
+      "target": "macos_background_services_launchctl"
     },
     {
       "relation": "contains",
@@ -51148,9 +51148,9 @@
       "source_file": "scripts/macos/background_services.py",
       "source_location": "L60",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_macos_background_services_py",
-      "target": "macos_background_services_is_loaded",
-      "confidence_score": 1.0
+      "target": "macos_background_services_is_loaded"
     },
     {
       "relation": "contains",
@@ -51158,9 +51158,9 @@
       "source_file": "scripts/macos/background_services.py",
       "source_location": "L75",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_macos_background_services_py",
-      "target": "macos_background_services_unload_if_loaded",
-      "confidence_score": 1.0
+      "target": "macos_background_services_unload_if_loaded"
     },
     {
       "relation": "contains",
@@ -51168,9 +51168,9 @@
       "source_file": "scripts/macos/background_services.py",
       "source_location": "L80",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_macos_background_services_py",
-      "target": "macos_background_services_install",
-      "confidence_score": 1.0
+      "target": "macos_background_services_install"
     },
     {
       "relation": "contains",
@@ -51178,9 +51178,9 @@
       "source_file": "scripts/macos/background_services.py",
       "source_location": "L137",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_macos_background_services_py",
-      "target": "macos_background_services_uninstall",
-      "confidence_score": 1.0
+      "target": "macos_background_services_uninstall"
     },
     {
       "relation": "contains",
@@ -51188,9 +51188,9 @@
       "source_file": "scripts/macos/background_services.py",
       "source_location": "L150",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_macos_background_services_py",
-      "target": "macos_background_services_main",
-      "confidence_score": 1.0
+      "target": "macos_background_services_main"
     },
     {
       "relation": "calls",
@@ -51199,9 +51199,9 @@
       "source_file": "scripts/macos/background_services.py",
       "source_location": "L77",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "macos_background_services_unload_if_loaded",
-      "target": "macos_background_services_launchctl",
-      "confidence_score": 1.0
+      "target": "macos_background_services_launchctl"
     },
     {
       "relation": "calls",
@@ -51210,9 +51210,9 @@
       "source_file": "scripts/macos/background_services.py",
       "source_location": "L126",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "macos_background_services_install",
-      "target": "macos_background_services_launchctl",
-      "confidence_score": 1.0
+      "target": "macos_background_services_launchctl"
     },
     {
       "relation": "calls",
@@ -51221,9 +51221,9 @@
       "source_file": "scripts/macos/background_services.py",
       "source_location": "L76",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "macos_background_services_unload_if_loaded",
-      "target": "macos_background_services_is_loaded",
-      "confidence_score": 1.0
+      "target": "macos_background_services_is_loaded"
     },
     {
       "relation": "calls",
@@ -51232,9 +51232,9 @@
       "source_file": "scripts/macos/background_services.py",
       "source_location": "L119",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "macos_background_services_install",
-      "target": "macos_background_services_is_loaded",
-      "confidence_score": 1.0
+      "target": "macos_background_services_is_loaded"
     },
     {
       "relation": "calls",
@@ -51243,9 +51243,9 @@
       "source_file": "scripts/macos/background_services.py",
       "source_location": "L123",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "macos_background_services_install",
-      "target": "macos_background_services_unload_if_loaded",
-      "confidence_score": 1.0
+      "target": "macos_background_services_unload_if_loaded"
     },
     {
       "relation": "calls",
@@ -51254,9 +51254,9 @@
       "source_file": "scripts/macos/background_services.py",
       "source_location": "L143",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "macos_background_services_uninstall",
-      "target": "macos_background_services_unload_if_loaded",
-      "confidence_score": 1.0
+      "target": "macos_background_services_unload_if_loaded"
     },
     {
       "relation": "calls",
@@ -51265,9 +51265,9 @@
       "source_file": "scripts/macos/background_services.py",
       "source_location": "L159",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "macos_background_services_main",
-      "target": "macos_background_services_install",
-      "confidence_score": 1.0
+      "target": "macos_background_services_install"
     },
     {
       "relation": "calls",
@@ -51276,9 +51276,9 @@
       "source_file": "scripts/macos/background_services.py",
       "source_location": "L159",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "macos_background_services_main",
-      "target": "macos_background_services_uninstall",
-      "confidence_score": 1.0
+      "target": "macos_background_services_uninstall"
     },
     {
       "relation": "contains",
@@ -53366,9 +53366,9 @@
       "source_file": "README.md",
       "source_location": "L157",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "option_journal_readme_quick_start_installation",
-      "target": "option_journal_readme_keep_the_servers_running_after_closing_vs_code_macos",
-      "confidence_score": 1.0
+      "target": "option_journal_readme_keep_the_servers_running_after_closing_vs_code_macos"
     },
     {
       "relation": "contains",
@@ -53396,9 +53396,9 @@
       "source_file": "README.md",
       "source_location": "L161",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "option_journal_readme_keep_the_servers_running_after_closing_vs_code_macos",
-      "target": "option_journal_readme_codeblock_4",
-      "confidence_score": 1.0
+      "target": "option_journal_readme_codeblock_4"
     },
     {
       "relation": "contains",
@@ -53406,9 +53406,9 @@
       "source_file": "README.md",
       "source_location": "L167",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "option_journal_readme_keep_the_servers_running_after_closing_vs_code_macos",
-      "target": "option_journal_readme_codeblock_5",
-      "confidence_score": 1.0
+      "target": "option_journal_readme_codeblock_5"
     },
     {
       "relation": "contains",
@@ -53436,9 +53436,9 @@
       "source_file": "README.md",
       "source_location": "L253",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "option_journal_readme_testing",
-      "target": "option_journal_readme_codeblock_6",
-      "confidence_score": 1.0
+      "target": "option_journal_readme_codeblock_6"
     },
     {
       "relation": "contains",
@@ -53446,9 +53446,9 @@
       "source_file": "README.md",
       "source_location": "L260",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "option_journal_readme_testing",
-      "target": "option_journal_readme_codeblock_7",
-      "confidence_score": 1.0
+      "target": "option_journal_readme_codeblock_7"
     },
     {
       "relation": "contains",
@@ -76425,5 +76425,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "9d8902af3785c98ed7bf5f67b3b3f1dc60e42a0b"
+  "built_at_commit": "89c26101954d0d9d506c8c1816f670f892dafa17"
 }

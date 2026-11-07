@@ -301,11 +301,13 @@ export default function AllTrades() {
   useEffect(() => {
     setSelectedRowIds(new Set());
     setAllPagesTotalNetPnl(null);
+    setAllPagesTotalInvestment(null);
   }, [selectedIndex, selectedTradingType, selectedOption, selectedStrategy, search]);
 
   // Cache known trades to compute P&L even when switching pages
   const [knownTradesMap, setKnownTradesMap] = useState(new Map());
   const [allPagesTotalNetPnl, setAllPagesTotalNetPnl] = useState(null);
+  const [allPagesTotalInvestment, setAllPagesTotalInvestment] = useState(null);
 
   useEffect(() => {
     if (!trades || trades.length === 0) return;
@@ -319,6 +321,7 @@ export default function AllTrades() {
   useEffect(() => {
     if (selectedRowIds.size === 0) {
       setAllPagesTotalNetPnl(null);
+      setAllPagesTotalInvestment(null);
     }
   }, [selectedRowIds.size]);
 
@@ -346,6 +349,33 @@ export default function AllTrades() {
     });
     return Math.round(sum * 100) / 100;
   }, [selectedRowIds, knownTradesMap, trades, allPagesTotalNetPnl, pagination.total]);
+
+  // Total Investment of currently selected trades
+  const selectedTotalInvestment = useMemo(() => {
+    if (!selectedRowIds || selectedRowIds.size === 0) return 0;
+    if (allPagesTotalInvestment !== null && selectedRowIds.size === pagination.total) {
+      return allPagesTotalInvestment;
+    }
+    let sum = 0;
+    selectedRowIds.forEach((id) => {
+      const t = knownTradesMap.get(id) || trades.find((x) => x.id === id);
+      if (t) {
+        const buyOrdersSum = t.orders?.length
+          ? t.orders
+              .filter((o) => o.order_type === 'BUY')
+              .reduce((acc, o) => acc + (parseFloat(o.price) || 0) * (parseInt(o.quantity, 10) || 0), 0)
+          : 0;
+        if (buyOrdersSum > 0) {
+          sum += buyOrdersSum;
+        } else {
+          const entryPrice = parseFloat(t.avg_entry_price || t.entry_premium) || 0;
+          const qty = parseInt(t.quantity, 10) || 0;
+          sum += entryPrice * qty;
+        }
+      }
+    });
+    return Math.round(sum * 100) / 100;
+  }, [selectedRowIds, knownTradesMap, trades, allPagesTotalInvestment, pagination.total]);
 
   // Selected IDs specifically on the current page
   const selectedOnCurrentPageCount = useMemo(() => {
@@ -452,6 +482,9 @@ export default function AllTrades() {
       const ids = res.data?.ids || [];
       if (res.data?.total_net_pnl !== undefined) {
         setAllPagesTotalNetPnl(parseFloat(res.data.total_net_pnl) || 0);
+      }
+      if (res.data?.total_investment !== undefined) {
+        setAllPagesTotalInvestment(parseFloat(res.data.total_investment) || 0);
       }
       setSelectedRowIds(new Set(ids));
       setFeedbackMessage(`Selected all ${ids.length} trade(s) across all pages.`);
@@ -1823,6 +1856,16 @@ export default function AllTrades() {
                   </span>
                   <span className="text-xs font-bold text-white light:text-slate-900 whitespace-nowrap">
                     {selectedRowIds.size === 1 ? '1 trade selected' : `${selectedRowIds.size} trades selected`}
+                  </span>
+                </div>
+
+                {/* Total Investment Pill */}
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-mono font-bold border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 light:bg-cyan-50 light:text-cyan-700 light:border-cyan-200 transition-colors">
+                  <span className="text-[10px] font-sans font-medium text-slate-400 light:text-slate-500 uppercase tracking-wider">
+                    Total Inv:
+                  </span>
+                  <span>
+                    {formatINR(selectedTotalInvestment, Math.abs(selectedTotalInvestment % 1) > 0.001)}
                   </span>
                 </div>
 
@@ -3375,6 +3418,14 @@ export default function AllTrades() {
             </span>
             <span className="text-white light:text-slate-900 font-semibold whitespace-nowrap">
               Selected
+            </span>
+          </div>
+
+          {/* Total Investment Badge */}
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 light:bg-cyan-50 light:text-cyan-700 light:border-cyan-200 transition-colors">
+            <span className="text-[10px] font-sans font-medium text-slate-400 light:text-slate-500">Total Inv:</span>
+            <span className="whitespace-nowrap">
+              {formatINR(selectedTotalInvestment, Math.abs(selectedTotalInvestment % 1) > 0.001)}
             </span>
           </div>
 

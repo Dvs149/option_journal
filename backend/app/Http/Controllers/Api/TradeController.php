@@ -732,11 +732,13 @@ class TradeController extends Controller
 
         $ids = $query->pluck('id');
         $totalNetPnl = (float) $query->sum('net_pnl');
+        $totalInvestment = (float) $query->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(avg_entry_price, entry_premium, 0) * COALESCE(quantity, 0)'));
 
         return response()->json([
             'ids' => $ids,
             'count' => count($ids),
             'total_net_pnl' => round($totalNetPnl, 2),
+            'total_investment' => round($totalInvestment, 2),
         ]);
     }
 
