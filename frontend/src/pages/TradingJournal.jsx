@@ -176,6 +176,35 @@ export default function TradingJournal() {
     return selectedEntry?.raw ? getLegPrices(selectedEntry.raw) : { ceEntry: null, peEntry: null, ceExit: null, peExit: null };
   }, [selectedEntry]);
 
+  // Total Investment & Exit Value for selected trade
+  const tradeInvestment = useMemo(() => {
+    const raw = selectedEntry?.raw;
+    if (!raw) return 0;
+    const buyOrdersSum = raw.orders?.length
+      ? raw.orders
+          .filter((o) => o.order_type === 'BUY')
+          .reduce((sum, o) => sum + (parseFloat(o.price) || 0) * (parseInt(o.quantity, 10) || 0), 0)
+      : 0;
+    if (buyOrdersSum > 0) return buyOrdersSum;
+    const entryPrice = parseFloat(raw.avg_entry_price || raw.entry_premium || raw.entry_price) || 0;
+    const qty = parseInt(raw.quantity, 10) || 0;
+    return entryPrice * qty;
+  }, [selectedEntry]);
+
+  const tradeExitValue = useMemo(() => {
+    const raw = selectedEntry?.raw;
+    if (!raw) return 0;
+    const sellOrdersSum = raw.orders?.length
+      ? raw.orders
+          .filter((o) => o.order_type === 'SELL')
+          .reduce((sum, o) => sum + (parseFloat(o.price) || 0) * (parseInt(o.quantity, 10) || 0), 0)
+      : 0;
+    if (sellOrdersSum > 0) return sellOrdersSum;
+    const exitPrice = parseFloat(raw.avg_exit_price || raw.exit_premium || raw.exit_price) || 0;
+    const qty = parseInt(raw.quantity, 10) || 0;
+    return exitPrice * qty;
+  }, [selectedEntry]);
+
   const handleDrawerScreenshotUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length || !selectedEntry) return;
@@ -897,6 +926,38 @@ export default function TradingJournal() {
                       {selectedEntry.raw?.exit_premium ? formatINR(selectedEntry.raw.exit_premium) : (selectedEntry.raw?.exit_price ? `₹${selectedEntry.raw.exit_price}` : '-')}
                     </span>
                   </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block">Total Investment</span>
+                    <span className="text-cyan-400 font-mono-numbers font-semibold text-sm">
+                      {tradeInvestment > 0 ? formatINR(tradeInvestment) : '-'}
+                    </span>
+                    {selectedEntry.option_type === 'Both' && (selLegs.ceEntry != null || selLegs.peEntry != null) && (
+                      <div className="flex items-center gap-1.5 mt-1 text-[10px] font-mono-numbers">
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                          CE: {formatINR((selLegs.ceEntry || 0) * (selectedEntry.raw?.quantity || 0))}
+                        </span>
+                        <span className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold">
+                          PE: {formatINR((selLegs.peEntry || 0) * (selectedEntry.raw?.quantity || 0))}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block">Exit Value</span>
+                    <span className="text-white light:text-slate-900 font-mono-numbers font-semibold text-sm">
+                      {tradeExitValue > 0 ? formatINR(tradeExitValue) : '-'}
+                    </span>
+                    {selectedEntry.option_type === 'Both' && (selLegs.ceExit != null || selLegs.peExit != null) && (
+                      <div className="flex items-center gap-1.5 mt-1 text-[10px] font-mono-numbers">
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                          CE: {formatINR((selLegs.ceExit || 0) * (selectedEntry.raw?.quantity || 0))}
+                        </span>
+                        <span className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold">
+                          PE: {formatINR((selLegs.peExit || 0) * (selectedEntry.raw?.quantity || 0))}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Dedicated Option Leg Breakdown Box for Both (Straddle / Strangle) */}
@@ -912,18 +973,30 @@ export default function TradingJournal() {
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div className="p-2 rounded-xl bg-[#121b2d] light:bg-white border border-emerald-500/30">
+                      <div className="p-2.5 rounded-xl bg-[#121b2d] light:bg-white border border-emerald-500/30 space-y-1">
                         <span className="text-[10px] font-bold text-emerald-400 block mb-1">CALL (CE)</span>
                         <div className="flex justify-between text-[11px] text-slate-400">
                           <span>Entry: <strong className="text-white light:text-slate-900 font-mono-numbers">{selLegs.ceEntry != null ? `₹${selLegs.ceEntry}` : '-'}</strong></span>
                           <span>Exit: <strong className="text-white light:text-slate-900 font-mono-numbers">{selLegs.ceExit != null ? `₹${selLegs.ceExit}` : '-'}</strong></span>
                         </div>
+                        <div className="flex justify-between text-[11px] text-slate-400 pt-1 border-t border-[#1e293b]/60">
+                          <span>Investment:</span>
+                          <strong className="text-cyan-400 font-mono-numbers">
+                            {selLegs.ceEntry != null ? formatINR(selLegs.ceEntry * (selectedEntry.raw?.quantity || 0)) : '-'}
+                          </strong>
+                        </div>
                       </div>
-                      <div className="p-2 rounded-xl bg-[#121b2d] light:bg-white border border-rose-500/30">
+                      <div className="p-2.5 rounded-xl bg-[#121b2d] light:bg-white border border-rose-500/30 space-y-1">
                         <span className="text-[10px] font-bold text-rose-400 block mb-1">PUT (PE)</span>
                         <div className="flex justify-between text-[11px] text-slate-400">
                           <span>Entry: <strong className="text-white light:text-slate-900 font-mono-numbers">{selLegs.peEntry != null ? `₹${selLegs.peEntry}` : '-'}</strong></span>
                           <span>Exit: <strong className="text-white light:text-slate-900 font-mono-numbers">{selLegs.peExit != null ? `₹${selLegs.peExit}` : '-'}</strong></span>
+                        </div>
+                        <div className="flex justify-between text-[11px] text-slate-400 pt-1 border-t border-[#1e293b]/60">
+                          <span>Investment:</span>
+                          <strong className="text-cyan-400 font-mono-numbers">
+                            {selLegs.peEntry != null ? formatINR(selLegs.peEntry * (selectedEntry.raw?.quantity || 0)) : '-'}
+                          </strong>
                         </div>
                       </div>
                     </div>
@@ -932,6 +1005,12 @@ export default function TradingJournal() {
 
                 {/* Financial Summary Card */}
                 <div className="p-3.5 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between text-xs pb-2 border-b border-[#1e293b] light:border-slate-200">
+                    <span className="font-semibold text-slate-300 light:text-slate-700">Total Investment</span>
+                    <span className="text-cyan-400 font-mono-numbers font-bold text-sm">
+                      {tradeInvestment > 0 ? formatINR(tradeInvestment) : '₹0'}
+                    </span>
+                  </div>
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-slate-400">Gross Profit</span>
                     <span className="text-emerald-400 font-mono-numbers font-semibold">

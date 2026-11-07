@@ -148,6 +148,33 @@ export default function AllTrades() {
   const [drawerTab, setDrawerTab] = useState('details'); // 'details' | 'charges' | 'journal'
   const selLegs = useMemo(() => getLegPrices(selectedTrade), [selectedTrade]);
 
+  // Total Investment & Exit Value for selected trade
+  const tradeInvestment = useMemo(() => {
+    if (!selectedTrade) return 0;
+    const buyOrdersSum = selectedTrade.orders?.length
+      ? selectedTrade.orders
+          .filter((o) => o.order_type === 'BUY')
+          .reduce((sum, o) => sum + (parseFloat(o.price) || 0) * (parseInt(o.quantity, 10) || 0), 0)
+      : 0;
+    if (buyOrdersSum > 0) return buyOrdersSum;
+    const entryPrice = parseFloat(selectedTrade.avg_entry_price || selectedTrade.entry_premium) || 0;
+    const qty = parseInt(selectedTrade.quantity, 10) || 0;
+    return entryPrice * qty;
+  }, [selectedTrade]);
+
+  const tradeExitValue = useMemo(() => {
+    if (!selectedTrade) return 0;
+    const sellOrdersSum = selectedTrade.orders?.length
+      ? selectedTrade.orders
+          .filter((o) => o.order_type === 'SELL')
+          .reduce((sum, o) => sum + (parseFloat(o.price) || 0) * (parseInt(o.quantity, 10) || 0), 0)
+      : 0;
+    if (sellOrdersSum > 0) return sellOrdersSum;
+    const exitPrice = parseFloat(selectedTrade.avg_exit_price || selectedTrade.exit_premium) || 0;
+    const qty = parseInt(selectedTrade.quantity, 10) || 0;
+    return exitPrice * qty;
+  }, [selectedTrade]);
+
   // Performance Breakdown chart tab
   const [breakdownTab, setBreakdownTab] = useState('Index'); // 'Index' | 'Option Type' | 'Trading Type' | 'Strategy'
 
@@ -2462,6 +2489,12 @@ export default function AllTrades() {
                   </div>
                   <div className="text-[11px] text-slate-300 mt-0.5 font-mono-numbers">
                     Open: <strong className="text-amber-300">{selectedTrade.open_quantity ?? selectedTrade.quantity} Qty</strong> (Avg: ₹{selectedTrade.avg_entry_price || selectedTrade.entry_premium})
+                    {tradeInvestment > 0 && (
+                      <>
+                        <span className="mx-1 text-slate-500">•</span>
+                        Inv: <strong className="text-cyan-300">{formatINR(tradeInvestment)}</strong>
+                      </>
+                    )}
                   </div>
                 </div>
                 <button
@@ -2620,7 +2653,46 @@ export default function AllTrades() {
                       </div>
                     )}
                   </div>
-                  
+                  <div>
+                    <span className="text-[10px] text-slate-500 block">Total Investment</span>
+                    <span className="text-cyan-400 font-mono-numbers font-semibold text-sm">
+                      {tradeInvestment > 0 ? formatINR(tradeInvestment) : '-'}
+                    </span>
+                    {selectedTrade.option_type === 'Both' && (selLegs.ceEntry != null || selLegs.peEntry != null) && (
+                      <div className="flex items-center gap-1.5 mt-1 text-[10px] font-mono-numbers">
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                          CE: {formatINR((selLegs.ceEntry || 0) * (selectedTrade.quantity || 0))}
+                        </span>
+                        <span className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold">
+                          PE: {formatINR((selLegs.peEntry || 0) * (selectedTrade.quantity || 0))}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-500 block">
+                      {selectedTrade.status === 'OPEN' ? 'Exit Value (Open)' : 'Exit Value'}
+                    </span>
+                    <span className="text-white light:text-slate-900 font-mono-numbers font-semibold text-sm">
+                      {selectedTrade.status === 'OPEN' ? (
+                        <span className="text-slate-500 text-xs italic">Position Open</span>
+                      ) : tradeExitValue > 0 ? (
+                        formatINR(tradeExitValue)
+                      ) : (
+                        '-'
+                      )}
+                    </span>
+                    {selectedTrade.status !== 'OPEN' && selectedTrade.option_type === 'Both' && (selLegs.ceExit != null || selLegs.peExit != null) && (
+                      <div className="flex items-center gap-1.5 mt-1 text-[10px] font-mono-numbers">
+                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                          CE: {formatINR((selLegs.ceExit || 0) * (selectedTrade.quantity || 0))}
+                        </span>
+                        <span className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 font-semibold">
+                          PE: {formatINR((selLegs.peExit || 0) * (selectedTrade.quantity || 0))}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Dedicated Option Leg Breakdown Box for Both (Straddle / Strangle) */}
@@ -2668,6 +2740,12 @@ export default function AllTrades() {
                               ₹{selLegs.ceExit != null ? selLegs.ceExit.toFixed(2) : '-'}
                             </span>
                           </div>
+                          <div className="flex items-center justify-between text-slate-400 pt-1 border-t border-[#1e293b]/60 light:border-slate-200">
+                            <span>Investment</span>
+                            <span className="text-cyan-400 font-semibold">
+                              {selLegs.ceEntry != null ? formatINR(selLegs.ceEntry * (selectedTrade.quantity || 0)) : '-'}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
@@ -2702,6 +2780,12 @@ export default function AllTrades() {
                               ₹{selLegs.peExit != null ? selLegs.peExit.toFixed(2) : '-'}
                             </span>
                           </div>
+                          <div className="flex items-center justify-between text-slate-400 pt-1 border-t border-[#1e293b]/60 light:border-slate-200">
+                            <span>Investment</span>
+                            <span className="text-cyan-400 font-semibold">
+                              {selLegs.peEntry != null ? formatINR(selLegs.peEntry * (selectedTrade.quantity || 0)) : '-'}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2710,6 +2794,12 @@ export default function AllTrades() {
 
                 {/* Financial Summary Box */}
                 <div className="p-3.5 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between text-slate-400 pb-2 border-b border-[#1e293b] light:border-slate-200">
+                    <span className="font-semibold text-slate-300 light:text-slate-700">Total Investment</span>
+                    <span className="font-bold text-cyan-400 font-mono-numbers text-sm">
+                      {tradeInvestment > 0 ? formatINR(tradeInvestment) : '₹0'}
+                    </span>
+                  </div>
                   <div className="flex items-center justify-between text-slate-400">
                     <span>Gross Profit</span>
                     <span className="font-bold text-emerald-400 font-mono-numbers">
@@ -2895,6 +2985,9 @@ export default function AllTrades() {
                             </span>
                             <span className="font-bold text-white light:text-slate-900 font-mono-numbers text-xs">
                               {ord.quantity} Qty @ ₹{parseFloat(ord.price).toFixed(2)}
+                              <span className="text-slate-400 font-normal ml-1 text-[11px]">
+                                ({formatINR(parseFloat(ord.price) * parseInt(ord.quantity, 10))})
+                              </span>
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5">

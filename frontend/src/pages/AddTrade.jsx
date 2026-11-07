@@ -572,6 +572,12 @@ export default function AddTrade() {
   ]);
 
   // Gross Profit & Gross Loss calculation
+  const computedTotalInvestment = useMemo(() => {
+    const entry = Math.max(0, parseFloat(form.entry_premium) || 0);
+    const qty = Math.max(0, parseFloat(form.quantity) || 0);
+    return (entry * qty).toFixed(2);
+  }, [form.entry_premium, form.quantity]);
+
   const computedGrossProfit = useMemo(() => {
     if (tradeMode === 'OPEN') return '0.00';
     const entry = Math.max(0, parseFloat(form.entry_premium) || 0);
@@ -2068,10 +2074,37 @@ export default function AddTrade() {
                   </div>
                 )}
               </div>
+
+              {/* Total Investment */}
+              <div className="py-2 text-slate-400">
+                <div className="flex items-center justify-between">
+                  <span>Total Investment</span>
+                  <span className="font-semibold text-cyan-400 font-mono-numbers text-sm">
+                    {parseFloat(computedTotalInvestment) > 0 ? formatINR(computedTotalInvestment) : '-'}
+                  </span>
+                </div>
+                {form.option_type === 'Both' && (form.ce_entry_price || form.pe_entry_price) && (
+                  <div className="flex items-center justify-between mt-1 text-[11px] font-mono-numbers px-2 py-1 rounded-lg bg-[#0e1626] border border-[#1e293b]">
+                    <span className="text-emerald-400 font-semibold">
+                      CE: {formatINR((parseFloat(form.ce_entry_price) || 0) * (parseFloat(form.quantity) || 0))}
+                    </span>
+                    <span className="text-slate-600">|</span>
+                    <span className="text-rose-400 font-semibold">
+                      PE: {formatINR((parseFloat(form.pe_entry_price) || 0) * (parseFloat(form.quantity) || 0))}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Financial Calculations */}
             <div className="pt-2 border-t border-[#1e293b] light:border-slate-200 divide-y divide-[#1e293b]/60 light:divide-slate-200 text-xs">
+              <div className="py-2 flex items-center justify-between">
+                <span className="font-semibold text-slate-300 light:text-slate-700">Total Investment</span>
+                <span className="font-bold text-cyan-400 font-mono-numbers text-sm">
+                  {parseFloat(computedTotalInvestment) > 0 ? formatINR(computedTotalInvestment) : '₹0.00'}
+                </span>
+              </div>
               <div className="py-2 flex items-center justify-between">
                 <span className="text-slate-400">Gross Profit</span>
                 <span className="font-bold text-emerald-400 font-mono-numbers">

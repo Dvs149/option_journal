@@ -182,7 +182,20 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
                 Execute Exit / Partial Order
               </h3>
               <p className="text-xs text-slate-400">
-                {trade.index_name} {trade.strike_price ? Math.round(trade.strike_price) : ''} {trade.option_type} • {trade.trading_type}
+                {trade.index_name} {trade.strike_price ? Math.round(trade.strike_price) : ''}
+                {/* {trade.option_type} */}
+                <span
+                  className={` ${
+                    trade.option_type === 'CE'
+                      ? 'text-emerald-400 '
+                      : trade.option_type === 'PE'
+                      ? ' text-rose-400'
+                      : ' text-blue-400'
+                  }`}
+                >
+                  {trade.option_type}
+                </span>
+                • {trade.trading_type}
               </p>
             </div>
           </div>

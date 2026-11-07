@@ -834,8 +834,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/vite.config.js": {
-    "mtime": 1793630873.9886434,
-    "ast_hash": "cf2ff25ce0f3a1f329632a106517c4e1",
+    "mtime": 1793948007.505165,
+    "ast_hash": "0724e66567f15691e23972ae822f4c3e",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/package.json": {
@@ -949,8 +949,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/api/client.js": {
-    "mtime": 1793364447.5591254,
-    "ast_hash": "730a7772420936ec991b80d206d92bd4",
+    "mtime": 1793947857.8187892,
+    "ast_hash": "91744b9bb994b20e7c5029cb9e801fcb",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/RiskManagement.jsx": {
@@ -964,13 +964,13 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/AllTrades.jsx": {
-    "mtime": 1793881353.4980736,
-    "ast_hash": "5f132325fe06fef21f3d8922a8f6be62",
+    "mtime": 1794051039.0812361,
+    "ast_hash": "e990ecede6328b864d559c3e695858c3",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/AddTrade.jsx": {
-    "mtime": 1793883740.896584,
-    "ast_hash": "03b6c57df6728d345400d4dd3f444b6a",
+    "mtime": 1794051121.3418684,
+    "ast_hash": "4f691105e6d992e6fa7dc7d23dbcf3ac",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/AnalyticsReports.jsx": {
@@ -979,8 +979,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/TradingJournal.jsx": {
-    "mtime": 1793754908.9929206,
-    "ast_hash": "592235e8daf1fc16137ee501414bd7d5",
+    "mtime": 1794051087.4771817,
+    "ast_hash": "3667d282555a2161b5508940482029e5",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/Dashboard.jsx": {
@@ -1484,8 +1484,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/README.md": {
-    "mtime": 1793499117.650847,
-    "ast_hash": "fc27c5e4052e74d025a24c198d1f4375",
+    "mtime": 1794011975.2460463,
+    "ast_hash": "bcabbbb0e18590b23823de6b88f9fcc7",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/KNOWN_ISSUES.md": {
@@ -1954,8 +1954,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/trades/PartialExitModal.jsx": {
-    "mtime": 1793881486.6017356,
-    "ast_hash": "1407c18dc381d88dda5c9989fed1e285",
+    "mtime": 1794051136.8787625,
+    "ast_hash": "0f657f206cecbb1738fd4a12e9b38740",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/database/migrations/2026_11_04_080000_create_trade_orders_table_and_add_position_fields_to_trades.php": {
@@ -2016,6 +2016,11 @@
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/utils/marketData.js": {
     "mtime": 1793867537.5132632,
     "ast_hash": "bc87e8675c093a6c3172d85b7dd26a14",
+    "semantic_hash": ""
+  },
+  "/Users/divyeshlunagariya/mern/option_journal/scripts/macos/background_services.py": {
+    "mtime": 1794012140.757162,
+    "ast_hash": "67bdd62786bd37713b96a485e0a82a49",
     "semantic_hash": ""
   }
 }
