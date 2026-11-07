@@ -148,11 +148,27 @@ npm install
 # Build production bundle
 npm run build
 
-# Start Vite development server (Port 3000)
-npm run dev -- --host 0.0.0.0 --port 3000
+# Start Vite development server (Port 3000, accessible on your Wi-Fi network)
+npm run dev
 ```
 
-Open your browser at **`http://localhost:3000`**.
+On the Mac running the project, find its Wi-Fi IP with `ipconfig getifaddr en0`. From another device on the same Wi-Fi network, open **`http://<MAC-IP>:3000`** (for example, `http://192.168.1.5:3000`). Keep both the Laravel server on port 8000 and Vite on port 3000 running on the Mac. API requests are proxied through Vite, so other devices do not need direct access to port 8000. If macOS Firewall prompts you, allow incoming connections for the development server.
+
+### Keep the servers running after closing VS Code (macOS)
+
+From the project root, install per-user `launchd` services:
+
+```bash
+python3 scripts/macos/background_services.py install
+```
+
+The services run independently of VS Code, restart if they stop, and start automatically the next time you log in to your Mac. You can lock the screen; the added `caffeinate` service prevents idle system sleep while you are logged in. Closing the laptop lid, manually putting the Mac to sleep, logging out, or losing Wi-Fi will make it unreachable. To stop and remove the background services:
+
+```bash
+python3 scripts/macos/background_services.py uninstall
+```
+
+Logs are written to `~/Library/Logs/OptionJournal/`.
 
 ---
 

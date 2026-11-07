@@ -1,17 +1,7 @@
 import axios from 'axios';
 
-const getBaseUrl = () => {
-  if (typeof window !== 'undefined' && window.location) {
-    const host = window.location.hostname;
-    // Map localhost to 127.0.0.1 to prevent macOS IPv6 ::1 ERR_CONNECTION_REFUSED
-    const resolvedHost = (!host || host === 'localhost') ? '127.0.0.1' : host;
-    return `http://${resolvedHost}:8000/api`;
-  }
-  return 'http://127.0.0.1:8000/api';
-};
-
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || getBaseUrl(),
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
