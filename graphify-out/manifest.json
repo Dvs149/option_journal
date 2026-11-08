@@ -964,8 +964,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/AllTrades.jsx": {
-    "mtime": 1794061198.6410847,
-    "ast_hash": "8a7b82963afcdf31f86e935930412786",
+    "mtime": 1794098571.8272269,
+    "ast_hash": "251396e01247cfb772e2f30b756f7993",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/AddTrade.jsx": {
@@ -1279,8 +1279,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/app/Http/Controllers/Api/TradeController.php": {
-    "mtime": 1794051451.470004,
-    "ast_hash": "edd92d6169a7ec0e712fbfffb414bb52",
+    "mtime": 1794098472.4739602,
+    "ast_hash": "d6142c23aab87c5698477caef3331d15",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/app/Http/Controllers/Api/CalendarController.php": {

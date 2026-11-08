@@ -302,12 +302,14 @@ export default function AllTrades() {
     setSelectedRowIds(new Set());
     setAllPagesTotalNetPnl(null);
     setAllPagesTotalInvestment(null);
+    setAllPagesTotalPremium(null);
   }, [selectedIndex, selectedTradingType, selectedOption, selectedStrategy, search]);
 
   // Cache known trades to compute P&L even when switching pages
   const [knownTradesMap, setKnownTradesMap] = useState(new Map());
   const [allPagesTotalNetPnl, setAllPagesTotalNetPnl] = useState(null);
   const [allPagesTotalInvestment, setAllPagesTotalInvestment] = useState(null);
+  const [allPagesTotalPremium, setAllPagesTotalPremium] = useState(null);
 
   useEffect(() => {
     if (!trades || trades.length === 0) return;
@@ -322,6 +324,7 @@ export default function AllTrades() {
     if (selectedRowIds.size === 0) {
       setAllPagesTotalNetPnl(null);
       setAllPagesTotalInvestment(null);
+      setAllPagesTotalPremium(null);
     }
   }, [selectedRowIds.size]);
 
@@ -376,6 +379,23 @@ export default function AllTrades() {
     });
     return Math.round(sum * 100) / 100;
   }, [selectedRowIds, knownTradesMap, trades, allPagesTotalInvestment, pagination.total]);
+
+  // Total Premium of currently selected trades
+  const selectedTotalPremium = useMemo(() => {
+    if (!selectedRowIds || selectedRowIds.size === 0) return 0;
+    if (allPagesTotalPremium !== null && selectedRowIds.size === pagination.total) {
+      return allPagesTotalPremium;
+    }
+    let sum = 0;
+    selectedRowIds.forEach((id) => {
+      const t = knownTradesMap.get(id) || trades.find((x) => x.id === id);
+      if (t) {
+        const prem = parseFloat(t.avg_entry_price || t.entry_premium) || 0;
+        sum += prem;
+      }
+    });
+    return Math.round(sum * 100) / 100;
+  }, [selectedRowIds, knownTradesMap, trades, allPagesTotalPremium, pagination.total]);
 
   // Selected IDs specifically on the current page
   const selectedOnCurrentPageCount = useMemo(() => {
@@ -485,6 +505,9 @@ export default function AllTrades() {
       }
       if (res.data?.total_investment !== undefined) {
         setAllPagesTotalInvestment(parseFloat(res.data.total_investment) || 0);
+      }
+      if (res.data?.total_premium !== undefined) {
+        setAllPagesTotalPremium(parseFloat(res.data.total_premium) || 0);
       }
       setSelectedRowIds(new Set(ids));
       setFeedbackMessage(`Selected all ${ids.length} trade(s) across all pages.`);
@@ -1857,6 +1880,16 @@ export default function AllTrades() {
                   </span>
                   <span className="text-xs font-bold text-white light:text-slate-900 whitespace-nowrap">
                     {selectedRowIds.size === 1 ? '1 trade selected' : `${selectedRowIds.size} trades selected`}
+                  </span>
+                </div>
+
+                {/* Total Premium Pill */}
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-mono font-bold border border-purple-500/30 bg-purple-500/10 text-purple-400 light:bg-purple-50 light:text-purple-700 light:border-purple-200 transition-colors">
+                  <span className="text-[10px] font-sans font-medium text-slate-400 light:text-slate-500 uppercase tracking-wider">
+                    Total Prem:
+                  </span>
+                  <span>
+                    {formatINR(selectedTotalPremium, Math.abs(selectedTotalPremium % 1) > 0.001)}
                   </span>
                 </div>
 
@@ -3419,6 +3452,14 @@ export default function AllTrades() {
             </span>
             <span className="text-white light:text-slate-900 font-semibold whitespace-nowrap">
               Selected
+            </span>
+          </div>
+
+          {/* Total Premium Badge */}
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold border border-purple-500/30 bg-purple-500/10 text-purple-400 light:bg-purple-50 light:text-purple-700 light:border-purple-200 transition-colors">
+            <span className="text-[10px] font-sans font-medium text-slate-400 light:text-slate-500">Total Prem:</span>
+            <span className="whitespace-nowrap">
+              {formatINR(selectedTotalPremium, Math.abs(selectedTotalPremium % 1) > 0.001)}
             </span>
           </div>
 
