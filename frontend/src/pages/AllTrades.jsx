@@ -1532,6 +1532,7 @@ export default function AllTrades() {
                       { key: 'last_month', label: 'Last Month' },
                       { key: 'today', label: 'Today' },
                       { key: 'yesterday', label: 'Yesterday' },
+                      { key: 'tomorrow', label: 'Next Working Day' },
                       { key: 'this_week', label: 'This Week' },
                       { key: 'this_year', label: 'This Year' },
                       { key: 'all', label: 'All Time' },

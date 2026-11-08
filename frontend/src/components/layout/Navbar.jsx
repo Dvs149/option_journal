@@ -40,6 +40,7 @@ export default function Navbar({
   const filterOptions = [
     { key: 'today', label: "Today" },
     { key: 'yesterday', label: "Yesterday" },
+    { key: 'tomorrow', label: "Tomorrow / Next Working Day" },
     { key: 'this_week', label: "This Week" },
     { key: 'this_month', label: "This Month" },
     { key: 'last_month', label: "Last Month" },
@@ -74,13 +75,13 @@ export default function Navbar({
             onClick={() => setShowFilterDropdown(!showFilterDropdown)}
             className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#162033] light:bg-slate-100 hover:bg-[#1f2d47] light:hover:bg-slate-200 text-xs font-semibold text-slate-200 light:text-slate-700 border border-[#1e293b] light:border-slate-200 transition-colors shadow-sm"
           >
-            <Calendar className="w-3.5 h-3.5 text-blue-400" />
-            <span>{currentLabel}</span>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            <Calendar className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+            <span className="max-w-[190px] sm:max-w-none truncate">{currentLabel}</span>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           </button>
 
           {showFilterDropdown && (
-            <div className="absolute left-0 mt-2 w-44 rounded-xl bg-[#162033] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-2xl py-1 z-50">
+            <div className="absolute left-0 mt-2 w-56 sm:w-60 rounded-xl bg-[#162033] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-2xl py-1 z-50">
               {filterOptions.map((opt) => (
                 <button
                   key={opt.key}

@@ -46,6 +46,9 @@ export default function Dashboard() {
     switch (filter) {
       case 'today': return 'Today';
       case 'yesterday': return 'Yesterday';
+      case 'tomorrow':
+      case 'next_working_day':
+        return 'Tomorrow / Next Working Day';
       case 'this_week': return 'This Week';
       case 'this_month': return 'This Month';
       case 'last_month': return 'Last Month';

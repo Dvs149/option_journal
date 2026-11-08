@@ -565,10 +565,19 @@ class DropdownOption extends Model
                 'module_key' => 'trades',
                 'dropdown_key' => 'date_period',
                 'dropdown_label' => 'Date Period Filter',
+                'option_value' => 'tomorrow',
+                'option_label' => 'Tomorrow / Next Working Day',
+                'color' => 'blue',
+                'sort_order' => 5,
+            ],
+            [
+                'module_key' => 'trades',
+                'dropdown_key' => 'date_period',
+                'dropdown_label' => 'Date Period Filter',
                 'option_value' => 'this_week',
                 'option_label' => 'This Week',
                 'color' => 'amber',
-                'sort_order' => 5,
+                'sort_order' => 6,
             ],
             [
                 'module_key' => 'trades',
@@ -577,7 +586,7 @@ class DropdownOption extends Model
                 'option_value' => 'this_year',
                 'option_label' => 'This Year',
                 'color' => 'purple',
-                'sort_order' => 6,
+                'sort_order' => 7,
             ],
             [
                 'module_key' => 'trades',
@@ -586,7 +595,7 @@ class DropdownOption extends Model
                 'option_value' => 'all',
                 'option_label' => 'All Time',
                 'color' => 'cyan',
-                'sort_order' => 7,
+                'sort_order' => 8,
             ],
             [
                 'module_key' => 'trades',
@@ -595,7 +604,7 @@ class DropdownOption extends Model
                 'option_value' => 'custom',
                 'option_label' => 'Custom Date Range',
                 'color' => 'indigo',
-                'sort_order' => 8,
+                'sort_order' => 9,
             ],
 
             // All Trades -> Option Type Filter

@@ -117,6 +117,7 @@ export default function ExportModal({
       { option_value: 'last_month', option_label: 'Last Month' },
       { option_value: 'today', option_label: 'Today' },
       { option_value: 'yesterday', option_label: 'Yesterday' },
+      { option_value: 'tomorrow', option_label: 'Tomorrow / Next Working Day' },
       { option_value: 'this_week', option_label: 'This Week' },
       { option_value: 'this_year', option_label: 'This Year' },
       { option_value: 'all', option_label: 'All Time' },

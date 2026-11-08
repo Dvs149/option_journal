@@ -10,6 +10,28 @@ export const formatDateISO = (d) => {
   return `${y}-${m}-${day}`;
 };
 
+/**
+ * Returns tomorrow or the next working day.
+ * If today is Friday (5) -> returns Monday (+3 days).
+ * If today is Saturday (6) -> returns Monday (+2 days).
+ * If today is Sunday (0) -> returns Monday (+1 day).
+ * If Monday-Thursday -> returns next day (+1 day).
+ */
+export const getNextWorkingDay = (from = new Date()) => {
+  const d = new Date(from.getFullYear(), from.getMonth(), from.getDate());
+  const day = d.getDay(); // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
+  if (day === 5) {
+    d.setDate(d.getDate() + 3);
+  } else if (day === 6) {
+    d.setDate(d.getDate() + 2);
+  } else if (day === 0) {
+    d.setDate(d.getDate() + 1);
+  } else {
+    d.setDate(d.getDate() + 1);
+  }
+  return d;
+};
+
 export const formatDisplayDate = (d) => {
   if (!d) return '';
   if (typeof d === 'string') return formatDate(d);
@@ -27,6 +49,11 @@ export const getDisplayDateRangeForFilter = (filterType, from, to) => {
       const y = new Date(now);
       y.setDate(y.getDate() - 1);
       return formatDisplayDate(y);
+    }
+    case 'tomorrow':
+    case 'next_working_day': {
+      const nextDay = getNextWorkingDay(now);
+      return formatDisplayDate(nextDay);
     }
     case 'this_week': {
       const start = new Date(now);
@@ -73,6 +100,11 @@ export const getISODateRangeForFilter = (filterType, customFrom, customTo) => {
       const y = new Date(now);
       y.setDate(y.getDate() - 1);
       return [formatDateISO(y), formatDateISO(y)];
+    }
+    case 'tomorrow':
+    case 'next_working_day': {
+      const nextDay = getNextWorkingDay(now);
+      return [formatDateISO(nextDay), formatDateISO(nextDay)];
     }
     case 'this_week': {
       const start = new Date(now);

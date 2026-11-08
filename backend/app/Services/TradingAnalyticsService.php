@@ -24,6 +24,20 @@ class TradingAnalyticsService
             case 'yesterday':
                 $yesterday = $today->copy()->subDay();
                 return [$yesterday->toDateString(), $yesterday->toDateString()];
+            case 'tomorrow':
+            case 'next_working_day': {
+                $dayOfWeek = $today->dayOfWeek; // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
+                if ($dayOfWeek === Carbon::FRIDAY) {
+                    $nextDay = $today->copy()->addDays(3);
+                } elseif ($dayOfWeek === Carbon::SATURDAY) {
+                    $nextDay = $today->copy()->addDays(2);
+                } elseif ($dayOfWeek === Carbon::SUNDAY) {
+                    $nextDay = $today->copy()->addDays(1);
+                } else {
+                    $nextDay = $today->copy()->addDay();
+                }
+                return [$nextDay->toDateString(), $nextDay->toDateString()];
+            }
             case 'this_week':
                 return [
                     $today->copy()->startOfWeek()->toDateString(),
