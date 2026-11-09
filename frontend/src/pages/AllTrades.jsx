@@ -304,7 +304,7 @@ export default function AllTrades() {
     setAllPagesTotalNetPnl(null);
     setAllPagesTotalInvestment(null);
     setAllPagesTotalPremium(null);
-  }, [selectedIndex, selectedTradingType, selectedOption, selectedStrategy, search]);
+  }, [filter, fromDate, toDate, customFrom, customTo, selectedIndex, selectedTradingType, selectedOption, selectedStrategy, statusFilter, search]);
 
   // Cache known trades to compute P&L even when switching pages
   const [knownTradesMap, setKnownTradesMap] = useState(new Map());
@@ -332,7 +332,7 @@ export default function AllTrades() {
   // Total Net P&L of currently selected trades
   const selectedTotalNetPnl = useMemo(() => {
     if (!selectedRowIds || selectedRowIds.size === 0) return 0;
-    if (allPagesTotalNetPnl !== null && selectedRowIds.size === pagination.total) {
+    if (allPagesTotalNetPnl !== null && selectedRowIds.size >= pagination.total) {
       return allPagesTotalNetPnl;
     }
     let sum = 0;
@@ -357,7 +357,7 @@ export default function AllTrades() {
   // Total Investment of currently selected trades
   const selectedTotalInvestment = useMemo(() => {
     if (!selectedRowIds || selectedRowIds.size === 0) return 0;
-    if (allPagesTotalInvestment !== null && selectedRowIds.size === pagination.total) {
+    if (allPagesTotalInvestment !== null && selectedRowIds.size >= pagination.total) {
       return allPagesTotalInvestment;
     }
     let sum = 0;
@@ -384,7 +384,7 @@ export default function AllTrades() {
   // Total Premium of currently selected trades
   const selectedTotalPremium = useMemo(() => {
     if (!selectedRowIds || selectedRowIds.size === 0) return 0;
-    if (allPagesTotalPremium !== null && selectedRowIds.size === pagination.total) {
+    if (allPagesTotalPremium !== null && selectedRowIds.size >= pagination.total) {
       return allPagesTotalPremium;
     }
     let sum = 0;
@@ -492,6 +492,9 @@ export default function AllTrades() {
       setLoadingAllIds(true);
       const res = await api.get('/trades/all-ids', {
         params: {
+          filter: filter || 'this_month',
+          from_date: filter === 'custom' ? customFrom : (fromDate || undefined),
+          to_date: filter === 'custom' ? customTo : (toDate || undefined),
           index_name: selectedIndex === 'ALL' ? undefined : selectedIndex,
           trading_type: selectedTradingType === 'ALL' ? undefined : selectedTradingType,
           option_type: selectedOption === 'ALL' ? undefined : selectedOption,
@@ -509,6 +512,13 @@ export default function AllTrades() {
       }
       if (res.data?.total_premium !== undefined) {
         setAllPagesTotalPremium(parseFloat(res.data.total_premium) || 0);
+      }
+      if (res.data?.trades && Array.isArray(res.data.trades)) {
+        setKnownTradesMap((prev) => {
+          const next = new Map(prev);
+          res.data.trades.forEach((t) => next.set(t.id, t));
+          return next;
+        });
       }
       setSelectedRowIds(new Set(ids));
       setFeedbackMessage(`Selected all ${ids.length} trade(s) across all pages.`);
@@ -1996,6 +2006,14 @@ export default function AllTrades() {
                         {loadingAllIds && <RotateCw className="w-2.5 h-2.5 animate-spin inline" />}
                         Select all {pagination.total} across all pages
                       </button>
+                    </>
+                  )}
+                  {selectedRowIds.size >= pagination.total && pagination.total > trades.length && (
+                    <>
+                      <span className="text-slate-600">•</span>
+                      <span className="text-emerald-400 light:text-emerald-600 font-medium">
+                        All {pagination.total} across all pages selected
+                      </span>
                     </>
                   )}
                 </div>

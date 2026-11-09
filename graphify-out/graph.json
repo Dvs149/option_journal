@@ -9943,7 +9943,7 @@
       "label": ".bulkDestroy()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L731",
+      "source_location": "L775",
       "id": "api_tradecontroller_tradecontroller_bulkdestroy",
       "community": 116,
       "norm_label": ".bulkdestroy()"
@@ -9952,7 +9952,7 @@
       "label": ".duplicate()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L783",
+      "source_location": "L827",
       "id": "api_tradecontroller_tradecontroller_duplicate",
       "community": 116,
       "norm_label": ".duplicate()"
@@ -9961,7 +9961,7 @@
       "label": ".estimateCharges()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L812",
+      "source_location": "L856",
       "id": "api_tradecontroller_tradecontroller_estimatecharges",
       "community": 116,
       "norm_label": ".estimatecharges()"
@@ -9970,7 +9970,7 @@
       "label": ".resetAllData()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L873",
+      "source_location": "L917",
       "id": "api_tradecontroller_tradecontroller_resetalldata",
       "community": 116,
       "norm_label": ".resetalldata()"
@@ -9979,7 +9979,7 @@
       "label": ".bulkImport()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L921",
+      "source_location": "L965",
       "id": "api_tradecontroller_tradecontroller_bulkimport",
       "community": 116,
       "norm_label": ".bulkimport()"
@@ -9988,7 +9988,7 @@
       "label": ".addOrder()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1020",
+      "source_location": "L1064",
       "id": "api_tradecontroller_tradecontroller_addorder",
       "community": 116,
       "norm_label": ".addorder()"
@@ -9997,7 +9997,7 @@
       "label": ".updateOrder()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1135",
+      "source_location": "L1179",
       "id": "api_tradecontroller_tradecontroller_updateorder",
       "community": 116,
       "norm_label": ".updateorder()"
@@ -10006,7 +10006,7 @@
       "label": ".destroyOrder()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1261",
+      "source_location": "L1305",
       "id": "api_tradecontroller_tradecontroller_destroyorder",
       "community": 116,
       "norm_label": ".destroyorder()"
@@ -10015,7 +10015,7 @@
       "label": ".recalculateTradeFromOrders()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1285",
+      "source_location": "L1329",
       "id": "api_tradecontroller_tradecontroller_recalculatetradefromorders",
       "community": 116,
       "norm_label": ".recalculatetradefromorders()"
@@ -10024,7 +10024,7 @@
       "label": ".syncOrdersFromTrade()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1389",
+      "source_location": "L1433",
       "id": "api_tradecontroller_tradecontroller_syncordersfromtrade",
       "community": 116,
       "norm_label": ".syncordersfromtrade()"
@@ -10033,7 +10033,7 @@
       "label": ".authorizeTrade()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1593",
+      "source_location": "L1637",
       "id": "api_tradecontroller_tradecontroller_authorizetrade",
       "community": 116,
       "norm_label": ".authorizetrade()"
@@ -10042,7 +10042,7 @@
       "label": ".parseScreenshot()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1600",
+      "source_location": "L1644",
       "id": "api_tradecontroller_tradecontroller_parsescreenshot",
       "community": 116,
       "norm_label": ".parsescreenshot()"
@@ -10051,7 +10051,7 @@
       "label": ".importScreenshotOrders()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1621",
+      "source_location": "L1665",
       "id": "api_tradecontroller_tradecontroller_importscreenshotorders",
       "community": 116,
       "norm_label": ".importscreenshotorders()"
@@ -43266,9 +43266,9 @@
       "source_file": "frontend/src/components/trades/EditOrderModal.jsx",
       "source_location": "L20",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "frontend_src_components_trades_editordermodal_jsx",
-      "target": "frontend_src_context_lotsizecontext_jsx",
-      "confidence_score": 1.0
+      "target": "frontend_src_context_lotsizecontext_jsx"
     },
     {
       "relation": "imports_from",
@@ -43376,9 +43376,9 @@
       "source_file": "frontend/src/components/trades/EditOrderModal.jsx",
       "source_location": "L20",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "frontend_src_components_trades_editordermodal_jsx",
-      "target": "context_lotsizecontext_uselotsizes",
-      "confidence_score": 1.0
+      "target": "context_lotsizecontext_uselotsizes"
     },
     {
       "relation": "imports",
@@ -77109,5 +77109,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "8a51a8320f42632c14c76e7c80fd309f187e4ab1"
+  "built_at_commit": "a302f793d1e1ec994767429e5fc284a7c842d2d9"
 }

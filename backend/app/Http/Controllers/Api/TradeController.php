@@ -672,6 +672,15 @@ class TradeController extends Controller
             $query->where('trading_account_id', $account->id);
         }
 
+        // Status Filter
+        if ($request->filled('status') && $request->status !== 'ALL') {
+            if ($request->status === 'OPEN_OR_PARTIAL') {
+                $query->whereIn('status', ['OPEN', 'PARTIALLY_CLOSED']);
+            } else {
+                $query->where('status', $request->status);
+            }
+        }
+
         if ($request->filled('index_name') && $request->index_name !== 'ALL') {
             $query->where('index_name', $request->index_name);
         }
@@ -714,17 +723,52 @@ class TradeController extends Controller
             });
         }
 
-        $ids = $query->pluck('id');
-        $totalNetPnl = (float) $query->sum('net_pnl');
-        $totalInvestment = (float) $query->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(avg_entry_price, entry_premium, 0) * COALESCE(quantity, 0)'));
-        $totalPremium = (float) $query->sum(\Illuminate\Support\Facades\DB::raw('COALESCE(avg_entry_price, entry_premium, 0)'));
+        $allTrades = $query->with(['orders', 'screenshots', 'journal'])->get();
+        $ids = $allTrades->pluck('id')->values();
+
+        $totalNetPnl = 0.0;
+        $totalInvestment = 0.0;
+        $totalPremium = 0.0;
+
+        foreach ($allTrades as $t) {
+            // Net PnL: for OPEN trades without net_pnl, subtract charges; otherwise use net_pnl
+            if ($t->status === 'OPEN') {
+                $net = (float) $t->net_pnl;
+                if ($net !== 0.0) {
+                    $totalNetPnl += $net;
+                } else {
+                    $totalNetPnl -= abs((float) ($t->total_charges ?? 0));
+                }
+            } else {
+                $totalNetPnl += (float) ($t->net_pnl ?? 0);
+            }
+
+            // Total Investment: sum buy orders if present; fallback to avg_entry_price * quantity
+            $buyOrders = $t->orders->where('order_type', 'BUY');
+            if ($buyOrders->isNotEmpty()) {
+                $buyOrdersSum = 0.0;
+                foreach ($buyOrders as $bo) {
+                    $buyOrdersSum += (float) $bo->price * (int) $bo->quantity;
+                }
+                $totalInvestment += $buyOrdersSum;
+            } else {
+                $entryPrice = (float) ($t->avg_entry_price ?: $t->entry_premium ?: 0);
+                $qty = (int) ($t->quantity ?: 0);
+                $totalInvestment += $entryPrice * $qty;
+            }
+
+            // Total Premium: entry premium
+            $prem = (float) ($t->avg_entry_price ?: $t->entry_premium ?: 0);
+            $totalPremium += $prem;
+        }
 
         return response()->json([
             'ids' => $ids,
-            'count' => count($ids),
+            'count' => $allTrades->count(),
             'total_net_pnl' => round($totalNetPnl, 2),
             'total_investment' => round($totalInvestment, 2),
             'total_premium' => round($totalPremium, 2),
+            'trades' => $allTrades,
         ]);
     }
 
