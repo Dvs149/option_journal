@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreTradeRequest;
 use App\Http\Requests\UpdateTradeRequest;
+use App\Models\IndexLotSize;
 use App\Models\Trade;
 use App\Models\TradeJournal;
 use App\Models\TradeOrder;
@@ -430,25 +431,8 @@ class TradeController extends Controller
                 'net_pnl' => $isOpen ? round(-$calculated['total_charges'], 2) : $calculated['net_pnl'],
             ]));
 
-            // If trade has orders and is OPEN, sync the initial BUY order
-            if ($isOpen && $trade->orders()->count() === 1) {
-                $firstOrder = $trade->orders()->first();
-                if ($firstOrder && $firstOrder->order_type === 'BUY') {
-                    $firstOrder->update([
-                        'quantity' => $trade->quantity,
-                        'price' => $trade->entry_premium ?? $firstOrder->price,
-                        'lots' => $trade->lots ?? 1,
-                        'brokerage' => $trade->brokerage,
-                        'stt' => $trade->stt,
-                        'exchange_charges' => $trade->exchange_charges,
-                        'gst' => $trade->gst,
-                        'sebi_charges' => $trade->sebi_charges,
-                        'stamp_duty' => $trade->stamp_duty,
-                        'total_charges' => $trade->total_charges,
-                    ]);
-                }
-            }
-
+            // Synchronize child orders whenever the trade is updated
+            $this->syncOrdersFromTrade($trade, $data);
             if ($trade->orders()->exists()) {
                 $this->recalculateTradeFromOrders($trade);
             }
@@ -536,7 +520,7 @@ class TradeController extends Controller
 
         return response()->json([
             'message' => 'Trade updated successfully',
-            'trade' => $trade->fresh()->load(['journal', 'screenshots']),
+            'trade' => $trade->fresh()->load(['journal', 'screenshots', 'orders']),
         ]);
     }
 
@@ -1175,6 +1159,19 @@ class TradeController extends Controller
         $quantity = (int) $validated['quantity'];
         $price = (float) $validated['price'];
 
+        $user = $request->user();
+        $rates = \App\Models\BrokerageSetting::forUser($user->id);
+        $exchange = in_array(strtoupper($trade->index_name), ['SENSEX', 'BANKEX']) ? 'BSE' : ($rates['default_exchange'] ?? 'NSE');
+
+        $userLotSize = IndexLotSize::where('user_id', $trade->user_id)
+            ->where('index_name', strtoupper($trade->index_name))
+            ->value('lot_size');
+        if (!$userLotSize) {
+            $defaults = IndexLotSize::getExchangeDefaults();
+            $userLotSize = $defaults[strtoupper($trade->index_name)]['lot_size'] ?? null;
+        }
+        $lotSize = max(1, (int) ($userLotSize ?: 1));
+
         // If SELL: verify that new quantity doesn't exceed open_quantity + this order's quantity
         if ($order->order_type === 'SELL') {
             $maxSellable = (int) ($trade->open_quantity ?? 0) + (int) $order->quantity;
@@ -1194,10 +1191,6 @@ class TradeController extends Controller
                 ], 422);
             }
         }
-
-        $user = $request->user();
-        $rates = \App\Models\BrokerageSetting::forUser($user->id);
-        $exchange = in_array(strtoupper($trade->index_name), ['SENSEX', 'BANKEX']) ? 'BSE' : ($rates['default_exchange'] ?? 'NSE');
 
         $autoCharges = $this->calcService->estimateSingleOrderCharges($order->order_type, $price, $quantity, $exchange, $rates);
 
@@ -1235,8 +1228,7 @@ class TradeController extends Controller
             $charges['other_charges'] = (float) ($order->other_charges ?? 0.0);
         }
 
-        DB::transaction(function () use ($trade, $order, $quantity, $price, $validated, $charges) {
-            $lotSize = max(1, $trade->lots > 0 ? (int) round($trade->quantity / $trade->lots) : 1);
+        DB::transaction(function () use ($trade, $order, $quantity, $price, $validated, $charges, $lotSize) {
             $lots = max(1, (int) round($quantity / $lotSize));
 
             $order->update([
@@ -1355,9 +1347,23 @@ class TradeController extends Controller
 
         $latestSell = $sellOrders->sortByDesc('order_date')->first();
 
+        $userLotSize = IndexLotSize::where('user_id', $trade->user_id)
+            ->where('index_name', strtoupper($trade->index_name))
+            ->value('lot_size');
+        if (!$userLotSize) {
+            $defaults = IndexLotSize::getExchangeDefaults();
+            $userLotSize = $defaults[strtoupper($trade->index_name)]['lot_size'] ?? null;
+        }
+        if (!$userLotSize && $trade->lots > 0 && $trade->quantity > 0) {
+            $userLotSize = (int) round($trade->quantity / $trade->lots);
+        }
+        $lotSize = max(1, (int) ($userLotSize ?: 1));
+        $totalLots = max(1, (int) round($totalBuyQty / $lotSize));
+
         $trade->update([
             'status' => $status,
             'quantity' => $totalBuyQty > 0 ? $totalBuyQty : $trade->quantity,
+            'lots' => $totalLots,
             'open_quantity' => $openQty,
             'avg_entry_price' => $avgEntryPrice,
             'avg_exit_price' => $avgExitPrice,
@@ -1378,6 +1384,210 @@ class TradeController extends Controller
         ]);
 
         return $trade;
+    }
+
+    public function syncOrdersFromTrade(Trade $trade, array $data): void
+    {
+        $orders = $trade->orders()->orderBy('order_date', 'asc')->orderBy('id', 'asc')->get();
+
+        $user = $trade->user;
+        $userLotSize = IndexLotSize::where('user_id', $trade->user_id)
+            ->where('index_name', strtoupper($data['index_name'] ?? $trade->index_name))
+            ->value('lot_size');
+        if (!$userLotSize) {
+            $defaults = IndexLotSize::getExchangeDefaults();
+            $userLotSize = $defaults[strtoupper($data['index_name'] ?? $trade->index_name)]['lot_size'] ?? null;
+        }
+        if (!$userLotSize && $trade->lots > 0 && $trade->quantity > 0) {
+            $userLotSize = (int) round($trade->quantity / $trade->lots);
+        }
+        $lotSize = max(1, (int) ($userLotSize ?: 1));
+
+        // Determine target lots and target quantity
+        if (array_key_exists('lots', $data) && !array_key_exists('quantity', $data)) {
+            $targetLots = max(1, (int) $data['lots']);
+            $targetQty = $targetLots * $lotSize;
+        } elseif (array_key_exists('quantity', $data) && !array_key_exists('lots', $data)) {
+            $targetQty = max(1, (int) $data['quantity']);
+            $targetLots = max(1, (int) round($targetQty / $lotSize));
+        } elseif (array_key_exists('quantity', $data) && array_key_exists('lots', $data)) {
+            $passedQty = (int) $data['quantity'];
+            $passedLots = (int) $data['lots'];
+            if ($passedLots !== (int) $trade->lots && $passedQty === (int) $trade->quantity) {
+                $targetLots = max(1, $passedLots);
+                $targetQty = $targetLots * $lotSize;
+            } else {
+                $targetQty = max(1, $passedQty);
+                $targetLots = max(1, $passedLots);
+            }
+        } else {
+            $targetQty = (int) $trade->quantity;
+            $targetLots = max(1, (int) ($trade->lots ?: round($targetQty / $lotSize)));
+        }
+
+        $rates = $user ? \App\Models\BrokerageSetting::forUser($user->id) : [];
+        $indexName = strtoupper($data['index_name'] ?? $trade->index_name);
+        $exchange = in_array($indexName, ['SENSEX', 'BANKEX']) ? 'BSE' : ($rates['default_exchange'] ?? 'NSE');
+
+        $entryPrice = (float) ($data['entry_premium'] ?? $data['avg_entry_price'] ?? $trade->entry_premium ?? 0);
+        $exitPrice = (float) ($data['exit_premium'] ?? $data['avg_exit_price'] ?? $trade->exit_premium ?? 0);
+        $isClosed = (($data['status'] ?? $trade->status) === 'CLOSED') || ($exitPrice > 0);
+
+        // If no orders exist yet, create initial order(s)
+        if ($orders->isEmpty()) {
+            $buyCharges = $this->calcService->estimateSingleOrderCharges('BUY', $entryPrice, $targetQty, $exchange, $rates);
+            $trade->orders()->create([
+                'user_id' => $trade->user_id,
+                'order_type' => 'BUY',
+                'quantity' => $targetQty,
+                'lots' => $targetLots,
+                'price' => $entryPrice,
+                'order_date' => $data['trade_date'] ?? $trade->trade_date,
+                'order_time' => '09:15:00',
+                'brokerage' => $buyCharges['brokerage'],
+                'stt' => $buyCharges['stt'],
+                'exchange_charges' => $buyCharges['exchange_charges'],
+                'gst' => $buyCharges['gst'],
+                'sebi_charges' => $buyCharges['sebi_charges'],
+                'stamp_duty' => $buyCharges['stamp_duty'],
+                'other_charges' => 0.00,
+                'total_charges' => $buyCharges['total_charges'],
+                'realized_pnl' => 0.00,
+                'notes' => $data['entry_reason'] ?? $trade->entry_reason ?? 'Initial Buy Order',
+            ]);
+
+            if ($isClosed) {
+                $sellCharges = $this->calcService->estimateSingleOrderCharges('SELL', $exitPrice, $targetQty, $exchange, $rates);
+                $trade->orders()->create([
+                    'user_id' => $trade->user_id,
+                    'order_type' => 'SELL',
+                    'quantity' => $targetQty,
+                    'lots' => $targetLots,
+                    'price' => $exitPrice,
+                    'order_date' => $data['exit_date'] ?? $data['trade_date'] ?? $trade->exit_date ?? $trade->trade_date,
+                    'order_time' => '15:20:00',
+                    'brokerage' => $sellCharges['brokerage'],
+                    'stt' => $sellCharges['stt'],
+                    'exchange_charges' => $sellCharges['exchange_charges'],
+                    'gst' => $sellCharges['gst'],
+                    'sebi_charges' => $sellCharges['sebi_charges'],
+                    'stamp_duty' => $sellCharges['stamp_duty'],
+                    'other_charges' => 0.00,
+                    'total_charges' => $sellCharges['total_charges'],
+                    'realized_pnl' => round(($exitPrice - $entryPrice) * $targetQty, 2),
+                    'notes' => $data['exit_reason'] ?? $trade->exit_reason ?? 'Exit Order',
+                ]);
+            }
+            return;
+        }
+
+        $buyOrders = $orders->where('order_type', 'BUY')->values();
+        $sellOrders = $orders->where('order_type', 'SELL')->values();
+
+        // 1. Sync BUY orders
+        if ($buyOrders->count() === 1) {
+            $bo = $buyOrders[0];
+            $boPrice = $entryPrice > 0 ? $entryPrice : (float) $bo->price;
+            $ch = $this->calcService->estimateSingleOrderCharges('BUY', $boPrice, $targetQty, $exchange, $rates);
+            $bo->update([
+                'quantity' => $targetQty,
+                'lots' => $targetLots,
+                'price' => $boPrice,
+                'order_date' => $data['trade_date'] ?? $bo->order_date,
+                'brokerage' => $ch['brokerage'],
+                'stt' => $ch['stt'],
+                'exchange_charges' => $ch['exchange_charges'],
+                'gst' => $ch['gst'],
+                'sebi_charges' => $ch['sebi_charges'],
+                'stamp_duty' => $ch['stamp_duty'],
+                'total_charges' => $ch['total_charges'],
+            ]);
+        } elseif ($buyOrders->count() > 1) {
+            $oldTotalBuy = max(1, (int) $buyOrders->sum('quantity'));
+            $runningBuy = 0;
+            foreach ($buyOrders as $i => $bo) {
+                if ($i === $buyOrders->count() - 1) {
+                    $q = max(1, $targetQty - $runningBuy);
+                } else {
+                    $q = max(1, (int) round($bo->quantity * ($targetQty / $oldTotalBuy)));
+                    $runningBuy += $q;
+                }
+                $l = max(1, (int) round($q / $lotSize));
+                $boPrice = (float) $bo->price;
+                $ch = $this->calcService->estimateSingleOrderCharges('BUY', $boPrice, $q, $exchange, $rates);
+                $bo->update([
+                    'quantity' => $q,
+                    'lots' => $l,
+                    'brokerage' => $ch['brokerage'],
+                    'stt' => $ch['stt'],
+                    'exchange_charges' => $ch['exchange_charges'],
+                    'gst' => $ch['gst'],
+                    'sebi_charges' => $ch['sebi_charges'],
+                    'stamp_duty' => $ch['stamp_duty'],
+                    'total_charges' => $ch['total_charges'],
+                ]);
+            }
+        }
+
+        // 2. Sync SELL orders
+        if ($isClosed) {
+            if ($sellOrders->isEmpty()) {
+                // Closed trade had no sell order -> create one
+                $soPrice = $exitPrice > 0 ? $exitPrice : $entryPrice;
+                $sellCharges = $this->calcService->estimateSingleOrderCharges('SELL', $soPrice, $targetQty, $exchange, $rates);
+                $trade->orders()->create([
+                    'user_id' => $trade->user_id,
+                    'order_type' => 'SELL',
+                    'quantity' => $targetQty,
+                    'lots' => $targetLots,
+                    'price' => $soPrice,
+                    'order_date' => $data['exit_date'] ?? $data['trade_date'] ?? now()->format('Y-m-d'),
+                    'order_time' => '15:20:00',
+                    'brokerage' => $sellCharges['brokerage'],
+                    'stt' => $sellCharges['stt'],
+                    'exchange_charges' => $sellCharges['exchange_charges'],
+                    'gst' => $sellCharges['gst'],
+                    'sebi_charges' => $sellCharges['sebi_charges'],
+                    'stamp_duty' => $sellCharges['stamp_duty'],
+                    'other_charges' => 0.00,
+                    'total_charges' => $sellCharges['total_charges'],
+                    'realized_pnl' => round(($soPrice - $entryPrice) * $targetQty, 2),
+                    'notes' => $data['exit_reason'] ?? $trade->exit_reason ?? 'Exit Order',
+                ]);
+            } elseif ($sellOrders->count() === 1) {
+                $so = $sellOrders[0];
+                $isPartialExit = str_contains((string) $so->notes, 'Partial Exit') ||
+                                 ($trade->status === 'PARTIALLY_CLOSED') ||
+                                 ((int) $so->quantity < (int) $buyOrders->sum('quantity'));
+
+                if (!$isPartialExit) {
+                    $soPrice = $exitPrice > 0 ? $exitPrice : (float) $so->price;
+                    $effectiveEntryPrice = $entryPrice > 0 ? $entryPrice : (float) ($buyOrders->first()?->price ?? 0);
+                    $realizedPnl = round(($soPrice - $effectiveEntryPrice) * $targetQty, 2);
+                    $ch = $this->calcService->estimateSingleOrderCharges('SELL', $soPrice, $targetQty, $exchange, $rates);
+                    $so->update([
+                        'quantity' => $targetQty,
+                        'lots' => $targetLots,
+                        'price' => $soPrice,
+                        'order_date' => $data['exit_date'] ?? $data['trade_date'] ?? $so->order_date,
+                        'brokerage' => $ch['brokerage'],
+                        'stt' => $ch['stt'],
+                        'exchange_charges' => $ch['exchange_charges'],
+                        'gst' => $ch['gst'],
+                        'sebi_charges' => $ch['sebi_charges'],
+                        'stamp_duty' => $ch['stamp_duty'],
+                        'total_charges' => $ch['total_charges'],
+                        'realized_pnl' => $realizedPnl,
+                    ]);
+                }
+            }
+            // Notice: When $sellOrders->count() > 1, do NOT scale them as they are individual executed partial exits!
+        } elseif ((($data['status'] ?? $trade->status) === 'OPEN') && $sellOrders->count() === 1) {
+            // Trade switched from CLOSED to OPEN, remove solitary SELL order if not partial exit
+            if (!str_contains((string) $sellOrders[0]->notes, 'Partial Exit')) {
+                $sellOrders[0]->delete();
+            }
+        }
     }
 
     protected function authorizeTrade($user, Trade $trade): void
