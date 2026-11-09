@@ -5,9 +5,13 @@ import Navbar from './Navbar';
 import MobileNav from './MobileNav';
 import ErrorBoundary from '../common/ErrorBoundary';
 import { useFilter } from '../../context/FilterContext';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 export default function AppLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  // Close mobile sidebar on Escape
+  useEscapeKey(() => setMobileSidebarOpen(false), mobileSidebarOpen);
   const {
     filter,
     updateFilter,

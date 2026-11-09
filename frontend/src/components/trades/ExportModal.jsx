@@ -23,6 +23,7 @@ import api from '../../api/client';
 import { formatDate } from '../../utils/formatters';
 import { useToast } from '../../context/ToastContext';
 import { useDropdown } from '../../context/DropdownContext';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 // Column definitions for Trade-by-Trade Log
 const TRADE_COLUMNS = [
@@ -107,6 +108,9 @@ export default function ExportModal({
 }) {
   const { showToast } = useToast();
   const { getActiveOptions } = useDropdown();
+
+  // Close modal on Escape
+  useEscapeKey(onClose, isOpen);
 
   // Dynamically load active options from Dropdown Manager
   const activeDatePeriods = useMemo(() => {
@@ -702,8 +706,14 @@ export default function ExportModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-      <div className="w-full max-w-4xl max-h-[92vh] flex flex-col rounded-3xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-2xl overflow-hidden">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-4xl max-h-[92vh] flex flex-col rounded-3xl bg-[#0b1322] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* ========================================================= */}
         {/* MODAL HEADER                                              */}

@@ -26,6 +26,7 @@ import { useToast } from '../context/ToastContext';
 import { useBrokerage } from '../context/BrokerageContext';
 import { useDropdown } from '../context/DropdownContext';
 import { useTheme } from '../context/ThemeContext';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import BulkImportModal from '../components/trades/BulkImportModal';
 import ImageOrderImportModal from '../components/trades/ImageOrderImportModal';
 import OptionChainModal from '../components/trades/OptionChainModal';
@@ -63,6 +64,10 @@ export default function AddTrade() {
   const setErrorMessage = (msg) => { if (msg) showToast(msg, 'error'); };
   const [selectedScreenshots, setSelectedScreenshots] = useState([]);
   const [viewingLightboxUrl, setViewingLightboxUrl] = useState(null);
+
+  // Close modals on Escape
+  useEscapeKey(() => setViewingLightboxUrl(null), !!viewingLightboxUrl);
+  useEscapeKey(() => setShowPreviewModal(false), showPreviewModal);
 
   // Auto-fill form from Option Chain selection
   const handleSelectOptionFromChain = (opt) => {
@@ -923,117 +928,72 @@ export default function AddTrade() {
         </div>
       </div>
 
-      {/* Navigation Tabs (Trade Details / P&L & Charges / Strategy & Journal / Preview) */}
-      <div className="flex items-center gap-2 p-1.5 bg-[#121b2d] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 rounded-2xl overflow-x-auto no-scrollbar">
-        <button
-          type="button"
-          onClick={() => scrollToSection('trade_details')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer ${
-            activeTab === 'trade_details'
-              ? isKite
-                ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
-                : 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-semibold'
-              : isKite
-                ? 'text-[#9b9b9b] hover:text-white bg-transparent font-medium'
-                : 'text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#18233a] light:hover:bg-slate-200/60 font-medium'
-          }`}
-        >
-          <FileText className="w-3.5 h-3.5" />
-          <span>Trade Details</span>
-        </button>
+      {/* Navigation & Action Bar (Trade Details on Left, Tool Actions on Right) */}
+      <div className="flex items-center justify-between gap-2 p-1.5 bg-[#121b2d] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 rounded-2xl overflow-x-auto no-scrollbar">
+        {/* Left: Tab */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => scrollToSection('trade_details')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'trade_details'
+                ? isKite
+                  ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
+                  : 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-semibold'
+                : isKite
+                  ? 'text-[#9b9b9b] hover:text-white bg-transparent font-medium'
+                  : 'text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#18233a] light:hover:bg-slate-200/60 font-medium'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Trade Details</span>
+          </button>
+        </div>
 
-        {/* <button
-          type="button"
-          onClick={() => scrollToSection('pnl_charges')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer ${
-            activeTab === 'pnl_charges'
-              ? isKite
-                ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
-                : 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-semibold'
-              : isKite
-                ? 'text-[#9b9b9b] hover:text-white bg-transparent font-medium'
-                : 'text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#18233a] light:hover:bg-slate-200/60 font-medium'
-          }`}
-        >
-          <Receipt className="w-3.5 h-3.5" />
-          <span>P&L & Charges</span>
-        </button> */}
+        {/* Right: Quick Actions */}
+        <div className="flex items-center gap-2 ml-auto">
+          <button
+            type="button"
+            onClick={() => setShowOptionChainModal(true)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              isKite
+                ? 'text-indigo-400 border border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10'
+                : 'text-indigo-400 hover:text-indigo-300 hover:bg-indigo-600/10 border border-indigo-500/30 bg-indigo-500/5 shadow-sm'
+            }`}
+            title="Live NSE & BSE Option Chain with real spot prices, Greeks, and ATM strikes"
+          >
+            <Layers className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Option Chain</span>
+          </button>
 
-        {/* <button
-          type="button"
-          onClick={() => scrollToSection('strategy_journal')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer ${
-            activeTab === 'strategy_journal'
-              ? isKite
-                ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
-                : 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-semibold'
-              : isKite
-                ? 'text-[#9b9b9b] hover:text-white bg-transparent font-medium'
-                : 'text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#18233a] light:hover:bg-slate-200/60 font-medium'
-          }`}
-        >
-          <BookOpen className="w-3.5 h-3.5" />
-          <span>Strategy & Journal</span>
-        </button> */}
+          <button
+            type="button"
+            onClick={() => setShowImageOrderModal(true)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              isKite
+                ? 'text-cyan-400 border border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/10'
+                : 'text-cyan-400 hover:text-cyan-300 hover:bg-cyan-600/10 border border-cyan-500/30 bg-cyan-500/5 shadow-sm'
+            }`}
+            title="Import executed orders from order book screenshot (Zerodha Kite, Groww, etc.)"
+          >
+            <Camera className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Image Orders</span>
+          </button>
 
-        <button
-          type="button"
-          onClick={() => scrollToSection('preview')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs whitespace-nowrap transition-all cursor-pointer ${
-            activeTab === 'preview'
-              ? isKite
-                ? 'text-[#ff5722] font-semibold bg-transparent shadow-none hover:bg-transparent'
-                : 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-semibold'
-              : isKite
-                ? 'text-[#9b9b9b] hover:text-white bg-transparent font-medium'
-                : 'text-slate-400 light:text-slate-600 hover:text-white light:hover:text-slate-900 hover:bg-[#18233a] light:hover:bg-slate-200/60 font-medium'
-          }`}
-        >
-          <Eye className="w-3.5 h-3.5" />
-          <span>Preview</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setShowOptionChainModal(true)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-            isKite
-              ? 'text-indigo-400 border border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10'
-              : 'text-indigo-400 hover:text-indigo-300 hover:bg-indigo-600/10 border border-indigo-500/30 bg-indigo-500/5 shadow-sm'
-          }`}
-          title="Live NSE & BSE Option Chain with real spot prices, Greeks, and ATM strikes"
-        >
-          <Layers className="w-3.5 h-3.5 text-indigo-400" />
-          <span>Option Chain</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setShowImageOrderModal(true)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-            isKite
-              ? 'text-cyan-400 border border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/10'
-              : 'text-cyan-400 hover:text-cyan-300 hover:bg-cyan-600/10 border border-cyan-500/30 bg-cyan-500/5 shadow-sm'
-          }`}
-          title="Import executed orders from order book screenshot (Zerodha Kite, Groww, etc.)"
-        >
-          <Camera className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Image Orders</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setShowBulkImportModal(true)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
-            isKite
-              ? 'text-[#ff5722] border border-[#ff5722]/30 bg-[#ff5722]/5 hover:bg-[#ff5722]/10'
-              : 'text-blue-400 hover:text-blue-300 hover:bg-blue-600/10 border border-blue-500/30 bg-blue-500/5 shadow-sm'
-          }`}
-          title="Import trades in bulk from Zerodha, Kotak Neo, or Custom Excel"
-        >
-          <Upload className={`w-3.5 h-3.5 ${isKite ? 'text-[#ff5722]' : 'text-blue-400'}`} />
-          <span>Bulk Import</span>
-        </button>
+          <button
+            type="button"
+            onClick={() => setShowBulkImportModal(true)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
+              isKite
+                ? 'text-[#ff5722] border border-[#ff5722]/30 bg-[#ff5722]/5 hover:bg-[#ff5722]/10'
+                : 'text-blue-400 hover:text-blue-300 hover:bg-blue-600/10 border border-blue-500/30 bg-blue-500/5 shadow-sm'
+            }`}
+            title="Import trades in bulk from Zerodha, Kotak Neo, or Custom Excel"
+          >
+            <Upload className={`w-3.5 h-3.5 ${isKite ? 'text-[#ff5722]' : 'text-blue-400'}`} />
+            <span>Bulk Import</span>
+          </button>
+        </div>
       </div>
 
       {/* Main Grid: Left Form Cards (8 cols) & Right Summary + Quick Actions (4 cols) */}
@@ -1240,7 +1200,7 @@ export default function AddTrade() {
                       title="View live Option Chain"
                     >
                       <Layers className="w-3 h-3" />
-                      <span>Option Chain</span>
+                      {/* <span>Option Chain</span> */}
                     </button>
                   </div>
                   <input
@@ -2214,8 +2174,14 @@ export default function AddTrade() {
 
       {/* Preview Modal */}
       {showPreviewModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setShowPreviewModal(false)}
+        >
+          <div
+            className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-6 max-w-lg w-full shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-[#1e293b] light:border-slate-200 pb-3">
               <div className="flex items-center gap-2">
                 <Eye className="w-4 h-4 text-blue-400" />

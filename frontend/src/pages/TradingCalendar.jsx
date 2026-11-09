@@ -34,6 +34,7 @@ import api from '../api/client';
 import { formatINR, formatCompactINR, formatDate, formatTime } from '../utils/formatters';
 import { useToast } from '../context/ToastContext';
 import { useFilter } from '../context/FilterContext';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import EditTradeModal from '../components/trades/EditTradeModal';
 
 // Extract year, month, day from active global filter date
@@ -191,6 +192,9 @@ export default function TradingCalendar() {
   const [tradeToDelete, setTradeToDelete] = useState(null);
   const [tradeToEdit, setTradeToEdit] = useState(null);
   const { showToast } = useToast();
+
+  // Close delete confirmation modal on Escape
+  useEscapeKey(() => setTradeToDelete(null), !!tradeToDelete);
   const setFeedbackMessage = (msg, type = 'success') => {
     if (msg) showToast(msg, type);
   };
@@ -1228,8 +1232,14 @@ export default function TradingCalendar() {
 
       {/* Delete Confirmation Modal */}
       {tradeToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn"
+          onClick={() => !isDeleting && setTradeToDelete(null)}
+        >
+          <div
+            className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-3 text-rose-400">
               <div className="p-2 rounded-2xl bg-rose-500/10">
                 <AlertTriangle className="w-6 h-6" />

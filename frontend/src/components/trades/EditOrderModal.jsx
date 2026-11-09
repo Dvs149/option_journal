@@ -19,6 +19,7 @@ import { formatINR } from '../../utils/formatters';
 import { useBrokerage } from '../../context/BrokerageContext';
 import { useToast } from '../../context/ToastContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import OptionChainModal from './OptionChainModal';
 
 export default function EditOrderModal({ trade, order, isOpen, onClose, onSuccess }) {
@@ -49,6 +50,9 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showOptionChainModal, setShowOptionChainModal] = useState(false);
+
+  // Close modal on Escape
+  useEscapeKey(onClose, isOpen && !showOptionChainModal);
 
   const handleSelectOptionFromChain = (opt) => {
     if (opt?.price) {
@@ -238,7 +242,10 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in"
+      onClick={onClose}
+    >
       <div
         className="w-full max-w-lg rounded-2xl bg-[#0f172a] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}

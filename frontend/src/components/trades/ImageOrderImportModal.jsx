@@ -22,6 +22,7 @@ import { formatINR, formatDate } from '../../utils/formatters';
 import { useLotSizes } from '../../context/LotSizeContext';
 import { useToast } from '../../context/ToastContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import api from '../../api/client';
 
 export default function ImageOrderImportModal({
@@ -48,6 +49,9 @@ export default function ImageOrderImportModal({
   const [importMode, setImportMode] = useState('smart'); // 'smart' | 'individual'
   const [optionType, setOptionType] = useState('auto'); // 'auto' | 'Both' | 'CE' | 'PE'
   const [importResult, setImportResult] = useState(null);
+
+  // Close preview or modal on Escape
+  useEscapeKey(showImagePreview ? () => setShowImagePreview(false) : onClose, isOpen);
 
   // Reset when opening
   useEffect(() => {
@@ -354,7 +358,10 @@ export default function ImageOrderImportModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/80 backdrop-blur-md animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 bg-black/80 backdrop-blur-md animate-fade-in"
+      onClick={onClose}
+    >
       <div
         className="w-full max-w-6xl max-h-[92vh] flex flex-col rounded-3xl bg-[#0f172a] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}

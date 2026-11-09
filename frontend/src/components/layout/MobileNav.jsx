@@ -22,9 +22,13 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useModules } from '../../context/ModuleContext';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 export default function MobileNav() {
   const [showMoreDrawer, setShowMoreDrawer] = useState(false);
+
+  // Close more drawer on Escape
+  useEscapeKey(() => setShowMoreDrawer(false), showMoreDrawer);
   const { user, logout } = useAuth();
   const { isDark, toggleTheme, isKite } = useTheme();
   const { isModuleVisible } = useModules();
@@ -85,8 +89,14 @@ export default function MobileNav() {
 
       {/* Slide-over Drawer for 'More' navigation */}
       {showMoreDrawer && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm lg:hidden">
-          <div className="bg-[#0e1626] light:bg-white border-t border-[#1e293b] light:border-slate-200 rounded-t-3xl max-h-[85vh] overflow-y-auto p-5 space-y-4 shadow-2xl">
+        <div
+          className="fixed inset-0 z-50 flex flex-col justify-end bg-black/60 backdrop-blur-sm lg:hidden"
+          onClick={() => setShowMoreDrawer(false)}
+        >
+          <div
+            className="bg-[#0e1626] light:bg-white border-t border-[#1e293b] light:border-slate-200 rounded-t-3xl max-h-[85vh] overflow-y-auto p-5 space-y-4 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-[#1e293b] light:border-slate-200">
               <span className="font-bold text-base text-white light:text-slate-900">

@@ -844,8 +844,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/main.jsx": {
-    "mtime": 1793881279.1885839,
-    "ast_hash": "eeb0533ea236e00f6d75669d6dfcfe03",
+    "mtime": 1794190881.0170321,
+    "ast_hash": "434bd277b737425960a87f9e849341e4",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/App.jsx": {
@@ -904,23 +904,23 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/trades/ExportModal.jsx": {
-    "mtime": 1794061212.285752,
-    "ast_hash": "b62e963f233a4bca59167b725e73e1b4",
+    "mtime": 1794191018.6396484,
+    "ast_hash": "9055463eae659a31a52089a3c23ec224",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/trades/BulkImportModal.jsx": {
-    "mtime": 1793755006.8935728,
-    "ast_hash": "3f208734cc62d30b31c96c504687bd73",
+    "mtime": 1794190974.6441581,
+    "ast_hash": "0bdf2c1af456372b759bbaffde753189",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/trades/EditTradeModal.jsx": {
-    "mtime": 1793881448.2095144,
-    "ast_hash": "6335ee865c68c3a8ec45497d97471ee6",
+    "mtime": 1794191092.507745,
+    "ast_hash": "96f8b1250ada72950275890561cb5f01",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/layout/AppLayout.jsx": {
-    "mtime": 1793388242.1616595,
-    "ast_hash": "9c607584d992659194bba169f1b939f7",
+    "mtime": 1794191417.1655397,
+    "ast_hash": "8bf438907edb24919ae1636d1b2fee9a",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/layout/Sidebar.jsx": {
@@ -929,13 +929,13 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/layout/Navbar.jsx": {
-    "mtime": 1794061168.6050794,
-    "ast_hash": "4e103daf273d8187bcb59192d9b24953",
+    "mtime": 1794191252.0608451,
+    "ast_hash": "8f7c101d6b58d66ece2c8624727d0d3f",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/layout/MobileNav.jsx": {
-    "mtime": 1793505544.2290251,
-    "ast_hash": "71bc6035c435c7a7d1ebe3ffff68776f",
+    "mtime": 1794191459.627947,
+    "ast_hash": "96d03d57efec4ae8f6c5a0c3d81bdf63",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/common/ErrorBoundary.jsx": {
@@ -964,13 +964,13 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/AllTrades.jsx": {
-    "mtime": 1794098571.8272269,
-    "ast_hash": "251396e01247cfb772e2f30b756f7993",
+    "mtime": 1794191229.4057252,
+    "ast_hash": "73d30e37f26bf73e03b852b91cc697d8",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/AddTrade.jsx": {
-    "mtime": 1794051121.3418684,
-    "ast_hash": "4f691105e6d992e6fa7dc7d23dbcf3ac",
+    "mtime": 1794191297.283995,
+    "ast_hash": "93be0e48abb471e62f236d3bc95d84ce",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/AnalyticsReports.jsx": {
@@ -979,8 +979,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/TradingJournal.jsx": {
-    "mtime": 1794051087.4771817,
-    "ast_hash": "3667d282555a2161b5508940482029e5",
+    "mtime": 1794191339.2425556,
+    "ast_hash": "29b10a688fbd1fc62fe6c5ed0fb0f8e5",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/Dashboard.jsx": {
@@ -989,8 +989,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/TradingCalendar.jsx": {
-    "mtime": 1793797108.4467504,
-    "ast_hash": "1858f8d0c336e5325b679f4d0d68cce5",
+    "mtime": 1794191394.497186,
+    "ast_hash": "c31c3643b89ca4a2bbaf60ebcb22ffb7",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/Login.jsx": {
@@ -1954,8 +1954,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/trades/PartialExitModal.jsx": {
-    "mtime": 1794051359.2068582,
-    "ast_hash": "2018e2e1ab354e53a938687077aeb0ae",
+    "mtime": 1794191053.0570228,
+    "ast_hash": "b36c71de17a2432586e46e2785041e55",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/database/migrations/2026_11_04_080000_create_trade_orders_table_and_add_position_fields_to_trades.php": {
@@ -1974,13 +1974,13 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/trades/EditOrderModal.jsx": {
-    "mtime": 1793881461.5933242,
-    "ast_hash": "9bd9ed282b5906d452e32e8655fcaff8",
+    "mtime": 1794191121.864948,
+    "ast_hash": "739d5ccd279d3ba8f35dd75d68611155",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/trades/ImageOrderImportModal.jsx": {
-    "mtime": 1793883705.4094238,
-    "ast_hash": "1ea971bf3593f6f2517dc9caeea4420f",
+    "mtime": 1794190940.7821136,
+    "ast_hash": "2c8b76522385a148cfdda10625835d04",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/app/Services/OrderScreenshotParserService.php": {
@@ -1989,8 +1989,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/trades/OptionChainModal.jsx": {
-    "mtime": 1793867089.913508,
-    "ast_hash": "4cb743a9a0405375d50c57f6db2d39f7",
+    "mtime": 1794190909.4030488,
+    "ast_hash": "04e24655e7dc08532253e4e0d9e3657d",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/app/Http/Controllers/Api/OptionChainController.php": {
@@ -2021,6 +2021,11 @@
   "/Users/divyeshlunagariya/mern/option_journal/scripts/macos/background_services.py": {
     "mtime": 1794012140.757162,
     "ast_hash": "67bdd62786bd37713b96a485e0a82a49",
+    "semantic_hash": ""
+  },
+  "/Users/divyeshlunagariya/mern/option_journal/frontend/src/hooks/useEscapeKey.js": {
+    "mtime": 1794191478.978874,
+    "ast_hash": "e9ee956c5b5f4d535047f360dd4352da",
     "semantic_hash": ""
   }
 }

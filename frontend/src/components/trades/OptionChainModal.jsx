@@ -17,6 +17,7 @@ import {
 import { formatINR } from '../../utils/formatters';
 import { useTheme } from '../../context/ThemeContext';
 import { useToast } from '../../context/ToastContext';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import api from '../../api/client';
 
 export default function OptionChainModal({
@@ -40,6 +41,9 @@ export default function OptionChainModal({
   const [viewMode, setViewMode] = useState('standard'); // 'standard' | 'compact' | 'greeks'
 
   const tableContainerRef = useRef(null);
+
+  // Close modal on Escape key press
+  useEscapeKey(onClose, isOpen);
 
   // Sync initial symbol if modal opens with a specific trade's index
   useEffect(() => {
@@ -171,7 +175,10 @@ export default function OptionChainModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-md animate-fade-in"
+      onClick={onClose}
+    >
       <div
         className="w-full max-w-7xl max-h-[94vh] flex flex-col rounded-3xl bg-[#0f172a] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}

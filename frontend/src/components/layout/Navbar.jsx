@@ -12,6 +12,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 
 export default function Navbar({
   filter,
@@ -28,6 +29,11 @@ export default function Navbar({
   const [showNotifications, setShowNotifications] = useState(false);
   const [localFrom, setLocalFrom] = useState(customFrom || '');
   const [localTo, setLocalTo] = useState(customTo || '');
+
+  // Close modals, dropdowns, and notifications on Escape
+  useEscapeKey(() => setShowCustomModal(false), showCustomModal);
+  useEscapeKey(() => setShowNotifications(false), showNotifications);
+  useEscapeKey(() => setShowFilterDropdown(false), showFilterDropdown);
 
   // Keep local dates in sync when custom modal opens or props change
   useEffect(() => {

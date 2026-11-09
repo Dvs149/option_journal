@@ -26,6 +26,7 @@ import { useToast } from '../../context/ToastContext';
 import { useFilter } from '../../context/FilterContext';
 import { useNavigate } from 'react-router-dom';
 import { formatDate } from '../../utils/formatters';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import api from '../../api/client';
 
 export default function BulkImportModal({ isOpen, onClose, onImportSuccess }) {
@@ -46,6 +47,9 @@ export default function BulkImportModal({ isOpen, onClose, onImportSuccess }) {
   const [importResult, setImportResult] = useState(null);
 
   const fileInputRef = useRef(null);
+
+  // Close modal on Escape
+  useEscapeKey(onClose, isOpen);
 
   // Always reset to a brand new, clean popup whenever the modal is opened
   useEffect(() => {
@@ -238,8 +242,14 @@ export default function BulkImportModal({ isOpen, onClose, onImportSuccess }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl max-w-6xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden text-slate-100 light:text-slate-900">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/80 backdrop-blur-sm animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl max-w-6xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden text-slate-100 light:text-slate-900"
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Modal Top Header */}
         <div className="px-6 py-4 border-b border-[#1e293b] light:border-slate-200 flex items-center justify-between shrink-0 bg-[#0e1626]/80 light:bg-slate-50/80">

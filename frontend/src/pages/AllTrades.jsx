@@ -53,6 +53,7 @@ import { useFilter } from '../context/FilterContext';
 import { useBrokerage } from '../context/BrokerageContext';
 import { useDropdown } from '../context/DropdownContext';
 import { useTheme } from '../context/ThemeContext';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import BulkImportModal from '../components/trades/BulkImportModal';
 import ImageOrderImportModal from '../components/trades/ImageOrderImportModal';
 import ExportModal from '../components/trades/ExportModal';
@@ -1112,6 +1113,24 @@ export default function AllTrades() {
       closeLightbox();
     }
   };
+
+  // Escape key handlers for popups and drawers in AllTrades
+  useEscapeKey(closeLightbox, lightboxState.isOpen);
+  useEscapeKey(() => setTradeToDelete(null), !!tradeToDelete);
+  useEscapeKey(() => setShowBulkDeleteModal(false), showBulkDeleteModal);
+  useEscapeKey(() => setShowEditModal(false), showEditModal);
+  useEscapeKey(() => setShowDatePicker(false), showDatePicker);
+  useEscapeKey(() => setShowExportMenu(false), showExportMenu);
+  useEscapeKey(
+    () => setSelectedTrade(null),
+    !!selectedTrade &&
+      !partialExitTrade &&
+      !editingOrderData &&
+      !showEditModal &&
+      !tradeToDelete &&
+      !showBulkDeleteModal &&
+      !lightboxState.isOpen
+  );
 
   const handleEditAddFiles = (e) => {
     const files = Array.from(e.target.files || []);
@@ -3355,8 +3374,14 @@ export default function AllTrades() {
 
       {/* Delete Confirmation Modal */}
       {tradeToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setTradeToDelete(null)}
+        >
+          <div
+            className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-3 text-rose-400">
               <div className="p-2 rounded-2xl bg-rose-500/10">
                 <AlertTriangle className="w-6 h-6" />
@@ -3394,8 +3419,14 @@ export default function AllTrades() {
 
       {/* Bulk Delete Confirmation Modal */}
       {showBulkDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn"
+          onClick={() => !deletingBulk && setShowBulkDeleteModal(false)}
+        >
+          <div
+            className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-3 text-rose-400">
               <div className="p-2 rounded-2xl bg-rose-500/10">
                 <AlertTriangle className="w-6 h-6" />
@@ -3510,8 +3541,14 @@ export default function AllTrades() {
 
       {/* Edit Trade Modal - Comprehensive with all tabs */}
       {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 md:p-6 max-w-3xl w-full shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fadeIn"
+          onClick={() => setShowEditModal(false)}
+        >
+          <div
+            className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-5 md:p-6 max-w-3xl w-full shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-[#1e293b] pb-3">
               <div>

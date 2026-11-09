@@ -20,6 +20,7 @@ import { useDropdown } from '../../context/DropdownContext';
 import { useTheme } from '../../context/ThemeContext';
 import { formatINR } from '../../utils/formatters';
 import { getIndexAtmStrike, getIndexStrikeStep } from '../../utils/marketData';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
 import OptionChainModal from './OptionChainModal';
 
 const getLegPrices = (trade) => {
@@ -85,6 +86,9 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
   const [deletedScreenshotIds, setDeletedScreenshotIds] = useState([]);
   const [stagedNewFiles, setStagedNewFiles] = useState([]);
   const [showOptionChainModal, setShowOptionChainModal] = useState(false);
+
+  // Close modal on Escape key press
+  useEscapeKey(onClose, isOpen && !showOptionChainModal);
   const fileInputRef = useRef(null);
 
   const blockNegativeKeys = (e) => {
@@ -559,8 +563,14 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
   if (!isOpen || !trade) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-black/75 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4 bg-black/75 backdrop-blur-sm animate-fadeIn"
+      onClick={onClose}
+    >
+      <div
+        className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 md:p-5 border-b border-[#1e293b] light:border-slate-200 bg-[#0e1626] light:bg-slate-50">
           <div>

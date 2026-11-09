@@ -41,6 +41,7 @@ import { formatINR, formatDate } from '../utils/formatters';
 import { useFilter } from '../context/FilterContext';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
+import { useEscapeKey } from '../hooks/useEscapeKey';
 import EditTradeModal from '../components/trades/EditTradeModal';
 
 const resolveScreenshot = (tradeOrUrl) => {
@@ -167,6 +168,14 @@ export default function TradingJournal() {
   const [pagination, setPagination] = useState({ current_page: 1, last_page: 1, total: 0, from: 0, to: 0 });
   const [summaryStats, setSummaryStats] = useState(null);
   const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  // Close modals and drawer on Escape
+  useEscapeKey(() => setLightboxImage(null), !!lightboxImage);
+  useEscapeKey(() => setEntryToDelete(null), !!entryToDelete);
+  useEscapeKey(
+    () => setSelectedEntry(null),
+    !!selectedEntry && !entryToDelete && !entryToEdit && !lightboxImage
+  );
 
   const tradeScreenshots = useMemo(() => {
     return selectedEntry?.raw ? getTradeScreenshots(selectedEntry.raw) : [];
@@ -1481,8 +1490,14 @@ export default function TradingJournal() {
 
       {/* Delete Entry Confirmation Modal */}
       {entryToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn"
+          onClick={() => !isDeletingEntry && setEntryToDelete(null)}
+        >
+          <div
+            className="bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center gap-3 text-rose-400">
               <div className="p-2 rounded-2xl bg-rose-500/10">
                 <AlertTriangle className="w-6 h-6" />
