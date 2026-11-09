@@ -143,6 +143,32 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
     }));
   };
 
+  const handleEditQuantityKeyDown = (e) => {
+    blockNegativeKeys(e);
+    const ls = getLotSize(editForm.index_name || 'NIFTY') || 50;
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const current = parseInt(editForm.quantity, 10) || 0;
+      const nextLots = Math.floor(current / ls) + 1;
+      const nextQty = nextLots * ls;
+      setEditForm((prev) => ({
+        ...prev,
+        quantity: nextQty.toString(),
+        lots: nextLots.toString(),
+      }));
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const current = parseInt(editForm.quantity, 10) || 0;
+      const prevLots = Math.max(1, Math.ceil(current / ls) - 1);
+      const prevQty = prevLots * ls;
+      setEditForm((prev) => ({
+        ...prev,
+        quantity: prevQty.toString(),
+        lots: prevLots.toString(),
+      }));
+    }
+  };
+
   const handleSelectOptionFromChain = (opt) => {
     if (!opt) return;
     const newLotSize = getLotSize(opt.index_name) || opt.lot_size || 50;
@@ -999,11 +1025,12 @@ export default function EditTradeModal({ trade, isOpen, onClose, onSaved }) {
                   <label className="block text-slate-400 mb-1 font-medium">Quantity (Shares)</label>
                   <input
                     type="number"
-                    min="1"
-                    placeholder="50"
+                    step={getLotSize(editForm.index_name || 'NIFTY') || 50}
+                    min={getLotSize(editForm.index_name || 'NIFTY') || 50}
+                    placeholder={`e.g. ${getLotSize(editForm.index_name || 'NIFTY') || 50}`}
                     value={editForm.quantity || ''}
                     onChange={(e) => handleEditQuantityChange(e.target.value)}
-                    onKeyDown={blockNegativeKeys}
+                    onKeyDown={handleEditQuantityKeyDown}
                     className="w-full px-3 py-2 rounded-xl bg-[#0e1626] border border-[#1e293b] text-white font-mono-numbers focus:outline-none focus:border-blue-500"
                   />
                 </div>

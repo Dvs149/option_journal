@@ -40,7 +40,12 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
 
   const lotSize = useMemo(() => {
     if (!trade) return 50;
-    return getLotSize(trade.index_name) || 50;
+    const fromContext = getLotSize(trade.index_name);
+    if (fromContext && fromContext > 0) return fromContext;
+    if (trade.lots > 0 && trade.quantity > 0) {
+      return Math.max(1, Math.round(trade.quantity / trade.lots));
+    }
+    return 50;
   }, [trade, getLotSize]);
 
   const [exitQty, setExitQty] = useState('');
@@ -58,6 +63,23 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
   const blockNegativeKeys = (e) => {
     if (e.key === '-' || e.key === 'Minus' || e.key === 'e' || e.key === 'E' || e.key === '+') {
       e.preventDefault();
+    }
+  };
+
+  const handleQtyKeyDown = (e) => {
+    blockNegativeKeys(e);
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const current = parseInt(exitQty, 10) || 0;
+      const nextLots = Math.floor(current / lotSize) + 1;
+      const nextQty = Math.min(openQty, nextLots * lotSize);
+      setExitQty(nextQty.toString());
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const current = parseInt(exitQty, 10) || 0;
+      const prevLots = Math.ceil(current / lotSize) - 1;
+      const prevQty = Math.max(lotSize, prevLots * lotSize);
+      setExitQty(prevQty.toString());
     }
   };
 
@@ -80,10 +102,16 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
     }
   }, [isOpen, trade, openQty]);
 
-  // Quick percentage selection
+  // Quick percentage selection - rounded to lot size multiples
   const handleQuickPercent = (pct) => {
     if (!openQty) return;
-    const calcQty = Math.max(1, Math.round((openQty * pct) / 100));
+    if (pct === 100) {
+      setExitQty(openQty.toString());
+      return;
+    }
+    const targetRaw = (openQty * pct) / 100;
+    const roundedLots = Math.max(1, Math.round(targetRaw / lotSize));
+    const calcQty = Math.min(openQty, roundedLots * lotSize);
     setExitQty(calcQty.toString());
   };
 
@@ -255,13 +283,14 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
             <div className="flex items-center gap-2">
               <input
                 type="number"
-                min="1"
+                min={lotSize}
+                step={lotSize}
                 max={openQty}
                 required
                 value={exitQty}
                 onChange={(e) => setExitQty(e.target.value.replace(/[^0-9]/g, ''))}
-                onKeyDown={blockNegativeKeys}
-                placeholder="Enter quantity to sell"
+                onKeyDown={handleQtyKeyDown}
+                placeholder={`Enter quantity (Lot: ${lotSize})`}
                 className="w-full px-3.5 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-white light:text-slate-900 text-sm font-mono-numbers focus:outline-none focus:border-blue-500"
               />
               <span className="px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs text-slate-400 font-mono-numbers whitespace-nowrap">

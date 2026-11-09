@@ -415,6 +415,31 @@ export default function AddTrade() {
     }));
   };
 
+  const handleQuantityKeyDown = (e) => {
+    blockNegativeKeys(e);
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const current = parseInt(form.quantity, 10) || 0;
+      const nextLots = Math.floor(current / currentLotSize) + 1;
+      const nextQty = nextLots * currentLotSize;
+      setForm((prev) => ({
+        ...prev,
+        quantity: nextQty.toString(),
+        lots: nextLots.toString(),
+      }));
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const current = parseInt(form.quantity, 10) || 0;
+      const prevLots = Math.max(1, Math.ceil(current / currentLotSize) - 1);
+      const prevQty = prevLots * currentLotSize;
+      setForm((prev) => ({
+        ...prev,
+        quantity: prevQty.toString(),
+        lots: prevLots.toString(),
+      }));
+    }
+  };
+
   const nonNegativeNumericFields = [
     'strike_price',
     'entry_premium',
@@ -1396,12 +1421,12 @@ export default function AddTrade() {
                   <input
                     type="number"
                     step={currentLotSize}
-                    min="1"
-                    placeholder="50"
+                    min={currentLotSize}
+                    placeholder={`e.g. ${currentLotSize}`}
                     name="quantity"
                     value={form.quantity}
                     onChange={handleQuantityChange}
-                    onKeyDown={blockNegativeKeys}
+                    onKeyDown={handleQuantityKeyDown}
                     className="w-full px-3 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900 font-mono-numbers focus:outline-none focus:border-blue-500 transition-colors"
                   />
                 </div>

@@ -205,6 +205,24 @@ export default function ImageOrderImportModal({
     }
   };
 
+  const handleOrderQuantityKeyDown = (ord, e) => {
+    blockNegativeKeys(e);
+    const ls = getLotSize(ord.index_name) || 50;
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const current = parseInt(ord.quantity, 10) || 0;
+      const nextLots = Math.floor(current / ls) + 1;
+      const nextQty = nextLots * ls;
+      handleUpdateOrderField(ord.id, 'quantity', nextQty);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const current = parseInt(ord.quantity, 10) || 0;
+      const prevLots = Math.max(1, Math.ceil(current / ls) - 1);
+      const prevQty = prevLots * ls;
+      handleUpdateOrderField(ord.id, 'quantity', prevQty);
+    }
+  };
+
   // Edit order field inline
   const handleUpdateOrderField = (id, field, value) => {
     setDetectedOrders((prev) =>
@@ -746,10 +764,11 @@ export default function ImageOrderImportModal({
                             <div className="flex items-center gap-1">
                               <input
                                 type="number"
-                                min="1"
+                                min={getLotSize(ord.index_name) || 50}
+                                step={getLotSize(ord.index_name) || 50}
                                 value={ord.quantity}
                                 onChange={(e) => handleUpdateOrderField(ord.id, 'quantity', e.target.value)}
-                                onKeyDown={blockNegativeKeys}
+                                onKeyDown={(e) => handleOrderQuantityKeyDown(ord, e)}
                                 className="w-16 px-2 py-1 rounded bg-[#0b101b] light:bg-slate-100 border border-[#1e293b] text-white light:text-slate-900 font-mono-numbers text-xs"
                               />
                               <span className="text-[10px] text-slate-400 font-semibold">

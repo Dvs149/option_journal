@@ -126,7 +126,7 @@
       "source_file": "",
       "source_location": "",
       "id": "observableobject",
-      "community": 127,
+      "community": 163,
       "norm_label": "observableobject"
     },
     {
@@ -1494,7 +1494,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Core/Storage/PreferencesManager.swift",
       "source_location": "L28",
       "id": "storage_preferencesmanager_preferencesmanager",
-      "community": 127,
+      "community": 163,
       "norm_label": "preferencesmanager"
     },
     {
@@ -1503,7 +1503,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Core/Storage/PreferencesManager.swift",
       "source_location": "L35",
       "id": "storage_preferencesmanager_preferencesmanager_init",
-      "community": 127,
+      "community": 163,
       "norm_label": ".init()"
     },
     {
@@ -6748,7 +6748,7 @@
       "label": "EditOrderModal()",
       "file_type": "code",
       "source_file": "frontend/src/components/trades/EditOrderModal.jsx",
-      "source_location": "L25",
+      "source_location": "L26",
       "id": "trades_editordermodal_editordermodal",
       "community": 18,
       "norm_label": "editordermodal()"
@@ -6840,7 +6840,7 @@
       "source_file": "frontend/src/components/common/ErrorBoundary.jsx",
       "source_location": "L4",
       "id": "common_errorboundary_errorboundary",
-      "community": 113,
+      "community": 18,
       "norm_label": "errorboundary"
     },
     {
@@ -6849,7 +6849,7 @@
       "source_file": "frontend/src/components/common/ErrorBoundary.jsx",
       "source_location": "L5",
       "id": "common_errorboundary_errorboundary_constructor",
-      "community": 113,
+      "community": 18,
       "norm_label": ".constructor()"
     },
     {
@@ -6858,7 +6858,7 @@
       "source_file": "frontend/src/components/common/ErrorBoundary.jsx",
       "source_location": "L10",
       "id": "common_errorboundary_errorboundary_getderivedstatefromerror",
-      "community": 113,
+      "community": 18,
       "norm_label": ".getderivedstatefromerror()"
     },
     {
@@ -6867,7 +6867,7 @@
       "source_file": "frontend/src/components/common/ErrorBoundary.jsx",
       "source_location": "L14",
       "id": "common_errorboundary_errorboundary_componentdidcatch",
-      "community": 113,
+      "community": 18,
       "norm_label": ".componentdidcatch()"
     },
     {
@@ -6876,7 +6876,7 @@
       "source_file": "frontend/src/components/common/ErrorBoundary.jsx",
       "source_location": "L18",
       "id": "common_errorboundary_errorboundary_render",
-      "community": 113,
+      "community": 18,
       "norm_label": ".render()"
     },
     {
@@ -43263,6 +43263,17 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/trades/EditOrderModal.jsx",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "frontend_src_components_trades_editordermodal_jsx",
+      "target": "frontend_src_context_lotsizecontext_jsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "frontend/src/pages/CapitalManagement.jsx",
       "source_location": "L40",
       "weight": 1.0,
@@ -43362,6 +43373,17 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/trades/EditOrderModal.jsx",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "frontend_src_components_trades_editordermodal_jsx",
+      "target": "context_lotsizecontext_uselotsizes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "frontend/src/pages/CapitalManagement.jsx",
       "source_location": "L40",
       "weight": 1.0,
@@ -43433,6 +43455,17 @@
       "source_location": "L67",
       "weight": 1.0,
       "source": "trades_edittrademodal_edittrademodal",
+      "target": "context_lotsizecontext_uselotsizes"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "frontend/src/components/trades/EditOrderModal.jsx",
+      "source_location": "L30",
+      "weight": 1.0,
+      "source": "trades_editordermodal_editordermodal",
       "target": "context_lotsizecontext_uselotsizes"
     },
     {
@@ -77076,5 +77109,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "6d7254154dd09c8b99e647cdc72e7b1655b92ebe"
+  "built_at_commit": "8a51a8320f42632c14c76e7c80fd309f187e4ab1"
 }

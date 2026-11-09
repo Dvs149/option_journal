@@ -17,6 +17,7 @@ import {
 import api from '../../api/client';
 import { formatINR } from '../../utils/formatters';
 import { useBrokerage } from '../../context/BrokerageContext';
+import { useLotSizes } from '../../context/LotSizeContext';
 import { useToast } from '../../context/ToastContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
@@ -26,6 +27,17 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
   const { isKite } = useTheme();
   const { showToast } = useToast();
   const { rates } = useBrokerage();
+  const { getLotSize } = useLotSizes();
+
+  const lotSize = useMemo(() => {
+    if (!trade) return 50;
+    const fromContext = getLotSize(trade.index_name);
+    if (fromContext && fromContext > 0) return fromContext;
+    if (trade.lots > 0 && trade.quantity > 0) {
+      return Math.max(1, Math.round(trade.quantity / trade.lots));
+    }
+    return 50;
+  }, [trade, getLotSize]);
 
   const isSell = order?.order_type === 'SELL';
 
@@ -143,6 +155,24 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
   const blockNegativeKeys = (e) => {
     if (e.key === '-' || e.key === 'Minus' || e.key === 'e' || e.key === 'E' || e.key === '+') {
       e.preventDefault();
+    }
+  };
+
+  const handleQuantityKeyDown = (e) => {
+    blockNegativeKeys(e);
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const current = parseInt(quantity, 10) || 0;
+      const nextLots = Math.floor(current / lotSize) + 1;
+      const maxVal = isSell ? maxPermissibleQty : 999999;
+      const nextQty = Math.min(maxVal, nextLots * lotSize);
+      setQuantity(nextQty.toString());
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const current = parseInt(quantity, 10) || 0;
+      const prevLots = Math.ceil(current / lotSize) - 1;
+      const prevQty = Math.max(lotSize, prevLots * lotSize);
+      setQuantity(prevQty.toString());
     }
   };
 
@@ -292,17 +322,23 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
               <label className="block text-xs font-medium text-slate-300 light:text-slate-700 mb-1.5">
                 Quantity <span className="text-rose-400">*</span>
               </label>
-              <input
-                type="number"
-                min="1"
-                max={isSell ? maxPermissibleQty : undefined}
-                value={quantity}
-                onChange={(e) => setQuantity(e.target.value.replace(/[^0-9]/g, ''))}
-                onKeyDown={blockNegativeKeys}
-                placeholder="e.g. 50"
-                required
-                className="w-full px-3 py-2 text-sm rounded-xl bg-[#141e33] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono"
-              />
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number"
+                  min={lotSize}
+                  step={lotSize}
+                  max={isSell ? maxPermissibleQty : undefined}
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value.replace(/[^0-9]/g, ''))}
+                  onKeyDown={handleQuantityKeyDown}
+                  placeholder={`e.g. ${lotSize}`}
+                  required
+                  className="w-full px-3 py-2 text-sm rounded-xl bg-[#141e33] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 placeholder-slate-500 focus:outline-none focus:border-blue-500 font-mono"
+                />
+                <span className="px-2 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-xs text-slate-400 font-mono whitespace-nowrap">
+                  {Math.max(1, Math.round(parsedQty / lotSize))}L
+                </span>
+              </div>
               {isSell && (
                 <p className="text-[11px] text-slate-400 mt-1">
                   Max allowed: <span className="text-amber-400 font-mono font-medium">{maxPermissibleQty} Qty</span>

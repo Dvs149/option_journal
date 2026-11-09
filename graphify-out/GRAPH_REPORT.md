@@ -1,16 +1,16 @@
 # Graph Report - option_journal  (2026-11-09)
 
 ## Corpus Check
-- 223 files · ~234,948 words
+- 223 files · ~235,609 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2509 nodes · 4502 edges · 214 communities (144 shown, 70 thin omitted)
+- 2509 nodes · 4505 edges · 213 communities (144 shown, 69 thin omitted)
 - Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 203 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6d725415`
+- Built from commit: `8a51a832`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -119,7 +119,6 @@
 - [[_COMMUNITY_Community 110|Community 110]]
 - [[_COMMUNITY_Community 111|Community 111]]
 - [[_COMMUNITY_Community 112|Community 112]]
-- [[_COMMUNITY_Community 113|Community 113]]
 - [[_COMMUNITY_Community 114|Community 114]]
 - [[_COMMUNITY_Community 115|Community 115]]
 - [[_COMMUNITY_Community 116|Community 116]]
@@ -210,7 +209,7 @@
 - `3.3 Controller Inventory` --references--> `CapitalController`  [INFERRED]
   ARCHITECTURE.md → backend/app/Http/Controllers/Api/CapitalController.php
 
-## Communities (214 total, 70 thin omitted)
+## Communities (213 total, 69 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.07
@@ -278,7 +277,7 @@ Nodes (5): CapitalController, LotSizeController, PineScriptController, PineScrip
 
 ### Community 18 - "Community 18"
 Cohesion: 0.05
-Nodes (92): api, token, CompactMetricCard(), MainStatsCard(), AuthContext, AuthProvider(), useAuth(), BrokerageContext (+84 more)
+Nodes (93): api, token, ErrorBoundary, CompactMetricCard(), MainStatsCard(), AuthContext, AuthProvider(), useAuth() (+85 more)
 
 ### Community 19 - "Community 19"
 Cohesion: 0.13
@@ -532,10 +531,6 @@ Nodes (5): Priority 0: Stability, Quality Control & Security (Immediate), Priori
 Cohesion: 0.40
 Nodes (4): colors, info, author, version
 
-### Community 127 - "Community 127"
-Cohesion: 0.32
-Nodes (3): ObservableObject, PreferencesManager, AnalyticsReportsViewModel
-
 ### Community 130 - "Community 130"
 Cohesion: 0.29
 Nodes (7): [1.6.0] - 2026-10-31, [1.7.0] - 2026-10-31, Added, Added, Added, Added, Added
@@ -555,6 +550,10 @@ Nodes (8): 1. Core Guiding Principles, 4. Database Safety Rules, 5. Security Che
 ### Community 146 - "Community 146"
 Cohesion: 0.22
 Nodes (4): CreatePineScriptRequest, PineScript, PineScriptResponse, PineScriptStats
+
+### Community 163 - "Community 163"
+Cohesion: 0.32
+Nodes (3): ObservableObject, PreferencesManager, CapitalManagementViewModel
 
 ### Community 165 - "Community 165"
 Cohesion: 0.19
@@ -615,7 +614,7 @@ Nodes (4): chat.tools.terminal.autoApprove, /^git add \\. && git commit -m \"Upd
 ## Knowledge Gaps
 - **492 isolated node(s):** `get`, `post`, `put`, `delete`, `patch` (+487 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **70 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **69 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
