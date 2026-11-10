@@ -41,23 +41,29 @@
 
 ### 2.2 Trade Logging Engine (`AddTrade.jsx`)
 - Supports single-leg buying/selling (`CE` or `PE`) and multi-leg simultaneous positions (`Both` / Straddle / Strangle).
-- Automatic lot sizing: changing index immediately recalibrates contract quantities.
+- Automatic lot sizing: changing index immediately recalibrates contract quantities; up/down stepper arrows increment/decrement by the exact lot size of the active index (e.g. 65 for NIFTY, 15 for BANKNIFTY).
 - Real-time tax preview: dynamically queries `/api/trades/estimate-charges` or computes client-side charges before trade submission.
 - Multi-screenshot attachment with drag-and-drop preview.
 - Customizable strategy, trading type (Intraday, BTST, Positional), and execution notes.
+- Position modes: support for closed round-trip trades and open positions with partial scaling and exits.
 
 ### 2.3 All Trades Explorer (`AllTrades.jsx`)
-- Paginated table supporting 10, 20, 50, or 100 rows per page.
+- Paginated table supporting 10, 20, 50, or 100 rows per page with status filters (`All`, `Open Positions`, `Closed Trades`).
+- Multi-order execution breakdown drawer: itemizes all BUY and SELL executions, prices, turnover, individual charges, and realized P&L per order.
 - Search filter matching index, strategy, tags, notes, and trade setup.
 - Interactive Date Range filter popover:
-  - Preset shortcuts: *Today, Yesterday, This Week, This Month, Last Month, This Year, All Time*.
+  - Preset shortcuts: *Today, Yesterday, Tomorrow/Next Working Day, This Week, This Month, Last Month, This Year, All Time*.
   - Custom two-month date range calendar picker with start and end date selection.
-- Multi-row bulk actions: multi-checkbox selection with one-click bulk delete.
+- Multi-row bulk actions across pages:
+  - Checkbox selection with "Select all on page" and "Select all across all pages".
+  - Real-time aggregation pills displaying exact **Total Premium**, **Total Investment**, and **Net P&L** across all selected records.
+  - One-click bulk delete with confirmation modal.
 - Interactive Side Drawer: 
   - Details Tab: comprehensive contract specifications.
   - Charges Tab: breakdown of STT, exchange charges, GST, SEBI fee, stamp duty, brokerage.
   - Journal Tab: quick read/write reflection notes.
   - Sleek top-right action icons: Edit, Delete, Close (`✕`).
+- Universal Escape (`ESC`) key dismissal for all modals and flyouts.
 
 ### 2.4 Trading Journal & Reflection Drawer (`TradingJournal.jsx`)
 - Dedicated psychological and qualitative analysis tool.
@@ -114,4 +120,14 @@
   - **P&L Metrics**: Crisp NSE/BSE Green (`#4caf50`) for profits and Red (`#df514c`) for losses.
 - Selectable in **Settings → Appearance** with dedicated live preview thumbnail cards for **Light**, **Dark (Midnight)**, **Zerodha Kite**, and **System**.
 - Theme persistence via `localStorage` (`tj_theme`) and responsive mobile drawer integration.
+
+### 2.10 Trading Calendar & Heatmap (`TradingCalendar.jsx`)
+- Interactive monthly financial heatmap grid (Mon–Sun) with daily P&L badges, trade counts, and month navigation.
+- **Realized P&L Attribution by Square-Off / Execution Date**:
+  - Automatically attributes closed multi-day trades (BTST, overnight, positional) to their actual exit / square-off date.
+  - In partial order scaling/exits, attributes realized P&L and charges to the latest executed order date.
+- **Itemized Daily Trades Inspection**:
+  - Displays all executions on the selected calendar date with Status badges (`CLOSED`, `PARTIAL`, `OPEN`).
+  - Displays multi-day `Entry: <Date>` indicator when a trade was taken on an earlier date and squared off on the selected date.
+- Synchronized monthly KPIs, bar charts, cumulative equity trend line, and weekday performance distribution.
 

@@ -944,6 +944,7 @@ export default function TradingCalendar() {
                     <th className="py-2.5 px-3">Time</th>
                     <th className="py-2.5 px-3">Index</th>
                     <th className="py-2.5 px-3">Type</th>
+                    <th className="py-2.5 px-2">Status</th>
                     <th className="py-2.5 px-2">CE/PE</th>
                     <th className="py-2.5 px-3">Strike</th>
                     <th className="py-2.5 px-2 text-right">Lots</th>
@@ -966,7 +967,25 @@ export default function TradingCalendar() {
                             {t.index_name}
                           </td>
                           <td className="py-2.5 px-3 text-slate-400 text-[11px]">
-                            {t.trading_type || 'Intraday'}
+                            <div>{t.trading_type || 'Intraday'}</div>
+                            {t.trade_date && t.effective_date && t.trade_date !== t.effective_date && (
+                              <div className="text-[10px] text-amber-400/80 light:text-amber-600 font-mono-numbers">
+                                Entry: {formatDate(t.trade_date)}
+                              </div>
+                            )}
+                          </td>
+                          <td className="py-2.5 px-2">
+                            <span
+                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                t.status === 'CLOSED'
+                                  ? 'bg-slate-700/40 text-slate-300 border border-slate-600/40'
+                                  : t.status === 'PARTIALLY_CLOSED'
+                                  ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                                  : 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+                              }`}
+                            >
+                              {t.status === 'PARTIALLY_CLOSED' ? 'PARTIAL' : (t.status || 'CLOSED')}
+                            </span>
                           </td>
                           <td className="py-2.5 px-2">
                             <span
@@ -1026,7 +1045,7 @@ export default function TradingCalendar() {
                     })
                   ) : (
                     <tr>
-                      <td colSpan="10" className="py-8 text-center text-slate-400">
+                      <td colSpan="11" className="py-8 text-center text-slate-400">
                         No trade activity recorded on this day.
                       </td>
                     </tr>

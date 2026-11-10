@@ -32,6 +32,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.13.0] - 2026-11-10
+
+### Added & Enhanced
+- **Trading Calendar Realized P&L Attribution by Square-Off & Execution Date**:
+  - Resolved calendar P&L misplacement where trades taken on the 1st and squared off on the 2nd (e.g., BTST, overnight, positional) previously showed P&L on the entry date.
+  - Implemented dynamic `effective_date` and `effective_time` accessors on `Trade.php`:
+    - For multi-order or partial-order executions, resolves to the date and time of the **last executed order** (e.g. exit sell order or latest partial exit).
+    - For closed trades without child orders, uses `exit_date`.
+    - For open positions with only initial buys, defaults to `trade_date`.
+  - Updated `TradingAnalyticsService::getTradingCalendar` to query candidate trades across `trade_date`, `exit_date`, and `trade_orders.order_date`, grouping cells by `effective_date`.
+  - Updated `TradingCalendar.jsx` with a `Status` badge (`CLOSED`, `PARTIAL`, `OPEN`) and multi-day `Entry: <Date>` indicator when entry date precedes square-off date.
+- **Bulk Trades Selection & Cross-Page Totals Aggregation**:
+  - Updated `handleSelectAllAcrossPages` in `AllTrades.jsx` to pass active date filters (`filter`, `from_date`, `to_date`, `status`, `search`).
+  - Updated backend `TradeController::allIds` to eager-load `orders`, accurately calculating `total_investment` (sum of buy orders), `total_premium`, and `total_net_pnl`.
+  - Returned full trade objects in `trades` array to populate `knownTradesMap`, ensuring continuous calculation accuracy if individual rows are unselected across pages.
+  - Added dedicated badges for **TOTAL PREM** and **TOTAL INV** in both top and floating bulk action bars.
+- **Index Lot Size Stepper Increment**:
+  - Configured quantity input steppers (up/down arrows) to increment and decrement by the exact lot size of the selected index (e.g. 65 for NIFTY, 15 for BANKNIFTY) across `AddTrade.jsx`, `EditTradeModal.jsx`, and partial exit dialogs.
+- **Order Editing & Position Quantity Bidirectional Sync**:
+  - Synchronized parent trade modifications with executed child orders.
+  - Updating buy order quantities automatically recalculates trade lots, open quantities, and dynamic position status (`OPEN`, `PARTIALLY_CLOSED`, `CLOSED`).
+- **Global Escape Key Modal & Popup Dismissal**:
+  - Implemented unified `useEscapeKey` hook attached across all application modals, dialogs, drawers, and confirmation alerts for instant keyboard dismissal.
+- **Quick Date Filter Next Working Day Shortcut**:
+  - Added "Tomorrow / Next Working Day" quick filter option in date pickers, automatically advancing Friday selections to Monday.
+- **UI Navigation & Layout Refinement**:
+  - Relocated utility action options to the right-hand side of the navigation bar.
+  - Cleaned up menubar by removing redundant Preview navigation tabs.
+
+---
+
 ## [1.12.2] - 2026-11-01
 
 ### Fixed & Optimized

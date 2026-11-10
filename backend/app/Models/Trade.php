@@ -86,7 +86,51 @@ class Trade extends Model
         ];
     }
 
-    protected $appends = ['screenshot_url', 'screenshots_list'];
+    protected $appends = ['screenshot_url', 'screenshots_list', 'effective_date', 'effective_time'];
+
+    public function getEffectiveDateAttribute(): string
+    {
+        $orders = $this->relationLoaded('orders') ? $this->orders : $this->orders()->get();
+        if ($orders && $orders->isNotEmpty()) {
+            $latestOrder = $orders
+                ->sortByDesc(fn($o) => ($o->order_date ? ($o->order_date instanceof \DateTimeInterface ? $o->order_date->format('Y-m-d') : (string) $o->order_date) : '') . ' ' . ($o->order_time ?? '00:00:00') . ' ' . str_pad((string)$o->id, 10, '0', STR_PAD_LEFT))
+                ->first();
+            if ($latestOrder && $latestOrder->order_date) {
+                return $latestOrder->order_date instanceof \DateTimeInterface
+                    ? $latestOrder->order_date->format('Y-m-d')
+                    : (string) $latestOrder->order_date;
+            }
+        }
+
+        if ($this->status === 'CLOSED' && $this->exit_date) {
+            return $this->exit_date instanceof \DateTimeInterface
+                ? $this->exit_date->format('Y-m-d')
+                : (string) $this->exit_date;
+        }
+
+        if ($this->trade_date) {
+            return $this->trade_date instanceof \DateTimeInterface
+                ? $this->trade_date->format('Y-m-d')
+                : (string) $this->trade_date;
+        }
+
+        return now()->format('Y-m-d');
+    }
+
+    public function getEffectiveTimeAttribute(): string
+    {
+        $orders = $this->relationLoaded('orders') ? $this->orders : $this->orders()->get();
+        if ($orders && $orders->isNotEmpty()) {
+            $latestOrder = $orders
+                ->sortByDesc(fn($o) => ($o->order_date ? ($o->order_date instanceof \DateTimeInterface ? $o->order_date->format('Y-m-d') : (string) $o->order_date) : '') . ' ' . ($o->order_time ?? '00:00:00') . ' ' . str_pad((string)$o->id, 10, '0', STR_PAD_LEFT))
+                ->first();
+            if ($latestOrder && $latestOrder->order_time) {
+                return substr($latestOrder->order_time, 0, 5);
+            }
+        }
+
+        return $this->created_at ? $this->created_at->format('H:i') : '09:30';
+    }
 
     public function getScreenshotUrlAttribute(): ?string
     {

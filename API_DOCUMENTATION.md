@@ -170,8 +170,34 @@ Content-Type: application/json
 - **`DELETE /trades/{id}`**
 - **Response (200 OK)**: Soft-deletes trade record.
 
-### 4.6 Bulk Operations
-- **`POST /trades/bulk-delete`**: `{ "ids": [12, 13, 14] }`
+### 4.6 All Filtered IDs & Cross-Page Totals
+- **`GET /trades/all-ids`**
+- **Description**: Returns all trade IDs and accurate financial sums matching the current active filters across all pagination pages.
+- **Query Parameters**:
+  - `filter`: Preset range (`today`, `yesterday`, `this_week`, `this_month`, `last_month`, `this_year`, `all`, `custom`)
+  - `from_date`: `YYYY-MM-DD`
+  - `to_date`: `YYYY-MM-DD`
+  - `status`: `ALL`, `OPEN`, `CLOSED`, `PARTIALLY_CLOSED`, `OPEN_OR_PARTIAL`
+  - `index_name`, `trading_type`, `option_type`, `strategy_name`, `search`
+- **Response (200 OK)**:
+  ```json
+  {
+    "ids": [2981, 2982, 2983],
+    "count": 33,
+    "total_net_pnl": 128339.78,
+    "total_investment": 2983770.45,
+    "total_premium": 8413.68,
+    "trades": [ ... ]
+  }
+  ```
+
+### 4.7 Order Execution Operations (Partial Exits & Scaling)
+- **`POST /trades/{id}/orders`**: Adds an order (BUY/SELL) to an existing trade, recalculates average prices, open quantity, and sets status (`OPEN`, `PARTIALLY_CLOSED`, `CLOSED`).
+- **`PUT /trades/{id}/orders/{order_id}`**: Updates an executed order's quantity, price, or date/time and recalculates parent trade.
+- **`DELETE /trades/{id}/orders/{order_id}`**: Removes an execution order and updates parent trade state.
+
+### 4.8 Bulk Operations
+- **`POST /trades/bulk-delete`**: `{ "trade_ids": [12, 13, 14] }`
 - **`POST /trades/bulk-import`**: Uploads CSV file (Zerodha or standardized format).
 - **`POST /trades/estimate-charges`**: Dry-run calculation of charges without saving.
 - **`POST /trades/{id}/duplicate`**: Clones trade with current timestamp.
@@ -184,20 +210,60 @@ Content-Type: application/json
 
 ### 5.1 Calendar Overview
 - **`GET /calendar`**
-- **Query Parameters**: `year`, `month` (e.g. `year=2026&month=10`)
+- **Description**: Returns monthly calendar days with itemized trade records. Automatically attributes P&L to the square-off / exit date for multi-day trades (BTST / positional), and to the last executed order date for partial orders.
+- **Query Parameters**: `year`, `month` (e.g. `year=2026&month=11`)
 - **Response (200 OK)**:
   ```json
   {
     "year": 2026,
-    "month": 10,
-    "days": {
-      "2026-10-01": { "net_pnl": 5200.00, "trade_count": 3, "is_profit": true },
-      "2026-10-02": { "net_pnl": -1400.00, "trade_count": 1, "is_profit": false }
-    },
-    "monthly_summary": {
-      "net_pnl": 42000.00,
-      "winning_days": 14,
-      "losing_days": 4,
+    "month": 11,
+    "month_name": "November",
+    "total_net_pnl": 128218.52,
+    "total_trades": 35,
+    "winning_trades": 22,
+    "losing_trades": 13,
+    "trade_win_rate": 62.9,
+    "total_trading_days": 7,
+    "winning_days": 5,
+    "losing_days": 2,
+    "win_rate": 71.4,
+    "days": [
+      {
+        "date": "2026-11-02",
+        "day": 2,
+        "weekday": "Monday",
+        "net_pnl": 1410.54,
+        "gross_profit": 29404.38,
+        "gross_loss": 27993.84,
+        "total_charges": 628.94,
+        "trade_count": 10,
+        "status": "profit",
+        "trades": [
+          {
+            "id": 2981,
+            "time": "15:20",
+            "index_name": "NIFTY",
+            "trading_type": "BTST",
+            "status": "CLOSED",
+            "strategy_name": "Long Straddle",
+            "option_type": "Both",
+            "strike_price": 25000,
+            "lots": 1,
+            "quantity": 65,
+            "open_quantity": 0,
+            "entry_premium": 171.05,
+            "exit_premium": 216.11,
+            "net_pnl": 2157.31,
+            "trade_date": "2026-11-01",
+            "exit_date": "2026-11-02",
+            "effective_date": "2026-11-02"
+          }
+        ]
+      }
+    ],
+    "weekday_analytics": { ... }
+  }
+  ```
       "win_rate": 77.78
     }
   }

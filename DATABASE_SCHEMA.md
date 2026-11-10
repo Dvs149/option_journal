@@ -186,6 +186,11 @@ Core repository of executed option trades and full regulatory fee breakdowns.
 | `exit_premium` | DECIMAL(15,2) | Yes | NULL | Combined or single leg exit premium |
 | `quantity` | INT | Yes | NULL | Total executed contract quantity |
 | `lots` | INT | Yes | 1 | Number of lots traded |
+| `exit_date` | DATE | Yes | NULL | Date of final exit / square-off |
+| `status` | VARCHAR(20) | No | 'CLOSED' | Position status: `OPEN`, `PARTIALLY_CLOSED`, `CLOSED` |
+| `open_quantity` | INT | Yes | 0 | Remaining open contract quantity |
+| `avg_entry_price` | DECIMAL(15,2) | Yes | NULL | Weighted average buy / entry price |
+| `avg_exit_price` | DECIMAL(15,2) | Yes | NULL | Weighted average sell / exit price |
 | `gross_profit` | DECIMAL(15,2) | No | 0.00 | Gross profit before charges |
 | `gross_loss` | DECIMAL(15,2) | No | 0.00 | Gross loss before charges |
 | `brokerage` | DECIMAL(15,2) | No | 0.00 | Total broker execution fee |
@@ -232,7 +237,35 @@ Stores deep psychological reflections, post-trade reviews, and lessons learned.
 
 ---
 
-### 3.5 `trade_screenshots`
+### 3.5 `trade_orders`
+Stores individual order executions (BUY / SELL legs, partial fills, scaling in/out) for each trade.
+| Column | Type | Nullable | Default | Description |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | No | AUTO_INCREMENT | Primary Key |
+| `trade_id` | BIGINT UNSIGNED | No | - | Foreign Key -> `trades.id` (ON DELETE CASCADE) |
+| `user_id` | BIGINT UNSIGNED | No | - | Foreign Key -> `users.id` (ON DELETE CASCADE) |
+| `order_type` | VARCHAR(10) | No | - | Side: `BUY` or `SELL` |
+| `quantity` | INT | No | - | Contract quantity for this execution |
+| `lots` | INT | Yes | 1 | Lots count for this order |
+| `price` | DECIMAL(15,2) | No | - | Fill execution price per share |
+| `order_date` | DATE | No | - | Date of order execution |
+| `order_time` | VARCHAR(20) | Yes | NULL | Time of fill execution (e.g. `09:15`) |
+| `brokerage` | DECIMAL(15,2) | No | 0.00 | Brokerage for this order |
+| `stt` | DECIMAL(15,2) | No | 0.00 | STT for this order |
+| `exchange_charges` | DECIMAL(15,2) | No | 0.00 | Exchange turnover fee |
+| `gst` | DECIMAL(15,2) | No | 0.00 | 18% GST |
+| `sebi_charges` | DECIMAL(15,2) | No | 0.00 | SEBI regulatory fee |
+| `stamp_duty` | DECIMAL(15,2) | No | 0.00 | Stamp duty |
+| `other_charges` | DECIMAL(15,2) | No | 0.00 | Other miscellaneous charges |
+| `total_charges` | DECIMAL(15,2) | No | 0.00 | Sum of taxes and fees for this order |
+| `realized_pnl` | DECIMAL(15,2) | No | 0.00 | Realized P&L for this sell execution |
+| `notes` | TEXT | Yes | NULL | Execution notes (e.g. Partial Exit at T1) |
+| `created_at` | TIMESTAMP | Yes | NULL | Creation timestamp |
+| `updated_at` | TIMESTAMP | Yes | NULL | Last update timestamp |
+
+---
+
+### 3.6 `trade_screenshots`
 Stores multiple image attachments per trade record.
 | Column | Type | Nullable | Default | Description |
 |---|---|---|---|---|

@@ -48,7 +48,9 @@ The system addresses the core needs of active option traders:
 
 1. **Trade Logging & Execution**:
    - Single-leg (CE / PE) and Multi-leg (Both / Straddle / Strangle) trade recording.
-   - Strike price, expiry date, lots, and dynamic lot size auto-calculation.
+   - Position tracking: Open positions, partial exit scaling, and round-trip closed trades.
+   - Multi-order executions breakdown: itemizes all individual BUY/SELL orders with execution time, price, quantity, individual charges, and order-level realized P&L.
+   - Dynamic lot sizing with up/down stepper arrows incrementing by index lot size.
    - Real-time gross P&L and net P&L calculation after taxes and brokerage.
 2. **Indian Regulatory Charges Calculator**:
    - Brokerage: Flat ₹20 per executed order (or customizable per user).
@@ -59,7 +61,8 @@ The system addresses the core needs of active option traders:
    - Stamp Duty: 0.003% on buy-side option premium turnover.
 3. **Trading Calendar & Heatmap**:
    - Color-coded monthly view of winning days (green) and losing days (red).
-   - Daily trade volume count and net profit/loss aggregated per calendar day.
+   - Dynamic realized P&L attribution: places multi-day/BTST trades on their exit/square-off date, and partial orders on the latest order executed date.
+   - Daily trade volume count and net profit/loss aggregated per calendar day with itemized trades breakdown and multi-day entry indicators.
 4. **Risk Management & Guardrails**:
    - Daily maximum allowable loss and daily profit target tracking with live violation alerts.
    - Monthly drawdown monitoring.
