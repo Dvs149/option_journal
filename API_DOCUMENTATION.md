@@ -193,6 +193,8 @@ Content-Type: application/json
 
 ### 4.7 Order Execution Operations (Partial Exits & Scaling)
 - **`POST /trades/{id}/orders`**: Adds an order (BUY/SELL) to an existing trade, recalculates average prices, open quantity, and sets status (`OPEN`, `PARTIALLY_CLOSED`, `CLOSED`).
+  - **Standard Payload**: `{ "order_type": "SELL", "quantity": 65, "price": 124.00, "order_date": "2026-11-10", "order_time": "12:50:00", "notes": "Partial Exit" }`
+  - **Both (Straddle / Strangle) Payload**: When exiting a `Both` position, client passes `ce_price` and `pe_price` (along with optional combined `price`): `{ "order_type": "SELL", "quantity": 65, "price": 315.00, "ce_price": 150.00, "pe_price": 165.00, "order_date": "2026-11-10", "order_time": "12:50:00" }`. The backend creates both CE SELL and PE SELL leg orders within a single transaction and updates trade leg prices accordingly.
 - **`PUT /trades/{id}/orders/{order_id}`**: Updates an executed order's quantity, price, or date/time and recalculates parent trade.
 - **`DELETE /trades/{id}/orders/{order_id}`**: Removes an execution order and updates parent trade state.
 

@@ -47,8 +47,8 @@ The system addresses the core needs of active option traders:
 ## 4. Key Functional Subsystems
 
 1. **Trade Logging & Execution**:
-   - Single-leg (CE / PE) and Multi-leg (Both / Straddle / Strangle) trade recording.
-   - Position tracking: Open positions, partial exit scaling, and round-trip closed trades.
+   - Single-leg (CE / PE) and Multi-leg (Both / Straddle / Strangle) trade recording with separate CE and PE entry/exit price tracking and live option chain integration.
+   - Position tracking: Open positions, partial exit scaling (with dual CE & PE exit fields for straddles), and round-trip closed trades.
    - Multi-order executions breakdown: itemizes all individual BUY/SELL orders with execution time, price, quantity, individual charges, and order-level realized P&L.
    - Dynamic lot sizing with up/down stepper arrows incrementing by index lot size.
    - Real-time gross P&L and net P&L calculation after taxes and brokerage.

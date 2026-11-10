@@ -48,8 +48,12 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
     return 50;
   }, [trade, getLotSize]);
 
+  const isBoth = trade?.option_type === 'Both';
+
   const [exitQty, setExitQty] = useState('');
   const [exitPrice, setExitPrice] = useState('');
+  const [ceExitPrice, setCeExitPrice] = useState('');
+  const [peExitPrice, setPeExitPrice] = useState('');
   const [orderDate, setOrderDate] = useState('');
   const [orderTime, setOrderTime] = useState('');
   const [notes, setNotes] = useState('');
@@ -84,8 +88,18 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
   };
 
   const handleSelectOptionFromChain = (opt) => {
-    if (opt?.price) {
-      setExitPrice(String(Math.max(0, Math.abs(parseFloat(opt.price) || 0))));
+    if (!opt) return;
+    if (isBoth) {
+      const ce = opt.ce_price != null ? String(Math.max(0, Math.abs(parseFloat(opt.ce_price) || 0))) : (opt.option_type === 'CE' ? String(Math.max(0, Math.abs(parseFloat(opt.price) || 0))) : '');
+      const pe = opt.pe_price != null ? String(Math.max(0, Math.abs(parseFloat(opt.pe_price) || 0))) : (opt.option_type === 'PE' ? String(Math.max(0, Math.abs(parseFloat(opt.price) || 0))) : '');
+      if (ce) setCeExitPrice(ce);
+      if (pe) setPeExitPrice(pe);
+      const total = (parseFloat(ce) || 0) + (parseFloat(pe) || 0);
+      setExitPrice(total > 0 ? total.toFixed(2) : (opt.price ? String(Math.max(0, Math.abs(parseFloat(opt.price) || 0))) : ''));
+    } else {
+      if (opt.price) {
+        setExitPrice(String(Math.max(0, Math.abs(parseFloat(opt.price) || 0))));
+      }
     }
   };
 
@@ -93,7 +107,17 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
   useEffect(() => {
     if (isOpen && trade) {
       setExitQty(openQty.toString());
-      setExitPrice(trade.exit_premium ? parseFloat(trade.exit_premium).toFixed(2) : '');
+      if (trade.option_type === 'Both') {
+        const ceInit = trade.ce_exit_price != null ? parseFloat(trade.ce_exit_price).toString() : '';
+        const peInit = trade.pe_exit_price != null ? parseFloat(trade.pe_exit_price).toString() : '';
+        setCeExitPrice(ceInit);
+        setPeExitPrice(peInit);
+        setExitPrice(trade.exit_premium ? parseFloat(trade.exit_premium).toFixed(2) : '');
+      } else {
+        setCeExitPrice('');
+        setPeExitPrice('');
+        setExitPrice(trade.exit_premium ? parseFloat(trade.exit_premium).toFixed(2) : '');
+      }
       const now = new Date();
       setOrderDate(now.toISOString().split('T')[0]);
       setOrderTime(now.toTimeString().split(' ')[0].substring(0, 5));
@@ -116,7 +140,16 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
   };
 
   const parsedQty = parseInt(exitQty, 10) || 0;
-  const parsedPrice = parseFloat(exitPrice) || 0;
+  const totalExitPrice = useMemo(() => {
+    if (isBoth) {
+      const ce = parseFloat(ceExitPrice) || 0;
+      const pe = parseFloat(peExitPrice) || 0;
+      return (ce > 0 || pe > 0) ? (ce + pe).toFixed(2) : (exitPrice || '');
+    }
+    return exitPrice;
+  }, [isBoth, ceExitPrice, peExitPrice, exitPrice]);
+
+  const parsedPrice = parseFloat(totalExitPrice) || 0;
   const remainingQty = Math.max(0, openQty - parsedQty);
   const lots = Math.max(1, Math.round(parsedQty / lotSize));
 
@@ -126,13 +159,14 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
     return Math.round((parsedPrice - avgEntryPrice) * parsedQty * 100) / 100;
   }, [parsedQty, parsedPrice, avgEntryPrice]);
 
-  // Live estimated charges for this single SELL order
+  // Live estimated charges for this SELL order (or 2 orders for Both)
   const estimatedSellCharges = useMemo(() => {
     if (parsedQty <= 0 || parsedPrice <= 0) return 0;
     const turnover = parsedPrice * parsedQty;
     const isBse = ['SENSEX', 'BANKEX'].includes((trade?.index_name || '').toUpperCase());
+    const numOrders = isBoth ? 2 : 1;
 
-    const brokerage = parseFloat(rates?.brokerage_per_order) || 20.00;
+    const brokerage = (parseFloat(rates?.brokerage_per_order) || 20.00) * numOrders;
     const stt = turnover * ((parseFloat(rates?.stt_rate_percent) || 0.15) / 100);
     const txnRate = isBse
       ? (parseFloat(rates?.bse_txn_rate_percent) || 0.0325) / 100
@@ -143,7 +177,7 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
     const gst = (brokerage + exchangeCharges + sebiCharges) * ((parseFloat(rates?.gst_rate_percent) || 18.0) / 100);
 
     return Math.round((brokerage + stt + exchangeCharges + sebiCharges + stampDuty + gst) * 100) / 100;
-  }, [parsedQty, parsedPrice, trade?.index_name, rates]);
+  }, [parsedQty, parsedPrice, trade?.index_name, isBoth, rates]);
 
   const activeCharges = customCharges !== '' ? parseFloat(customCharges) || 0 : estimatedSellCharges;
 
@@ -163,14 +197,23 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
       showToast(`Quantity cannot exceed current open quantity of ${openQty}`, 'error');
       return;
     }
-    if (parsedPrice <= 0) {
-      showToast('Please enter a valid exit price', 'error');
-      return;
+    if (isBoth) {
+      const ce = parseFloat(ceExitPrice) || 0;
+      const pe = parseFloat(peExitPrice) || 0;
+      if (ce <= 0 && pe <= 0 && parsedPrice <= 0) {
+        showToast('Please enter valid CE and PE exit prices', 'error');
+        return;
+      }
+    } else {
+      if (parsedPrice <= 0) {
+        showToast('Please enter a valid exit price', 'error');
+        return;
+      }
     }
 
     try {
       setSubmitting(true);
-      const res = await api.post(`/trades/${trade.id}/orders`, {
+      const payload = {
         order_type: 'SELL',
         quantity: parsedQty,
         lots,
@@ -179,7 +222,14 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
         order_time: orderTime ? `${orderTime}:00` : new Date().toTimeString().split(' ')[0],
         notes: notes || 'Partial Exit',
         total_charges: customCharges !== '' ? activeCharges : undefined,
-      });
+      };
+
+      if (isBoth) {
+        if (ceExitPrice !== '') payload.ce_price = parseFloat(ceExitPrice) || 0;
+        if (peExitPrice !== '') payload.pe_price = parseFloat(peExitPrice) || 0;
+      }
+
+      const res = await api.post(`/trades/${trade.id}/orders`, payload);
 
       showToast(
         remainingQty === 0
@@ -320,9 +370,16 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
           {/* Exit Price */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-medium text-slate-300 light:text-slate-700">
-                Exit Price (₹ per share) <span className="text-rose-500">*</span>
-              </label>
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-medium text-slate-300 light:text-slate-700">
+                  {isBoth ? 'Exit Prices (₹ per share)' : 'Exit Price (₹ per share)'} <span className="text-rose-500">*</span>
+                </label>
+                {isBoth && (
+                  <span className="text-[11px] text-blue-400 font-mono-numbers font-semibold">
+                    Total: ₹{totalExitPrice || '0.00'}
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
                 onClick={() => setShowOptionChainModal(true)}
@@ -333,22 +390,79 @@ export default function PartialExitModal({ trade, isOpen, onClose, onSuccess }) 
                 <span>Option Chain</span>
               </button>
             </div>
-            <div className="relative">
-              <input
-                type="number"
-                step="any"
-                min="0"
-                required
-                value={exitPrice}
-                onChange={(e) => setExitPrice(e.target.value.replace(/-/g, '').replace(/[^0-9.]/g, ''))}
-                onKeyDown={blockNegativeKeys}
-                placeholder="e.g. 156.50"
-                className="w-full pl-8 pr-3.5 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-white light:text-slate-900 text-sm font-mono-numbers focus:outline-none focus:border-blue-500"
-              />
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">
-                ₹
-              </span>
-            </div>
+
+            {isBoth ? (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    required
+                    value={ceExitPrice}
+                    onChange={(e) => {
+                      const cleanVal = e.target.value.replace(/-/g, '').replace(/[^0-9.]/g, '');
+                      setCeExitPrice(cleanVal);
+                      const ce = Math.max(0, parseFloat(cleanVal) || 0);
+                      const pe = Math.max(0, parseFloat(peExitPrice) || 0);
+                      setExitPrice((ce + pe).toFixed(2));
+                    }}
+                    onKeyDown={blockNegativeKeys}
+                    placeholder="CE Exit (₹)"
+                    className="w-full pl-7 pr-9 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-white light:text-slate-900 text-sm font-mono-numbers focus:outline-none focus:border-blue-500"
+                  />
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">
+                    ₹
+                  </span>
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 pointer-events-none">
+                    CE
+                  </span>
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="any"
+                    min="0"
+                    required
+                    value={peExitPrice}
+                    onChange={(e) => {
+                      const cleanVal = e.target.value.replace(/-/g, '').replace(/[^0-9.]/g, '');
+                      setPeExitPrice(cleanVal);
+                      const ce = Math.max(0, parseFloat(ceExitPrice) || 0);
+                      const pe = Math.max(0, parseFloat(cleanVal) || 0);
+                      setExitPrice((ce + pe).toFixed(2));
+                    }}
+                    onKeyDown={blockNegativeKeys}
+                    placeholder="PE Exit (₹)"
+                    className="w-full pl-7 pr-9 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-white light:text-slate-900 text-sm font-mono-numbers focus:outline-none focus:border-blue-500"
+                  />
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">
+                    ₹
+                  </span>
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-rose-400 pointer-events-none">
+                    PE
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="relative">
+                <input
+                  type="number"
+                  step="any"
+                  min="0"
+                  required
+                  value={exitPrice}
+                  onChange={(e) => setExitPrice(e.target.value.replace(/-/g, '').replace(/[^0-9.]/g, ''))}
+                  onKeyDown={blockNegativeKeys}
+                  placeholder="e.g. 156.50"
+                  className="w-full pl-8 pr-3.5 py-2.5 rounded-xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 text-white light:text-slate-900 text-sm font-mono-numbers focus:outline-none focus:border-blue-500"
+                />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm pointer-events-none">
+                  ₹
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Date & Time */}

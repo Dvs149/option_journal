@@ -50,6 +50,12 @@
 ### 2.3 All Trades Explorer (`AllTrades.jsx`)
 - Paginated table supporting 10, 20, 50, or 100 rows per page with status filters (`All`, `Open Positions`, `Closed Trades`).
 - Multi-order execution breakdown drawer: itemizes all BUY and SELL executions, prices, turnover, individual charges, and realized P&L per order.
+- **Execute Exit / Partial Order Engine (`PartialExitModal.jsx`)**:
+  - Full and partial position closure dialog with dynamic lot stepper increment.
+  - Supports single-leg options (`CE` or `PE`) with single `Exit Price` input, and multi-leg straddles (`Both`) with dual `CE Exit Price` and `PE Exit Price` inputs plus live combined total display.
+  - Integrated `Option Chain` lookup populates both CE and PE exit prices automatically.
+  - Live Realized P&L and estimated exit charges (STT, turnover, and 2-order brokerage for straddles).
+  - Submits single or split-leg SELL executions in a single database transaction, preserving straddle unit quantities without doubling or halving position sizes.
 - Search filter matching index, strategy, tags, notes, and trade setup.
 - Interactive Date Range filter popover:
   - Preset shortcuts: *Today, Yesterday, Tomorrow/Next Working Day, This Week, This Month, Last Month, This Year, All Time*.

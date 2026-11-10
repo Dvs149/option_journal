@@ -58,3 +58,4 @@ This document records verified operational observations, technical debt, and kno
 | **ISSUE-007** | Quantity input up/down stepper arrows stepped by 1 rather than instrument lot size | 2026-11-09 | Updated quantity inputs across trade forms and partial exit dialogs to step by dynamic index lot size. |
 | **ISSUE-008** | Editing buy order quantity did not recalculate open quantity or update position status | 2026-11-09 | Added bidirectional synchronization in `updateOrder` / `recalculateTradeFromOrders` to update lots and status. |
 | **ISSUE-009** | Popups and dialogs did not close on pressing Escape key | 2026-11-09 | Implemented unified `useEscapeKey` hook attached across all modals, sheets, and drawers. |
+| **ISSUE-010** | Single Exit Price input in Partial Exit modal for "Both" (Straddle / Strangle) orders | 2026-11-10 | Added dual CE & PE exit price inputs with live combined total, option chain integration, and backend split leg order execution. |

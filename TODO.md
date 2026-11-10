@@ -6,6 +6,8 @@ This document tracks prioritized future improvements, architectural tasks, and p
 
 ## Priority 0: Stability, Quality Control & Security (Immediate)
 
+- [x] **Dual CE & PE Exit Prices for Both (Straddle/Strangle) Orders**:
+  - Support separate CE and PE exit price inputs in partial exit dialog (`PartialExitModal.jsx`), live combined total display, option chain straddle selection, and split leg SELL order execution in backend.
 - [ ] **Automated Tests for Calculation Engine**:
   - Add PHPUnit / Pest tests in `backend/tests/Feature/TradingCalculationTest.php` testing STT, exchange fees, GST, SEBI turnover fees, and stamp duty edge cases against known Indian broker contract notes.
 - [ ] **Bulk Import Parser Validation Suite**:

@@ -1068,7 +1068,9 @@ class TradeController extends Controller
         $validated = $request->validate([
             'order_type' => ['required', 'string', 'in:BUY,SELL'],
             'quantity' => ['required', 'integer', 'min:1'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'price' => ['nullable', 'numeric', 'min:0'],
+            'ce_price' => ['nullable', 'numeric', 'min:0'],
+            'pe_price' => ['nullable', 'numeric', 'min:0'],
             'order_date' => ['nullable', 'date'],
             'order_time' => ['nullable', 'string', 'max:20'],
             'lots' => ['nullable', 'integer', 'min:1'],
@@ -1085,7 +1087,23 @@ class TradeController extends Controller
 
         $side = strtoupper($validated['order_type']);
         $quantity = (int) $validated['quantity'];
-        $price = (float) $validated['price'];
+        $isBoth = $trade->option_type === 'Both';
+        $hasLegPrices = $isBoth && ($request->filled('ce_price') || $request->filled('pe_price'));
+
+        if ($hasLegPrices) {
+            $cePrice = (float) $request->input('ce_price', 0);
+            $pePrice = (float) $request->input('pe_price', 0);
+            $price = $request->filled('price') ? (float) $request->input('price') : round($cePrice + $pePrice, 2);
+        } else {
+            if (!$request->filled('price')) {
+                return response()->json([
+                    'message' => 'The price field is required.',
+                ], 422);
+            }
+            $price = (float) $validated['price'];
+            $cePrice = null;
+            $pePrice = null;
+        }
 
         // If SELL: check that quantity doesn't exceed open_quantity
         if ($side === 'SELL') {
@@ -1100,46 +1118,129 @@ class TradeController extends Controller
         $user = $request->user();
         $rates = \App\Models\BrokerageSetting::forUser($user->id);
         $exchange = in_array(strtoupper($trade->index_name), ['SENSEX', 'BANKEX']) ? 'BSE' : ($rates['default_exchange'] ?? 'NSE');
+        $strike = $trade->strike_price ? round((float) $trade->strike_price) : '';
+        $baseNotes = $validated['notes'] ?? null;
+        $orderDate = $validated['order_date'] ?? now()->format('Y-m-d');
+        $orderTime = $validated['order_time'] ?? now()->format('H:i:s');
 
-        $autoCharges = $this->calcService->estimateSingleOrderCharges($side, $price, $quantity, $exchange, $rates);
+        $userLotSize = IndexLotSize::where('user_id', $trade->user_id)
+            ->where('index_name', strtoupper($trade->index_name))
+            ->value('lot_size');
+        if (!$userLotSize) {
+            $defaults = IndexLotSize::getExchangeDefaults();
+            $userLotSize = $defaults[strtoupper($trade->index_name)]['lot_size'] ?? null;
+        }
+        $lotSize = max(1, (int) ($userLotSize ?: ($trade->lots > 0 && $trade->quantity > 0 ? round($trade->quantity / $trade->lots) : 50)));
+        $lots = $validated['lots'] ?? max(1, (int) round($quantity / $lotSize));
 
-        if ($request->has('total_charges') || $request->has('brokerage')) {
-            $brokerage = $request->has('brokerage') ? (float) $validated['brokerage'] : (float) ($autoCharges['brokerage'] ?? 20.0);
-            $stt = $request->has('stt') ? (float) $validated['stt'] : (float) ($autoCharges['stt'] ?? 0.0);
-            $exchangeCharges = $request->has('exchange_charges') ? (float) $validated['exchange_charges'] : (float) ($autoCharges['exchange_charges'] ?? 0.0);
-            $gst = $request->has('gst') ? (float) $validated['gst'] : (float) ($autoCharges['gst'] ?? 0.0);
-            $sebiCharges = $request->has('sebi_charges') ? (float) $validated['sebi_charges'] : (float) ($autoCharges['sebi_charges'] ?? 0.0);
-            $stampDuty = $request->has('stamp_duty') ? (float) $validated['stamp_duty'] : (float) ($autoCharges['stamp_duty'] ?? 0.0);
-            $otherCharges = $request->has('other_charges') ? (float) $validated['other_charges'] : 0.0;
+        $order = DB::transaction(function () use (
+            $user, $trade, $side, $quantity, $lots, $price, $cePrice, $pePrice,
+            $hasLegPrices, $validated, $exchange, $rates, $strike, $baseNotes, $orderDate, $orderTime, $request
+        ) {
+            if ($hasLegPrices) {
+                $ceCharges = $this->calcService->estimateSingleOrderCharges($side, $cePrice, $quantity, $exchange, $rates);
+                $peCharges = $this->calcService->estimateSingleOrderCharges($side, $pePrice, $quantity, $exchange, $rates);
 
-            if ($request->has('total_charges')) {
-                $totalCharges = (float) $validated['total_charges'];
-                $sumOfParts = round($brokerage + $stt + $exchangeCharges + $gst + $sebiCharges + $stampDuty + $otherCharges, 2);
-                if (abs($totalCharges - $sumOfParts) > 0.01) {
-                    $otherCharges = round($otherCharges + ($totalCharges - $sumOfParts), 2);
+                if ($request->has('total_charges')) {
+                    $customTotal = (float) $validated['total_charges'];
+                    $autoSum = ($ceCharges['total_charges'] + $peCharges['total_charges']) ?: 1.0;
+                    $ratioCe = $ceCharges['total_charges'] / $autoSum;
+                    $ceCharges['total_charges'] = round($customTotal * $ratioCe, 2);
+                    $peCharges['total_charges'] = round($customTotal - $ceCharges['total_charges'], 2);
                 }
-            } else {
-                $totalCharges = round($brokerage + $stt + $exchangeCharges + $gst + $sebiCharges + $stampDuty + $otherCharges, 2);
+
+                $ceCost = (float) ($trade->ce_entry_price ?: ($trade->avg_entry_price / 2));
+                $peCost = (float) ($trade->pe_entry_price ?: ($trade->avg_entry_price / 2));
+                $ceRealizedPnl = $side === 'SELL' ? round(($cePrice - $ceCost) * $quantity, 2) : 0.00;
+                $peRealizedPnl = $side === 'SELL' ? round(($pePrice - $peCost) * $quantity, 2) : 0.00;
+
+                $ceNotes = $baseNotes
+                    ? "{$baseNotes} - CE Leg Exit" . ($strike ? " ({$strike} CE)" : '')
+                    : "CE Leg Exit" . ($strike ? " ({$strike} CE)" : '');
+                $peNotes = $baseNotes
+                    ? "{$baseNotes} - PE Leg Exit" . ($strike ? " ({$strike} PE)" : '')
+                    : "PE Leg Exit" . ($strike ? " ({$strike} PE)" : '');
+
+                $ceOrder = $trade->orders()->create([
+                    'user_id' => $user->id,
+                    'order_type' => $side,
+                    'quantity' => $quantity,
+                    'lots' => $lots,
+                    'price' => $cePrice,
+                    'order_date' => $orderDate,
+                    'order_time' => $orderTime,
+                    'brokerage' => $ceCharges['brokerage'],
+                    'stt' => $ceCharges['stt'],
+                    'exchange_charges' => $ceCharges['exchange_charges'],
+                    'gst' => $ceCharges['gst'],
+                    'sebi_charges' => $ceCharges['sebi_charges'],
+                    'stamp_duty' => $ceCharges['stamp_duty'],
+                    'other_charges' => $ceCharges['other_charges'] ?? 0.00,
+                    'total_charges' => $ceCharges['total_charges'],
+                    'realized_pnl' => $ceRealizedPnl,
+                    'notes' => $ceNotes,
+                ]);
+
+                $trade->orders()->create([
+                    'user_id' => $user->id,
+                    'order_type' => $side,
+                    'quantity' => $quantity,
+                    'lots' => $lots,
+                    'price' => $pePrice,
+                    'order_date' => $orderDate,
+                    'order_time' => $orderTime,
+                    'brokerage' => $peCharges['brokerage'],
+                    'stt' => $peCharges['stt'],
+                    'exchange_charges' => $peCharges['exchange_charges'],
+                    'gst' => $peCharges['gst'],
+                    'sebi_charges' => $peCharges['sebi_charges'],
+                    'stamp_duty' => $peCharges['stamp_duty'],
+                    'other_charges' => $peCharges['other_charges'] ?? 0.00,
+                    'total_charges' => $peCharges['total_charges'],
+                    'realized_pnl' => $peRealizedPnl,
+                    'notes' => $peNotes,
+                ]);
+
+                $this->recalculateTradeFromOrders($trade);
+
+                return $ceOrder;
             }
 
-            $charges = [
-                'brokerage' => $brokerage,
-                'stt' => $stt,
-                'exchange_charges' => $exchangeCharges,
-                'gst' => $gst,
-                'sebi_charges' => $sebiCharges,
-                'stamp_duty' => $stampDuty,
-                'other_charges' => $otherCharges,
-                'total_charges' => $totalCharges,
-            ];
-        } else {
-            $charges = $autoCharges;
-            $charges['other_charges'] = 0.0;
-        }
+            $autoCharges = $this->calcService->estimateSingleOrderCharges($side, $price, $quantity, $exchange, $rates);
 
-        $order = DB::transaction(function () use ($user, $trade, $side, $quantity, $price, $validated, $charges) {
-            $orderDate = $validated['order_date'] ?? now()->format('Y-m-d');
-            $orderTime = $validated['order_time'] ?? now()->format('H:i:s');
+            if ($request->has('total_charges') || $request->has('brokerage')) {
+                $brokerage = $request->has('brokerage') ? (float) $validated['brokerage'] : (float) ($autoCharges['brokerage'] ?? 20.0);
+                $stt = $request->has('stt') ? (float) $validated['stt'] : (float) ($autoCharges['stt'] ?? 0.0);
+                $exchangeCharges = $request->has('exchange_charges') ? (float) $validated['exchange_charges'] : (float) ($autoCharges['exchange_charges'] ?? 0.0);
+                $gst = $request->has('gst') ? (float) $validated['gst'] : (float) ($autoCharges['gst'] ?? 0.0);
+                $sebiCharges = $request->has('sebi_charges') ? (float) $validated['sebi_charges'] : (float) ($autoCharges['sebi_charges'] ?? 0.0);
+                $stampDuty = $request->has('stamp_duty') ? (float) $validated['stamp_duty'] : (float) ($autoCharges['stamp_duty'] ?? 0.0);
+                $otherCharges = $request->has('other_charges') ? (float) $validated['other_charges'] : 0.0;
+
+                if ($request->has('total_charges')) {
+                    $totalCharges = (float) $validated['total_charges'];
+                    $sumOfParts = round($brokerage + $stt + $exchangeCharges + $gst + $sebiCharges + $stampDuty + $otherCharges, 2);
+                    if (abs($totalCharges - $sumOfParts) > 0.01) {
+                        $otherCharges = round($otherCharges + ($totalCharges - $sumOfParts), 2);
+                    }
+                } else {
+                    $totalCharges = round($brokerage + $stt + $exchangeCharges + $gst + $sebiCharges + $stampDuty + $otherCharges, 2);
+                }
+
+                $charges = [
+                    'brokerage' => $brokerage,
+                    'stt' => $stt,
+                    'exchange_charges' => $exchangeCharges,
+                    'gst' => $gst,
+                    'sebi_charges' => $sebiCharges,
+                    'stamp_duty' => $stampDuty,
+                    'other_charges' => $otherCharges,
+                    'total_charges' => $totalCharges,
+                ];
+            } else {
+                $charges = $autoCharges;
+                $charges['other_charges'] = 0.0;
+            }
 
             $costPrice = (float) ($trade->avg_entry_price ?: $trade->entry_premium ?: 0);
             $realizedPnl = $side === 'SELL' ? round(($price - $costPrice) * $quantity, 2) : 0.00;
@@ -1148,7 +1249,7 @@ class TradeController extends Controller
                 'user_id' => $user->id,
                 'order_type' => $side,
                 'quantity' => $quantity,
-                'lots' => $validated['lots'] ?? max(1, (int) round($quantity / max(1, $trade->lots > 0 ? ($trade->quantity / $trade->lots) : 1))),
+                'lots' => $lots,
                 'price' => $price,
                 'order_date' => $orderDate,
                 'order_time' => $orderTime,
@@ -1161,7 +1262,7 @@ class TradeController extends Controller
                 'other_charges' => $charges['other_charges'] ?? 0.00,
                 'total_charges' => $charges['total_charges'],
                 'realized_pnl' => $realizedPnl,
-                'notes' => $validated['notes'] ?? null,
+                'notes' => $baseNotes,
             ]);
 
             $this->recalculateTradeFromOrders($trade);
@@ -1336,19 +1437,134 @@ class TradeController extends Controller
         $buyOrders = $allOrders->where('order_type', 'BUY');
         $sellOrders = $allOrders->where('order_type', 'SELL');
 
-        $totalBuyQty = (int) $buyOrders->sum('quantity');
-        $totalBuyCost = 0.0;
-        foreach ($buyOrders as $bo) {
-            $totalBuyCost += (float) $bo->price * (int) $bo->quantity;
-        }
-        $avgEntryPrice = $totalBuyQty > 0 ? round($totalBuyCost / $totalBuyQty, 2) : (float) ($trade->entry_premium ?? 0);
+        $isBoth = $trade->option_type === 'Both';
+        $ceBuyOrders = $buyOrders->filter(fn($o) => preg_match('/\bCE\b/i', (string) $o->notes));
+        $peBuyOrders = $buyOrders->filter(fn($o) => preg_match('/\bPE\b/i', (string) $o->notes));
+        $ceSellOrders = $sellOrders->filter(fn($o) => preg_match('/\bCE\b/i', (string) $o->notes));
+        $peSellOrders = $sellOrders->filter(fn($o) => preg_match('/\bPE\b/i', (string) $o->notes));
 
-        $totalSellQty = (int) $sellOrders->sum('quantity');
-        $totalSellProceeds = 0.0;
-        foreach ($sellOrders as $so) {
-            $totalSellProceeds += (float) $so->price * (int) $so->quantity;
+        $hasSplitLegs = $isBoth && (
+            $ceBuyOrders->isNotEmpty() || $peBuyOrders->isNotEmpty() ||
+            $ceSellOrders->isNotEmpty() || $peSellOrders->isNotEmpty()
+        );
+
+        if ($hasSplitLegs) {
+            // BUY LEG CALCULATIONS
+            if ($ceBuyOrders->isNotEmpty()) {
+                $ceBuyQty = (int) $ceBuyOrders->sum('quantity');
+                $ceBuyCost = 0.0;
+                foreach ($ceBuyOrders as $bo) {
+                    $ceBuyCost += (float) $bo->price * (int) $bo->quantity;
+                }
+                $ceEntryPrice = $ceBuyQty > 0 ? round($ceBuyCost / $ceBuyQty, 2) : (float) ($trade->ce_entry_price ?: 0);
+            } else {
+                $ceBuyQty = (int) $buyOrders->sum('quantity');
+                $ceEntryPrice = (float) ($trade->ce_entry_price ?: 0);
+                $ceBuyCost = $ceEntryPrice * $ceBuyQty;
+            }
+
+            if ($peBuyOrders->isNotEmpty()) {
+                $peBuyQty = (int) $peBuyOrders->sum('quantity');
+                $peBuyCost = 0.0;
+                foreach ($peBuyOrders as $bo) {
+                    $peBuyCost += (float) $bo->price * (int) $bo->quantity;
+                }
+                $peEntryPrice = $peBuyQty > 0 ? round($peBuyCost / $peBuyQty, 2) : (float) ($trade->pe_entry_price ?: 0);
+            } else {
+                $peBuyQty = (int) $buyOrders->sum('quantity');
+                $peEntryPrice = (float) ($trade->pe_entry_price ?: 0);
+                $peBuyCost = $peEntryPrice * $peBuyQty;
+            }
+
+            $totalBuyQty = max($ceBuyQty, $peBuyQty);
+            $avgEntryPrice = round($ceEntryPrice + $peEntryPrice, 2);
+
+            // SELL LEG CALCULATIONS
+            if ($ceSellOrders->isNotEmpty()) {
+                $ceSellQty = (int) $ceSellOrders->sum('quantity');
+                $ceSellProceeds = 0.0;
+                foreach ($ceSellOrders as $so) {
+                    $ceSellProceeds += (float) $so->price * (int) $so->quantity;
+                }
+                $ceExitPrice = $ceSellQty > 0 ? round($ceSellProceeds / $ceSellQty, 2) : null;
+            } else {
+                $ceSellQty = 0;
+                $ceExitPrice = null;
+            }
+
+            if ($peSellOrders->isNotEmpty()) {
+                $peSellQty = (int) $peSellOrders->sum('quantity');
+                $peSellProceeds = 0.0;
+                foreach ($peSellOrders as $so) {
+                    $peSellProceeds += (float) $so->price * (int) $so->quantity;
+                }
+                $peExitPrice = $peSellQty > 0 ? round($peSellProceeds / $peSellQty, 2) : null;
+            } else {
+                $peSellQty = 0;
+                $peExitPrice = null;
+            }
+
+            if ($ceSellOrders->isNotEmpty() || $peSellOrders->isNotEmpty()) {
+                $totalSellQty = max($ceSellQty, $peSellQty);
+                $avgExitPrice = ($ceExitPrice !== null || $peExitPrice !== null)
+                    ? round((float) ($ceExitPrice ?? 0) + (float) ($peExitPrice ?? 0), 2)
+                    : null;
+            } else {
+                $totalSellQty = (int) $sellOrders->sum('quantity');
+                $totalSellProceeds = 0.0;
+                foreach ($sellOrders as $so) {
+                    $totalSellProceeds += (float) $so->price * (int) $so->quantity;
+                }
+                $avgExitPrice = $totalSellQty > 0 ? round($totalSellProceeds / $totalSellQty, 2) : null;
+            }
+
+            // Realized PnL per order
+            foreach ($ceSellOrders as $so) {
+                $pnl = round(((float) $so->price - $ceEntryPrice) * (int) $so->quantity, 2);
+                if ((float) $so->realized_pnl !== $pnl) {
+                    $so->update(['realized_pnl' => $pnl]);
+                }
+            }
+            foreach ($peSellOrders as $so) {
+                $pnl = round(((float) $so->price - $peEntryPrice) * (int) $so->quantity, 2);
+                if ((float) $so->realized_pnl !== $pnl) {
+                    $so->update(['realized_pnl' => $pnl]);
+                }
+            }
+            $otherSellOrders = $sellOrders->reject(fn($o) => preg_match('/\b(CE|PE)\b/i', (string) $o->notes));
+            foreach ($otherSellOrders as $so) {
+                $pnl = round(((float) $so->price - $avgEntryPrice) * (int) $so->quantity, 2);
+                if ((float) $so->realized_pnl !== $pnl) {
+                    $so->update(['realized_pnl' => $pnl]);
+                }
+            }
+        } else {
+            // Standard single-leg or combined Both trade
+            $totalBuyQty = (int) $buyOrders->sum('quantity');
+            $totalBuyCost = 0.0;
+            foreach ($buyOrders as $bo) {
+                $totalBuyCost += (float) $bo->price * (int) $bo->quantity;
+            }
+            $avgEntryPrice = $totalBuyQty > 0 ? round($totalBuyCost / $totalBuyQty, 2) : (float) ($trade->entry_premium ?? 0);
+
+            $totalSellQty = (int) $sellOrders->sum('quantity');
+            $totalSellProceeds = 0.0;
+            foreach ($sellOrders as $so) {
+                $totalSellProceeds += (float) $so->price * (int) $so->quantity;
+            }
+            $avgExitPrice = $totalSellQty > 0 ? round($totalSellProceeds / $totalSellQty, 2) : null;
+            $ceEntryPrice = null;
+            $peEntryPrice = null;
+            $ceExitPrice = null;
+            $peExitPrice = null;
+
+            foreach ($sellOrders as $so) {
+                $pnl = round(((float) $so->price - $avgEntryPrice) * (int) $so->quantity, 2);
+                if ((float) $so->realized_pnl !== $pnl) {
+                    $so->update(['realized_pnl' => $pnl]);
+                }
+            }
         }
-        $avgExitPrice = $totalSellQty > 0 ? round($totalSellProceeds / $totalSellQty, 2) : null;
 
         $openQty = max(0, $totalBuyQty - $totalSellQty);
 
@@ -1360,16 +1576,7 @@ class TradeController extends Controller
             $status = 'PARTIALLY_CLOSED';
         }
 
-        // Realized P&L from sell orders against avg entry
-        $totalRealizedPnl = 0.0;
-        foreach ($sellOrders as $so) {
-            $pnl = round(((float) $so->price - $avgEntryPrice) * (int) $so->quantity, 2);
-            $totalRealizedPnl += $pnl;
-            if ((float) $so->realized_pnl !== $pnl) {
-                $so->update(['realized_pnl' => $pnl]);
-            }
-        }
-        $totalRealizedPnl = round($totalRealizedPnl, 2);
+        $totalRealizedPnl = round((float) $sellOrders->sum('realized_pnl'), 2);
         $grossProfit = $totalRealizedPnl >= 0 ? $totalRealizedPnl : 0.00;
         $grossLoss = $totalRealizedPnl < 0 ? abs($totalRealizedPnl) : 0.00;
 
@@ -1404,7 +1611,7 @@ class TradeController extends Controller
         $lotSize = max(1, (int) ($userLotSize ?: 1));
         $totalLots = max(1, (int) round($totalBuyQty / $lotSize));
 
-        $trade->update([
+        $updateData = [
             'status' => $status,
             'quantity' => $totalBuyQty > 0 ? $totalBuyQty : $trade->quantity,
             'lots' => $totalLots,
@@ -1425,7 +1632,16 @@ class TradeController extends Controller
             'other_charges' => $otherCharges,
             'total_charges' => $totalCharges,
             'net_pnl' => $netPnl,
-        ]);
+        ];
+
+        if ($hasSplitLegs) {
+            if (!empty($ceEntryPrice)) $updateData['ce_entry_price'] = $ceEntryPrice;
+            if (!empty($peEntryPrice)) $updateData['pe_entry_price'] = $peEntryPrice;
+            if ($ceExitPrice !== null) $updateData['ce_exit_price'] = $ceExitPrice;
+            if ($peExitPrice !== null) $updateData['pe_exit_price'] = $peExitPrice;
+        }
+
+        $trade->update($updateData);
 
         return $trade;
     }
@@ -1547,29 +1763,57 @@ class TradeController extends Controller
                 'total_charges' => $ch['total_charges'],
             ]);
         } elseif ($buyOrders->count() > 1) {
-            $oldTotalBuy = max(1, (int) $buyOrders->sum('quantity'));
-            $runningBuy = 0;
-            foreach ($buyOrders as $i => $bo) {
-                if ($i === $buyOrders->count() - 1) {
-                    $q = max(1, $targetQty - $runningBuy);
-                } else {
-                    $q = max(1, (int) round($bo->quantity * ($targetQty / $oldTotalBuy)));
-                    $runningBuy += $q;
+            $isBoth = $trade->option_type === 'Both';
+            $ceBuyOrders = $buyOrders->filter(fn($o) => preg_match('/\bCE\b/i', (string) $o->notes));
+            $peBuyOrders = $buyOrders->filter(fn($o) => preg_match('/\bPE\b/i', (string) $o->notes));
+            $hasSplitLegs = $isBoth && ($ceBuyOrders->isNotEmpty() || $peBuyOrders->isNotEmpty());
+
+            if ($hasSplitLegs) {
+                foreach ($buyOrders as $bo) {
+                    $isCe = preg_match('/\bCE\b/i', (string) $bo->notes);
+                    $boPrice = $isCe
+                        ? ((float) ($data['ce_entry_price'] ?? $trade->ce_entry_price) ?: (float) $bo->price)
+                        : ((float) ($data['pe_entry_price'] ?? $trade->pe_entry_price) ?: (float) $bo->price);
+                    $l = max(1, (int) round($targetQty / $lotSize));
+                    $ch = $this->calcService->estimateSingleOrderCharges('BUY', $boPrice, $targetQty, $exchange, $rates);
+                    $bo->update([
+                        'quantity' => $targetQty,
+                        'lots' => $l,
+                        'price' => $boPrice,
+                        'brokerage' => $ch['brokerage'],
+                        'stt' => $ch['stt'],
+                        'exchange_charges' => $ch['exchange_charges'],
+                        'gst' => $ch['gst'],
+                        'sebi_charges' => $ch['sebi_charges'],
+                        'stamp_duty' => $ch['stamp_duty'],
+                        'total_charges' => $ch['total_charges'],
+                    ]);
                 }
-                $l = max(1, (int) round($q / $lotSize));
-                $boPrice = (float) $bo->price;
-                $ch = $this->calcService->estimateSingleOrderCharges('BUY', $boPrice, $q, $exchange, $rates);
-                $bo->update([
-                    'quantity' => $q,
-                    'lots' => $l,
-                    'brokerage' => $ch['brokerage'],
-                    'stt' => $ch['stt'],
-                    'exchange_charges' => $ch['exchange_charges'],
-                    'gst' => $ch['gst'],
-                    'sebi_charges' => $ch['sebi_charges'],
-                    'stamp_duty' => $ch['stamp_duty'],
-                    'total_charges' => $ch['total_charges'],
-                ]);
+            } else {
+                $oldTotalBuy = max(1, (int) $buyOrders->sum('quantity'));
+                $runningBuy = 0;
+                foreach ($buyOrders as $i => $bo) {
+                    if ($i === $buyOrders->count() - 1) {
+                        $q = max(1, $targetQty - $runningBuy);
+                    } else {
+                        $q = max(1, (int) round($bo->quantity * ($targetQty / $oldTotalBuy)));
+                        $runningBuy += $q;
+                    }
+                    $l = max(1, (int) round($q / $lotSize));
+                    $boPrice = (float) $bo->price;
+                    $ch = $this->calcService->estimateSingleOrderCharges('BUY', $boPrice, $q, $exchange, $rates);
+                    $bo->update([
+                        'quantity' => $q,
+                        'lots' => $l,
+                        'brokerage' => $ch['brokerage'],
+                        'stt' => $ch['stt'],
+                        'exchange_charges' => $ch['exchange_charges'],
+                        'gst' => $ch['gst'],
+                        'sebi_charges' => $ch['sebi_charges'],
+                        'stamp_duty' => $ch['stamp_duty'],
+                        'total_charges' => $ch['total_charges'],
+                    ]);
+                }
             }
         }
 

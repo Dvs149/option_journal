@@ -32,6 +32,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.14.0] - 2026-11-10
+
+### Added & Enhanced
+- **Dual CE & PE Exit Prices for "Both" (Straddle / Strangle) Orders in Partial Exit Modal**:
+  - Resolved issue where `Execute Exit / Partial Order` modal (`PartialExitModal.jsx`) only showed a single `Exit Price` input field for `Both` (Straddle / Strangle) trades.
+  - Added dual numeric inputs for `CE Exit Price` (emerald CE badge) and `PE Exit Price` (rose PE badge) with live combined `Total: ₹{totalExitPrice}` display.
+  - Single-leg option orders (`CE` or `PE`) continue to present a single clean `Exit Price` input field.
+  - Integrated `OptionChainModal` to automatically populate both CE and PE exit prices when selecting a straddle from the live option chain.
+  - Live calculation of Realized P&L and estimated sell charges for `Both` positions: turnover is calculated across both legs `(ceExitPrice + peExitPrice) * parsedQty` with 2 execution orders (₹40 default brokerage).
+  - Backend `TradeController::addOrder` supports `ce_price` and `pe_price` payloads for `Both` trades, creating both CE and PE SELL child orders in a single database transaction.
+  - Backend `recalculateTradeFromOrders` updated to identify split leg orders on `Both` trades: position quantity and open quantity represent straddle units rather than double-counting legs, maintaining leg-level prices (`ce_entry_price`, `pe_entry_price`, `ce_exit_price`, `pe_exit_price`) and calculating leg-specific realized P&L accurately.
+  - Backend `syncOrdersFromTrade` updated to preserve position quantities per leg without halving them during trade updates.
+
+---
+
 ## [1.13.0] - 2026-11-10
 
 ### Added & Enhanced
