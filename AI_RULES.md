@@ -232,9 +232,17 @@ Check:
 - Unintended side effects.
 - Backward compatibility.
 
-### Phase 6: Documentation
+### Phase 6: Documentation (Mandatory on Every Change)
 
-Update relevant documentation after implementation.
+Update all relevant documentation files immediately after completing any code change, bug fix, or feature addition before concluding the task:
+- `CHANGELOG.md`: Log all additions, fixes, enhancements, and optimizations under current release or `[Unreleased]`.
+- `KNOWN_ISSUES.md`: Record resolved issues with resolution details, and log any newly identified debt or edge cases.
+- `FEATURES.md`: Update feature status matrix and in-depth breakdown for modified screens or workflows.
+- `API_DOCUMENTATION.md`: Document new or modified endpoints, parameters, and response structures.
+- `DATABASE_SCHEMA.md`: Document new tables, columns, indexes, or model attributes.
+- `TODO.md`: Check off completed items and record follow-ups.
+- `PROJECT_CONTEXT.md` / `README.md`: Keep architectural summary and functional capabilities current.
+- `graphify update .`: Synchronize the AST knowledge graph after modifications.
 
 ---
 
