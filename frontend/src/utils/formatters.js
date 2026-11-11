@@ -92,6 +92,48 @@ export function formatDate(dateStr) {
 }
 
 /**
+ * Get the full day of the week for a given date string (e.g. "Monday", "Tuesday", etc.)
+ */
+export function getDayOfWeek(dateStr) {
+  if (!dateStr) return '';
+  const str = String(dateStr).trim();
+  const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  // 1. Matches YYYY-MM-DD or YYYY/MM/DD (with optional time or ISO suffix)
+  const ymdMatch = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})/);
+  if (ymdMatch) {
+    const [, y, m, d] = ymdMatch;
+    const dateObj = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+    return days[dateObj.getDay()] || '';
+  }
+
+  // 2. Matches DD-MM-YYYY or DD/MM/YYYY
+  const dmyMatch = str.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (dmyMatch) {
+    const [, d, m, y] = dmyMatch;
+    const dateObj = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+    return days[dateObj.getDay()] || '';
+  }
+
+  // 3. Matches e.g. "09 Nov 2026" or "9 November 2026"
+  const namedMatch = str.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/);
+  if (namedMatch) {
+    const [, d, monStr, y] = namedMatch;
+    const months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const monIdx = months.indexOf(monStr.slice(0, 3).toLowerCase());
+    if (monIdx !== -1) {
+      const dateObj = new Date(parseInt(y, 10), monIdx, parseInt(d, 10));
+      return days[dateObj.getDay()] || '';
+    }
+  }
+
+  // 4. Fallback: Parse with Date object
+  const d = new Date(str);
+  if (isNaN(d.getTime())) return '';
+  return days[d.getDay()] || '';
+}
+
+/**
  * Format a time string (e.g. "19:42:00", "19:42", "07:42", "09:30") to 12-hour format with AM/PM (e.g. "07:42 PM", "09:30 AM")
  */
 export function formatTime(timeStr) {

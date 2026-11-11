@@ -37,7 +37,7 @@ import {
   Tooltip,
 } from 'recharts';
 import api from '../api/client';
-import { formatINR, formatDate } from '../utils/formatters';
+import { formatINR, formatDate, getDayOfWeek } from '../utils/formatters';
 import { useFilter } from '../context/FilterContext';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
@@ -870,7 +870,7 @@ export default function TradingJournal() {
                   <div>
                     <span className="text-[10px] text-slate-500 block">Trade Date</span>
                     <span className="text-white light:text-slate-900 font-semibold">
-                      {selectedEntry.date || formatDate(selectedEntry.raw?.trade_date)}
+                      <span title={getDayOfWeek(selectedEntry.raw?.trade_date || selectedEntry.date)} className="cursor-help hover:text-blue-400 transition-colors">{selectedEntry.date || formatDate(selectedEntry.raw?.trade_date)}</span>
                     </span>
                   </div>
                   <div>
@@ -908,7 +908,7 @@ export default function TradingJournal() {
                   <div>
                     <span className="text-[10px] text-slate-500 block">Expiry Date</span>
                     <span className="text-white light:text-slate-900 font-semibold">
-                      {selectedEntry.raw?.expiry_date ? formatDate(selectedEntry.raw.expiry_date) : '-'}
+                      {selectedEntry.raw?.expiry_date ? <span title={getDayOfWeek(selectedEntry.raw.expiry_date)} className="cursor-help hover:text-blue-400 transition-colors">{formatDate(selectedEntry.raw.expiry_date)}</span> : '-'}
                     </span>
                   </div>
                   <div>

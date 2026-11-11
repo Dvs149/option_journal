@@ -46,7 +46,7 @@ import {
   Cell,
 } from 'recharts';
 import api from '../api/client';
-import { formatINR, formatDate, formatTime, formatDateTime } from '../utils/formatters';
+import { formatINR, formatDate, formatTime, formatDateTime, getDayOfWeek } from '../utils/formatters';
 import { useLotSizes } from '../context/LotSizeContext';
 import { useToast } from '../context/ToastContext';
 import { useFilter } from '../context/FilterContext';
@@ -2196,7 +2196,17 @@ export default function AllTrades() {
                                     )}
                                   </button>
                                 ) : null}
-                                <span>{formatDate(trade.trade_date)}</span>
+                                <span
+                                  className="relative group/day inline-block cursor-help hover:text-blue-400 transition-colors"
+                                  title={getDayOfWeek(trade.trade_date)}
+                                >
+                                  <span>{formatDate(trade.trade_date)}</span>
+                                  {getDayOfWeek(trade.trade_date) ? (
+                                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-white text-[10px] font-semibold shadow-xl whitespace-nowrap opacity-0 group-hover/day:opacity-100 transition-opacity z-50">
+                                      {getDayOfWeek(trade.trade_date)}
+                                    </span>
+                                  ) : null}
+                                </span>
                               </div>
                             </td>
                             <td className="py-2.5 px-3 font-semibold text-white light:text-slate-900">
@@ -2254,7 +2264,19 @@ export default function AllTrades() {
                               {trade.strike_price ? Math.round(trade.strike_price) : '-'}
                             </td>
                             <td className="py-2.5 px-2 text-slate-400 text-[11px]">
-                              {trade.expiry_date ? formatDate(trade.expiry_date) : '-'}
+                              {trade.expiry_date ? (
+                                <span
+                                  className="relative group/exp inline-block cursor-help hover:text-blue-400 transition-colors"
+                                  title={getDayOfWeek(trade.expiry_date)}
+                                >
+                                  <span>{formatDate(trade.expiry_date)}</span>
+                                  {getDayOfWeek(trade.expiry_date) ? (
+                                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-white text-[10px] font-semibold shadow-xl whitespace-nowrap opacity-0 group-hover/exp:opacity-100 transition-opacity z-50">
+                                      {getDayOfWeek(trade.expiry_date)}
+                                    </span>
+                                  ) : null}
+                                </span>
+                              ) : '-'}
                             </td>
                             <td className="py-2.5 px-2 text-right font-mono-numbers text-slate-300 light:text-slate-700">
                               {trade.lots}
@@ -2427,7 +2449,7 @@ export default function AllTrades() {
                                                   </span>
                                                 </td>
                                                 <td className="py-2 px-3 text-slate-300 light:text-slate-700">
-                                                  {formatDateTime(ord.order_date, ord.order_time)}
+                                                  <span title={getDayOfWeek(ord.order_date || ord.order_time)} className="cursor-help hover:text-blue-400 transition-colors">{formatDateTime(ord.order_date, ord.order_time)}</span>
                                                 </td>
                                                 <td className="py-2 px-3 text-right font-mono-numbers font-semibold text-white light:text-slate-900">
                                                   {ord.quantity} Qty
@@ -2716,7 +2738,7 @@ export default function AllTrades() {
                   <div>
                     <span className="text-[10px] text-slate-500 block">Trade Date</span>
                     <span className="text-white light:text-slate-900 font-semibold">
-                      {formatDate(selectedTrade.trade_date)}
+                      <span title={getDayOfWeek(selectedTrade.trade_date)} className="cursor-help hover:text-blue-400 transition-colors">{formatDate(selectedTrade.trade_date)}</span>
                     </span>
                   </div>
                   <div>
@@ -2746,7 +2768,7 @@ export default function AllTrades() {
                   <div>
                     <span className="text-[10px] text-slate-500 block">Expiry Date</span>
                     <span className="text-white light:text-slate-900 font-semibold">
-                      {selectedTrade.expiry_date ? formatDate(selectedTrade.expiry_date) : '-'}
+                      {selectedTrade.expiry_date ? <span title={getDayOfWeek(selectedTrade.expiry_date)} className="cursor-help hover:text-blue-400 transition-colors">{formatDate(selectedTrade.expiry_date)}</span> : '-'}
                     </span>
                   </div>
                   <div>

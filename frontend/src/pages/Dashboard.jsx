@@ -35,7 +35,7 @@ import api from '../api/client';
 import { useFilter } from '../context/FilterContext';
 import { useTheme } from '../context/ThemeContext';
 import { MainStatsCard, CompactMetricCard } from '../components/common/StatsCard';
-import { formatINR, formatCompactINR, formatDate } from '../utils/formatters';
+import { formatINR, formatCompactINR, formatDate, getDayOfWeek } from '../utils/formatters';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -1125,8 +1125,8 @@ export default function Dashboard() {
                 <tbody className="divide-y divide-[#1e293b]/60 light:divide-slate-100 font-mono-numbers">
                   {recentTrades.map((t) => (
                     <tr key={t.id} className="hover:bg-[#162033]/40 light:hover:bg-slate-50">
-                      <td className="py-2 text-slate-300 light:text-slate-600 font-sans text-[11px]">
-                        {formatDate(t.trade_date || t.display_date)}
+                      <td className="py-2 text-slate-300 light:text-slate-600 font-sans text-[11px]" title={getDayOfWeek(t.trade_date || t.display_date)}>
+                        <span className="cursor-help hover:text-blue-400 transition-colors">{formatDate(t.trade_date || t.display_date)}</span>
                       </td>
                       <td className="py-2 font-semibold text-white light:text-slate-900">
                         {t.index_name}
