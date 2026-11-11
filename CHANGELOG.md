@@ -9,6 +9,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-11-12
+
+### Added & Enhanced
+- **Indian Stock Market (NSE & BSE) Trading Holidays in All Calendars**:
+  - Added official 2026 NSE/BSE holiday schedule across all calendar surfaces:
+    - `2026-01-26` (Monday) — Republic Day
+    - `2026-03-03` (Tuesday) — Holi
+    - `2026-03-26` (Thursday) — Shri Ram Navami
+    - `2026-03-31` (Tuesday) — Shri Mahavir Jayanti
+    - `2026-04-03` (Friday) — Good Friday
+    - `2026-04-14` (Tuesday) — Dr. Baba Saheb Ambedkar Jayanti
+    - `2026-05-01` (Friday) — Maharashtra Day
+    - `2026-05-28` (Thursday) — Bakri Id
+    - `2026-06-26` (Friday) — Muharram
+    - `2026-09-14` (Monday) — Ganesh Chaturthi
+    - `2026-10-02` (Friday) — Mahatma Gandhi Jayanti
+    - `2026-10-20` (Tuesday) — Dussehra
+    - `2026-11-10` (Tuesday) — Diwali-Balipratipada
+    - `2026-11-24` (Tuesday) — Prakash Gurpurb Sri Guru Nanak Dev
+    - `2026-12-25` (Friday) — Christmas
+  - Created `frontend/src/utils/holidays.js` providing `MARKET_HOLIDAYS_2026`, `ANNUAL_NATIONAL_HOLIDAYS`, `getMarketHoliday`, `isMarketHoliday`, and `getHolidayMapForMonth`.
+  - Updated `backend/app/Services/TradingAnalyticsService.php` to include `getMarketHolidays` and inject `'holidays'` into `/calendar` payload.
+  - Updated `TradingCalendar.jsx`:
+    - Calendar cells on market holidays render with amber borders and background, `🇮🇳 Holiday` badge, the official holiday name, and `Market Closed` caption.
+    - Hovering over a holiday cell displays an interactive floating tooltip with `🇮🇳 {Holiday Name}` and `NSE & BSE Market Closed`.
+    - Added "Market Holiday" (amber indicator) to the calendar legend.
+    - Added `X market holidays` indicator in the top "No Trade Days" statistics card.
+    - Clicking on a holiday date shows an `🇮🇳 {Holiday Name}` badge in the header and an informative market closure banner in the day's trades table.
+  - Updated `Dashboard.jsx` mini trading calendar widget:
+    - Amber-tinted cells with day number and `Holiday` text.
+    - Interactive hover tooltip showing holiday name and closed status.
+    - Updated legend with amber `● Holiday` item.
+    - Fixed React Hooks ordering by moving `useMemo(holidayMap)` before conditional loading early-returns, eliminating the "Rendered more hooks than during previous render" runtime error.
+  - Updated `FilterContext.jsx` helper `getNextWorkingDay`:
+    - Automatically advances through weekends and official Indian market holidays.
+  - Updated native macOS application (`TradingCalendarView.swift`):
+    - Indian market holidays marked with `🇮🇳` badge, amber title, and updated calendar legend.
+
+---
+
 ### Added (macOS Native Application - Phase 6)
 - **Journaling, Tools, Packaging & Release**:
   - `TradingJournalView`: Post-trade reviews, psychological discipline ratings, mistake logging (`mistakes_made`), lessons learned, and reflection drawer (`JournalReflectionSheet`).

@@ -869,8 +869,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/context/FilterContext.jsx": {
-    "mtime": 1794061147.8407714,
-    "ast_hash": "ab8a1a3a3015c58bfeb4f480ee7d2070",
+    "mtime": 1794421258.8162675,
+    "ast_hash": "edfffd863e69f152b396fb41c204097a",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/context/DropdownContext.jsx": {
@@ -899,8 +899,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/utils/formatters.js": {
-    "mtime": 1793759698.4141066,
-    "ast_hash": "98e8b9063373a6723a7bca1d1266b1aa",
+    "mtime": 1794358854.7149568,
+    "ast_hash": "0fdd8d21682fb70cd97a92d60ccf4d2a",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/trades/ExportModal.jsx": {
@@ -964,8 +964,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/AllTrades.jsx": {
-    "mtime": 1794208114.228306,
-    "ast_hash": "350e96c718c2f36872ebb44f1c99adbe",
+    "mtime": 1794359063.2539997,
+    "ast_hash": "fe6ed696aa09b937d7912b655b1cc256",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/AddTrade.jsx": {
@@ -979,18 +979,18 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/TradingJournal.jsx": {
-    "mtime": 1794191339.2425556,
-    "ast_hash": "29b10a688fbd1fc62fe6c5ed0fb0f8e5",
+    "mtime": 1794359150.6100585,
+    "ast_hash": "4ba62197315e2189207e9e0e05d45044",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/Dashboard.jsx": {
-    "mtime": 1794061183.8201103,
-    "ast_hash": "5cbf85170f95cb75d7d55b9781303b9e",
+    "mtime": 1794422470.8332791,
+    "ast_hash": "631b43b2b4472fcf3aef749793c5b892",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/TradingCalendar.jsx": {
-    "mtime": 1794279976.2666912,
-    "ast_hash": "41b776b7ca75cac8c11cd843cb71d2cf",
+    "mtime": 1794421846.4720426,
+    "ast_hash": "9e0261773fe15cc057a8d5c4d4af0c48",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/Login.jsx": {
@@ -1314,8 +1314,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/app/Services/TradingAnalyticsService.php": {
-    "mtime": 1794284539.3062966,
-    "ast_hash": "874117a4b3e59c9cca4b0604f21ab87f",
+    "mtime": 1794421320.446648,
+    "ast_hash": "f7d9a2453e35913b12a84f49f7ae79eb",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/app/Services/ExportService.php": {
@@ -1449,23 +1449,23 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/PROJECT_CONTEXT.md": {
-    "mtime": 1794296863.8802917,
-    "ast_hash": "4557d3348ac7620ca4552d7973ef770f",
+    "mtime": 1794422240.2261813,
+    "ast_hash": "ff0dc569481d7b6fc400f62ac8ca2b97",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/API_DOCUMENTATION.md": {
-    "mtime": 1794296823.5811787,
-    "ast_hash": "074309365b15bbcbafbd9404eb756cde",
+    "mtime": 1794422216.7448897,
+    "ast_hash": "a263e2b8f34543f2de91c70b7e4cb00a",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/ARCHITECTURE.md": {
-    "mtime": 1793517821.1658819,
-    "ast_hash": "0c9ce2f458b60c3ace6f283556b55beb",
+    "mtime": 1794422310.561401,
+    "ast_hash": "fd4f411e8d7f48b4e49e166664fb6cde",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/CHANGELOG.md": {
-    "mtime": 1794296778.595101,
-    "ast_hash": "1c1bd39c6d6a77a2462fb1801d95466d",
+    "mtime": 1794422154.85141,
+    "ast_hash": "2599aa79fe81b5097edac2122051ae30",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/DATABASE_SCHEMA.md": {
@@ -1474,8 +1474,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/TODO.md": {
-    "mtime": 1794296887.9951828,
-    "ast_hash": "1bc0cf56f4e97f8ad8919bcf4f2363a5",
+    "mtime": 1794422254.46331,
+    "ast_hash": "2d6571667bbcd35b4f2e5f2af4e6a6fa",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/AI_RULES.md": {
@@ -1484,13 +1484,13 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/README.md": {
-    "mtime": 1794011975.2460463,
-    "ast_hash": "bcabbbb0e18590b23823de6b88f9fcc7",
+    "mtime": 1794422289.3485844,
+    "ast_hash": "9135f071ce8fd740fdcfa4e6350eae67",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/KNOWN_ISSUES.md": {
-    "mtime": 1794296801.5518792,
-    "ast_hash": "4edd8e9fd2ca9867379892cfda52d589",
+    "mtime": 1794422276.487927,
+    "ast_hash": "a223fe033d2c7a51cccf802d301418d9",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/DEVELOPMENT_RULES.md": {
@@ -1499,8 +1499,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/FEATURES.md": {
-    "mtime": 1794296846.6053174,
-    "ast_hash": "612f104ec20059600693afa736947bc4",
+    "mtime": 1794422187.0919662,
+    "ast_hash": "62901ed109fa50d01f8ed9bbdfd3a9c5",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/index.html": {
@@ -1744,8 +1744,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/macos/OptionJournal/OptionJournal/Views/Analytics/TradingCalendarView.swift": {
-    "mtime": 1793532446.3830085,
-    "ast_hash": "570191d6a3b3f87c8d4186b81e927a40",
+    "mtime": 1794422071.6185472,
+    "ast_hash": "5fc6d97b0c85c152b6a2a4c9db07b9ee",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/macos/OptionJournal/OptionJournal/Views/Analytics/AnalyticsReportsView.swift": {
@@ -2031,6 +2031,11 @@
   "/Users/divyeshlunagariya/mern/option_journal/.agents/rules/project-documentation.md": {
     "mtime": 1794294956.785691,
     "ast_hash": "b09ad2115cb49f71b4c275372e7263f0",
+    "semantic_hash": ""
+  },
+  "/Users/divyeshlunagariya/mern/option_journal/frontend/src/utils/holidays.js": {
+    "mtime": 1794421232.0112453,
+    "ast_hash": "f90cbc5100d973ba7bb4c4ff5d701607",
     "semantic_hash": ""
   }
 }

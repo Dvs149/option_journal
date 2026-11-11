@@ -6,6 +6,10 @@ This document tracks prioritized future improvements, architectural tasks, and p
 
 ## Priority 0: Stability, Quality Control & Security (Immediate)
 
+- [x] **Indian Stock Market (NSE & BSE) Trading Holidays in All Calendars**:
+  - Added full 2026 official NSE & BSE exchange holidays schedule to main Trading Calendar (`TradingCalendar.jsx`), Dashboard mini calendar (`Dashboard.jsx`), and macOS application (`TradingCalendarView.swift`).
+  - Rendered distinct amber styling, `🇮🇳 Holiday` signs/badges, holiday names, interactive hover tooltips, and updated legends.
+  - Updated `FilterContext.jsx`'s `getNextWorkingDay` to automatically skip weekends and market holidays.
 - [x] **Dual CE & PE Exit Prices for Both (Straddle/Strangle) Orders**:
   - Support separate CE and PE exit price inputs in partial exit dialog (`PartialExitModal.jsx`), live combined total display, option chain straddle selection, and split leg SELL order execution in backend.
 - [ ] **Automated Tests for Calculation Engine**:

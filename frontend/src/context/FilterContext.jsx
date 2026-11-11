@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useMemo } from 'react';
 import { formatDate } from '../utils/formatters';
+import { isMarketHoliday } from '../utils/holidays';
 
 const FilterContext = createContext();
 
@@ -11,22 +12,14 @@ export const formatDateISO = (d) => {
 };
 
 /**
- * Returns tomorrow or the next working day.
- * If today is Friday (5) -> returns Monday (+3 days).
- * If today is Saturday (6) -> returns Monday (+2 days).
- * If today is Sunday (0) -> returns Monday (+1 day).
- * If Monday-Thursday -> returns next day (+1 day).
+ * Returns tomorrow or the next working day, automatically skipping
+ * both weekends (Saturday & Sunday) and official Indian stock market holidays.
  */
 export const getNextWorkingDay = (from = new Date()) => {
   const d = new Date(from.getFullYear(), from.getMonth(), from.getDate());
-  const day = d.getDay(); // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
-  if (day === 5) {
-    d.setDate(d.getDate() + 3);
-  } else if (day === 6) {
-    d.setDate(d.getDate() + 2);
-  } else if (day === 0) {
-    d.setDate(d.getDate() + 1);
-  } else {
+  d.setDate(d.getDate() + 1);
+  // Loop until we find a weekday that is not a market holiday
+  while (d.getDay() === 0 || d.getDay() === 6 || isMarketHoliday(d)) {
     d.setDate(d.getDate() + 1);
   }
   return d;

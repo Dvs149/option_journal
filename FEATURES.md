@@ -127,8 +127,16 @@
 - Selectable in **Settings → Appearance** with dedicated live preview thumbnail cards for **Light**, **Dark (Midnight)**, **Zerodha Kite**, and **System**.
 - Theme persistence via `localStorage` (`tj_theme`) and responsive mobile drawer integration.
 
-### 2.10 Trading Calendar & Heatmap (`TradingCalendar.jsx`)
-- Interactive monthly financial heatmap grid (Mon–Sun) with daily P&L badges, trade counts, and month navigation.
+### 2.10 Trading Calendar, Heatmap & Market Holidays (`TradingCalendar.jsx`, `Dashboard.jsx`)
+- Interactive monthly financial heatmap grid (Sun–Sat) with daily P&L badges, trade counts, and month navigation.
+- **Indian Stock Market (NSE & BSE) Trading Holidays**:
+  - Full official 2026 exchange holiday schedule integrated directly into both the main calendar and Dashboard mini calendar.
+  - Dedicated amber styling for holiday cells with `🇮🇳 Holiday` badge, official holiday title, and `Market Closed` caption.
+  - Interactive floating hover tooltip displaying full holiday name, weekday, and closure notice even on days without trades.
+  - Calendar Legend includes dedicated amber "Market Holiday" indicator.
+  - Selected date trade card displays `🇮🇳 {Holiday Name}` badge in the header and an informative market closure banner when no trades are recorded.
+  - Top "No Trade Days" KPI card displays the active month's market holidays count (`X market holidays`).
+  - Next Working Day filter shortcut automatically skips both weekends and official Indian market holidays.
 - **Realized P&L Attribution by Square-Off / Execution Date**:
   - Automatically attributes closed multi-day trades (BTST, overnight, positional) to their actual exit / square-off date.
   - In partial order scaling/exits, attributes realized P&L and charges to the latest executed order date.

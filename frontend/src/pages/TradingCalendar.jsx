@@ -32,6 +32,7 @@ import {
 } from 'recharts';
 import api from '../api/client';
 import { formatINR, formatCompactINR, formatDate, formatTime } from '../utils/formatters';
+import { getHolidayMapForMonth, getMarketHoliday } from '../utils/holidays';
 import { useToast } from '../context/ToastContext';
 import { useFilter } from '../context/FilterContext';
 import { useEscapeKey } from '../hooks/useEscapeKey';
@@ -212,6 +213,17 @@ export default function TradingCalendar() {
     }
   }, [filter, fromDate, customFrom]);
 
+  // Indian Stock Market (NSE & BSE) Holidays Map for current month
+  const holidayMap = useMemo(() => {
+    const local = getHolidayMapForMonth(currentDate.year, currentDate.month);
+    if (calendarData?.holidays) {
+      calendarData.holidays.forEach((h) => {
+        local[h.day] = { ...h, isHoliday: true };
+      });
+    }
+    return local;
+  }, [currentDate.year, currentDate.month, calendarData]);
+
   // When calendar data loads for a month, select the first trading day if current selection has no trades
   useEffect(() => {
     if (calendarData?.days && calendarData.days.length > 0) {
@@ -283,6 +295,7 @@ export default function TradingCalendar() {
 
     const daysInMonth = new Date(currentDate.year, currentDate.month, 0).getDate();
     const no_trade_days = Math.max(0, daysInMonth - total_trading_days);
+    const holidays_count = Object.keys(holidayMap).length;
 
     let bestDay = null;
     let worstDay = null;
@@ -301,6 +314,7 @@ export default function TradingCalendar() {
       losing_days,
       losing_days_pct: `${lossRate}%`,
       no_trade_days,
+      holidays_count,
       best_day_pnl: bestDay && bestDay.net_pnl > 0 ? bestDay.net_pnl : 0,
       best_day_date: bestDay && bestDay.net_pnl > 0 ? formatDate(bestDay.date) : '-',
       worst_day_pnl: worstDay && worstDay.net_pnl < 0 ? worstDay.net_pnl : 0,
@@ -310,7 +324,7 @@ export default function TradingCalendar() {
       total_charges,
       avg_daily_pnl,
     };
-  }, [calendarData, currentDate]);
+  }, [calendarData, currentDate, holidayMap]);
 
   useEffect(() => {
     fetchCalendar(currentDate.year, currentDate.month);
@@ -399,6 +413,7 @@ export default function TradingCalendar() {
         day: d,
         isCurrentMonth: true,
         data: dayMap[d],
+        holiday: holidayMap[d] || null,
       });
     }
     // Next month padding days to complete 35 or 42 grid cells
@@ -411,7 +426,7 @@ export default function TradingCalendar() {
     }
 
     return cells;
-  }, [currentDate, dayMap]);
+  }, [currentDate, dayMap, holidayMap]);
 
   // Monthly Performance Bar Chart Data (days in current month)
   const monthlyPerformanceData = useMemo(() => {
@@ -610,7 +625,9 @@ export default function TradingCalendar() {
           <span className="text-base font-bold text-white light:text-slate-900 font-mono-numbers block tracking-tight">
             {stats.no_trade_days}
           </span>
-          <span className="text-[10px] text-slate-500 block">-</span>
+          <span className="text-[10px] text-amber-400/90 light:text-amber-600 block truncate">
+            {stats.holidays_count > 0 ? `${stats.holidays_count} market ${stats.holidays_count === 1 ? 'holiday' : 'holidays'}` : '-'}
+          </span>
         </div>
 
         {/* Best Day */}
@@ -734,12 +751,16 @@ export default function TradingCalendar() {
                 const isProfit = data && data.net_pnl > 0;
                 const isLoss = data && data.net_pnl < 0;
                 const hasTrades = Boolean(data && data.trade_count > 0);
+                const holiday = cell.holiday;
+                const isHoliday = Boolean(holiday);
 
                 let bgClass = 'bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-slate-400 hover:border-slate-500';
                 if (isProfit) {
                   bgClass = 'bg-[#065f46] hover:bg-[#059669] text-white border border-[#047857] shadow-sm';
                 } else if (isLoss) {
                   bgClass = 'bg-[#991b1b] hover:bg-[#b91c1c] text-white border border-[#7f1d1d] shadow-sm';
+                } else if (isHoliday) {
+                  bgClass = 'bg-[#181813] light:bg-amber-50 hover:bg-[#222017] light:hover:bg-amber-100/90 text-amber-200 light:text-amber-900 border border-amber-500/40 light:border-amber-300 shadow-sm';
                 }
 
                 const colIndex = idx % 7;
@@ -753,10 +774,10 @@ export default function TradingCalendar() {
                     key={idx}
                     role="button"
                     tabIndex={0}
-                    aria-label={`${cell.day} ${monthName}, ${hasTrades ? (isProfit ? 'Profit ' : 'Loss ') + formatINR(data.net_pnl, true) : 'No trades'}`}
+                    aria-label={`${cell.day} ${monthName}, ${hasTrades ? (isProfit ? 'Profit ' : 'Loss ') + formatINR(data.net_pnl, true) : isHoliday ? `Holiday: ${holiday.name}` : 'No trades'}`}
                     onClick={() => setSelectedDayNumber(cell.day)}
                     onMouseEnter={(e) => {
-                      if (!hasTrades) return;
+                      if (!hasTrades && !isHoliday) return;
                       const parent = calendarCardRef.current;
                       if (!parent) return;
                       const targetRect = e.currentTarget.getBoundingClientRect();
@@ -764,6 +785,8 @@ export default function TradingCalendar() {
                       setHoveredDay({
                         day: cell.day,
                         data,
+                        holiday,
+                        isHoliday,
                         colIndex,
                         rowIndex,
                         monthName,
@@ -786,10 +809,27 @@ export default function TradingCalendar() {
                       isSelected ? 'ring-2 ring-blue-400 shadow-lg shadow-blue-500/30 transform scale-[1.02]' : ''
                     }`}
                   >
-                    {/* Top Day Number */}
-                    <span className="text-[10px] sm:text-[11px] font-bold opacity-90 select-none leading-none">{cell.day}</span>
+                    {/* Top Row: Day Number + Holiday Badge */}
+                    <div className="flex items-center justify-between w-full">
+                      <span className={`text-[10px] sm:text-[11px] font-bold select-none leading-none ${isHoliday && !hasTrades ? 'text-amber-400 light:text-amber-700' : 'opacity-90'}`}>
+                        {cell.day}
+                      </span>
+                      {isHoliday && (
+                        <span
+                          className={`text-[8px] sm:text-[8.5px] font-bold px-1 py-0.5 rounded flex items-center gap-0.5 leading-none shrink-0 ${
+                            hasTrades
+                              ? 'bg-black/40 text-amber-300 border border-amber-400/30'
+                              : 'bg-amber-500/20 text-amber-300 light:text-amber-800 border border-amber-500/30'
+                          }`}
+                          title={`Holiday: ${holiday.name}`}
+                        >
+                          <span className="text-[9px] leading-none">🇮🇳</span>
+                          <span className="hidden sm:inline font-semibold">Holiday</span>
+                        </span>
+                      )}
+                    </div>
 
-                    {/* Middle: Net P&L */}
+                    {/* Middle: Net P&L or Holiday Name */}
                     {hasTrades ? (
                       <div className="text-center my-auto py-0.5 select-none overflow-hidden">
                         <span className="text-[10.5px] sm:text-xs md:text-sm font-bold font-mono-numbers block tracking-tight leading-tight truncate px-0.5">
@@ -798,6 +838,15 @@ export default function TradingCalendar() {
                         <span className="text-[7.5px] sm:text-[9px] opacity-85 block truncate max-w-full px-0.5 leading-tight whitespace-nowrap mt-0.5">
                           <span className="hidden sm:inline">{data.trade_count} {data.trade_count === 1 ? 'trade' : 'trades'}</span>
                           <span className="sm:hidden">{data.trade_count} tr</span>
+                        </span>
+                      </div>
+                    ) : isHoliday ? (
+                      <div className="text-center my-auto py-0.5 select-none overflow-hidden">
+                        <span className="text-[9px] sm:text-[10.5px] font-bold text-amber-300 light:text-amber-800 block tracking-tight leading-tight truncate px-0.5" title={holiday.name}>
+                          {holiday.name}
+                        </span>
+                        <span className="text-[7px] sm:text-[8px] text-amber-400/80 light:text-amber-700 block truncate max-w-full px-0.5 leading-tight whitespace-nowrap mt-0.5 font-medium">
+                          Market Closed
                         </span>
                       </div>
                     ) : (
@@ -809,7 +858,7 @@ export default function TradingCalendar() {
             </div>
 
             {/* Single Floating Tooltip at Calendar Level - WCAG 1.4.13 Compliant, Never Clipped by Grid Cells */}
-            {hoveredDay && hoveredDay.data && (
+            {hoveredDay && (hoveredDay.data || hoveredDay.isHoliday) && (
               <div
                 role="tooltip"
                 className="absolute z-50 pointer-events-none w-56 p-2.5 rounded-xl bg-[#0b1322] light:bg-slate-900 text-white border border-slate-700/80 light:border-slate-800 shadow-2xl text-left select-none animate-fadeIn transition-all duration-75"
@@ -829,62 +878,84 @@ export default function TradingCalendar() {
                   <span className="text-[11px] font-semibold text-slate-200">
                     {hoveredDay.weekdayName}, {formatDate(`${currentDate.year}-${String(currentDate.month).padStart(2, '0')}-${String(hoveredDay.day).padStart(2, '0')}`)}
                   </span>
-                  <span
-                    className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded-full ${
-                      hoveredDay.data.net_pnl > 0
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                        : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
-                    }`}
-                  >
-                    {hoveredDay.data.trade_count} {hoveredDay.data.trade_count === 1 ? 'trade' : 'trades'}
-                  </span>
-                </div>
-
-                {/* Body */}
-                <div className="space-y-1.5">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-[10px] text-slate-400">Net P&L:</span>
+                  {hoveredDay.data && hoveredDay.data.trade_count > 0 ? (
                     <span
-                      className={`text-xs font-bold font-mono-numbers ${
-                        hoveredDay.data.net_pnl > 0 ? 'text-emerald-400' : 'text-rose-400'
+                      className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded-full ${
+                        hoveredDay.data.net_pnl > 0
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                          : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
                       }`}
                     >
-                      {hoveredDay.data.net_pnl > 0 ? '+' : ''}{formatINR(hoveredDay.data.net_pnl, true)}
+                      {hoveredDay.data.trade_count} {hoveredDay.data.trade_count === 1 ? 'trade' : 'trades'}
                     </span>
-                  </div>
-
-                  {(hoveredDay.data.gross_profit > 0 || hoveredDay.data.gross_loss > 0 || hoveredDay.data.total_charges > 0) && (
-                    <div className="pt-1.5 border-t border-slate-800/80 space-y-0.5 text-[10px] text-slate-400">
-                      {hoveredDay.data.gross_profit > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span>Gross Profit:</span>
-                          <span className="text-emerald-400 font-mono-numbers">
-                            +{formatINR(hoveredDay.data.gross_profit)}
-                          </span>
-                        </div>
-                      )}
-                      {hoveredDay.data.gross_loss > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span>Gross Loss:</span>
-                          <span className="text-rose-400 font-mono-numbers">
-                            -{formatINR(hoveredDay.data.gross_loss)}
-                          </span>
-                        </div>
-                      )}
-                      {hoveredDay.data.total_charges > 0 && (
-                        <div className="flex justify-between items-center">
-                          <span>Charges:</span>
-                          <span className="text-amber-400/90 font-mono-numbers">
-                            {formatINR(hoveredDay.data.total_charges)}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <div className="pt-1 text-[9px] text-blue-400/80 text-center font-medium">
-                    {selectedDayNumber === hoveredDay.day ? 'Currently Selected' : 'Click to inspect day trades'}
-                  </div>
+                  ) : hoveredDay.isHoliday ? (
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                      <span>🇮🇳</span> Holiday
+                    </span>
+                  ) : null}
                 </div>
+
+                {/* Holiday Banner inside tooltip */}
+                {hoveredDay.isHoliday && (
+                  <div className="mb-2 p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-[10.5px]">
+                    <div className="font-bold text-amber-300 flex items-center gap-1">
+                      <span>🇮🇳</span> {hoveredDay.holiday.name}
+                    </div>
+                    <div className="text-[9px] text-amber-400/80 mt-0.5">NSE & BSE Market Closed</div>
+                  </div>
+                )}
+
+                {/* Body */}
+                {hoveredDay.data && hoveredDay.data.trade_count > 0 ? (
+                  <div className="space-y-1.5">
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-[10px] text-slate-400">Net P&L:</span>
+                      <span
+                        className={`text-xs font-bold font-mono-numbers ${
+                          hoveredDay.data.net_pnl > 0 ? 'text-emerald-400' : 'text-rose-400'
+                        }`}
+                      >
+                        {hoveredDay.data.net_pnl > 0 ? '+' : ''}{formatINR(hoveredDay.data.net_pnl, true)}
+                      </span>
+                    </div>
+
+                    {(hoveredDay.data.gross_profit > 0 || hoveredDay.data.gross_loss > 0 || hoveredDay.data.total_charges > 0) && (
+                      <div className="pt-1.5 border-t border-slate-800/80 space-y-0.5 text-[10px] text-slate-400">
+                        {hoveredDay.data.gross_profit > 0 && (
+                          <div className="flex justify-between items-center">
+                            <span>Gross Profit:</span>
+                            <span className="text-emerald-400 font-mono-numbers">
+                              +{formatINR(hoveredDay.data.gross_profit)}
+                            </span>
+                          </div>
+                        )}
+                        {hoveredDay.data.gross_loss > 0 && (
+                          <div className="flex justify-between items-center">
+                            <span>Gross Loss:</span>
+                            <span className="text-rose-400 font-mono-numbers">
+                              -{formatINR(hoveredDay.data.gross_loss)}
+                            </span>
+                          </div>
+                        )}
+                        {hoveredDay.data.total_charges > 0 && (
+                          <div className="flex justify-between items-center">
+                            <span>Charges:</span>
+                            <span className="text-amber-400/90 font-mono-numbers">
+                              {formatINR(hoveredDay.data.total_charges)}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div className="pt-1 text-[9px] text-blue-400/80 text-center font-medium">
+                      {selectedDayNumber === hoveredDay.day ? 'Currently Selected' : 'Click to inspect day trades'}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="pt-0.5 text-[9.5px] text-slate-400 text-center font-medium">
+                    {selectedDayNumber === hoveredDay.day ? 'Currently Selected' : 'Click to select this date'}
+                  </div>
+                )}
 
                 {/* Arrow Pointer */}
                 <div
@@ -900,7 +971,7 @@ export default function TradingCalendar() {
             )}
 
             {/* Heatmap Legend */}
-            <div className="pt-2 flex items-center gap-5 text-xs text-slate-400">
+            <div className="pt-2 flex items-center gap-5 text-xs text-slate-400 flex-wrap">
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                 <span className="text-slate-300 light:text-slate-700">Profit Day</span>
@@ -908,6 +979,10 @@ export default function TradingCalendar() {
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-rose-600" />
                 <span className="text-slate-300 light:text-slate-700">Loss Day</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-500/50" />
+                <span className="text-slate-300 light:text-slate-700">Market Holiday</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#1e293b]" />
@@ -918,10 +993,17 @@ export default function TradingCalendar() {
 
           {/* Trades on Selected Date Card */}
           <div className="p-5 md:p-6 rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-sm md:text-base font-bold text-white light:text-slate-900">
-                Trades on {formatDate(`${currentDate.year}-${String(currentDate.month).padStart(2, '0')}-${String(selectedDayNumber).padStart(2, '0')}`)}
-              </h2>
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-sm md:text-base font-bold text-white light:text-slate-900">
+                  Trades on {formatDate(`${currentDate.year}-${String(currentDate.month).padStart(2, '0')}-${String(selectedDayNumber).padStart(2, '0')}`)}
+                </h2>
+                {holidayMap[selectedDayNumber] && (
+                  <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 light:text-amber-800 border border-amber-500/30 flex items-center gap-1">
+                    <span>🇮🇳</span> {holidayMap[selectedDayNumber].name}
+                  </span>
+                )}
+              </div>
               {selectedDayData.net_pnl !== 0 && (
                 <span
                   className={`text-xs font-bold px-3 py-1 rounded-full ${
@@ -1046,7 +1128,19 @@ export default function TradingCalendar() {
                   ) : (
                     <tr>
                       <td colSpan="11" className="py-8 text-center text-slate-400">
-                        No trade activity recorded on this day.
+                        {holidayMap[selectedDayNumber] ? (
+                          <div className="flex flex-col items-center justify-center space-y-1.5 py-4">
+                            <span className="text-2xl">🇮🇳</span>
+                            <span className="text-sm font-bold text-amber-300 light:text-amber-800">
+                              {holidayMap[selectedDayNumber].name}
+                            </span>
+                            <span className="text-xs text-slate-400 max-w-sm mx-auto">
+                              Indian Stock Market (NSE & BSE) closed for trading holiday on {formatDate(`${currentDate.year}-${String(currentDate.month).padStart(2, '0')}-${String(selectedDayNumber).padStart(2, '0')}`)}.
+                            </span>
+                          </div>
+                        ) : (
+                          'No trade activity recorded on this day.'
+                        )}
                       </td>
                     </tr>
                   )}

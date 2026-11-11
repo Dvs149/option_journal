@@ -36,6 +36,7 @@ import { useFilter } from '../context/FilterContext';
 import { useTheme } from '../context/ThemeContext';
 import { MainStatsCard, CompactMetricCard } from '../components/common/StatsCard';
 import { formatINR, formatCompactINR, formatDate, getDayOfWeek } from '../utils/formatters';
+import { getHolidayMapForMonth } from '../utils/holidays';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -67,6 +68,17 @@ export default function Dashboard() {
   const [hoveredCePeSlice, setHoveredCePeSlice] = useState(null);
   const [calendarMonth, setCalendarMonth] = useState({ year: today.getFullYear(), month: today.getMonth() + 1 });
   const [calendarData, setCalendarData] = useState(null);
+
+  // Indian Stock Market (NSE & BSE) Holidays Map for current calendar month
+  const holidayMap = useMemo(() => {
+    const local = getHolidayMapForMonth(calendarMonth.year, calendarMonth.month);
+    if (calendarData?.holidays) {
+      calendarData.holidays.forEach((h) => {
+        local[h.day] = { ...h, isHoliday: true };
+      });
+    }
+    return local;
+  }, [calendarMonth.year, calendarMonth.month, calendarData]);
 
   useEffect(() => {
     fetchDashboard();
@@ -231,6 +243,7 @@ export default function Dashboard() {
         day: d,
         isCurrentMonth: true,
         data: calendarMap[d] || null,
+        holiday: holidayMap[d] || null,
       });
     }
 
@@ -548,6 +561,8 @@ export default function Dashboard() {
               const hasTrade = !!d;
               const isProfit = d && d.net_pnl > 0;
               const isLoss = d && d.net_pnl < 0;
+              const holiday = cell.holiday;
+              const isHoliday = Boolean(holiday);
 
               const colIndex = idx % 7;
               const rowIndex = Math.floor(idx / 7);
@@ -560,12 +575,12 @@ export default function Dashboard() {
                   key={idx}
                   tabIndex={0}
                   role="button"
-                  aria-label={`${cell.day} ${monthName}, ${hasTrade ? (isProfit ? 'Profit ' : 'Loss ') + formatINR(d.net_pnl, true) : 'No trades'}`}
+                  aria-label={`${cell.day} ${monthName}, ${hasTrade ? (isProfit ? 'Profit ' : 'Loss ') + formatINR(d.net_pnl, true) : isHoliday ? `Holiday: ${holiday.name}` : 'No trades'}`}
                   onClick={() => {
                     navigate('/calendar');
                   }}
                   onMouseEnter={(e) => {
-                    if (!hasTrade) return;
+                    if (!hasTrade && !isHoliday) return;
                     const parent = calendarCardRef.current;
                     if (!parent) return;
                     const targetRect = e.currentTarget.getBoundingClientRect();
@@ -573,6 +588,8 @@ export default function Dashboard() {
                     setHoveredDay({
                       day: cell.day,
                       data: d,
+                      holiday,
+                      isHoliday,
                       colIndex,
                       rowIndex,
                       monthName,
@@ -592,26 +609,36 @@ export default function Dashboard() {
                     }
                   }}
                   className={`h-10 rounded-lg p-0.5 flex flex-col items-center justify-center text-[10px] transition-all cursor-pointer border ${
-                    !hasTrade
-                      ? 'bg-[#152033] light:bg-slate-100 border-transparent text-slate-400 hover:border-slate-500/50'
-                      : isProfit
-                      ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-400 hover:bg-emerald-900/50 hover:border-emerald-400'
-                      : 'bg-rose-950/40 border-rose-500/40 text-rose-400 hover:bg-rose-900/50 hover:border-rose-400'
+                    hasTrade
+                      ? isProfit
+                        ? 'bg-emerald-950/40 border-emerald-500/40 text-emerald-400 hover:bg-emerald-900/50 hover:border-emerald-400'
+                        : isLoss
+                        ? 'bg-rose-950/40 border-rose-500/40 text-rose-400 hover:bg-rose-900/50 hover:border-rose-400'
+                        : 'bg-slate-800 border-slate-700 text-slate-300'
+                      : isHoliday
+                      ? 'bg-amber-950/30 light:bg-amber-50/80 border-amber-500/40 text-amber-300 light:text-amber-800 hover:bg-amber-900/40 hover:border-amber-400'
+                      : 'bg-[#152033] light:bg-slate-100 border-transparent text-slate-400 hover:border-slate-500/50'
                   }`}
                 >
-                  <span className="font-semibold text-[11px] leading-tight select-none">{cell.day}</span>
-                  {hasTrade && (
+                  <span className={`font-semibold text-[11px] leading-tight select-none ${isHoliday && !hasTrade ? 'text-amber-400 light:text-amber-700' : ''}`}>
+                    {cell.day}
+                  </span>
+                  {hasTrade ? (
                     <span className="text-[8px] sm:text-[8.5px] font-mono-numbers font-bold tracking-tight leading-none truncate max-w-full px-0.5 select-none">
                       {formatMiniCellPnl(d.net_pnl)}
                     </span>
-                  )}
+                  ) : isHoliday ? (
+                    <span className="text-[7.5px] font-bold text-amber-400/90 light:text-amber-700 leading-none truncate max-w-full px-0.5 select-none" title={holiday.name}>
+                      Holiday
+                    </span>
+                  ) : null}
                 </div>
               );
             })}
           </div>
 
           {/* Single Floating Tooltip at Calendar Level - WCAG 1.4.13 Compliant, Never Clipped by Grid Cells */}
-          {hoveredDay && hoveredDay.data && (
+          {hoveredDay && (hoveredDay.data || hoveredDay.isHoliday) && (
             <div
               role="tooltip"
               className="absolute z-50 pointer-events-none w-52 p-2.5 rounded-xl bg-[#0b1322] light:bg-slate-900 text-white border border-slate-700/80 light:border-slate-800 shadow-2xl text-left select-none animate-fadeIn transition-all duration-75"
@@ -631,62 +658,84 @@ export default function Dashboard() {
                 <span className="text-[11px] font-semibold text-slate-200">
                   {hoveredDay.weekdayName}, {formatDate(`${calendarMonth.year}-${String(calendarMonth.month).padStart(2, '0')}-${String(hoveredDay.day).padStart(2, '0')}`)}
                 </span>
-                <span
-                  className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded-full ${
-                    hoveredDay.data.net_pnl > 0
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                      : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
-                  }`}
-                >
-                  {hoveredDay.data.trade_count} {hoveredDay.data.trade_count === 1 ? 'trade' : 'trades'}
-                </span>
-              </div>
-
-              {/* Body */}
-              <div className="space-y-1.5">
-                <div className="flex items-baseline justify-between">
-                  <span className="text-[10px] text-slate-400">Net P&L:</span>
+                {hoveredDay.data && hoveredDay.data.trade_count > 0 ? (
                   <span
-                    className={`text-xs font-bold font-mono-numbers ${
-                      hoveredDay.data.net_pnl > 0 ? 'text-emerald-400' : 'text-rose-400'
+                    className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded-full ${
+                      hoveredDay.data.net_pnl > 0
+                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                        : 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
                     }`}
                   >
-                    {hoveredDay.data.net_pnl > 0 ? '+' : ''}{formatINR(hoveredDay.data.net_pnl, true)}
+                    {hoveredDay.data.trade_count} {hoveredDay.data.trade_count === 1 ? 'trade' : 'trades'}
                   </span>
-                </div>
+                ) : hoveredDay.isHoliday ? (
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
+                    <span>🇮🇳</span> Holiday
+                  </span>
+                ) : null}
+              </div>
 
-                {(hoveredDay.data.gross_profit > 0 || hoveredDay.data.gross_loss > 0 || hoveredDay.data.total_charges > 0) && (
-                  <div className="pt-1.5 border-t border-slate-800/80 space-y-0.5 text-[10px] text-slate-400">
-                    {hoveredDay.data.gross_profit > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span>Gross Profit:</span>
-                        <span className="text-emerald-400 font-mono-numbers">
-                          +{formatINR(hoveredDay.data.gross_profit)}
-                        </span>
-                      </div>
-                    )}
-                    {hoveredDay.data.gross_loss > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span>Gross Loss:</span>
-                        <span className="text-rose-400 font-mono-numbers">
-                          -{formatINR(hoveredDay.data.gross_loss)}
-                        </span>
-                      </div>
-                    )}
-                    {hoveredDay.data.total_charges > 0 && (
-                      <div className="flex justify-between items-center">
-                        <span>Charges:</span>
-                        <span className="text-amber-400/90 font-mono-numbers">
-                          {formatINR(hoveredDay.data.total_charges)}
-                        </span>
-                      </div>
-                    )}
+              {/* Holiday Info */}
+              {hoveredDay.isHoliday && (
+                <div className="mb-2 p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/25 text-[10.5px]">
+                  <div className="font-bold text-amber-300 flex items-center gap-1">
+                    <span>🇮🇳</span> {hoveredDay.holiday.name}
                   </div>
-                )}
-                <div className="pt-1 text-[9px] text-blue-400/80 text-center font-medium">
+                  <div className="text-[9px] text-amber-400/80 mt-0.5">NSE & BSE Market Closed</div>
+                </div>
+              )}
+
+              {/* Body */}
+              {hoveredDay.data && hoveredDay.data.trade_count > 0 ? (
+                <div className="space-y-1.5">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-[10px] text-slate-400">Net P&L:</span>
+                    <span
+                      className={`text-xs font-bold font-mono-numbers ${
+                        hoveredDay.data.net_pnl > 0 ? 'text-emerald-400' : 'text-rose-400'
+                      }`}
+                    >
+                      {hoveredDay.data.net_pnl > 0 ? '+' : ''}{formatINR(hoveredDay.data.net_pnl, true)}
+                    </span>
+                  </div>
+
+                  {(hoveredDay.data.gross_profit > 0 || hoveredDay.data.gross_loss > 0 || hoveredDay.data.total_charges > 0) && (
+                    <div className="pt-1.5 border-t border-slate-800/80 space-y-0.5 text-[10px] text-slate-400">
+                      {hoveredDay.data.gross_profit > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span>Gross Profit:</span>
+                          <span className="text-emerald-400 font-mono-numbers">
+                            +{formatINR(hoveredDay.data.gross_profit)}
+                          </span>
+                        </div>
+                      )}
+                      {hoveredDay.data.gross_loss > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span>Gross Loss:</span>
+                          <span className="text-rose-400 font-mono-numbers">
+                            -{formatINR(hoveredDay.data.gross_loss)}
+                          </span>
+                        </div>
+                      )}
+                      {hoveredDay.data.total_charges > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span>Charges:</span>
+                          <span className="text-amber-400/90 font-mono-numbers">
+                            {formatINR(hoveredDay.data.total_charges)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <div className="pt-1 text-[9px] text-blue-400/80 text-center font-medium">
+                    Click to open in Trading Calendar
+                  </div>
+                </div>
+              ) : (
+                <div className="pt-0.5 text-[9.5px] text-blue-400/80 text-center font-medium">
                   Click to open in Trading Calendar
                 </div>
-              </div>
+              )}
 
               {/* Arrow Pointer */}
               <div
@@ -702,12 +751,15 @@ export default function Dashboard() {
           )}
 
           {/* Calendar Legend */}
-          <div className="flex items-center justify-center gap-4 mt-3 pt-2 border-t border-[#1e293b] light:border-slate-200 text-[11px] text-slate-400">
+          <div className="flex items-center justify-center gap-3.5 mt-3 pt-2 border-t border-[#1e293b] light:border-slate-200 text-[11px] text-slate-400 flex-wrap">
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500" /> Profit Day
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-rose-500" /> Loss Day
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400" /> Holiday
             </span>
             <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-slate-600" /> No Trade

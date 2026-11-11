@@ -212,7 +212,7 @@ Content-Type: application/json
 
 ### 5.1 Calendar Overview
 - **`GET /calendar`**
-- **Description**: Returns monthly calendar days with itemized trade records. Automatically attributes P&L to the square-off / exit date for multi-day trades (BTST / positional), and to the last executed order date for partial orders.
+- **Description**: Returns monthly calendar days with itemized trade records. Automatically attributes P&L to the square-off / exit date for multi-day trades (BTST / positional), and to the last executed order date for partial orders. Also returns the official Indian Stock Market (NSE & BSE) trading holidays schedule for the requested month.
 - **Query Parameters**: `year`, `month` (e.g. `year=2026&month=11`)
 - **Response (200 OK)**:
   ```json
@@ -229,6 +229,24 @@ Content-Type: application/json
     "winning_days": 5,
     "losing_days": 2,
     "win_rate": 71.4,
+    "holidays": [
+      {
+        "date": "2026-11-10",
+        "day": 10,
+        "month": 11,
+        "year": 2026,
+        "weekday": "Tuesday",
+        "name": "Diwali-Balipratipada"
+      },
+      {
+        "date": "2026-11-24",
+        "day": 24,
+        "month": 11,
+        "year": 2026,
+        "weekday": "Tuesday",
+        "name": "Prakash Gurpurb Sri Guru Nanak Dev"
+      }
+    ],
     "days": [
       {
         "date": "2026-11-02",

@@ -33,7 +33,7 @@ The user interface matches modern financial trading terminals (Zerodha Kite, Tra
   - Dynamic module-wise dropdown option control for Indices, Trading Types, Option Types, Strategies, and Date Periods.
   - Activate, deactivate, add custom options, or reset to system defaults.
 - **Trading Calendar & Heatmap**:
-  - Interactive calendar displaying daily P&L color-coded by win/loss and daily trade summaries.
+  - Interactive calendar displaying daily P&L color-coded by win/loss, realized P&L attribution on square-off dates, daily trade summaries, and official Indian Stock Market (NSE & BSE) trading holidays marked with badges, names, and closure notifications.
 - **Equity Curve & Capital Management**:
   - Cumulative equity curve, high-water mark, peak-to-trough drawdown calculation, and capital deposit/withdrawal tracking.
 - **Risk Management**:

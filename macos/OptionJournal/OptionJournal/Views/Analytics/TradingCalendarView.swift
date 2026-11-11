@@ -310,6 +310,10 @@ public struct TradingCalendarView: View {
                     Text("Loss Day").font(.system(size: 11)).foregroundColor(Color(hex: "94a3b8"))
                 }
                 HStack(spacing: 6) {
+                    Circle().fill(Color(hex: "f59e0b")).frame(width: 8, height: 8)
+                    Text("Market Holiday").font(.system(size: 11)).foregroundColor(Color(hex: "94a3b8"))
+                }
+                HStack(spacing: 6) {
                     Circle().fill(Color(hex: "334155")).frame(width: 8, height: 8)
                     Text("No Trade").font(.system(size: 11)).foregroundColor(Color(hex: "94a3b8"))
                 }
@@ -326,16 +330,45 @@ public struct TradingCalendarView: View {
         )
     }
     
+    private func marketHoliday(for day: Int) -> String? {
+        let y = viewModel.currentYear
+        let m = viewModel.currentMonth
+        if y == 2026 {
+            if m == 1 && day == 26 { return "Republic Day" }
+            if m == 3 && day == 3 { return "Holi" }
+            if m == 3 && day == 26 { return "Shri Ram Navami" }
+            if m == 3 && day == 31 { return "Shri Mahavir Jayanti" }
+            if m == 4 && day == 3 { return "Good Friday" }
+            if m == 4 && day == 14 { return "Dr. Baba Saheb Ambedkar Jayanti" }
+            if m == 5 && day == 1 { return "Maharashtra Day" }
+            if m == 5 && day == 28 { return "Bakri Id" }
+            if m == 6 && day == 26 { return "Muharram" }
+            if m == 9 && day == 14 { return "Ganesh Chaturthi" }
+            if m == 10 && day == 2 { return "Mahatma Gandhi Jayanti" }
+            if m == 10 && day == 20 { return "Dussehra" }
+            if m == 11 && day == 10 { return "Diwali-Balipratipada" }
+            if m == 11 && day == 24 { return "Prakash Gurpurb Sri Guru Nanak Dev" }
+            if m == 12 && day == 25 { return "Christmas" }
+        }
+        return nil
+    }
+
     private func dayGridCell(day: Int, item: CalendarDayItem?) -> some View {
         let isSelected = viewModel.selectedDayNumber == day
         let isDay3 = (day == 3 && viewModel.currentMonth == 11 && viewModel.currentYear == 2026)
+        let holidayName = marketHoliday(for: day)
+        let isHoliday = holidayName != nil
         
         return VStack(alignment: .leading, spacing: 2) {
             HStack {
                 Text("\(day)")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(isDay3 ? .white : Color(hex: "94a3b8"))
+                    .foregroundColor(isDay3 ? .white : (isHoliday ? Color(hex: "f59e0b") : Color(hex: "94a3b8")))
                 Spacer()
+                if isHoliday {
+                    Text("🇮🇳")
+                        .font(.system(size: 9))
+                }
             }
             
             Spacer()
@@ -350,17 +383,36 @@ public struct TradingCalendarView: View {
                         .foregroundColor(.white.opacity(0.85))
                 }
                 .frame(maxWidth: .infinity)
+            } else if let hName = holidayName {
+                VStack(spacing: 1) {
+                    Text(hName)
+                        .font(.system(size: 8.5, weight: .bold))
+                        .foregroundColor(Color(hex: "fcd34d"))
+                        .lineLimit(1)
+                    Text("Closed")
+                        .font(.system(size: 7.5))
+                        .foregroundColor(Color(hex: "f59e0b").opacity(0.8))
+                }
+                .frame(maxWidth: .infinity)
             }
             
             Spacer()
         }
         .padding(6)
         .frame(height: 70)
-        .background(isDay3 ? Color(hex: "059669") : (isSelected ? Color(hex: "1e293b") : Color(hex: "0e1524")))
+        .background(
+            isDay3 ? Color(hex: "059669") :
+            (isHoliday ? Color(hex: "1c1917") :
+            (isSelected ? Color(hex: "1e293b") : Color(hex: "0e1524")))
+        )
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(isSelected ? Color(hex: "3b82f6") : Color(hex: "1e293b"), lineWidth: isSelected ? 2 : 1)
+                .stroke(
+                    isSelected ? Color(hex: "3b82f6") :
+                    (isHoliday ? Color(hex: "f59e0b").opacity(0.5) : Color(hex: "1e293b")),
+                    lineWidth: isSelected ? 2 : 1
+                )
         )
     }
     
@@ -376,10 +428,20 @@ public struct TradingCalendarView: View {
             Divider().background(Color(hex: "1e293b"))
             
             if viewModel.selectedDayTrades.isEmpty {
+                let hol = marketHoliday(for: viewModel.selectedDayNumber)
                 VStack(spacing: 8) {
-                    Text("No trade activity recorded on this day.")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color(hex: "64748b"))
+                    if let holName = hol {
+                        Text("🇮🇳 \(holName)")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(Color(hex: "f59e0b"))
+                        Text("Indian Stock Market (NSE & BSE) closed for trading holiday.")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color(hex: "94a3b8"))
+                    } else {
+                        Text("No trade activity recorded on this day.")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color(hex: "64748b"))
+                    }
                 }
                 .frame(maxWidth: .infinity, minHeight: 90)
                 .padding(.bottom, 14)

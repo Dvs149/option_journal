@@ -723,6 +723,8 @@ class TradingAnalyticsService
         $tradeWinRate = $totalTrades > 0 ? round(($winTrades / $totalTrades) * 100, 1) : 0.0;
         $roi = $initialCapital > 0 ? round(($totalNet / $initialCapital) * 100, 2) : 0.0;
 
+        $holidays = self::getMarketHolidays($year, $month);
+
         return [
             'year' => $year,
             'month' => $month,
@@ -738,9 +740,52 @@ class TradingAnalyticsService
             'winning_days' => $winDays,
             'losing_days' => $lossDays,
             'win_rate' => $tradingDays > 0 ? round(($winDays / $tradingDays) * 100, 1) : 0,
+            'holidays' => $holidays,
             'days' => $daily->values(),
             'weekday_analytics' => $weekdayStats,
         ];
+    }
+
+    /**
+     * Official Indian Stock Market (NSE & BSE) Trading Holidays schedule.
+     */
+    public static function getMarketHolidays(int $year, ?int $month = null): array
+    {
+        $all2026 = [
+            ['date' => '2026-01-26', 'day' => 26, 'month' => 1, 'year' => 2026, 'weekday' => 'Monday', 'name' => 'Republic Day'],
+            ['date' => '2026-03-03', 'day' => 3, 'month' => 3, 'year' => 2026, 'weekday' => 'Tuesday', 'name' => 'Holi'],
+            ['date' => '2026-03-26', 'day' => 26, 'month' => 3, 'year' => 2026, 'weekday' => 'Thursday', 'name' => 'Shri Ram Navami'],
+            ['date' => '2026-03-31', 'day' => 31, 'month' => 3, 'year' => 2026, 'weekday' => 'Tuesday', 'name' => 'Shri Mahavir Jayanti'],
+            ['date' => '2026-04-03', 'day' => 3, 'month' => 4, 'year' => 2026, 'weekday' => 'Friday', 'name' => 'Good Friday'],
+            ['date' => '2026-04-14', 'day' => 14, 'month' => 4, 'year' => 2026, 'weekday' => 'Tuesday', 'name' => 'Dr. Baba Saheb Ambedkar Jayanti'],
+            ['date' => '2026-05-01', 'day' => 1, 'month' => 5, 'year' => 2026, 'weekday' => 'Friday', 'name' => 'Maharashtra Day'],
+            ['date' => '2026-05-28', 'day' => 28, 'month' => 5, 'year' => 2026, 'weekday' => 'Thursday', 'name' => 'Bakri Id'],
+            ['date' => '2026-06-26', 'day' => 26, 'month' => 6, 'year' => 2026, 'weekday' => 'Friday', 'name' => 'Muharram'],
+            ['date' => '2026-09-14', 'day' => 14, 'month' => 9, 'year' => 2026, 'weekday' => 'Monday', 'name' => 'Ganesh Chaturthi'],
+            ['date' => '2026-10-02', 'day' => 2, 'month' => 10, 'year' => 2026, 'weekday' => 'Friday', 'name' => 'Mahatma Gandhi Jayanti'],
+            ['date' => '2026-10-20', 'day' => 20, 'month' => 10, 'year' => 2026, 'weekday' => 'Tuesday', 'name' => 'Dussehra'],
+            ['date' => '2026-11-10', 'day' => 10, 'month' => 11, 'year' => 2026, 'weekday' => 'Tuesday', 'name' => 'Diwali-Balipratipada'],
+            ['date' => '2026-11-24', 'day' => 24, 'month' => 11, 'year' => 2026, 'weekday' => 'Tuesday', 'name' => 'Prakash Gurpurb Sri Guru Nanak Dev'],
+            ['date' => '2026-12-25', 'day' => 25, 'month' => 12, 'year' => 2026, 'weekday' => 'Friday', 'name' => 'Christmas'],
+        ];
+
+        if ($year === 2026) {
+            $holidays = $all2026;
+        } else {
+            $holidays = [
+                ['date' => sprintf('%04d-01-26', $year), 'day' => 26, 'month' => 1, 'year' => $year, 'weekday' => Carbon::createFromDate($year, 1, 26)->format('l'), 'name' => 'Republic Day'],
+                ['date' => sprintf('%04d-05-01', $year), 'day' => 1, 'month' => 5, 'year' => $year, 'weekday' => Carbon::createFromDate($year, 5, 1)->format('l'), 'name' => 'Maharashtra Day'],
+                ['date' => sprintf('%04d-08-15', $year), 'day' => 15, 'month' => 8, 'year' => $year, 'weekday' => Carbon::createFromDate($year, 8, 15)->format('l'), 'name' => 'Independence Day'],
+                ['date' => sprintf('%04d-10-02', $year), 'day' => 2, 'month' => 10, 'year' => $year, 'weekday' => Carbon::createFromDate($year, 10, 2)->format('l'), 'name' => 'Mahatma Gandhi Jayanti'],
+                ['date' => sprintf('%04d-12-25', $year), 'day' => 25, 'month' => 12, 'year' => $year, 'weekday' => Carbon::createFromDate($year, 12, 25)->format('l'), 'name' => 'Christmas'],
+            ];
+        }
+
+        if ($month !== null) {
+            $holidays = array_values(array_filter($holidays, fn($h) => (int)$h['month'] === (int)$month));
+        }
+
+        return $holidays;
     }
 
     /**
