@@ -107,18 +107,45 @@ class TradeController extends Controller
             $query->orderBy('trade_date', 'desc')->orderBy('id', 'desc');
         }
 
+        // Aggregate statistics for the filtered result set before pagination
+        $statsQuery = (clone $query);
+        $statsQuery->setEagerLoads([]);
+        $statsRows = $statsQuery->get(['id', 'status', 'net_pnl', 'gross_profit', 'gross_loss', 'total_charges']);
+
+        $totalTrades = $statsRows->count();
+        $closedTrades = $statsRows->where('status', '!=', 'OPEN');
+        $totalGrossProfit = (float) $closedTrades->sum('gross_profit');
+        $totalGrossLoss = (float) $closedTrades->sum('gross_loss');
+        $totalCharges = (float) $statsRows->sum('total_charges');
+        $totalNetPnl = (float) $statsRows->sum('net_pnl');
+        $totalClosed = $closedTrades->count();
+        $winningTrades = $closedTrades->where('net_pnl', '>', 0)->count();
+        $winRate = $totalClosed > 0 ? round(($winningTrades / $totalClosed) * 100, 1) : 0.0;
+
+        $summary = [
+            'total_trades' => $totalTrades,
+            'net_pnl' => round($totalNetPnl, 2),
+            'gross_profit' => round($totalGrossProfit, 2),
+            'gross_loss' => round($totalGrossLoss, 2),
+            'total_charges' => round($totalCharges, 2),
+            'win_rate' => $winRate,
+        ];
+
         $isAll = $request->boolean('all') || $request->input('per_page') === 'all' || (int) $request->input('per_page') === -1;
 
         if ($isAll) {
-            $totalCount = (clone $query)->count();
-            $trades = $query->with('journal')->paginate(max(1, $totalCount));
+            $trades = $query->with('journal')->paginate(max(1, $totalTrades));
         } else {
             $rawPerPage = (int) $request->input('per_page', 15);
             $perPage = $rawPerPage > 0 ? min($rawPerPage, 100000) : 15;
             $trades = $query->with('journal')->paginate($perPage);
         }
 
-        return response()->json($trades);
+        $response = $trades->toArray();
+        $response['summary'] = $summary;
+        $response['stats'] = $summary;
+
+        return response()->json($response);
     }
 
     public function store(StoreTradeRequest $request): JsonResponse

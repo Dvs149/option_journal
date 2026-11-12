@@ -51,7 +51,7 @@ The system addresses the core needs of active option traders:
    - Position tracking: Open positions, partial exit scaling (with dual CE & PE exit fields for straddles), and round-trip closed trades.
    - Multi-order executions breakdown: itemizes all individual BUY/SELL orders with execution time, price, quantity, individual charges, and order-level realized P&L.
    - Dynamic lot sizing with up/down stepper arrows incrementing by index lot size.
-   - Real-time gross P&L and net P&L calculation after taxes and brokerage.
+   - Real-time gross P&L and net P&L calculation after taxes and brokerage, with live query-level KPI card synchronization across All Trades on every order execution, edit, delete, or partial exit.
 2. **Indian Regulatory Charges Calculator**:
    - Brokerage: Flat ₹20 per executed order (or customizable per user).
    - STT: 0.15000% on sell-side option premium turnover.

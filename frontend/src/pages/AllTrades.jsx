@@ -209,38 +209,13 @@ export default function AllTrades() {
     setPage(1);
   };
 
-  // Fetch Dashboard Stats & Trades when date filters or category filters change
-  useEffect(() => {
-    fetchStats();
-  }, [filter, fromDate, toDate, customFrom, customTo]);
-
+  // Fetch Trades and summary stats whenever date filters or category filters change
   useEffect(() => {
     fetchTrades();
   }, [filter, fromDate, toDate, customFrom, customTo, selectedIndex, selectedTradingType, selectedOption, selectedStrategy, statusFilter, page, perPage, sortBy, sortOrder]);
 
   const fetchStats = async () => {
-    try {
-      const res = await api.get('/dashboard', {
-        params: {
-          filter: filter || 'this_month',
-          from_date: filter === 'custom' ? customFrom : (fromDate || undefined),
-          to_date: filter === 'custom' ? customTo : (toDate || undefined),
-        },
-      });
-      if (res.data?.stats) {
-        const s = res.data.stats;
-        setStats({
-          total_trades: s.total_trades ?? 0,
-          net_pnl: s.total_net_profit ?? 0,
-          gross_profit: s.total_gross_profit ?? 0,
-          gross_loss: s.total_gross_loss ?? 0,
-          total_charges: s.total_charges ?? 0,
-          win_rate: s.trade_win_rate ?? 0,
-        });
-      }
-    } catch (e) {
-      console.warn('Dashboard stats fallback applied', e);
-    }
+    return fetchTrades();
   };
 
   const fetchTrades = async () => {
@@ -266,6 +241,19 @@ export default function AllTrades() {
 
       const list = res.data?.data || [];
       setTrades(list);
+
+      if (res.data?.summary || res.data?.stats) {
+        const s = res.data.summary || res.data.stats;
+        setStats({
+          total_trades: s.total_trades ?? 0,
+          net_pnl: s.net_pnl ?? 0,
+          gross_profit: s.gross_profit ?? 0,
+          gross_loss: s.gross_loss ?? 0,
+          total_charges: s.total_charges ?? 0,
+          win_rate: s.win_rate ?? 0,
+        });
+      }
+
       setPagination({
         current_page: res.data?.current_page || 1,
         last_page: res.data?.last_page || 1,

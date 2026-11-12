@@ -122,17 +122,36 @@ Content-Type: application/json
 - **`GET /trades`**
 - **Query Parameters**:
   - `page`: Page number (default: 1)
-  - `per_page`: Records per page (default: 10, max: 100)
-  - `sort_by`: `trade_date`, `net_pnl`, `strike_price`, `lots` (default: `trade_date`)
-  - `sort_direction`: `asc`, `desc` (default: `desc`)
-  - `index_name`: `NIFTY`, `BANKNIFTY`, etc.
-  - `trading_type`: `Intraday`, `BTST`, `Overnight`
+  - `per_page`: Records per page (default: 15, max: 100000, or `all`)
+  - `sort_by`: `trade_date`, `net_pnl`, `strike_price`, `quantity`, etc. (default: `trade_date`)
+  - `sort_order`: `asc`, `desc` (default: `desc`)
+  - `index_name`: `NIFTY`, `BANKNIFTY`, `SENSEX`, etc.
+  - `trading_type`: `Intraday`, `BTST`, `Positional`
   - `strategy_name`: `Long Straddle`, etc.
   - `option_type`: `CE`, `PE`, `Both`
-  - `start_date`: `YYYY-MM-DD`
-  - `end_date`: `YYYY-MM-DD`
-  - `search`: Search query across index, strategy, reasons, notes
-- **Response (200 OK)**: Paginated resource collection with summary statistics.
+  - `status`: `ALL`, `OPEN`, `CLOSED`, `PARTIALLY_CLOSED`, `OPEN_OR_PARTIAL`
+  - `filter`: Preset range (`today`, `yesterday`, `this_week`, `this_month`, `last_month`, `this_year`, `all`, `custom`)
+  - `from_date`: `YYYY-MM-DD`
+  - `to_date`: `YYYY-MM-DD`
+  - `search`: Search query across index, strategy, reasons, notes, strike price
+- **Response (200 OK)**: Paginated resource collection with pre-paginated aggregate summary statistics:
+  ```json
+  {
+    "current_page": 1,
+    "data": [ ... ],
+    "total": 6,
+    "per_page": 15,
+    "summary": {
+      "total_trades": 6,
+      "net_pnl": 38600.01,
+      "gross_profit": 120450.8,
+      "gross_loss": 80928.5,
+      "total_charges": 922.29,
+      "win_rate": 33.3
+    },
+    "stats": { ... }
+  }
+  ```
 
 ### 4.2 Create Trade
 - **`POST /trades`**

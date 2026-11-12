@@ -9,7 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.15.0] - 2026-11-12
+## [1.15.1] - 2026-11-12
+
+### Fixed
+- **Synchronized Real-Time Top KPI Cards in All Trades Page**:
+  - Fixed an issue where modifying orders (editing quantity/price in `EditOrderModal`, deleting an order via `handleDeleteOrder`, or executing a partial exit in `PartialExitModal`) did not update the 6 top KPI cards (`Total Trades`, `Net P&L`, `Gross Profit`, `Gross Loss`, `Total Charges`, `Win Rate`) at the top of the All Trades page.
+  - Added server-side query-level aggregate calculations in `TradeController::index`:
+    - Clones the filtered query before pagination, executes eager-load-free aggregation across matching trades, and includes `summary` and `stats` objects in the JSON response (`total_trades`, `net_pnl`, `gross_profit`, `gross_loss`, `total_charges`, `win_rate`).
+  - Updated `frontend/src/pages/AllTrades.jsx`:
+    - Bound `fetchTrades()` to consume `res.data.summary` / `res.data.stats` and update the top 6 KPI cards immediately upon receiving new trades.
+    - Updated `fetchStats()` to delegate to `fetchTrades()` to eliminate redundant calls to `/dashboard` and prevent unfiltered stats from overwriting active page filters.
+    - Ensured all order actions (edit order, delete order, partial exit) immediately refresh the top KPI cards with 100% precision.
 
 ### Added & Enhanced
 - **Indian Stock Market (NSE & BSE) Trading Holidays in All Calendars**:

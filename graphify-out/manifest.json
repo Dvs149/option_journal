@@ -964,8 +964,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/AllTrades.jsx": {
-    "mtime": 1794359063.2539997,
-    "ast_hash": "fe6ed696aa09b937d7912b655b1cc256",
+    "mtime": 1794449476.8010867,
+    "ast_hash": "bb2a8dc03d67453bbb60d4077576891b",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/AddTrade.jsx": {
@@ -1279,8 +1279,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/app/Http/Controllers/Api/TradeController.php": {
-    "mtime": 1794296605.8282323,
-    "ast_hash": "a4017d2968e76c169318de6e4f64c761",
+    "mtime": 1794449433.6338916,
+    "ast_hash": "ddf65472951926b5b586de133e4a3ff4",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/app/Http/Controllers/Api/CalendarController.php": {
@@ -1449,13 +1449,13 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/PROJECT_CONTEXT.md": {
-    "mtime": 1794422240.2261813,
-    "ast_hash": "ff0dc569481d7b6fc400f62ac8ca2b97",
+    "mtime": 1794449788.6984363,
+    "ast_hash": "6a05ee49df94977abf87cfa07172a98a",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/API_DOCUMENTATION.md": {
-    "mtime": 1794422216.7448897,
-    "ast_hash": "a263e2b8f34543f2de91c70b7e4cb00a",
+    "mtime": 1794449734.971297,
+    "ast_hash": "127d1e0a711f1882ebd9d021e329c71a",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/ARCHITECTURE.md": {
@@ -1464,8 +1464,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/CHANGELOG.md": {
-    "mtime": 1794422154.85141,
-    "ast_hash": "2599aa79fe81b5097edac2122051ae30",
+    "mtime": 1794449721.5903695,
+    "ast_hash": "933f863ef1231ffcba2d59f075013c69",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/DATABASE_SCHEMA.md": {
@@ -1474,8 +1474,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/TODO.md": {
-    "mtime": 1794422254.46331,
-    "ast_hash": "2d6571667bbcd35b4f2e5f2af4e6a6fa",
+    "mtime": 1794449765.4298096,
+    "ast_hash": "2e03367a357e6a4e5b8b18afa66ae114",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/AI_RULES.md": {
@@ -1489,8 +1489,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/KNOWN_ISSUES.md": {
-    "mtime": 1794422276.487927,
-    "ast_hash": "a223fe033d2c7a51cccf802d301418d9",
+    "mtime": 1794449756.987999,
+    "ast_hash": "97825932ea99858706ccfbbe84599324",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/DEVELOPMENT_RULES.md": {
@@ -1499,8 +1499,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/FEATURES.md": {
-    "mtime": 1794422187.0919662,
-    "ast_hash": "62901ed109fa50d01f8ed9bbdfd3a9c5",
+    "mtime": 1794449773.5037613,
+    "ast_hash": "dc95d06d6924bcbd1f21ba2ecf7ffc65",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/index.html": {

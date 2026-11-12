@@ -48,6 +48,9 @@
 - Position modes: support for closed round-trip trades and open positions with partial scaling and exits.
 
 ### 2.3 All Trades Explorer (`AllTrades.jsx`)
+- **Synchronized Real-Time KPI Cards**:
+  - Six top KPI cards (**Total Trades**, **Net P&L**, **Gross Profit**, **Gross Loss**, **Total Charges**, **Win Rate**) dynamically bound to the server-side aggregate summary of the currently active query filters.
+  - Automatically updates immediately upon executing partial exits, editing executed orders, deleting individual orders, editing trade records, deleting trades, or modifying any index, strategy, status, or date range filters.
 - Paginated table supporting 10, 20, 50, or 100 rows per page with status filters (`All`, `Open Positions`, `Closed Trades`).
 - Multi-order execution breakdown drawer: itemizes all BUY and SELL executions, prices, turnover, individual charges, and realized P&L per order.
 - **Execute Exit / Partial Order Engine (`PartialExitModal.jsx`)**:
