@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.15.2] - 2026-11-13
+
+### Fixed & Enhanced
+- **Unified Trades List in Trading Calendar Module to Match All Trades Module**:
+  - Replaced legacy simplified daily trades table in [`TradingCalendar.jsx`](file:///Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/TradingCalendar.jsx) with the comprehensive 15-column format from [`AllTrades.jsx`](file:///Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/AllTrades.jsx):
+    - Columns: `Date` (with weekday tooltip), `Index`, `Type`, `Status` (with `X Orders v` pill), `CE/PE`, `Strike`, `Expiry` (with weekday tooltip), `Lots`, `Entry` (with `C:... P:...` leg support for straddles), `Exit` (with `C:... P:...` leg support and partial status), `Gross P/L`, `Charges`, `Net P&L`, `Strategy`, and `Actions`.
+  - Added inline expandable order executions breakdown sub-table (`Executed Orders Breakdown`) showing `#`, `Side`, `Date & Time`, `Quantity`, `Price`, `Turnover`, `Charges`, `Realized P&L`, `Notes`, and order `Actions` (Edit Order, Delete Order).
+  - Integrated [`EditOrderModal`](file:///Users/divyeshlunagariya/mern/option_journal/frontend/src/components/trades/EditOrderModal.jsx) and [`PartialExitModal`](file:///Users/divyeshlunagariya/mern/option_journal/frontend/src/components/trades/PartialExitModal.jsx) directly into the calendar view with automatic calendar data refresh.
+  - Aligned trade sorting with All Trades: default to newest `id desc` so trades appear in the exact same sequence as in All Trades.
+  - Enhanced [`TradingAnalyticsService.php`](file:///Users/divyeshlunagariya/mern/option_journal/backend/app/Services/TradingAnalyticsService.php)'s `getTradingCalendar` to serialize full trade models with `orders`, `expiry_date`, leg prices, and sort day trades by `id desc`.
+
 ## [1.15.1] - 2026-11-12
 
 ### Fixed

@@ -669,6 +669,8 @@ class TradingAnalyticsService
             $grossL = (float) $dayTrades->sum('gross_loss');
             $charges = (float) $dayTrades->sum('total_charges');
 
+            $sortedTrades = $dayTrades->sortByDesc('id')->values();
+
             return [
                 'date' => $date,
                 'day' => (int) Carbon::parse($date)->format('j'),
@@ -679,28 +681,20 @@ class TradingAnalyticsService
                 'total_charges' => round($charges, 2),
                 'trade_count' => $dayTrades->count(),
                 'status' => $net > 0 ? 'profit' : ($net < 0 ? 'loss' : 'breakeven'),
-                'trades' => $dayTrades->map(fn($t) => [
-                    'id' => $t->id,
-                    'time' => $t->effective_time,
-                    'index_name' => $t->index_name,
-                    'trading_type' => $t->trading_type,
-                    'status' => $t->status,
-                    'strategy_name' => $t->strategy_name,
-                    'option_type' => $t->option_type,
-                    'strike_price' => $t->strike_price,
-                    'lots' => $t->lots ?? 1,
-                    'quantity' => $t->quantity,
-                    'open_quantity' => $t->open_quantity,
-                    'entry_premium' => $t->entry_premium,
-                    'exit_premium' => $t->exit_premium,
-                    'gross_profit' => (float) $t->gross_profit,
-                    'gross_loss' => (float) $t->gross_loss,
-                    'total_charges' => (float) $t->total_charges,
-                    'net_pnl' => (float) $t->net_pnl,
-                    'trade_date' => $t->trade_date instanceof \DateTimeInterface ? $t->trade_date->format('Y-m-d') : (string) $t->trade_date,
-                    'exit_date' => $t->exit_date ? ($t->exit_date instanceof \DateTimeInterface ? $t->exit_date->format('Y-m-d') : (string) $t->exit_date) : null,
-                    'effective_date' => $t->effective_date,
-                ])->values(),
+                'trades' => $sortedTrades->map(function ($t) {
+                    $arr = $t->toArray();
+                    $arr['time'] = $t->effective_time;
+                    $arr['trade_date'] = $t->trade_date instanceof \DateTimeInterface ? $t->trade_date->format('Y-m-d') : (string) $t->trade_date;
+                    $arr['exit_date'] = $t->exit_date ? ($t->exit_date instanceof \DateTimeInterface ? $t->exit_date->format('Y-m-d') : (string) $t->exit_date) : null;
+                    $arr['expiry_date'] = $t->expiry_date ? ($t->expiry_date instanceof \DateTimeInterface ? $t->expiry_date->format('Y-m-d') : (string) $t->expiry_date) : null;
+                    $arr['effective_date'] = $t->effective_date;
+                    $arr['gross_profit'] = (float) $t->gross_profit;
+                    $arr['gross_loss'] = (float) $t->gross_loss;
+                    $arr['total_charges'] = (float) $t->total_charges;
+                    $arr['net_pnl'] = (float) $t->net_pnl;
+                    $arr['lots'] = (int) ($t->lots ?? 1);
+                    return $arr;
+                })->values(),
             ];
         });
 

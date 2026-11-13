@@ -15,6 +15,9 @@ import {
   ArrowRight,
   Layers,
   ChevronDown,
+  ChevronUp,
+  ArrowUpDown,
+  SlidersHorizontal,
   AlertTriangle,
 } from 'lucide-react';
 import {
@@ -37,6 +40,32 @@ import { useToast } from '../context/ToastContext';
 import { useFilter } from '../context/FilterContext';
 import { useEscapeKey } from '../hooks/useEscapeKey';
 import EditTradeModal from '../components/trades/EditTradeModal';
+import EditOrderModal from '../components/trades/EditOrderModal';
+import PartialExitModal from '../components/trades/PartialExitModal';
+
+// Helper to resolve individual CE and PE leg prices
+const getLegPrices = (trade) => {
+  if (!trade) return { ceEntry: null, peEntry: null, ceExit: null, peExit: null };
+  let ceEntry = trade.ce_entry_price != null ? parseFloat(trade.ce_entry_price) : null;
+  let peEntry = trade.pe_entry_price != null ? parseFloat(trade.pe_entry_price) : null;
+  let ceExit = trade.ce_exit_price != null ? parseFloat(trade.ce_exit_price) : null;
+  let peExit = trade.pe_exit_price != null ? parseFloat(trade.pe_exit_price) : null;
+  return { ceEntry, peEntry, ceExit, peExit };
+};
+
+const getDayOfWeek = (dateStr) => {
+  if (!dateStr) return '';
+  try {
+    const parts = String(dateStr).split('-');
+    if (parts.length === 3) {
+      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      return d.toLocaleDateString('en-US', { weekday: 'long' });
+    }
+  } catch (e) {
+    return '';
+  }
+  return '';
+};
 
 // Extract year, month, day from active global filter date
 const getTargetDateFromFilter = (filterType, from, customF) => {
@@ -192,10 +221,66 @@ export default function TradingCalendar() {
   const [loading, setLoading] = useState(false);
   const [tradeToDelete, setTradeToDelete] = useState(null);
   const [tradeToEdit, setTradeToEdit] = useState(null);
+  const [partialExitTrade, setPartialExitTrade] = useState(null);
+  const [editingOrderData, setEditingOrderData] = useState(null);
+  const [expandedTradeIds, setExpandedTradeIds] = useState(new Set());
+  const [sortCol, setSortCol] = useState('trade_date');
+  const [sortDir, setSortDir] = useState('desc');
   const { showToast } = useToast();
 
-  // Close delete confirmation modal on Escape
+  // Close modals on Escape
   useEscapeKey(() => setTradeToDelete(null), !!tradeToDelete);
+  useEscapeKey(() => setTradeToEdit(null), !!tradeToEdit);
+  useEscapeKey(() => setPartialExitTrade(null), !!partialExitTrade);
+  useEscapeKey(() => setEditingOrderData(null), !!editingOrderData);
+
+  const toggleExpandTrade = (tradeId, e) => {
+    if (e) e.stopPropagation();
+    setExpandedTradeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(tradeId)) {
+        next.delete(tradeId);
+      } else {
+        next.add(tradeId);
+      }
+      return next;
+    });
+  };
+
+  const handleSort = (col) => {
+    if (sortCol === col) {
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortCol(col);
+      setSortDir('desc');
+    }
+  };
+
+  const handleOpenEditOrder = (trade, order, e) => {
+    if (e) e.stopPropagation();
+    setEditingOrderData({ trade, order });
+  };
+
+  const handleDeleteOrder = async (trade, order, e) => {
+    if (e) e.stopPropagation();
+    if ((trade.orders?.length || 0) <= 1) {
+      showToast('Cannot delete the initial order. You can delete the entire trade instead.', 'warning');
+      return;
+    }
+    const confirmed = window.confirm(
+      `Delete order #${order.id} (${order.order_type} ${order.quantity} Qty @ ₹${parseFloat(order.price).toFixed(2)})?\nAll trade quantities, average prices, and net P&L will recalculate.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await api.delete(`/trades/${trade.id}/orders/${order.id}`);
+      showToast('Order deleted successfully', 'success');
+      fetchCalendar(currentDate.year, currentDate.month);
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Failed to delete order';
+      showToast(msg, 'error');
+    }
+  };
   const setFeedbackMessage = (msg, type = 'success') => {
     if (msg) showToast(msg, type);
   };
@@ -391,6 +476,35 @@ export default function TradingCalendar() {
       trades: [],
     };
   }, [dayMap, selectedDayNumber]);
+
+  // Sort trades for selected day (default: newest trade_date/effective_date first, secondary id desc, matching AllTrades)
+  const sortedDayTrades = useMemo(() => {
+    const list = [...(selectedDayData.trades || [])];
+    return list.sort((a, b) => {
+      if (sortCol === 'strike_price') {
+        const diff = (parseFloat(a.strike_price) || 0) - (parseFloat(b.strike_price) || 0);
+        return sortDir === 'asc' ? diff : -diff;
+      }
+      if (sortCol === 'gross_profit') {
+        const aGross = (parseFloat(a.gross_profit) || 0) - (parseFloat(a.gross_loss) || 0);
+        const bGross = (parseFloat(b.gross_profit) || 0) - (parseFloat(b.gross_loss) || 0);
+        return sortDir === 'asc' ? aGross - bGross : bGross - aGross;
+      }
+      if (sortCol === 'net_pnl') {
+        const diff = (parseFloat(a.net_pnl) || 0) - (parseFloat(b.net_pnl) || 0);
+        return sortDir === 'asc' ? diff : -diff;
+      }
+      // Default: trade_date desc, id desc (matching AllTrades)
+      const dateA = a.trade_date || a.effective_date || '';
+      const dateB = b.trade_date || b.effective_date || '';
+      if (dateA !== dateB) {
+        return sortDir === 'asc' ? dateA.localeCompare(dateB) : dateB.localeCompare(dateA);
+      }
+      const idA = a.id || 0;
+      const idB = b.id || 0;
+      return sortDir === 'asc' ? idA - idB : idB - idA;
+    });
+  }, [selectedDayData.trades, sortCol, sortDir]);
 
   // Calendar Cells Calculation
   const calendarCells = useMemo(() => {
@@ -1021,113 +1135,433 @@ export default function TradingCalendar() {
             {/* Trades Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs whitespace-nowrap">
-                <thead className="bg-[#0e1626]/60 light:bg-slate-50 border-b border-[#1e293b] text-slate-400 uppercase text-[10px] tracking-wider font-semibold">
+                <thead className="bg-[#0e1626]/60 light:bg-slate-50 border-b border-[#1e293b] light:border-slate-200 text-slate-400 uppercase text-[10px] tracking-wider font-semibold">
                   <tr>
-                    <th className="py-2.5 px-3">Time</th>
-                    <th className="py-2.5 px-3">Index</th>
-                    <th className="py-2.5 px-3">Type</th>
-                    <th className="py-2.5 px-2">Status</th>
-                    <th className="py-2.5 px-2">CE/PE</th>
-                    <th className="py-2.5 px-3">Strike</th>
-                    <th className="py-2.5 px-2 text-right">Lots</th>
-                    <th className="py-2.5 px-3 text-right">Entry</th>
-                    <th className="py-2.5 px-3 text-right">Exit</th>
-                    <th className="py-2.5 px-3 text-right">P&L</th>
-                    <th className="py-2.5 px-3 text-center">Actions</th>
+                    <th
+                      onClick={() => handleSort('trade_date')}
+                      className="py-3 px-3 cursor-pointer select-none hover:text-white light:hover:text-slate-900 transition-colors"
+                      title="Sort by Date"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Date</span>
+                        {sortCol === 'trade_date' ? (
+                          sortDir === 'asc' ? <ChevronUp className="w-3 h-3 text-blue-400" /> : <ChevronDown className="w-3 h-3 text-blue-400" />
+                        ) : (
+                          <ArrowUpDown className="w-2.5 h-2.5 text-slate-500 opacity-60" />
+                        )}
+                      </div>
+                    </th>
+                    <th className="py-3 px-3">Index</th>
+                    <th className="py-3 px-2">Type</th>
+                    <th className="py-3 px-2">Status</th>
+                    <th className="py-3 px-2">CE/PE</th>
+                    <th
+                      onClick={() => handleSort('strike_price')}
+                      className="py-3 px-2 cursor-pointer select-none hover:text-white light:hover:text-slate-900 transition-colors"
+                      title="Sort by Strike"
+                    >
+                      <div className="flex items-center gap-1">
+                        <span>Strike</span>
+                        {sortCol === 'strike_price' && (
+                          sortDir === 'asc' ? <ChevronUp className="w-3 h-3 text-blue-400" /> : <ChevronDown className="w-3 h-3 text-blue-400" />
+                        )}
+                      </div>
+                    </th>
+                    <th className="py-3 px-2">Expiry</th>
+                    <th className="py-3 px-2 text-right">Lots</th>
+                    <th className="py-3 px-2 text-right">Entry</th>
+                    <th className="py-3 px-2 text-right">Exit</th>
+                    <th
+                      onClick={() => handleSort('gross_profit')}
+                      className="py-3 px-3 text-right cursor-pointer select-none hover:text-white light:hover:text-slate-900 transition-colors"
+                      title="Sort by Gross P/L"
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        <span>Gross P/L</span>
+                        {sortCol === 'gross_profit' && (
+                          sortDir === 'asc' ? <ChevronUp className="w-3 h-3 text-blue-400" /> : <ChevronDown className="w-3 h-3 text-blue-400" />
+                        )}
+                      </div>
+                    </th>
+                    <th className="py-3 px-2 text-right">Charges</th>
+                    <th
+                      onClick={() => handleSort('net_pnl')}
+                      className="py-3 px-3 text-right cursor-pointer select-none hover:text-white light:hover:text-slate-900 transition-colors"
+                      title="Sort by Net P&L"
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        <span>Net P&L</span>
+                        {sortCol === 'net_pnl' ? (
+                          sortDir === 'asc' ? <ChevronUp className="w-3 h-3 text-blue-400" /> : <ChevronDown className="w-3 h-3 text-blue-400" />
+                        ) : (
+                          <ArrowUpDown className="w-2.5 h-2.5 text-slate-500 opacity-60" />
+                        )}
+                      </div>
+                    </th>
+                    <th className="py-3 px-3">Strategy</th>
+                    <th className="py-3 px-3 text-center">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#1e293b]/60 light:divide-slate-100">
-                  {selectedDayData.trades && selectedDayData.trades.length > 0 ? (
-                    selectedDayData.trades.map((t, idx) => {
-                      const net = parseFloat(t.net_pnl);
+                  {sortedDayTrades && sortedDayTrades.length > 0 ? (
+                    sortedDayTrades.map((t) => {
+                      const netVal = parseFloat(t.net_pnl);
+                      const grossPnl = parseFloat(t.gross_profit || 0) - parseFloat(t.gross_loss || 0);
+                      const tLegs = getLegPrices(t);
+                      const isOpen = t.status === 'OPEN';
+                      const isPartial = t.status === 'PARTIALLY_CLOSED';
+                      const isExpanded = expandedTradeIds.has(t.id);
+                      const hasMultipleOrders = t.orders && t.orders.length > 1;
+
                       return (
-                        <tr key={t.id || idx} className="hover:bg-[#162033]/60 transition-colors">
-                          <td className="py-2.5 px-3 text-slate-400 font-mono-numbers">
-                            {formatTime(t.time || '09:30')}
-                          </td>
-                          <td className="py-2.5 px-3 font-semibold text-white light:text-slate-900">
-                            {t.index_name}
-                          </td>
-                          <td className="py-2.5 px-3 text-slate-400 text-[11px]">
-                            <div>{t.trading_type || 'Intraday'}</div>
-                            {t.trade_date && t.effective_date && t.trade_date !== t.effective_date && (
-                              <div className="text-[10px] text-amber-400/80 light:text-amber-600 font-mono-numbers">
-                                Entry: {formatDate(t.trade_date)}
+                        <React.Fragment key={t.id}>
+                          <tr className="hover:bg-[#162033]/60 light:hover:bg-slate-50 transition-colors">
+                            <td className="py-2.5 px-3 text-slate-300 light:text-slate-700 font-sans">
+                              <div className="flex items-center gap-1.5">
+                                {hasMultipleOrders ? (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => toggleExpandTrade(t.id, e)}
+                                    className="p-0.5 rounded hover:bg-[#1e293b] light:hover:bg-slate-200 text-slate-400 hover:text-blue-400 transition-colors"
+                                    title={isExpanded ? "Collapse executions" : "Expand partial orders"}
+                                  >
+                                    {isExpanded ? (
+                                      <ChevronDown className="w-3.5 h-3.5 text-blue-400" />
+                                    ) : (
+                                      <ChevronRight className="w-3.5 h-3.5" />
+                                    )}
+                                  </button>
+                                ) : null}
+                                <span
+                                  className="relative group/day inline-block cursor-help hover:text-blue-400 transition-colors"
+                                  title={getDayOfWeek(t.trade_date)}
+                                >
+                                  <span>{formatDate(t.trade_date)}</span>
+                                  {getDayOfWeek(t.trade_date) ? (
+                                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-white text-[10px] font-semibold shadow-xl whitespace-nowrap opacity-0 group-hover/day:opacity-100 transition-opacity z-50">
+                                      {getDayOfWeek(t.trade_date)}
+                                    </span>
+                                  ) : null}
+                                </span>
                               </div>
-                            )}
-                          </td>
-                          <td className="py-2.5 px-2">
-                            <span
-                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                                t.status === 'CLOSED'
-                                  ? 'bg-slate-700/40 text-slate-300 border border-slate-600/40'
-                                  : t.status === 'PARTIALLY_CLOSED'
-                                  ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
-                                  : 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+                            </td>
+                            <td className="py-2.5 px-3 font-semibold text-white light:text-slate-900">
+                              {t.index_name}
+                            </td>
+                            <td className="py-2.5 px-2 text-slate-400 text-[11px]">
+                              <div>{t.trading_type || 'Intraday'}</div>
+                              {t.trade_date && t.effective_date && t.trade_date !== t.effective_date && (
+                                <div className="text-[10px] text-amber-400/80 light:text-amber-600 font-mono-numbers">
+                                  Exit: {formatDate(t.effective_date)}
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-2">
+                              <div>
+                                <span
+                                  className={`text-[10px] font-bold px-1.5 py-0.5 rounded inline-block ${
+                                    isOpen
+                                      ? 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+                                      : isPartial
+                                      ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+                                      : 'bg-slate-500/15 text-slate-400 border border-slate-500/20'
+                                  }`}
+                                >
+                                  {isPartial
+                                    ? `PARTIAL (${t.open_quantity})`
+                                    : t.status || 'CLOSED'}
+                                </span>
+                                {hasMultipleOrders && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => toggleExpandTrade(t.id, e)}
+                                    className="text-[9px] font-mono-numbers px-1 py-0.5 rounded bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 flex items-center gap-0.5 mt-0.5 transition-colors"
+                                    title="Click to view partial orders executed inline"
+                                  >
+                                    <span>{t.orders.length} Orders</span>
+                                    {isExpanded ? (
+                                      <ChevronUp className="w-2.5 h-2.5" />
+                                    ) : (
+                                      <ChevronDown className="w-2.5 h-2.5" />
+                                    )}
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-2">
+                              <span
+                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                  t.option_type === 'CE'
+                                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                    : t.option_type === 'PE'
+                                    ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                    : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                                }`}
+                              >
+                                {t.option_type}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-2 font-mono-numbers text-slate-300 light:text-slate-700">
+                              {t.strike_price ? Math.round(t.strike_price) : '-'}
+                            </td>
+                            <td className="py-2.5 px-2 text-slate-400 text-[11px]">
+                              {t.expiry_date ? (
+                                <span
+                                  className="relative group/exp inline-block cursor-help hover:text-blue-400 transition-colors"
+                                  title={getDayOfWeek(t.expiry_date)}
+                                >
+                                  <span>{formatDate(t.expiry_date)}</span>
+                                  {getDayOfWeek(t.expiry_date) ? (
+                                    <span className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-0.5 rounded bg-slate-900 border border-slate-700 text-white text-[10px] font-semibold shadow-xl whitespace-nowrap opacity-0 group-hover/exp:opacity-100 transition-opacity z-50">
+                                      {getDayOfWeek(t.expiry_date)}
+                                    </span>
+                                  ) : null}
+                                </span>
+                              ) : '-'}
+                            </td>
+                            <td className="py-2.5 px-2 text-right font-mono-numbers text-slate-300 light:text-slate-700">
+                              {t.lots || 1}
+                            </td>
+                            <td className="py-2.5 px-2 text-right font-mono-numbers text-slate-300 light:text-slate-700">
+                              <div>{t.entry_premium ? parseFloat(t.entry_premium).toFixed(2) : '-'}</div>
+                              {t.option_type === 'Both' && (tLegs.ceEntry != null || tLegs.peEntry != null) && (
+                                <div className="text-[9px] font-normal flex items-center justify-end gap-1 mt-0.5 whitespace-nowrap">
+                                  <span className="text-emerald-400 font-semibold">C:{tLegs.ceEntry != null ? Math.round(tLegs.ceEntry * 100) / 100 : '-'}</span>
+                                  <span className="text-rose-400 font-semibold">P:{tLegs.peEntry != null ? Math.round(tLegs.peEntry * 100) / 100 : '-'}</span>
+                                </div>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-2 text-right font-mono-numbers text-slate-300 light:text-slate-700">
+                              {isOpen ? (
+                                <span className="text-amber-400 font-semibold text-[11px]">Open</span>
+                              ) : (
+                                <>
+                                  <div>{t.exit_premium ? parseFloat(t.exit_premium).toFixed(2) : '-'}</div>
+                                  {isPartial && (
+                                    <div className="text-[9px] text-amber-400 font-normal">partial</div>
+                                  )}
+                                  {t.option_type === 'Both' && (tLegs.ceExit != null || tLegs.peExit != null) && (
+                                    <div className="text-[9px] font-normal flex items-center justify-end gap-1 mt-0.5 whitespace-nowrap">
+                                      <span className="text-emerald-400 font-semibold">C:{tLegs.ceExit != null ? Math.round(tLegs.ceExit * 100) / 100 : '-'}</span>
+                                      <span className="text-rose-400 font-semibold">P:{tLegs.peExit != null ? Math.round(tLegs.peExit * 100) / 100 : '-'}</span>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </td>
+                            <td
+                              className={`py-2.5 px-3 text-right font-mono-numbers font-semibold ${
+                                isOpen
+                                  ? 'text-slate-500'
+                                  : grossPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
                               }`}
                             >
-                              {t.status === 'PARTIALLY_CLOSED' ? 'PARTIAL' : (t.status || 'CLOSED')}
-                            </span>
-                          </td>
-                          <td className="py-2.5 px-2">
-                            <span
-                              className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                                t.option_type === 'CE'
-                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                  : t.option_type === 'PE'
-                                  ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                                  : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                              {isOpen ? '₹0.00' : `${grossPnl >= 0 ? '+' : ''}${formatINR(grossPnl)}`}
+                            </td>
+                            <td className="py-2.5 px-2 text-right font-mono-numbers text-slate-400">
+                              {formatINR(t.total_charges)}
+                            </td>
+                            <td
+                              className={`py-2.5 px-3 text-right font-mono-numbers font-bold ${
+                                isOpen
+                                  ? 'text-amber-400'
+                                  : netVal >= 0 ? 'text-emerald-400' : 'text-rose-400'
                               }`}
                             >
-                              {t.option_type}
-                            </span>
-                          </td>
-                          <td className="py-2.5 px-3 font-mono-numbers text-slate-300 light:text-slate-700">
-                            {t.strike_price ? Math.round(t.strike_price) : '-'}
-                          </td>
-                          <td className="py-2.5 px-2 text-right font-mono-numbers text-slate-300 light:text-slate-700">
-                            {t.lots || 1}
-                          </td>
-                          <td className="py-2.5 px-3 text-right font-mono-numbers text-slate-300 light:text-slate-700">
-                            {t.entry_premium ? parseFloat(t.entry_premium).toFixed(2) : '-'}
-                          </td>
-                          <td className="py-2.5 px-3 text-right font-mono-numbers text-slate-300 light:text-slate-700">
-                            {t.exit_premium ? parseFloat(t.exit_premium).toFixed(2) : '-'}
-                          </td>
-                          <td
-                            className={`py-2.5 px-3 text-right font-mono-numbers font-bold ${
-                              net >= 0 ? 'text-emerald-400' : 'text-rose-400'
-                            }`}
-                          >
-                            {net >= 0 ? '+' : ''}
-                            {formatINR(net)}
-                          </td>
-                          <td className="py-2.5 px-3 text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => setTradeToEdit(t)}
-                                className="p-1 rounded hover:bg-[#1e293b] text-slate-400 hover:text-blue-400 transition-colors"
-                                title="Edit Trade"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setTradeToDelete(t)}
-                                className="p-1 rounded hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 transition-colors"
-                                title="Delete Trade"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                              {isOpen
+                                ? `Open (-${formatINR(t.total_charges)})`
+                                : `${netVal >= 0 ? '+' : ''}${formatINR(netVal)}`}
+                            </td>
+                            <td className="py-2.5 px-3 text-slate-300 light:text-slate-700 text-[11px]">
+                              {t.strategy_name || '-'}
+                            </td>
+                            <td className="py-2.5 px-3 text-center" onClick={(e) => e.stopPropagation()}>
+                              <div className="flex items-center justify-center gap-1">
+                                {(isOpen || isPartial) && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setPartialExitTrade(t);
+                                    }}
+                                    className="p-1 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 transition-colors"
+                                    title="Execute Exit / Partial Order"
+                                  >
+                                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setTradeToEdit(t);
+                                  }}
+                                  className="p-1 rounded hover:bg-[#1e293b] light:hover:bg-slate-200 text-slate-400 hover:text-blue-400 transition-colors"
+                                  title="Edit Trade"
+                                >
+                                  <Edit2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setTradeToDelete(t);
+                                  }}
+                                  className="p-1 rounded hover:bg-rose-500/10 text-slate-400 hover:text-rose-400 transition-colors"
+                                  title="Delete Trade"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+
+                          {/* Inline Expanded Orders Breakdown Row */}
+                          {isExpanded && (
+                            <tr className="bg-[#0b1322]/90 light:bg-slate-100/80 border-b border-[#1e293b]">
+                              <td colSpan="15" className="py-3 px-5 sm:px-8">
+                                <div className="space-y-2.5">
+                                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                                    <div className="flex flex-wrap items-center gap-2.5">
+                                      <span className="font-bold text-slate-200 light:text-slate-800 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                                        <SlidersHorizontal className="w-3.5 h-3.5 text-blue-400" />
+                                        Executed Orders Breakdown ({t.orders?.length || 0})
+                                      </span>
+                                      <span className="text-[11px] text-slate-400 font-mono-numbers">
+                                        Avg Entry: ₹{t.avg_entry_price || t.entry_premium}
+                                        {t.avg_exit_price ? ` • Avg Exit: ₹${t.avg_exit_price}` : ''}
+                                        {t.open_quantity > 0 ? (
+                                          <strong className="text-amber-400 ml-1">
+                                            • Open: {t.open_quantity} Qty
+                                          </strong>
+                                        ) : (
+                                          <span className="text-emerald-400 ml-1">• Position Closed</span>
+                                        )}
+                                      </span>
+                                    </div>
+
+                                    {(isOpen || isPartial) && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setPartialExitTrade(t)}
+                                        className="px-2.5 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] flex items-center gap-1 shadow-sm transition-all self-start sm:self-auto"
+                                      >
+                                        <Plus className="w-3 h-3" />
+                                        <span>Execute Partial Exit</span>
+                                      </button>
+                                    )}
+                                  </div>
+
+                                  {/* Sub-table of orders */}
+                                  <div className="rounded-2xl border border-[#1e293b] light:border-slate-200 overflow-hidden bg-[#0e1626] light:bg-white shadow-inner">
+                                    <table className="w-full text-left text-xs whitespace-nowrap">
+                                      <thead className="bg-[#121b2d] light:bg-slate-50 border-b border-[#1e293b] light:border-slate-200 text-slate-400 text-[10px] uppercase font-semibold">
+                                        <tr>
+                                          <th className="py-2 px-3">#</th>
+                                          <th className="py-2 px-3">Side</th>
+                                          <th className="py-2 px-3">Date & Time</th>
+                                          <th className="py-2 px-3 text-right">Quantity</th>
+                                          <th className="py-2 px-3 text-right">Price</th>
+                                          <th className="py-2 px-3 text-right">Turnover</th>
+                                          <th className="py-2 px-3 text-right">Charges</th>
+                                          <th className="py-2 px-3 text-right">Realized P&L</th>
+                                          <th className="py-2 px-3">Notes</th>
+                                          <th className="py-2 px-3 text-right">Actions</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-[#1e293b]/40 light:divide-slate-200 text-[11px]">
+                                        {t.orders && t.orders.length > 0 ? (
+                                          t.orders.map((ord, oIdx) => {
+                                            const isSell = ord.order_type === 'SELL';
+                                            const ordTurnover = parseFloat(ord.price || 0) * parseInt(ord.quantity || 0);
+                                            const ordCharges = parseFloat(ord.total_charges || 0);
+                                            const ordPnl = ord.realized_pnl != null ? parseFloat(ord.realized_pnl) : null;
+
+                                            return (
+                                              <tr key={ord.id || oIdx} className="hover:bg-[#162033]/40 light:hover:bg-slate-50/80 transition-colors">
+                                                <td className="py-2 px-3 text-slate-500 font-mono-numbers">
+                                                  #{oIdx + 1}
+                                                </td>
+                                                <td className="py-2 px-3">
+                                                  <span
+                                                    className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                                      isSell
+                                                        ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                                                        : 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                                                    }`}
+                                                  >
+                                                    {ord.order_type}
+                                                  </span>
+                                                </td>
+                                                <td className="py-2 px-3 text-slate-300 light:text-slate-700 font-mono-numbers">
+                                                  {formatDate(ord.order_date || t.trade_date)} {formatTime(ord.order_time || '09:15')}
+                                                </td>
+                                                <td className="py-2 px-3 text-right font-mono-numbers font-semibold text-white light:text-slate-900">
+                                                  {ord.quantity} <span className="text-[10px] text-slate-500 font-normal">Qty</span>
+                                                </td>
+                                                <td className="py-2 px-3 text-right font-mono-numbers text-slate-200 light:text-slate-800">
+                                                  ₹{parseFloat(ord.price).toFixed(2)}
+                                                </td>
+                                                <td className="py-2 px-3 text-right font-mono-numbers text-slate-400">
+                                                  ₹{Math.round(ordTurnover).toLocaleString('en-IN')}
+                                                </td>
+                                                <td className="py-2 px-3 text-right font-mono-numbers text-slate-400">
+                                                  ₹{ordCharges.toFixed(2)}
+                                                </td>
+                                                <td className="py-2 px-3 text-right font-mono-numbers font-semibold">
+                                                  {ordPnl != null && isSell ? (
+                                                    <span className={ordPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                                                      {ordPnl >= 0 ? '+' : ''}₹{Math.round(ordPnl).toLocaleString('en-IN')}
+                                                    </span>
+                                                  ) : (
+                                                    <span className="text-slate-500">-</span>
+                                                  )}
+                                                </td>
+                                                <td className="py-2 px-3 text-slate-400 text-[10px] max-w-[140px] truncate">
+                                                  {ord.notes || '-'}
+                                                </td>
+                                                <td className="py-2 px-3 text-right" onClick={(e) => e.stopPropagation()}>
+                                                  <div className="flex items-center justify-end gap-1">
+                                                    <button
+                                                      onClick={(e) => handleOpenEditOrder(t, ord, e)}
+                                                      title="Edit Order"
+                                                      className="p-1 rounded text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 transition-colors"
+                                                    >
+                                                      <Edit2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button
+                                                      onClick={(e) => handleDeleteOrder(t, ord, e)}
+                                                      title="Delete Order"
+                                                      disabled={(t.orders?.length || 0) <= 1}
+                                                      className="p-1 rounded text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                                                    >
+                                                      <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                  </div>
+                                                </td>
+                                              </tr>
+                                            );
+                                          })
+                                        ) : (
+                                          <tr>
+                                            <td colSpan="10" className="py-3 px-3 text-center text-slate-500">
+                                              No individual orders found.
+                                            </td>
+                                          </tr>
+                                        )}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
                       );
                     })
                   ) : (
                     <tr>
-                      <td colSpan="11" className="py-8 text-center text-slate-400">
+                      <td colSpan="15" className="py-8 text-center text-slate-400">
                         {holidayMap[selectedDayNumber] ? (
                           <div className="flex flex-col items-center justify-center space-y-1.5 py-4">
                             <span className="text-2xl">🇮🇳</span>
@@ -1389,6 +1823,29 @@ export default function TradingCalendar() {
           </div>
         </div>
       )}
+
+      {/* Edit Executed Order Modal */}
+      <EditOrderModal
+        trade={editingOrderData?.trade}
+        order={editingOrderData?.order}
+        isOpen={Boolean(editingOrderData)}
+        onClose={() => setEditingOrderData(null)}
+        onSuccess={() => {
+          fetchCalendar(currentDate.year, currentDate.month);
+          setEditingOrderData(null);
+        }}
+      />
+
+      {/* Partial Exit Modal */}
+      <PartialExitModal
+        trade={partialExitTrade}
+        isOpen={Boolean(partialExitTrade)}
+        onClose={() => setPartialExitTrade(null)}
+        onSuccess={() => {
+          fetchCalendar(currentDate.year, currentDate.month);
+          setPartialExitTrade(null);
+        }}
+      />
     </div>
   );
 }

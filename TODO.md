@@ -14,6 +14,8 @@ This document tracks prioritized future improvements, architectural tasks, and p
   - Support separate CE and PE exit price inputs in partial exit dialog (`PartialExitModal.jsx`), live combined total display, option chain straddle selection, and split leg SELL order execution in backend.
 - [x] **Real-time KPI Top Cards Synchronization on Order & Trade Updates**:
   - Bound top KPI cards (Total Trades, Net P&L, Gross Profit, Gross Loss, Total Charges, Win Rate) in `AllTrades.jsx` to pre-paginated query aggregate summary in `TradeController::index`, ensuring instant updates whenever an order is edited, deleted, or partially exited, and across all active filter combinations.
+- [x] **Trading Calendar Daily Trades Table Parity with All Trades**:
+  - Upgraded daily trades list in `TradingCalendar.jsx` to 15-column format matching `AllTrades.jsx` with expandable order executions breakdown, Expiry/Gross P&L/Charges/Strategy columns, straddle leg prices, newest-first ordering, and inline partial exit/order edit modals.
 - [ ] **Automated Tests for Calculation Engine**:
   - Add PHPUnit / Pest tests in `backend/tests/Feature/TradingCalculationTest.php` testing STT, exchange fees, GST, SEBI turnover fees, and stamp duty edge cases against known Indian broker contract notes.
 - [ ] **Bulk Import Parser Validation Suite**:

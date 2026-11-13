@@ -162,7 +162,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/ViewModels/StrategyAnalysisViewModel.swift",
       "source_location": "L1",
       "id": "macos_optionjournal_optionjournal_viewmodels_strategyanalysisviewmodel_swift",
-      "community": 101,
+      "community": 93,
       "norm_label": "strategyanalysisviewmodel.swift"
     },
     {
@@ -171,7 +171,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/ViewModels/StrategyAnalysisViewModel.swift",
       "source_location": "L5",
       "id": "viewmodels_strategyanalysisviewmodel_strategyscatterpoint",
-      "community": 101,
+      "community": 93,
       "norm_label": "strategyscatterpoint"
     },
     {
@@ -369,7 +369,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/ViewModels/AuthViewModel.swift",
       "source_location": "L1",
       "id": "macos_optionjournal_optionjournal_viewmodels_authviewmodel_swift",
-      "community": 217,
+      "community": 86,
       "norm_label": "authviewmodel.swift"
     },
     {
@@ -378,7 +378,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/ViewModels/AuthViewModel.swift",
       "source_location": "L4",
       "id": "viewmodels_authviewmodel_authviewmodel",
-      "community": 217,
+      "community": 86,
       "norm_label": "authviewmodel"
     },
     {
@@ -387,7 +387,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/ViewModels/AuthViewModel.swift",
       "source_location": "L13",
       "id": "viewmodels_authviewmodel_authviewmodel_init",
-      "community": 217,
+      "community": 86,
       "norm_label": ".init()"
     },
     {
@@ -396,7 +396,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/ViewModels/AuthViewModel.swift",
       "source_location": "L26",
       "id": "viewmodels_authviewmodel_authviewmodel_performlogin",
-      "community": 217,
+      "community": 86,
       "norm_label": ".performlogin()"
     },
     {
@@ -1791,7 +1791,7 @@
       "source_file": "",
       "source_location": "",
       "id": "viewmodifier",
-      "community": 36,
+      "community": 215,
       "norm_label": "viewmodifier"
     },
     {
@@ -2016,7 +2016,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/App/AppState.swift",
       "source_location": "L1",
       "id": "macos_optionjournal_optionjournal_app_appstate_swift",
-      "community": 86,
+      "community": 217,
       "norm_label": "appstate.swift"
     },
     {
@@ -2106,7 +2106,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/App/AppState.swift",
       "source_location": "L31",
       "id": "app_appstate_appstate",
-      "community": 86,
+      "community": 217,
       "norm_label": "appstate"
     },
     {
@@ -2115,7 +2115,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/App/AppState.swift",
       "source_location": "L72",
       "id": "app_appstate_appstate_init",
-      "community": 86,
+      "community": 217,
       "norm_label": ".init()"
     },
     {
@@ -2124,7 +2124,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/App/AppState.swift",
       "source_location": "L86",
       "id": "app_appstate_appstate_bootstrap",
-      "community": 86,
+      "community": 217,
       "norm_label": ".bootstrap()"
     },
     {
@@ -2133,7 +2133,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/App/AppState.swift",
       "source_location": "L108",
       "id": "app_appstate_appstate_didlogin",
-      "community": 86,
+      "community": 217,
       "norm_label": ".didlogin()"
     },
     {
@@ -2142,7 +2142,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/App/AppState.swift",
       "source_location": "L114",
       "id": "app_appstate_appstate_logout",
-      "community": 86,
+      "community": 217,
       "norm_label": ".logout()"
     },
     {
@@ -2349,7 +2349,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Analytics.swift",
       "source_location": "L25",
       "id": "models_analytics_dailypnlpoint",
-      "community": 76,
+      "community": 30,
       "norm_label": "dailypnlpoint"
     },
     {
@@ -2421,7 +2421,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Analytics.swift",
       "source_location": "L116",
       "id": "models_analytics_equitypoint",
-      "community": 76,
+      "community": 113,
       "norm_label": "equitypoint"
     },
     {
@@ -2430,7 +2430,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Analytics.swift",
       "source_location": "L130",
       "id": "models_analytics_equitypoint_init",
-      "community": 76,
+      "community": 113,
       "norm_label": ".init()"
     },
     {
@@ -2448,7 +2448,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Analytics.swift",
       "source_location": "L163",
       "id": "models_analytics_calendardayitem",
-      "community": 30,
+      "community": 113,
       "norm_label": "calendardayitem"
     },
     {
@@ -2457,7 +2457,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Analytics.swift",
       "source_location": "L180",
       "id": "models_analytics_calendardayitem_init",
-      "community": 53,
+      "community": 113,
       "norm_label": ".init()"
     },
     {
@@ -2538,7 +2538,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Analytics.swift",
       "source_location": "L276",
       "id": "models_analytics_strategyperformanceitem",
-      "community": 101,
+      "community": 30,
       "norm_label": "strategyperformanceitem"
     },
     {
@@ -2547,7 +2547,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Analytics.swift",
       "source_location": "L287",
       "id": "models_analytics_strategyperformanceitem_init",
-      "community": 101,
+      "community": 113,
       "norm_label": ".init()"
     },
     {
@@ -2565,7 +2565,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Analytics.swift",
       "source_location": "L343",
       "id": "models_analytics_recenttradeitem",
-      "community": 76,
+      "community": 30,
       "norm_label": "recenttradeitem"
     },
     {
@@ -2655,7 +2655,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Trade.swift",
       "source_location": "L48",
       "id": "models_trade_trade_init",
-      "community": 53,
+      "community": 113,
       "norm_label": ".init()"
     },
     {
@@ -2781,7 +2781,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/DropdownOption.swift",
       "source_location": "L3",
       "id": "models_dropdownoption_dropdownoptionsresponse",
-      "community": 109,
+      "community": 30,
       "norm_label": "dropdownoptionsresponse"
     },
     {
@@ -2889,7 +2889,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/User.swift",
       "source_location": "L1",
       "id": "macos_optionjournal_optionjournal_models_user_swift",
-      "community": 53,
+      "community": 91,
       "norm_label": "user.swift"
     },
     {
@@ -2898,7 +2898,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/User.swift",
       "source_location": "L4",
       "id": "models_user_flexibledouble",
-      "community": 53,
+      "community": 113,
       "norm_label": "flexibledouble"
     },
     {
@@ -2907,7 +2907,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/User.swift",
       "source_location": "L8",
       "id": "models_user_flexibledouble_init",
-      "community": 53,
+      "community": 113,
       "norm_label": ".init()"
     },
     {
@@ -2916,7 +2916,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/User.swift",
       "source_location": "L27",
       "id": "models_user_flexibledouble_encode",
-      "community": 53,
+      "community": 113,
       "norm_label": ".encode()"
     },
     {
@@ -2943,7 +2943,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/User.swift",
       "source_location": "L55",
       "id": "models_user_tradingaccount",
-      "community": 53,
+      "community": 113,
       "norm_label": "tradingaccount"
     },
     {
@@ -2952,7 +2952,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/User.swift",
       "source_location": "L67",
       "id": "models_user_tradingaccount_init",
-      "community": 53,
+      "community": 113,
       "norm_label": ".init()"
     },
     {
@@ -2961,7 +2961,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/User.swift",
       "source_location": "L82",
       "id": "models_user_authresponse",
-      "community": 53,
+      "community": 91,
       "norm_label": "authresponse"
     },
     {
@@ -2970,7 +2970,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/User.swift",
       "source_location": "L88",
       "id": "models_user_userprofileresponse",
-      "community": 53,
+      "community": 91,
       "norm_label": "userprofileresponse"
     },
     {
@@ -2988,7 +2988,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/User.swift",
       "source_location": "L96",
       "id": "models_user_loginrequest",
-      "community": 53,
+      "community": 91,
       "norm_label": "loginrequest"
     },
     {
@@ -2997,7 +2997,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/User.swift",
       "source_location": "L100",
       "id": "models_user_loginrequest_init",
-      "community": 53,
+      "community": 91,
       "norm_label": ".init()"
     },
     {
@@ -3051,7 +3051,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Journal.swift",
       "source_location": "L62",
       "id": "models_journal_updatejournalrequest",
-      "community": 113,
+      "community": 120,
       "norm_label": "updatejournalrequest"
     },
     {
@@ -3060,7 +3060,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Journal.swift",
       "source_location": "L71",
       "id": "models_journal_updatejournalrequest_init",
-      "community": 113,
+      "community": 120,
       "norm_label": ".init()"
     },
     {
@@ -3474,7 +3474,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L1",
       "id": "macos_optionjournal_optionjournal_views_capital_capitalmanagementview_swift",
-      "community": 69,
+      "community": 70,
       "norm_label": "capitalmanagementview.swift"
     },
     {
@@ -3483,7 +3483,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L4",
       "id": "capital_capitalmanagementview_capitalmanagementview",
-      "community": 43,
+      "community": 70,
       "norm_label": "capitalmanagementview"
     },
     {
@@ -3492,7 +3492,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L9",
       "id": "capital_capitalmanagementview_capitalmanagementview_init",
-      "community": 43,
+      "community": 70,
       "norm_label": ".init()"
     },
     {
@@ -3501,7 +3501,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L147",
       "id": "capital_capitalmanagementview_capitalmanagementview_capitalmetriccard",
-      "community": 43,
+      "community": 70,
       "norm_label": ".capitalmetriccard()"
     },
     {
@@ -3510,7 +3510,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L258",
       "id": "capital_capitalmanagementview_capitalmanagementview_legenddot",
-      "community": 43,
+      "community": 70,
       "norm_label": ".legenddot()"
     },
     {
@@ -3519,7 +3519,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L297",
       "id": "capital_capitalmanagementview_capitalmanagementview_allocrow",
-      "community": 43,
+      "community": 70,
       "norm_label": ".allocrow()"
     },
     {
@@ -3528,7 +3528,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L362",
       "id": "capital_capitalmanagementview_capitalmanagementview_calcinputfield",
-      "community": 43,
+      "community": 70,
       "norm_label": ".calcinputfield()"
     },
     {
@@ -3537,7 +3537,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L452",
       "id": "capital_capitalmanagementview_capitalmanagementview_utilrow",
-      "community": 43,
+      "community": 70,
       "norm_label": ".utilrow()"
     },
     {
@@ -3546,7 +3546,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L627",
       "id": "capital_capitalmanagementview_capitalmanagementview_milestonenode",
-      "community": 43,
+      "community": 70,
       "norm_label": ".milestonenode()"
     },
     {
@@ -3555,7 +3555,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L644",
       "id": "capital_capitalmanagementview_capitalmanagementview_milestoneline",
-      "community": 43,
+      "community": 70,
       "norm_label": ".milestoneline()"
     },
     {
@@ -3564,7 +3564,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L678",
       "id": "capital_capitalmanagementview_capitalmanagementview_insightrow",
-      "community": 43,
+      "community": 70,
       "norm_label": ".insightrow()"
     },
     {
@@ -4140,7 +4140,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L5",
       "id": "dashboard_dashboardview_dashboardpalette",
-      "community": 36,
+      "community": 215,
       "norm_label": "dashboardpalette"
     },
     {
@@ -4149,7 +4149,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L23",
       "id": "dashboard_dashboardview_dashboardpalette_cardbackground",
-      "community": 36,
+      "community": 215,
       "norm_label": ".cardbackground()"
     },
     {
@@ -4158,7 +4158,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L27",
       "id": "dashboard_dashboardview_dashboardpalette_border",
-      "community": 36,
+      "community": 215,
       "norm_label": ".border()"
     },
     {
@@ -4167,7 +4167,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L31",
       "id": "dashboard_dashboardview_dashboardpalette_canvas",
-      "community": 36,
+      "community": 215,
       "norm_label": ".canvas()"
     },
     {
@@ -4176,7 +4176,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L37",
       "id": "dashboard_dashboardview_dashboardcardmodifier",
-      "community": 36,
+      "community": 215,
       "norm_label": "dashboardcardmodifier"
     },
     {
@@ -4185,7 +4185,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L41",
       "id": "dashboard_dashboardview_dashboardcardmodifier_body",
-      "community": 36,
+      "community": 215,
       "norm_label": ".body()"
     },
     {
@@ -4203,7 +4203,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L53",
       "id": "dashboard_dashboardview_view_dashboardcard",
-      "community": 36,
+      "community": 215,
       "norm_label": ".dashboardcard()"
     },
     {
@@ -4212,7 +4212,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L59",
       "id": "dashboard_dashboardview_dashboardnumberformatter",
-      "community": 215,
+      "community": 207,
       "norm_label": "dashboardnumberformatter"
     },
     {
@@ -4221,7 +4221,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L60",
       "id": "dashboard_dashboardview_dashboardnumberformatter_formatrupeeinteger",
-      "community": 215,
+      "community": 207,
       "norm_label": ".formatrupeeinteger()"
     },
     {
@@ -4230,7 +4230,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L82",
       "id": "dashboard_dashboardview_dashboardnumberformatter_formatabbreviatedrupee",
-      "community": 215,
+      "community": 207,
       "norm_label": ".formatabbreviatedrupee()"
     },
     {
@@ -4239,7 +4239,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L100",
       "id": "dashboard_dashboardview_dashboardnumberformatter_formatcompactcalendarrupee",
-      "community": 215,
+      "community": 207,
       "norm_label": ".formatcompactcalendarrupee()"
     },
     {
@@ -4248,7 +4248,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L112",
       "id": "dashboard_dashboardview_dashboardnumberformatter_parsedatedisplay",
-      "community": 215,
+      "community": 207,
       "norm_label": ".parsedatedisplay()"
     },
     {
@@ -4302,7 +4302,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L464",
       "id": "dashboard_dashboardview_dashboardview_samplestrategies",
-      "community": 101,
+      "community": 76,
       "norm_label": ".samplestrategies()"
     },
     {
@@ -4392,7 +4392,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L1151",
       "id": "dashboard_dashboardview_minitradingcalendarcard_rendercell",
-      "community": 215,
+      "community": 207,
       "norm_label": ".rendercell()"
     },
     {
@@ -4905,7 +4905,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Services/ExportService.swift",
       "source_location": "L1",
       "id": "macos_optionjournal_optionjournal_services_exportservice_swift",
-      "community": 29,
+      "community": 177,
       "norm_label": "exportservice.swift"
     },
     {
@@ -4950,7 +4950,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Services/ExportService.swift",
       "source_location": "L36",
       "id": "services_exportservice_exportserviceprotocol",
-      "community": 29,
+      "community": 177,
       "norm_label": "exportserviceprotocol"
     },
     {
@@ -4959,7 +4959,7 @@
       "source_file": "backend/app/Services/ExportService.php",
       "source_location": "L10",
       "id": "services_exportservice_exportservice",
-      "community": 29,
+      "community": 177,
       "norm_label": "exportservice"
     },
     {
@@ -4968,7 +4968,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Services/ExportService.swift",
       "source_location": "L45",
       "id": "services_exportservice_exportservice_init",
-      "community": 29,
+      "community": 177,
       "norm_label": ".init()"
     },
     {
@@ -4977,7 +4977,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Services/ExportService.swift",
       "source_location": "L49",
       "id": "services_exportservice_exportservice_downloadreport",
-      "community": 29,
+      "community": 177,
       "norm_label": ".downloadreport()"
     },
     {
@@ -4986,7 +4986,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Services/ExportService.swift",
       "source_location": "L53",
       "id": "services_exportservice_exportservice_savefiletodisk",
-      "community": 29,
+      "community": 177,
       "norm_label": ".savefiletodisk()"
     },
     {
@@ -5697,7 +5697,7 @@
       "source_file": "frontend/src/main.jsx",
       "source_location": "L1",
       "id": "frontend_src_main_jsx",
-      "community": 19,
+      "community": 210,
       "norm_label": "main.jsx"
     },
     {
@@ -5823,7 +5823,7 @@
       "source_file": "frontend/src/context/ToastContext.jsx",
       "source_location": "L6",
       "id": "context_toastcontext_toastprovider",
-      "community": 15,
+      "community": 18,
       "norm_label": "toastprovider()"
     },
     {
@@ -5841,7 +5841,7 @@
       "source_file": "frontend/src/context/FilterContext.jsx",
       "source_location": "L1",
       "id": "frontend_src_context_filtercontext_jsx",
-      "community": 95,
+      "community": 72,
       "norm_label": "filtercontext.jsx"
     },
     {
@@ -5850,7 +5850,7 @@
       "source_file": "frontend/src/context/FilterContext.jsx",
       "source_location": "L5",
       "id": "context_filtercontext_filtercontext",
-      "community": 95,
+      "community": 72,
       "norm_label": "filtercontext"
     },
     {
@@ -5859,7 +5859,7 @@
       "source_file": "frontend/src/context/FilterContext.jsx",
       "source_location": "L7",
       "id": "context_filtercontext_formatdateiso",
-      "community": 95,
+      "community": 72,
       "norm_label": "formatdateiso()"
     },
     {
@@ -5868,7 +5868,7 @@
       "source_file": "frontend/src/context/FilterContext.jsx",
       "source_location": "L18",
       "id": "context_filtercontext_getnextworkingday",
-      "community": 95,
+      "community": 72,
       "norm_label": "getnextworkingday()"
     },
     {
@@ -5877,7 +5877,7 @@
       "source_file": "frontend/src/context/FilterContext.jsx",
       "source_location": "L28",
       "id": "context_filtercontext_formatdisplaydate",
-      "community": 95,
+      "community": 72,
       "norm_label": "formatdisplaydate()"
     },
     {
@@ -5886,7 +5886,7 @@
       "source_file": "frontend/src/context/FilterContext.jsx",
       "source_location": "L36",
       "id": "context_filtercontext_getdisplaydaterangeforfilter",
-      "community": 95,
+      "community": 72,
       "norm_label": "getdisplaydaterangeforfilter()"
     },
     {
@@ -5895,7 +5895,7 @@
       "source_file": "frontend/src/context/FilterContext.jsx",
       "source_location": "L87",
       "id": "context_filtercontext_getisodaterangeforfilter",
-      "community": 95,
+      "community": 72,
       "norm_label": "getisodaterangeforfilter()"
     },
     {
@@ -5904,7 +5904,7 @@
       "source_file": "frontend/src/context/FilterContext.jsx",
       "source_location": "L134",
       "id": "context_filtercontext_filterprovider",
-      "community": 95,
+      "community": 72,
       "norm_label": "filterprovider()"
     },
     {
@@ -5958,7 +5958,7 @@
       "source_file": "frontend/src/context/DropdownContext.jsx",
       "source_location": "L270",
       "id": "context_dropdowncontext_usedropdown",
-      "community": 15,
+      "community": 92,
       "norm_label": "usedropdown()"
     },
     {
@@ -6003,7 +6003,7 @@
       "source_file": "frontend/src/context/BrokerageContext.jsx",
       "source_location": "L254",
       "id": "context_brokeragecontext_usebrokerage",
-      "community": 15,
+      "community": 92,
       "norm_label": "usebrokerage()"
     },
     {
@@ -6012,7 +6012,7 @@
       "source_file": "frontend/src/context/LotSizeContext.jsx",
       "source_location": "L1",
       "id": "frontend_src_context_lotsizecontext_jsx",
-      "community": 92,
+      "community": 18,
       "norm_label": "lotsizecontext.jsx"
     },
     {
@@ -6021,7 +6021,7 @@
       "source_file": "frontend/src/context/LotSizeContext.jsx",
       "source_location": "L4",
       "id": "context_lotsizecontext_default_lot_sizes",
-      "community": 92,
+      "community": 18,
       "norm_label": "default_lot_sizes"
     },
     {
@@ -6030,7 +6030,7 @@
       "source_file": "frontend/src/context/LotSizeContext.jsx",
       "source_location": "L17",
       "id": "context_lotsizecontext_standard_indices",
-      "community": 92,
+      "community": 18,
       "norm_label": "standard_indices"
     },
     {
@@ -6039,7 +6039,7 @@
       "source_file": "frontend/src/context/LotSizeContext.jsx",
       "source_location": "L29",
       "id": "context_lotsizecontext_lotsizecontext",
-      "community": 92,
+      "community": 18,
       "norm_label": "lotsizecontext"
     },
     {
@@ -6048,7 +6048,7 @@
       "source_file": "frontend/src/context/LotSizeContext.jsx",
       "source_location": "L31",
       "id": "context_lotsizecontext_lotsizeprovider",
-      "community": 92,
+      "community": 18,
       "norm_label": "lotsizeprovider()"
     },
     {
@@ -6120,7 +6120,7 @@
       "source_file": "frontend/src/utils/bulkTradeParser.js",
       "source_location": "L1",
       "id": "frontend_src_utils_bulktradeparser_js",
-      "community": 166,
+      "community": 28,
       "norm_label": "bulktradeparser.js"
     },
     {
@@ -6129,7 +6129,7 @@
       "source_file": "frontend/src/utils/bulkTradeParser.js",
       "source_location": "L4",
       "id": "utils_bulktradeparser_broker_options",
-      "community": 166,
+      "community": 28,
       "norm_label": "broker_options"
     },
     {
@@ -6138,7 +6138,7 @@
       "source_file": "frontend/src/utils/bulkTradeParser.js",
       "source_location": "L35",
       "id": "utils_bulktradeparser_default_lot_sizes",
-      "community": 166,
+      "community": 28,
       "norm_label": "default_lot_sizes"
     },
     {
@@ -6147,7 +6147,7 @@
       "source_file": "frontend/src/utils/bulkTradeParser.js",
       "source_location": "L52",
       "id": "utils_bulktradeparser_cleannumber",
-      "community": 166,
+      "community": 28,
       "norm_label": "cleannumber()"
     },
     {
@@ -6156,7 +6156,7 @@
       "source_file": "frontend/src/utils/bulkTradeParser.js",
       "source_location": "L67",
       "id": "utils_bulktradeparser_formatexceldate",
-      "community": 166,
+      "community": 28,
       "norm_label": "formatexceldate()"
     },
     {
@@ -6165,7 +6165,7 @@
       "source_file": "frontend/src/utils/bulkTradeParser.js",
       "source_location": "L119",
       "id": "utils_bulktradeparser_parsekotakneoscript",
-      "community": 166,
+      "community": 28,
       "norm_label": "parsekotakneoscript()"
     },
     {
@@ -6174,7 +6174,7 @@
       "source_file": "frontend/src/utils/bulkTradeParser.js",
       "source_location": "L166",
       "id": "utils_bulktradeparser_parsezerodhasymbol",
-      "community": 166,
+      "community": 28,
       "norm_label": "parsezerodhasymbol()"
     },
     {
@@ -6183,7 +6183,7 @@
       "source_file": "frontend/src/utils/bulkTradeParser.js",
       "source_location": "L234",
       "id": "utils_bulktradeparser_parsetradesspreadsheet",
-      "community": 166,
+      "community": 28,
       "norm_label": "parsetradesspreadsheet()"
     },
     {
@@ -6192,7 +6192,7 @@
       "source_file": "frontend/src/utils/bulkTradeParser.js",
       "source_location": "L265",
       "id": "utils_bulktradeparser_parsekotakneorows",
-      "community": 166,
+      "community": 28,
       "norm_label": "parsekotakneorows()"
     },
     {
@@ -6201,7 +6201,7 @@
       "source_file": "frontend/src/utils/bulkTradeParser.js",
       "source_location": "L461",
       "id": "utils_bulktradeparser_parsezerodharows",
-      "community": 166,
+      "community": 28,
       "norm_label": "parsezerodharows()"
     },
     {
@@ -6210,7 +6210,7 @@
       "source_file": "frontend/src/utils/bulkTradeParser.js",
       "source_location": "L620",
       "id": "utils_bulktradeparser_parsecustomrows",
-      "community": 166,
+      "community": 28,
       "norm_label": "parsecustomrows()"
     },
     {
@@ -6219,7 +6219,7 @@
       "source_file": "frontend/src/utils/bulkTradeParser.js",
       "source_location": "L750",
       "id": "utils_bulktradeparser_downloadcustomsampletemplate",
-      "community": 166,
+      "community": 28,
       "norm_label": "downloadcustomsampletemplate()"
     },
     {
@@ -6228,7 +6228,7 @@
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L1",
       "id": "frontend_src_utils_formatters_js",
-      "community": 95,
+      "community": 19,
       "norm_label": "formatters.js"
     },
     {
@@ -6255,7 +6255,7 @@
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L40",
       "id": "utils_formatters_formatpct",
-      "community": 95,
+      "community": 19,
       "norm_label": "formatpct()"
     },
     {
@@ -6264,7 +6264,7 @@
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L46",
       "id": "utils_formatters_formatdate",
-      "community": 95,
+      "community": 19,
       "norm_label": "formatdate()"
     },
     {
@@ -6273,7 +6273,7 @@
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L97",
       "id": "utils_formatters_getdayofweek",
-      "community": 15,
+      "community": 19,
       "norm_label": "getdayofweek()"
     },
     {
@@ -6282,7 +6282,7 @@
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L139",
       "id": "utils_formatters_formattime",
-      "community": 95,
+      "community": 19,
       "norm_label": "formattime()"
     },
     {
@@ -6291,7 +6291,7 @@
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L177",
       "id": "utils_formatters_formatdatetime",
-      "community": 95,
+      "community": 19,
       "norm_label": "formatdatetime()"
     },
     {
@@ -6300,7 +6300,7 @@
       "source_file": "frontend/src/utils/holidays.js",
       "source_location": "L1",
       "id": "frontend_src_utils_holidays_js",
-      "community": 95,
+      "community": 72,
       "norm_label": "holidays.js"
     },
     {
@@ -6309,7 +6309,7 @@
       "source_file": "frontend/src/utils/holidays.js",
       "source_location": "L6",
       "id": "utils_holidays_market_holidays_2026",
-      "community": 95,
+      "community": 72,
       "norm_label": "market_holidays_2026"
     },
     {
@@ -6318,7 +6318,7 @@
       "source_file": "frontend/src/utils/holidays.js",
       "source_location": "L25",
       "id": "utils_holidays_annual_national_holidays",
-      "community": 95,
+      "community": 72,
       "norm_label": "annual_national_holidays"
     },
     {
@@ -6327,7 +6327,7 @@
       "source_file": "frontend/src/utils/holidays.js",
       "source_location": "L36",
       "id": "utils_holidays_toisodatestring",
-      "community": 95,
+      "community": 72,
       "norm_label": "toisodatestring()"
     },
     {
@@ -6336,7 +6336,7 @@
       "source_file": "frontend/src/utils/holidays.js",
       "source_location": "L54",
       "id": "utils_holidays_getmarketholiday",
-      "community": 95,
+      "community": 72,
       "norm_label": "getmarketholiday()"
     },
     {
@@ -6345,7 +6345,7 @@
       "source_file": "frontend/src/utils/holidays.js",
       "source_location": "L97",
       "id": "utils_holidays_ismarketholiday",
-      "community": 95,
+      "community": 72,
       "norm_label": "ismarketholiday()"
     },
     {
@@ -6354,7 +6354,7 @@
       "source_file": "frontend/src/utils/holidays.js",
       "source_location": "L105",
       "id": "utils_holidays_getholidaymapformonth",
-      "community": 95,
+      "community": 72,
       "norm_label": "getholidaymapformonth()"
     },
     {
@@ -6813,7 +6813,7 @@
       "source_file": "frontend/src/components/trades/EditTradeModal.jsx",
       "source_location": "L69",
       "id": "trades_edittrademodal_edittrademodal",
-      "community": 15,
+      "community": 92,
       "norm_label": "edittrademodal()"
     },
     {
@@ -6966,7 +6966,7 @@
       "source_file": "frontend/src/components/common/StatsCard.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_common_statscard_jsx",
-      "community": 95,
+      "community": 72,
       "norm_label": "statscard.jsx"
     },
     {
@@ -6975,7 +6975,7 @@
       "source_file": "frontend/src/components/common/StatsCard.jsx",
       "source_location": "L5",
       "id": "common_statscard_mainstatscard",
-      "community": 95,
+      "community": 72,
       "norm_label": "mainstatscard()"
     },
     {
@@ -6984,7 +6984,7 @@
       "source_file": "frontend/src/components/common/StatsCard.jsx",
       "source_location": "L98",
       "id": "common_statscard_compactmetriccard",
-      "community": 95,
+      "community": 72,
       "norm_label": "compactmetriccard()"
     },
     {
@@ -6993,7 +6993,7 @@
       "source_file": "frontend/src/hooks/useEscapeKey.js",
       "source_location": "L1",
       "id": "frontend_src_hooks_useescapekey_js",
-      "community": 19,
+      "community": 210,
       "norm_label": "useescapekey.js"
     },
     {
@@ -7002,7 +7002,7 @@
       "source_file": "frontend/src/hooks/useEscapeKey.js",
       "source_location": "L4",
       "id": "hooks_useescapekey_activeescapehandlers",
-      "community": 19,
+      "community": 210,
       "norm_label": "activeescapehandlers"
     },
     {
@@ -7011,7 +7011,7 @@
       "source_file": "frontend/src/hooks/useEscapeKey.js",
       "source_location": "L10",
       "id": "hooks_useescapekey_closetopmostdommodal",
-      "community": 19,
+      "community": 210,
       "norm_label": "closetopmostdommodal()"
     },
     {
@@ -7020,7 +7020,7 @@
       "source_file": "frontend/src/hooks/useEscapeKey.js",
       "source_location": "L109",
       "id": "hooks_useescapekey_handled",
-      "community": 19,
+      "community": 210,
       "norm_label": "handled"
     },
     {
@@ -7038,7 +7038,7 @@
       "source_file": "frontend/src/api/client.js",
       "source_location": "L1",
       "id": "frontend_src_api_client_js",
-      "community": 92,
+      "community": 95,
       "norm_label": "client.js"
     },
     {
@@ -7047,7 +7047,7 @@
       "source_file": "frontend/src/api/client.js",
       "source_location": "L3",
       "id": "api_client_api",
-      "community": 92,
+      "community": 95,
       "norm_label": "api"
     },
     {
@@ -7056,7 +7056,7 @@
       "source_file": "frontend/src/api/client.js",
       "source_location": "L12",
       "id": "api_client_token",
-      "community": 92,
+      "community": 95,
       "norm_label": "token"
     },
     {
@@ -7083,7 +7083,7 @@
       "source_file": "frontend/src/pages/CapitalManagement.jsx",
       "source_location": "L1",
       "id": "frontend_src_pages_capitalmanagement_jsx",
-      "community": 95,
+      "community": 15,
       "norm_label": "capitalmanagement.jsx"
     },
     {
@@ -7092,7 +7092,7 @@
       "source_file": "frontend/src/pages/CapitalManagement.jsx",
       "source_location": "L45",
       "id": "pages_capitalmanagement_capitalmanagement",
-      "community": 95,
+      "community": 15,
       "norm_label": "capitalmanagement()"
     },
     {
@@ -7101,7 +7101,7 @@
       "source_file": "frontend/src/pages/AllTrades.jsx",
       "source_location": "L1",
       "id": "frontend_src_pages_alltrades_jsx",
-      "community": 15,
+      "community": 19,
       "norm_label": "alltrades.jsx"
     },
     {
@@ -7110,7 +7110,7 @@
       "source_file": "frontend/src/pages/AllTrades.jsx",
       "source_location": "L66",
       "id": "pages_alltrades_getlegprices",
-      "community": 15,
+      "community": 19,
       "norm_label": "getlegprices()"
     },
     {
@@ -7119,7 +7119,7 @@
       "source_file": "frontend/src/pages/AllTrades.jsx",
       "source_location": "L88",
       "id": "pages_alltrades_alltrades",
-      "community": 15,
+      "community": 19,
       "norm_label": "alltrades()"
     },
     {
@@ -7137,7 +7137,7 @@
       "source_file": "frontend/src/pages/AddTrade.jsx",
       "source_location": "L40",
       "id": "pages_addtrade_addtrade",
-      "community": 15,
+      "community": 92,
       "norm_label": "addtrade()"
     },
     {
@@ -7209,7 +7209,7 @@
       "source_file": "frontend/src/pages/TradingJournal.jsx",
       "source_location": "L147",
       "id": "pages_tradingjournal_tradingjournal",
-      "community": 15,
+      "community": 19,
       "norm_label": "tradingjournal()"
     },
     {
@@ -7218,7 +7218,7 @@
       "source_file": "frontend/src/pages/Dashboard.jsx",
       "source_location": "L1",
       "id": "frontend_src_pages_dashboard_jsx",
-      "community": 95,
+      "community": 72,
       "norm_label": "dashboard.jsx"
     },
     {
@@ -7240,10 +7240,28 @@
       "norm_label": "tradingcalendar.jsx"
     },
     {
+      "label": "getLegPrices()",
+      "file_type": "code",
+      "source_file": "frontend/src/pages/TradingCalendar.jsx",
+      "source_location": "L47",
+      "id": "pages_tradingcalendar_getlegprices",
+      "community": 95,
+      "norm_label": "getlegprices()"
+    },
+    {
+      "label": "getDayOfWeek()",
+      "file_type": "code",
+      "source_file": "frontend/src/pages/TradingCalendar.jsx",
+      "source_location": "L56",
+      "id": "pages_tradingcalendar_getdayofweek",
+      "community": 95,
+      "norm_label": "getdayofweek()"
+    },
+    {
       "label": "getTargetDateFromFilter()",
       "file_type": "code",
       "source_file": "frontend/src/pages/TradingCalendar.jsx",
-      "source_location": "L42",
+      "source_location": "L71",
       "id": "pages_tradingcalendar_gettargetdatefromfilter",
       "community": 95,
       "norm_label": "gettargetdatefromfilter()"
@@ -7252,7 +7270,7 @@
       "label": "formatCalendarCellPnl()",
       "file_type": "code",
       "source_file": "frontend/src/pages/TradingCalendar.jsx",
-      "source_location": "L60",
+      "source_location": "L89",
       "id": "pages_tradingcalendar_formatcalendarcellpnl",
       "community": 95,
       "norm_label": "formatcalendarcellpnl()"
@@ -7261,7 +7279,7 @@
       "label": "MonthlyBarTooltip()",
       "file_type": "code",
       "source_file": "frontend/src/pages/TradingCalendar.jsx",
-      "source_location": "L73",
+      "source_location": "L102",
       "id": "pages_tradingcalendar_monthlybartooltip",
       "community": 95,
       "norm_label": "monthlybartooltip()"
@@ -7270,7 +7288,7 @@
       "label": "DailyTrendTooltip()",
       "file_type": "code",
       "source_file": "frontend/src/pages/TradingCalendar.jsx",
-      "source_location": "L112",
+      "source_location": "L141",
       "id": "pages_tradingcalendar_dailytrendtooltip",
       "community": 95,
       "norm_label": "dailytrendtooltip()"
@@ -7279,7 +7297,7 @@
       "label": "WeekdayTooltip()",
       "file_type": "code",
       "source_file": "frontend/src/pages/TradingCalendar.jsx",
-      "source_location": "L144",
+      "source_location": "L173",
       "id": "pages_tradingcalendar_weekdaytooltip",
       "community": 95,
       "norm_label": "weekdaytooltip()"
@@ -7288,7 +7306,7 @@
       "label": "TradingCalendar()",
       "file_type": "code",
       "source_file": "frontend/src/pages/TradingCalendar.jsx",
-      "source_location": "L175",
+      "source_location": "L204",
       "id": "pages_tradingcalendar_tradingcalendar",
       "community": 95,
       "norm_label": "tradingcalendar()"
@@ -7380,7 +7398,7 @@
       "source_file": "frontend/src/pages/Settings.jsx",
       "source_location": "L46",
       "id": "pages_settings_settings",
-      "community": 15,
+      "community": 92,
       "norm_label": "settings()"
     },
     {
@@ -8397,7 +8415,7 @@
       "source_file": "backend/database/seeders/LotSizeSeeder.php",
       "source_location": "L1",
       "id": "backend_database_seeders_lotsizeseeder_php",
-      "community": 116,
+      "community": 214,
       "norm_label": "lotsizeseeder.php"
     },
     {
@@ -8406,7 +8424,7 @@
       "source_file": "backend/database/seeders/LotSizeSeeder.php",
       "source_location": "L9",
       "id": "seeders_lotsizeseeder_lotsizeseeder",
-      "community": 116,
+      "community": 214,
       "norm_label": "lotsizeseeder"
     },
     {
@@ -8415,7 +8433,7 @@
       "source_file": "backend/database/seeders/LotSizeSeeder.php",
       "source_location": "L11",
       "id": "seeders_lotsizeseeder_lotsizeseeder_run",
-      "community": 116,
+      "community": 214,
       "norm_label": ".run()"
     },
     {
@@ -8424,7 +8442,7 @@
       "source_file": "backend/database/seeders/DatabaseSeeder.php",
       "source_location": "L1",
       "id": "backend_database_seeders_databaseseeder_php",
-      "community": 52,
+      "community": 212,
       "norm_label": "databaseseeder.php"
     },
     {
@@ -8433,7 +8451,7 @@
       "source_file": "backend/database/seeders/DatabaseSeeder.php",
       "source_location": "L14",
       "id": "seeders_databaseseeder_databaseseeder",
-      "community": 52,
+      "community": 212,
       "norm_label": "databaseseeder"
     },
     {
@@ -8442,7 +8460,7 @@
       "source_file": "backend/database/seeders/DatabaseSeeder.php",
       "source_location": "L16",
       "id": "seeders_databaseseeder_databaseseeder_run",
-      "community": 52,
+      "community": 212,
       "norm_label": ".run()"
     },
     {
@@ -8559,7 +8577,7 @@
       "source_file": "backend/app/Models/TradeScreenshot.php",
       "source_location": "L1",
       "id": "backend_app_models_tradescreenshot_php",
-      "community": 116,
+      "community": 209,
       "norm_label": "tradescreenshot.php"
     },
     {
@@ -8568,7 +8586,7 @@
       "source_file": "backend/app/Models/TradeScreenshot.php",
       "source_location": "L9",
       "id": "models_tradescreenshot_tradescreenshot",
-      "community": 116,
+      "community": 209,
       "norm_label": "tradescreenshot"
     },
     {
@@ -8577,7 +8595,7 @@
       "source_file": "backend/app/Models/TradeScreenshot.php",
       "source_location": "L23",
       "id": "models_tradescreenshot_tradescreenshot_geturlattribute",
-      "community": 116,
+      "community": 209,
       "norm_label": ".geturlattribute()"
     },
     {
@@ -8586,7 +8604,7 @@
       "source_file": "backend/app/Models/TradeScreenshot.php",
       "source_location": "L36",
       "id": "models_tradescreenshot_tradescreenshot_trade",
-      "community": 116,
+      "community": 209,
       "norm_label": ".trade()"
     },
     {
@@ -8631,7 +8649,7 @@
       "source_file": "backend/app/Models/IndexLotSize.php",
       "source_location": "L1",
       "id": "backend_app_models_indexlotsize_php",
-      "community": 116,
+      "community": 169,
       "norm_label": "indexlotsize.php"
     },
     {
@@ -8640,7 +8658,7 @@
       "source_file": "backend/app/Models/IndexLotSize.php",
       "source_location": "L9",
       "id": "models_indexlotsize_indexlotsize",
-      "community": 116,
+      "community": 169,
       "norm_label": "indexlotsize"
     },
     {
@@ -8649,7 +8667,7 @@
       "source_file": "backend/app/Models/IndexLotSize.php",
       "source_location": "L24",
       "id": "models_indexlotsize_indexlotsize_casts",
-      "community": 116,
+      "community": 169,
       "norm_label": ".casts()"
     },
     {
@@ -8658,7 +8676,7 @@
       "source_file": "backend/app/Models/IndexLotSize.php",
       "source_location": "L32",
       "id": "models_indexlotsize_indexlotsize_user",
-      "community": 116,
+      "community": 169,
       "norm_label": ".user()"
     },
     {
@@ -8667,7 +8685,7 @@
       "source_file": "backend/app/Models/IndexLotSize.php",
       "source_location": "L40",
       "id": "models_indexlotsize_indexlotsize_getexchangedefaults",
-      "community": 116,
+      "community": 169,
       "norm_label": ".getexchangedefaults()"
     },
     {
@@ -8676,7 +8694,7 @@
       "source_file": "backend/app/Models/IndexLotSize.php",
       "source_location": "L58",
       "id": "models_indexlotsize_indexlotsize_seeddefaultsforuser",
-      "community": 116,
+      "community": 169,
       "norm_label": ".seeddefaultsforuser()"
     },
     {
@@ -8928,7 +8946,7 @@
       "source_file": "backend/app/Models/TradeOrder.php",
       "source_location": "L1",
       "id": "backend_app_models_tradeorder_php",
-      "community": 116,
+      "community": 74,
       "norm_label": "tradeorder.php"
     },
     {
@@ -8937,7 +8955,7 @@
       "source_file": "backend/app/Models/TradeOrder.php",
       "source_location": "L9",
       "id": "models_tradeorder_tradeorder",
-      "community": 116,
+      "community": 74,
       "norm_label": "tradeorder"
     },
     {
@@ -8946,7 +8964,7 @@
       "source_file": "backend/app/Models/TradeOrder.php",
       "source_location": "L34",
       "id": "models_tradeorder_tradeorder_casts",
-      "community": 116,
+      "community": 74,
       "norm_label": ".casts()"
     },
     {
@@ -8955,7 +8973,7 @@
       "source_file": "backend/app/Models/TradeOrder.php",
       "source_location": "L53",
       "id": "models_tradeorder_tradeorder_trade",
-      "community": 116,
+      "community": 74,
       "norm_label": ".trade()"
     },
     {
@@ -8964,7 +8982,7 @@
       "source_file": "backend/app/Models/TradeOrder.php",
       "source_location": "L58",
       "id": "models_tradeorder_tradeorder_user",
-      "community": 116,
+      "community": 74,
       "norm_label": ".user()"
     },
     {
@@ -9729,7 +9747,7 @@
       "source_file": "backend/app/Http/Controllers/Api/LotSizeController.php",
       "source_location": "L1",
       "id": "backend_app_http_controllers_api_lotsizecontroller_php",
-      "community": 116,
+      "community": 169,
       "norm_label": "lotsizecontroller.php"
     },
     {
@@ -9738,7 +9756,7 @@
       "source_file": "backend/app/Http/Controllers/Api/LotSizeController.php",
       "source_location": "L11",
       "id": "api_lotsizecontroller_lotsizecontroller",
-      "community": 116,
+      "community": 169,
       "norm_label": "lotsizecontroller"
     },
     {
@@ -9747,7 +9765,7 @@
       "source_file": "backend/app/Http/Controllers/Api/LotSizeController.php",
       "source_location": "L16",
       "id": "api_lotsizecontroller_lotsizecontroller_index",
-      "community": 116,
+      "community": 169,
       "norm_label": ".index()"
     },
     {
@@ -9756,7 +9774,7 @@
       "source_file": "backend/app/Http/Controllers/Api/LotSizeController.php",
       "source_location": "L51",
       "id": "api_lotsizecontroller_lotsizecontroller_store",
-      "community": 116,
+      "community": 169,
       "norm_label": ".store()"
     },
     {
@@ -9765,7 +9783,7 @@
       "source_file": "backend/app/Http/Controllers/Api/LotSizeController.php",
       "source_location": "L86",
       "id": "api_lotsizecontroller_lotsizecontroller_batchupdate",
-      "community": 116,
+      "community": 169,
       "norm_label": ".batchupdate()"
     },
     {
@@ -9774,7 +9792,7 @@
       "source_file": "backend/app/Http/Controllers/Api/LotSizeController.php",
       "source_location": "L120",
       "id": "api_lotsizecontroller_lotsizecontroller_destroy",
-      "community": 116,
+      "community": 169,
       "norm_label": ".destroy()"
     },
     {
@@ -9783,7 +9801,7 @@
       "source_file": "backend/app/Http/Controllers/Api/LotSizeController.php",
       "source_location": "L143",
       "id": "api_lotsizecontroller_lotsizecontroller_reset",
-      "community": 116,
+      "community": 169,
       "norm_label": ".reset()"
     },
     {
@@ -10071,7 +10089,7 @@
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
       "source_location": "L944",
       "id": "api_tradecontroller_tradecontroller_resetalldata",
-      "community": 116,
+      "community": 209,
       "norm_label": ".resetalldata()"
     },
     {
@@ -10125,7 +10143,7 @@
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
       "source_location": "L1676",
       "id": "api_tradecontroller_tradecontroller_syncordersfromtrade",
-      "community": 116,
+      "community": 169,
       "norm_label": ".syncordersfromtrade()"
     },
     {
@@ -10602,7 +10620,7 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L1",
       "id": "backend_app_services_orderscreenshotparserservice_php",
-      "community": 116,
+      "community": 74,
       "norm_label": "orderscreenshotparserservice.php"
     },
     {
@@ -10611,7 +10629,7 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L15",
       "id": "services_orderscreenshotparserservice_orderscreenshotparserservice",
-      "community": 116,
+      "community": 74,
       "norm_label": "orderscreenshotparserservice"
     },
     {
@@ -10620,7 +10638,7 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L17",
       "id": "services_orderscreenshotparserservice_orderscreenshotparserservice_construct",
-      "community": 116,
+      "community": 74,
       "norm_label": ".__construct()"
     },
     {
@@ -10629,7 +10647,7 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L24",
       "id": "services_orderscreenshotparserservice_orderscreenshotparserservice_parsescreenshot",
-      "community": 116,
+      "community": 74,
       "norm_label": ".parsescreenshot()"
     },
     {
@@ -10638,7 +10656,7 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L206",
       "id": "services_orderscreenshotparserservice_orderscreenshotparserservice_importorders",
-      "community": 116,
+      "community": 74,
       "norm_label": ".importorders()"
     },
     {
@@ -10647,7 +10665,7 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L369",
       "id": "services_orderscreenshotparserservice_orderscreenshotparserservice_createclosedtradefrompair",
-      "community": 116,
+      "community": 74,
       "norm_label": ".createclosedtradefrompair()"
     },
     {
@@ -10656,7 +10674,7 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L503",
       "id": "services_orderscreenshotparserservice_orderscreenshotparserservice_createopentradefromorder",
-      "community": 116,
+      "community": 74,
       "norm_label": ".createopentradefromorder()"
     },
     {
@@ -10665,7 +10683,7 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L587",
       "id": "services_orderscreenshotparserservice_orderscreenshotparserservice_createbothtradefromlegs",
-      "community": 116,
+      "community": 74,
       "norm_label": ".createbothtradefromlegs()"
     },
     {
@@ -10674,7 +10692,7 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L710",
       "id": "services_orderscreenshotparserservice_orderscreenshotparserservice_createclosedbothtrade",
-      "community": 116,
+      "community": 74,
       "norm_label": ".createclosedbothtrade()"
     },
     {
@@ -10683,7 +10701,7 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L832",
       "id": "services_orderscreenshotparserservice_orderscreenshotparserservice_detectordertype",
-      "community": 116,
+      "community": 74,
       "norm_label": ".detectordertype()"
     },
     {
@@ -10692,7 +10710,7 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L874",
       "id": "services_orderscreenshotparserservice_orderscreenshotparserservice_resolveexpirydate",
-      "community": 116,
+      "community": 74,
       "norm_label": ".resolveexpirydate()"
     },
     {
@@ -10701,7 +10719,7 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L902",
       "id": "services_orderscreenshotparserservice_orderscreenshotparserservice_getuserlotsizes",
-      "community": 116,
+      "community": 74,
       "norm_label": ".getuserlotsizes()"
     },
     {
@@ -10710,7 +10728,7 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L930",
       "id": "services_orderscreenshotparserservice_orderscreenshotparserservice_findtesseractbinary",
-      "community": 116,
+      "community": 74,
       "norm_label": ".findtesseractbinary()"
     },
     {
@@ -10825,7 +10843,7 @@
       "label": ".getMarketHolidays()",
       "file_type": "code",
       "source_file": "backend/app/Services/TradingAnalyticsService.php",
-      "source_location": "L752",
+      "source_location": "L746",
       "id": "services_tradinganalyticsservice_tradinganalyticsservice_getmarketholidays",
       "community": 52,
       "norm_label": ".getmarketholidays()"
@@ -10834,7 +10852,7 @@
       "label": ".calculateWeekdayAnalytics()",
       "file_type": "code",
       "source_file": "backend/app/Services/TradingAnalyticsService.php",
-      "source_location": "L794",
+      "source_location": "L788",
       "id": "services_tradinganalyticsservice_tradinganalyticsservice_calculateweekdayanalytics",
       "community": 52,
       "norm_label": ".calculateweekdayanalytics()"
@@ -10843,7 +10861,7 @@
       "label": ".getAdvancedAnalytics()",
       "file_type": "code",
       "source_file": "backend/app/Services/TradingAnalyticsService.php",
-      "source_location": "L839",
+      "source_location": "L833",
       "id": "services_tradinganalyticsservice_tradinganalyticsservice_getadvancedanalytics",
       "community": 52,
       "norm_label": ".getadvancedanalytics()"
@@ -10854,7 +10872,7 @@
       "source_file": "backend/app/Services/ExportService.php",
       "source_location": "L1",
       "id": "backend_app_services_exportservice_php",
-      "community": 29,
+      "community": 177,
       "norm_label": "exportservice.php"
     },
     {
@@ -10863,7 +10881,7 @@
       "source_file": "backend/app/Services/ExportService.php",
       "source_location": "L15",
       "id": "services_exportservice_exportservice_exportcsv",
-      "community": 29,
+      "community": 177,
       "norm_label": ".exportcsv()"
     },
     {
@@ -10872,7 +10890,7 @@
       "source_file": "backend/app/Services/ExportService.php",
       "source_location": "L113",
       "id": "services_exportservice_exportservice_exportexcel",
-      "community": 29,
+      "community": 177,
       "norm_label": ".exportexcel()"
     },
     {
@@ -10881,7 +10899,7 @@
       "source_file": "backend/app/Services/ExportService.php",
       "source_location": "L121",
       "id": "services_exportservice_exportservice_exportpdf",
-      "community": 29,
+      "community": 177,
       "norm_label": ".exportpdf()"
     },
     {
@@ -11932,7 +11950,7 @@
       "label": "code:block13",
       "file_type": "document",
       "source_file": "API_DOCUMENTATION.md",
-      "source_location": "L309",
+      "source_location": "L323",
       "id": "option_journal_api_documentation_codeblock_13",
       "community": 27,
       "norm_label": "code:block13"
@@ -11941,7 +11959,7 @@
       "label": "code:block14",
       "file_type": "document",
       "source_file": "API_DOCUMENTATION.md",
-      "source_location": "L333",
+      "source_location": "L347",
       "id": "option_journal_api_documentation_codeblock_14",
       "community": 27,
       "norm_label": "code:block14"
@@ -12123,23 +12141,41 @@
       "source_file": "CHANGELOG.md",
       "source_location": "L10",
       "id": "option_journal_changelog_unreleased",
-      "community": 4,
+      "community": 166,
       "norm_label": "[unreleased]"
+    },
+    {
+      "label": "[1.15.2] - 2026-11-13",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L12",
+      "id": "option_journal_changelog_1_15_2_2026_11_13",
+      "community": 4,
+      "norm_label": "[1.15.2] - 2026-11-13"
+    },
+    {
+      "label": "Fixed & Enhanced",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L14",
+      "id": "option_journal_changelog_fixed_enhanced",
+      "community": 4,
+      "norm_label": "fixed & enhanced"
     },
     {
       "label": "[1.15.1] - 2026-11-12",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L12",
+      "source_location": "L23",
       "id": "option_journal_changelog_1_15_1_2026_11_12",
-      "community": 4,
+      "community": 166,
       "norm_label": "[1.15.1] - 2026-11-12"
     },
     {
       "label": "Fixed",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L14",
+      "source_location": "L25",
       "id": "option_journal_changelog_fixed",
       "community": 4,
       "norm_label": "fixed"
@@ -12148,70 +12184,70 @@
       "label": "Added & Enhanced",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L24",
+      "source_location": "L35",
       "id": "option_journal_changelog_added_enhanced",
-      "community": 4,
+      "community": 166,
       "norm_label": "added & enhanced"
     },
     {
       "label": "Added (macOS Native Application - Phase 6)",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L62",
+      "source_location": "L73",
       "id": "option_journal_changelog_added_macos_native_application_phase_6",
-      "community": 4,
+      "community": 166,
       "norm_label": "added (macos native application - phase 6)"
     },
     {
       "label": "Added (macOS Native Application - Phase 5)",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L72",
+      "source_location": "L83",
       "id": "option_journal_changelog_added_macos_native_application_phase_5",
-      "community": 4,
+      "community": 166,
       "norm_label": "added (macos native application - phase 5)"
     },
     {
       "label": "[1.14.0] - 2026-11-10",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L85",
+      "source_location": "L96",
       "id": "option_journal_changelog_1_14_0_2026_11_10",
-      "community": 4,
+      "community": 166,
       "norm_label": "[1.14.0] - 2026-11-10"
     },
     {
       "label": "Added & Enhanced",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L87",
-      "id": "option_journal_changelog_added_enhanced_87",
-      "community": 4,
+      "source_location": "L98",
+      "id": "option_journal_changelog_added_enhanced_98",
+      "community": 166,
       "norm_label": "added & enhanced"
     },
     {
       "label": "[1.13.0] - 2026-11-10",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L100",
+      "source_location": "L111",
       "id": "option_journal_changelog_1_13_0_2026_11_10",
-      "community": 4,
+      "community": 166,
       "norm_label": "[1.13.0] - 2026-11-10"
     },
     {
       "label": "Added & Enhanced",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L102",
-      "id": "option_journal_changelog_added_enhanced_102",
-      "community": 4,
+      "source_location": "L113",
+      "id": "option_journal_changelog_added_enhanced_113",
+      "community": 166,
       "norm_label": "added & enhanced"
     },
     {
       "label": "[1.12.2] - 2026-11-01",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L131",
+      "source_location": "L142",
       "id": "option_journal_changelog_1_12_2_2026_11_01",
       "community": 4,
       "norm_label": "[1.12.2] - 2026-11-01"
@@ -12220,7 +12256,7 @@
       "label": "Fixed & Optimized",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L133",
+      "source_location": "L144",
       "id": "option_journal_changelog_fixed_optimized",
       "community": 4,
       "norm_label": "fixed & optimized"
@@ -12229,7 +12265,7 @@
       "label": "[1.12.1] - 2026-11-01",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L142",
+      "source_location": "L153",
       "id": "option_journal_changelog_1_12_1_2026_11_01",
       "community": 4,
       "norm_label": "[1.12.1] - 2026-11-01"
@@ -12238,8 +12274,8 @@
       "label": "Fixed & Enhanced",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L144",
-      "id": "option_journal_changelog_fixed_enhanced",
+      "source_location": "L155",
+      "id": "option_journal_changelog_fixed_enhanced_155",
       "community": 4,
       "norm_label": "fixed & enhanced"
     },
@@ -12247,7 +12283,7 @@
       "label": "[1.12.0] - 2026-11-01",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L153",
+      "source_location": "L164",
       "id": "option_journal_changelog_1_12_0_2026_11_01",
       "community": 144,
       "norm_label": "[1.12.0] - 2026-11-01"
@@ -12256,7 +12292,7 @@
       "label": "Added & Imported",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L155",
+      "source_location": "L166",
       "id": "option_journal_changelog_added_imported",
       "community": 144,
       "norm_label": "added & imported"
@@ -12265,8 +12301,8 @@
       "label": "Fixed & Enhanced",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L167",
-      "id": "option_journal_changelog_fixed_enhanced_167",
+      "source_location": "L178",
+      "id": "option_journal_changelog_fixed_enhanced_178",
       "community": 144,
       "norm_label": "fixed & enhanced"
     },
@@ -12274,7 +12310,7 @@
       "label": "[1.11.6] - 2026-11-01",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L177",
+      "source_location": "L188",
       "id": "option_journal_changelog_1_11_6_2026_11_01",
       "community": 103,
       "norm_label": "[1.11.6] - 2026-11-01"
@@ -12283,7 +12319,7 @@
       "label": "Fixed & Refined",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L179",
+      "source_location": "L190",
       "id": "option_journal_changelog_fixed_refined",
       "community": 103,
       "norm_label": "fixed & refined"
@@ -12292,8 +12328,8 @@
       "label": "Fixed & Refined",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L187",
-      "id": "option_journal_changelog_fixed_refined_187",
+      "source_location": "L198",
+      "id": "option_journal_changelog_fixed_refined_198",
       "community": 103,
       "norm_label": "fixed & refined"
     },
@@ -12301,7 +12337,7 @@
       "label": "Removed & Refined",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L194",
+      "source_location": "L205",
       "id": "option_journal_changelog_removed_refined",
       "community": 103,
       "norm_label": "removed & refined"
@@ -12310,7 +12346,7 @@
       "label": "Added & Refined",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L201",
+      "source_location": "L212",
       "id": "option_journal_changelog_added_refined",
       "community": 103,
       "norm_label": "added & refined"
@@ -12319,8 +12355,8 @@
       "label": "Fixed & Refined",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L213",
-      "id": "option_journal_changelog_fixed_refined_213",
+      "source_location": "L224",
+      "id": "option_journal_changelog_fixed_refined_224",
       "community": 103,
       "norm_label": "fixed & refined"
     },
@@ -12328,8 +12364,8 @@
       "label": "Fixed & Refined",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L226",
-      "id": "option_journal_changelog_fixed_refined_226",
+      "source_location": "L237",
+      "id": "option_journal_changelog_fixed_refined_237",
       "community": 103,
       "norm_label": "fixed & refined"
     },
@@ -12337,7 +12373,7 @@
       "label": "[1.11.0] - 2026-11-01",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L237",
+      "source_location": "L248",
       "id": "option_journal_changelog_1_11_0_2026_11_01",
       "community": 4,
       "norm_label": "[1.11.0] - 2026-11-01"
@@ -12346,7 +12382,7 @@
       "label": "Added",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L239",
+      "source_location": "L250",
       "id": "option_journal_changelog_added",
       "community": 4,
       "norm_label": "added"
@@ -12355,7 +12391,7 @@
       "label": "[1.10.0] - 2026-11-01",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L257",
+      "source_location": "L268",
       "id": "option_journal_changelog_1_10_0_2026_11_01",
       "community": 170,
       "norm_label": "[1.10.0] - 2026-11-01"
@@ -12364,8 +12400,8 @@
       "label": "Added",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L259",
-      "id": "option_journal_changelog_added_259",
+      "source_location": "L270",
+      "id": "option_journal_changelog_added_270",
       "community": 170,
       "norm_label": "added"
     },
@@ -12373,7 +12409,7 @@
       "label": "[1.9.1] - 2026-11-01",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L270",
+      "source_location": "L281",
       "id": "option_journal_changelog_1_9_1_2026_11_01",
       "community": 4,
       "norm_label": "[1.9.1] - 2026-11-01"
@@ -12382,8 +12418,8 @@
       "label": "Fixed",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L272",
-      "id": "option_journal_changelog_fixed_272",
+      "source_location": "L283",
+      "id": "option_journal_changelog_fixed_283",
       "community": 4,
       "norm_label": "fixed"
     },
@@ -12391,7 +12427,7 @@
       "label": "[1.9.0] - 2026-11-01",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L280",
+      "source_location": "L291",
       "id": "option_journal_changelog_1_9_0_2026_11_01",
       "community": 174,
       "norm_label": "[1.9.0] - 2026-11-01"
@@ -12400,16 +12436,16 @@
       "label": "Added",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L282",
-      "id": "option_journal_changelog_added_282",
-      "community": 174,
+      "source_location": "L293",
+      "id": "option_journal_changelog_added_293",
+      "community": 172,
       "norm_label": "added"
     },
     {
       "label": "[1.8.0] - 2026-10-31",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L293",
+      "source_location": "L304",
       "id": "option_journal_changelog_1_8_0_2026_10_31",
       "community": 176,
       "norm_label": "[1.8.0] - 2026-10-31"
@@ -12418,8 +12454,8 @@
       "label": "Added",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L295",
-      "id": "option_journal_changelog_added_295",
+      "source_location": "L306",
+      "id": "option_journal_changelog_added_306",
       "community": 176,
       "norm_label": "added"
     },
@@ -12427,28 +12463,10 @@
       "label": "[1.7.0] - 2026-10-31",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L306",
+      "source_location": "L317",
       "id": "option_journal_changelog_1_7_0_2026_10_31",
       "community": 130,
       "norm_label": "[1.7.0] - 2026-10-31"
-    },
-    {
-      "label": "Added",
-      "file_type": "document",
-      "source_file": "CHANGELOG.md",
-      "source_location": "L308",
-      "id": "option_journal_changelog_added_308",
-      "community": 130,
-      "norm_label": "added"
-    },
-    {
-      "label": "[1.6.0] - 2026-10-31",
-      "file_type": "document",
-      "source_file": "CHANGELOG.md",
-      "source_location": "L317",
-      "id": "option_journal_changelog_1_6_0_2026_10_31",
-      "community": 130,
-      "norm_label": "[1.6.0] - 2026-10-31"
     },
     {
       "label": "Added",
@@ -12460,28 +12478,46 @@
       "norm_label": "added"
     },
     {
+      "label": "[1.6.0] - 2026-10-31",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L328",
+      "id": "option_journal_changelog_1_6_0_2026_10_31",
+      "community": 130,
+      "norm_label": "[1.6.0] - 2026-10-31"
+    },
+    {
+      "label": "Added",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L330",
+      "id": "option_journal_changelog_added_330",
+      "community": 130,
+      "norm_label": "added"
+    },
+    {
       "label": "[1.5.0] - 2026-10-31",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L326",
+      "source_location": "L337",
       "id": "option_journal_changelog_1_5_0_2026_10_31",
-      "community": 171,
+      "community": 174,
       "norm_label": "[1.5.0] - 2026-10-31"
     },
     {
       "label": "Added",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L328",
-      "id": "option_journal_changelog_added_328",
-      "community": 171,
+      "source_location": "L339",
+      "id": "option_journal_changelog_added_339",
+      "community": 174,
       "norm_label": "added"
     },
     {
       "label": "[1.4.0] - 2026-10-30",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L336",
+      "source_location": "L347",
       "id": "option_journal_changelog_1_4_0_2026_10_30",
       "community": 171,
       "norm_label": "[1.4.0] - 2026-10-30"
@@ -12490,8 +12526,8 @@
       "label": "Added",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L338",
-      "id": "option_journal_changelog_added_338",
+      "source_location": "L349",
+      "id": "option_journal_changelog_added_349",
       "community": 171,
       "norm_label": "added"
     },
@@ -12499,7 +12535,7 @@
       "label": "[1.3.0] - 2026-10-30",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L346",
+      "source_location": "L357",
       "id": "option_journal_changelog_1_3_0_2026_10_30",
       "community": 172,
       "norm_label": "[1.3.0] - 2026-10-30"
@@ -12508,8 +12544,8 @@
       "label": "Added",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L348",
-      "id": "option_journal_changelog_added_348",
+      "source_location": "L359",
+      "id": "option_journal_changelog_added_359",
       "community": 172,
       "norm_label": "added"
     },
@@ -12517,7 +12553,7 @@
       "label": "[1.2.0] - 2026-10-30",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L356",
+      "source_location": "L367",
       "id": "option_journal_changelog_1_2_0_2026_10_30",
       "community": 172,
       "norm_label": "[1.2.0] - 2026-10-30"
@@ -12526,8 +12562,8 @@
       "label": "Added",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L358",
-      "id": "option_journal_changelog_added_358",
+      "source_location": "L369",
+      "id": "option_journal_changelog_added_369",
       "community": 172,
       "norm_label": "added"
     },
@@ -12535,7 +12571,7 @@
       "label": "[1.1.0] - 2026-10-30",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L365",
+      "source_location": "L376",
       "id": "option_journal_changelog_1_1_0_2026_10_30",
       "community": 174,
       "norm_label": "[1.1.0] - 2026-10-30"
@@ -12544,8 +12580,8 @@
       "label": "Added",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L367",
-      "id": "option_journal_changelog_added_367",
+      "source_location": "L378",
+      "id": "option_journal_changelog_added_378",
       "community": 174,
       "norm_label": "added"
     },
@@ -12553,7 +12589,7 @@
       "label": "[1.0.0] - 2026-10-30",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L375",
+      "source_location": "L386",
       "id": "option_journal_changelog_1_0_0_2026_10_30",
       "community": 4,
       "norm_label": "[1.0.0] - 2026-10-30"
@@ -12562,7 +12598,7 @@
       "label": "Initial Release",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
-      "source_location": "L377",
+      "source_location": "L388",
       "id": "option_journal_changelog_initial_release",
       "community": 4,
       "norm_label": "initial release"
@@ -12760,7 +12796,7 @@
       "label": "Priority 1: Performance & Code Optimization (Near-Term)",
       "file_type": "document",
       "source_file": "TODO.md",
-      "source_location": "L26",
+      "source_location": "L28",
       "id": "option_journal_todo_priority_1_performance_code_optimization_near_term",
       "community": 121,
       "norm_label": "priority 1: performance & code optimization (near-term)"
@@ -12769,7 +12805,7 @@
       "label": "Priority 2: Feature Enhancements (Mid-Term)",
       "file_type": "document",
       "source_file": "TODO.md",
-      "source_location": "L39",
+      "source_location": "L41",
       "id": "option_journal_todo_priority_2_feature_enhancements_mid_term",
       "community": 121,
       "norm_label": "priority 2: feature enhancements (mid-term)"
@@ -12778,7 +12814,7 @@
       "label": "Priority 3: Native macOS SwiftUI Application Roadmap",
       "file_type": "document",
       "source_file": "TODO.md",
-      "source_location": "L52",
+      "source_location": "L54",
       "id": "option_journal_todo_priority_3_native_macos_swiftui_application_roadmap",
       "community": 121,
       "norm_label": "priority 3: native macos swiftui application roadmap"
@@ -14773,11 +14809,155 @@
       "norm_label": "code:sh (composer require laravel/boost --dev)"
     },
     {
+      "label": "Added & Enhanced",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L87",
+      "community": 166,
+      "norm_label": "added & enhanced",
+      "id": "option_journal_changelog_added_enhanced_87"
+    },
+    {
+      "label": "Added & Enhanced",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L102",
+      "community": 166,
+      "norm_label": "added & enhanced",
+      "id": "option_journal_changelog_added_enhanced_102"
+    },
+    {
+      "label": "Fixed & Enhanced",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L167",
+      "community": 144,
+      "norm_label": "fixed & enhanced",
+      "id": "option_journal_changelog_fixed_enhanced_167"
+    },
+    {
+      "label": "Fixed & Refined",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L187",
+      "community": 103,
+      "norm_label": "fixed & refined",
+      "id": "option_journal_changelog_fixed_refined_187"
+    },
+    {
+      "label": "Fixed & Refined",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L213",
+      "community": 103,
+      "norm_label": "fixed & refined",
+      "id": "option_journal_changelog_fixed_refined_213"
+    },
+    {
+      "label": "Fixed & Refined",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L226",
+      "community": 103,
+      "norm_label": "fixed & refined",
+      "id": "option_journal_changelog_fixed_refined_226"
+    },
+    {
+      "label": "Added",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L259",
+      "community": 170,
+      "norm_label": "added",
+      "id": "option_journal_changelog_added_259"
+    },
+    {
+      "label": "Fixed",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L272",
+      "community": 4,
+      "norm_label": "fixed",
+      "id": "option_journal_changelog_fixed_272"
+    },
+    {
+      "label": "Added",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L282",
+      "community": 174,
+      "norm_label": "added",
+      "id": "option_journal_changelog_added_282"
+    },
+    {
+      "label": "Added",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L295",
+      "community": 176,
+      "norm_label": "added",
+      "id": "option_journal_changelog_added_295"
+    },
+    {
+      "label": "Added",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L308",
+      "community": 130,
+      "norm_label": "added",
+      "id": "option_journal_changelog_added_308"
+    },
+    {
+      "label": "Added",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L328",
+      "community": 174,
+      "norm_label": "added",
+      "id": "option_journal_changelog_added_328"
+    },
+    {
+      "label": "Added",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L338",
+      "community": 171,
+      "norm_label": "added",
+      "id": "option_journal_changelog_added_338"
+    },
+    {
+      "label": "Added",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L348",
+      "community": 172,
+      "norm_label": "added",
+      "id": "option_journal_changelog_added_348"
+    },
+    {
+      "label": "Added",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L358",
+      "community": 172,
+      "norm_label": "added",
+      "id": "option_journal_changelog_added_358"
+    },
+    {
+      "label": "Added",
+      "file_type": "document",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L367",
+      "community": 174,
+      "norm_label": "added",
+      "id": "option_journal_changelog_added_367"
+    },
+    {
       "label": "[1.15.0] - 2026-11-12",
       "file_type": "document",
       "source_file": "CHANGELOG.md",
       "source_location": "L12",
-      "community": 4,
+      "community": 166,
       "norm_label": "[1.15.0] - 2026-11-12",
       "id": "option_journal_changelog_1_15_0_2026_11_12"
     },
@@ -14786,7 +14966,7 @@
       "file_type": "document",
       "source_file": "CHANGELOG.md",
       "source_location": "L76",
-      "community": 4,
+      "community": 166,
       "norm_label": "added & enhanced",
       "id": "option_journal_changelog_added_enhanced_76"
     },
@@ -14795,7 +14975,7 @@
       "file_type": "document",
       "source_file": "CHANGELOG.md",
       "source_location": "L91",
-      "community": 4,
+      "community": 166,
       "norm_label": "added & enhanced",
       "id": "option_journal_changelog_added_enhanced_91"
     },
@@ -14876,7 +15056,7 @@
       "file_type": "document",
       "source_file": "CHANGELOG.md",
       "source_location": "L317",
-      "community": 171,
+      "community": 174,
       "norm_label": "added",
       "id": "option_journal_changelog_added_317"
     },
@@ -14921,7 +15101,7 @@
       "file_type": "document",
       "source_file": "CHANGELOG.md",
       "source_location": "L52",
-      "community": 4,
+      "community": 166,
       "norm_label": "added & enhanced",
       "id": "option_journal_changelog_added_enhanced_52"
     },
@@ -14966,7 +15146,7 @@
       "file_type": "document",
       "source_file": "CHANGELOG.md",
       "source_location": "L232",
-      "community": 171,
+      "community": 174,
       "norm_label": "added",
       "id": "option_journal_changelog_added_232"
     },
@@ -15002,7 +15182,7 @@
       "file_type": "document",
       "source_file": "CHANGELOG.md",
       "source_location": "L278",
-      "community": 171,
+      "community": 174,
       "norm_label": "added",
       "id": "option_journal_changelog_added_278"
     },
@@ -15119,7 +15299,7 @@
       "file_type": "document",
       "source_file": "CHANGELOG.md",
       "source_location": "L263",
-      "community": 171,
+      "community": 174,
       "norm_label": "added",
       "id": "option_journal_changelog_added_263"
     },
@@ -15140,15 +15320,6 @@
       "community": 172,
       "norm_label": "added",
       "id": "option_journal_changelog_added_283"
-    },
-    {
-      "label": "Added",
-      "file_type": "document",
-      "source_file": "CHANGELOG.md",
-      "source_location": "L293",
-      "community": 172,
-      "norm_label": "added",
-      "id": "option_journal_changelog_added_293"
     },
     {
       "label": "Added",
@@ -15344,7 +15515,7 @@
       "file_type": "document",
       "source_file": "CHANGELOG.md",
       "source_location": "L242",
-      "community": 172,
+      "community": 171,
       "norm_label": "added",
       "id": "option_journal_changelog_added_242"
     },
@@ -15380,7 +15551,7 @@
       "file_type": "code",
       "source_file": "frontend/src/api/client.js",
       "source_location": "L3",
-      "community": 92,
+      "community": 95,
       "norm_label": "getbaseurl()",
       "id": "api_client_getbaseurl"
     },
@@ -15398,7 +15569,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/ViewModels/StrategyAnalysisViewModel.swift",
       "source_location": "L5",
-      "community": 101,
+      "community": 93,
       "norm_label": "strategysortcriteria",
       "id": "viewmodels_strategyanalysisviewmodel_strategysortcriteria"
     },
@@ -15407,7 +15578,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/ViewModels/StrategyAnalysisViewModel.swift",
       "source_location": "L6",
-      "community": 101,
+      "community": 93,
       "norm_label": "pnl",
       "id": "viewmodels_strategyanalysisviewmodel_strategysortcriteria_pnl"
     },
@@ -15416,7 +15587,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/ViewModels/StrategyAnalysisViewModel.swift",
       "source_location": "L7",
-      "community": 101,
+      "community": 93,
       "norm_label": "winrate",
       "id": "viewmodels_strategyanalysisviewmodel_strategysortcriteria_winrate"
     },
@@ -15425,7 +15596,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/ViewModels/StrategyAnalysisViewModel.swift",
       "source_location": "L8",
-      "community": 101,
+      "community": 93,
       "norm_label": "totaltrades",
       "id": "viewmodels_strategyanalysisviewmodel_strategysortcriteria_totaltrades"
     },
@@ -15587,7 +15758,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L114",
-      "community": 43,
+      "community": 70,
       "norm_label": ".summaryrow()",
       "id": "capital_capitalmanagementview_capitalmanagementview_summaryrow"
     },
@@ -15596,7 +15767,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L154",
-      "community": 43,
+      "community": 70,
       "norm_label": ".statcard()",
       "id": "capital_capitalmanagementview_capitalmanagementview_statcard"
     },
@@ -15605,7 +15776,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L184",
-      "community": 43,
+      "community": 70,
       "norm_label": ".growthchartcard()",
       "id": "capital_capitalmanagementview_capitalmanagementview_growthchartcard"
     },
@@ -15614,7 +15785,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L263",
-      "community": 43,
+      "community": 70,
       "norm_label": ".transactionssection()",
       "id": "capital_capitalmanagementview_capitalmanagementview_transactionssection"
     },
@@ -15623,7 +15794,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L289",
-      "community": 43,
+      "community": 70,
       "norm_label": ".transactionrow()",
       "id": "capital_capitalmanagementview_capitalmanagementview_transactionrow"
     },
@@ -15632,7 +15803,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L346",
-      "community": 43,
+      "community": 70,
       "norm_label": ".formatcurrency()",
       "id": "capital_capitalmanagementview_capitalmanagementview_formatcurrency"
     },
@@ -15641,7 +15812,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L354",
-      "community": 43,
+      "community": 70,
       "norm_label": ".formatcompactcurrency()",
       "id": "capital_capitalmanagementview_capitalmanagementview_formatcompactcurrency"
     },
@@ -15650,7 +15821,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L365",
-      "community": 69,
+      "community": 70,
       "norm_label": "addtransactionsheet",
       "id": "capital_capitalmanagementview_addtransactionsheet"
     },
@@ -16163,7 +16334,7 @@
       "file_type": "document",
       "source_file": "CHANGELOG.md",
       "source_location": "L222",
-      "community": 171,
+      "community": 174,
       "norm_label": "added",
       "id": "option_journal_changelog_added_222"
     },
@@ -16253,7 +16424,7 @@
       "file_type": "document",
       "source_file": "CHANGELOG.md",
       "source_location": "L211",
-      "community": 171,
+      "community": 174,
       "norm_label": "added",
       "id": "option_journal_changelog_added_211"
     },
@@ -16389,7 +16560,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 9,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "journalcontroller",
@@ -16428,7 +16599,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 2,
+      "community": 53,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "brokeragesetting",
@@ -16454,7 +16625,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "dropdownoption",
@@ -16545,7 +16716,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 2,
+      "community": 173,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "databaseseeder",
@@ -16558,7 +16729,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 2,
+      "community": 173,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "lotsizeseeder",
@@ -16649,7 +16820,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 53,
       "community_name": "BrokerageSettingController",
       "file_type": "code",
       "norm_label": "brokeragesettingcontroller",
@@ -16831,7 +17002,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 53,
       "community_name": "TradingCalculationService",
       "file_type": "code",
       "norm_label": "tradingcalculationservice",
@@ -16844,7 +17015,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 53,
       "community_name": "TradingCalculationService",
       "file_type": "code",
       "norm_label": "exampletest",
@@ -16857,7 +17028,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 53,
       "community_name": "TradingCalculationService",
       "file_type": "code",
       "norm_label": "financialcalculationtest",
@@ -18404,7 +18575,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "metadata": {
@@ -18455,7 +18626,7 @@
       "label": "GET /ping()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "get /ping()",
@@ -18467,7 +18638,7 @@
       "label": "GET /()",
       "_callable": true,
       "_origin": "ast",
-      "community": 74,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "get /()",
@@ -18479,7 +18650,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 72,
+      "community": 9,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "{closure#1}()",
@@ -18491,7 +18662,7 @@
       "label": "{closure#2}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 72,
+      "community": 9,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "{closure#2}()",
@@ -18503,7 +18674,7 @@
       "label": "{closure#3}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 72,
+      "community": 9,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "{closure#3}()",
@@ -18515,7 +18686,7 @@
       "label": ".index()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 9,
       "community_name": "JournalController.php",
       "file_type": "code",
       "metadata": {
@@ -18566,7 +18737,7 @@
       "label": ".show()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 9,
       "community_name": "JournalController.php",
       "file_type": "code",
       "metadata": {
@@ -18589,7 +18760,7 @@
       "label": ".update()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 9,
       "community_name": "JournalController.php",
       "file_type": "code",
       "metadata": {
@@ -19101,7 +19272,7 @@
       "label": ".casts()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": ".casts()",
@@ -19113,7 +19284,7 @@
       "label": ".user()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": ".user()",
@@ -19137,7 +19308,7 @@
       "label": ".getExchangeDefaults()",
       "_callable": true,
       "_origin": "ast",
-      "community": 2,
+      "community": 173,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": ".getexchangedefaults()",
@@ -19149,7 +19320,7 @@
       "label": ".seedDefaultsForUser()",
       "_callable": true,
       "_origin": "ast",
-      "community": 2,
+      "community": 173,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": ".seeddefaultsforuser()",
@@ -19173,7 +19344,7 @@
       "label": ".user()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": ".user()",
@@ -19185,7 +19356,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 2,
+      "community": 68,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "{closure#1}()",
@@ -19197,7 +19368,7 @@
       "label": ".tradingAccount()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": ".tradingaccount()",
@@ -19209,7 +19380,7 @@
       "label": ".user()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": ".user()",
@@ -19281,7 +19452,7 @@
       "label": ".trades()",
       "_callable": true,
       "_origin": "ast",
-      "community": 2,
+      "community": 68,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": ".trades()",
@@ -19329,7 +19500,7 @@
       "label": ".run()",
       "_callable": true,
       "_origin": "ast",
-      "community": 2,
+      "community": 173,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "metadata": {
@@ -19352,7 +19523,7 @@
       "label": ".run()",
       "_callable": true,
       "_origin": "ast",
-      "community": 2,
+      "community": 173,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": ".run()",
@@ -19387,7 +19558,7 @@
       "label": "{closure#2}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 2,
+      "community": 173,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "metadata": {
@@ -20326,7 +20497,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 72,
+      "community": 17,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "norm_label": "{closure#1}()",
@@ -20391,7 +20562,7 @@
       "label": ".index()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 17,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "metadata": {
@@ -20442,7 +20613,7 @@
       "label": ".reset()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 17,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "metadata": {
@@ -20583,7 +20754,7 @@
       "label": ".getDefaultOptions()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 17,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "norm_label": ".getdefaultoptions()",
@@ -20595,7 +20766,7 @@
       "label": ".seedDefaultsForUser()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 17,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "norm_label": ".seeddefaultsforuser()",
@@ -20643,7 +20814,7 @@
       "label": ".reset()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 53,
       "community_name": "BrokerageSettingController",
       "file_type": "code",
       "metadata": {
@@ -20666,7 +20837,7 @@
       "label": ".show()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 53,
       "community_name": "BrokerageSettingController",
       "file_type": "code",
       "metadata": {
@@ -20689,7 +20860,7 @@
       "label": ".update()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 53,
       "community_name": "BrokerageSettingController",
       "file_type": "code",
       "metadata": {
@@ -20719,7 +20890,7 @@
       "label": ".estimateCharges()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 53,
       "community_name": "BrokerageSettingController",
       "file_type": "code",
       "metadata": {
@@ -20749,7 +20920,7 @@
       "label": ".forUser()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 53,
       "community_name": "BrokerageSettingController",
       "file_type": "code",
       "norm_label": ".foruser()",
@@ -20761,7 +20932,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 2,
+      "community": 173,
       "community_name": "Illuminate\\Http\\JsonResponse",
       "file_type": "code",
       "norm_label": "{closure#1}()",
@@ -20773,7 +20944,7 @@
       "label": "{closure#2}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 2,
+      "community": 173,
       "community_name": "Illuminate\\Http\\JsonResponse",
       "file_type": "code",
       "norm_label": "{closure#2}()",
@@ -20785,7 +20956,7 @@
       "label": "{closure#3}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 2,
+      "community": 173,
       "community_name": "Illuminate\\Http\\JsonResponse",
       "file_type": "code",
       "norm_label": "{closure#3}()",
@@ -20940,7 +21111,7 @@
       "label": ".register()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 38,
       "community_name": "RegisterRequest",
       "file_type": "code",
       "metadata": {
@@ -21416,7 +21587,7 @@
       "label": ".login()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 44,
       "community_name": "LoginRequest",
       "file_type": "code",
       "metadata": {
@@ -21940,7 +22111,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 73,
+      "community": 208,
       "community_name": "Illuminate\\Support\\Facades\\Schema",
       "file_type": "code",
       "metadata": {
@@ -22019,7 +22190,7 @@
       "label": "down()",
       "_callable": true,
       "_origin": "ast",
-      "community": 73,
+      "community": 208,
       "community_name": "Illuminate\\Support\\Facades\\Schema",
       "file_type": "code",
       "metadata": {
@@ -22042,7 +22213,7 @@
       "label": "up()",
       "_callable": true,
       "_origin": "ast",
-      "community": 73,
+      "community": 208,
       "community_name": "Illuminate\\Support\\Facades\\Schema",
       "file_type": "code",
       "metadata": {
@@ -22402,7 +22573,7 @@
       "label": "{closure#3}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 68,
+      "community": 9,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "{closure#3}()",
@@ -22414,7 +22585,7 @@
       "label": ".journal()",
       "_callable": true,
       "_origin": "ast",
-      "community": 68,
+      "community": 9,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": ".journal()",
@@ -23594,7 +23765,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 208,
+      "community": 73,
       "community_name": "2026_10_30_160000_create_user_module_visibilities_table.php",
       "file_type": "code",
       "metadata": {
@@ -23666,7 +23837,7 @@
       "label": "down()",
       "_callable": true,
       "_origin": "ast",
-      "community": 208,
+      "community": 73,
       "community_name": "2026_10_30_160000_create_user_module_visibilities_table.php",
       "file_type": "code",
       "metadata": {
@@ -23689,7 +23860,7 @@
       "label": "up()",
       "_callable": true,
       "_origin": "ast",
-      "community": 208,
+      "community": 73,
       "community_name": "2026_10_30_160000_create_user_module_visibilities_table.php",
       "file_type": "code",
       "metadata": {
@@ -23844,7 +24015,7 @@
       "label": ".__construct()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 53,
       "community_name": "TradingCalculationService",
       "file_type": "code",
       "norm_label": ".__construct()",
@@ -23856,7 +24027,7 @@
       "label": ".calculate()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 53,
       "community_name": "TradingCalculationService",
       "file_type": "code",
       "norm_label": ".calculate()",
@@ -23868,7 +24039,7 @@
       "label": ".estimateIndianCharges()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 53,
       "community_name": "TradingCalculationService",
       "file_type": "code",
       "norm_label": ".estimateindiancharges()",
@@ -23880,7 +24051,7 @@
       "label": ".test_that_true_is_true()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 53,
       "community_name": "TradingCalculationService",
       "file_type": "code",
       "norm_label": ".test_that_true_is_true()",
@@ -23892,7 +24063,7 @@
       "label": ".setUp()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 53,
       "community_name": "TradingCalculationService",
       "file_type": "code",
       "norm_label": ".setup()",
@@ -23904,7 +24075,7 @@
       "label": ".test_automatic_pnl_and_charges_calculation()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 53,
       "community_name": "TradingCalculationService",
       "file_type": "code",
       "norm_label": ".test_automatic_pnl_and_charges_calculation()",
@@ -23916,7 +24087,7 @@
       "label": ".test_drawdown_calculation()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 53,
       "community_name": "TradingCalculationService",
       "file_type": "code",
       "norm_label": ".test_drawdown_calculation()",
@@ -23928,7 +24099,7 @@
       "label": ".test_losing_trade_pnl_calculation()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 53,
       "community_name": "TradingCalculationService",
       "file_type": "code",
       "norm_label": ".test_losing_trade_pnl_calculation()",
@@ -24026,7 +24197,7 @@
       "label": ".bulkImport()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 53,
       "community_name": "Trade",
       "file_type": "code",
       "metadata": {
@@ -25552,7 +25723,7 @@
     {
       "label": "StrategyController.php",
       "_origin": "ast",
-      "community": 12,
+      "community": 2,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "strategycontroller.php",
@@ -25574,7 +25745,7 @@
     {
       "label": "api.php",
       "_origin": "ast",
-      "community": 17,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "api.php",
@@ -25585,7 +25756,7 @@
     {
       "label": "web.php",
       "_origin": "ast",
-      "community": 74,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "web.php",
@@ -25596,7 +25767,7 @@
     {
       "label": "Illuminate\\Support\\Facades\\Route",
       "_origin": "ast",
-      "community": 74,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "illuminate\\support\\facades\\route",
@@ -25921,7 +26092,7 @@
     {
       "label": "JournalController.php",
       "_origin": "ast",
-      "community": 72,
+      "community": 9,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "journalcontroller.php",
@@ -25943,7 +26114,7 @@
     {
       "label": "Carbon\\Carbon",
       "_origin": "ast",
-      "community": 72,
+      "community": 12,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "carbon\\carbon",
@@ -26201,7 +26372,7 @@
     {
       "label": "DropdownOptionController.php",
       "_origin": "ast",
-      "community": 70,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "dropdownoptioncontroller.php",
@@ -26212,7 +26383,7 @@
     {
       "label": "BrokerageSetting.php",
       "_origin": "ast",
-      "community": 2,
+      "community": 53,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "brokeragesetting.php",
@@ -26267,7 +26438,7 @@
     {
       "label": "Trade.php",
       "_origin": "ast",
-      "community": 2,
+      "community": 68,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "trade.php",
@@ -26344,7 +26515,7 @@
     {
       "label": "LotSizeSeeder.php",
       "_origin": "ast",
-      "community": 2,
+      "community": 173,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "lotsizeseeder.php",
@@ -26399,7 +26570,7 @@
     {
       "label": "Illuminate\\Database\\Eloquent\\SoftDeletes",
       "_origin": "ast",
-      "community": 9,
+      "community": 68,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "illuminate\\database\\eloquent\\softdeletes",
@@ -26410,7 +26581,7 @@
     {
       "label": "Illuminate\\Database\\Seeder",
       "_origin": "ast",
-      "community": 2,
+      "community": 173,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "illuminate\\database\\seeder",
@@ -26657,7 +26828,7 @@
     {
       "label": "AuthController.php",
       "_origin": "ast",
-      "community": 17,
+      "community": 2,
       "community_name": "UserFactory.php",
       "file_type": "code",
       "norm_label": "authcontroller.php",
@@ -26745,7 +26916,7 @@
     {
       "label": "Illuminate\\Validation\\ValidationException",
       "_origin": "ast",
-      "community": 17,
+      "community": 2,
       "community_name": "UserFactory.php",
       "file_type": "code",
       "norm_label": "illuminate\\validation\\validationexception",
@@ -26800,7 +26971,7 @@
     {
       "label": "CapitalController.php",
       "_origin": "ast",
-      "community": 72,
+      "community": 17,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "norm_label": "capitalcontroller.php",
@@ -26877,7 +27048,7 @@
     {
       "label": "BrokerageSettingController.php",
       "_origin": "ast",
-      "community": 17,
+      "community": 53,
       "community_name": "BrokerageSettingController",
       "file_type": "code",
       "norm_label": "brokeragesettingcontroller.php",
@@ -26888,7 +27059,7 @@
     {
       "label": "LotSizeController.php",
       "_origin": "ast",
-      "community": 2,
+      "community": 173,
       "community_name": "Illuminate\\Http\\JsonResponse",
       "file_type": "code",
       "norm_label": "lotsizecontroller.php",
@@ -27849,7 +28020,7 @@
     {
       "label": "2026_10_31_023000_create_dropdown_options_table.php",
       "_origin": "ast",
-      "community": 73,
+      "community": 208,
       "community_name": "Illuminate\\Support\\Facades\\Schema",
       "file_type": "code",
       "norm_label": "2026_10_31_023000_create_dropdown_options_table.php",
@@ -28638,7 +28809,7 @@
     {
       "label": "2026_10_30_160000_create_user_module_visibilities_table.php",
       "_origin": "ast",
-      "community": 208,
+      "community": 73,
       "community_name": "2026_10_30_160000_create_user_module_visibilities_table.php",
       "file_type": "code",
       "norm_label": "2026_10_30_160000_create_user_module_visibilities_table.php",
@@ -28660,7 +28831,7 @@
     {
       "label": "TradingCalculationService.php",
       "_origin": "ast",
-      "community": 9,
+      "community": 53,
       "community_name": "TradingCalculationService",
       "file_type": "code",
       "norm_label": "tradingcalculationservice.php",
@@ -28671,7 +28842,7 @@
     {
       "label": "Unit/ExampleTest.php",
       "_origin": "ast",
-      "community": 9,
+      "community": 53,
       "community_name": "TradingCalculationService",
       "file_type": "code",
       "norm_label": "unit/exampletest.php",
@@ -28682,7 +28853,7 @@
     {
       "label": "FinancialCalculationTest.php",
       "_origin": "ast",
-      "community": 9,
+      "community": 53,
       "community_name": "TradingCalculationService",
       "file_type": "code",
       "norm_label": "financialcalculationtest.php",
@@ -28693,7 +28864,7 @@
     {
       "label": "PHPUnit\\Framework\\TestCase",
       "_origin": "ast",
-      "community": 9,
+      "community": 53,
       "community_name": "TradingCalculationService",
       "file_type": "code",
       "norm_label": "phpunit\\framework\\testcase",
@@ -46231,6 +46402,17 @@
       "target": "frontend_src_components_trades_partialexitmodal_jsx"
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/TradingCalendar.jsx",
+      "source_location": "L44",
+      "weight": 1.0,
+      "source": "frontend_src_pages_tradingcalendar_jsx",
+      "target": "frontend_src_components_trades_partialexitmodal_jsx",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -47082,6 +47264,17 @@
       "target": "frontend_src_components_trades_editordermodal_jsx"
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/TradingCalendar.jsx",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "frontend_src_pages_tradingcalendar_jsx",
+      "target": "frontend_src_components_trades_editordermodal_jsx",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -47853,6 +48046,26 @@
       "confidence_score": 1.0,
       "source": "frontend_src_pages_dashboard_jsx",
       "target": "pages_dashboard_dashboard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/TradingCalendar.jsx",
+      "source_location": "L47",
+      "weight": 1.0,
+      "source": "frontend_src_pages_tradingcalendar_jsx",
+      "target": "pages_tradingcalendar_getlegprices",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/TradingCalendar.jsx",
+      "source_location": "L56",
+      "weight": 1.0,
+      "source": "frontend_src_pages_tradingcalendar_jsx",
+      "target": "pages_tradingcalendar_getdayofweek",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -53524,9 +53737,9 @@
       "source_file": "API_DOCUMENTATION.md",
       "source_location": "L138",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "option_journal_api_documentation_4_1_list_trades",
-      "target": "option_journal_api_documentation_codeblock_9",
-      "confidence_score": 1.0
+      "target": "option_journal_api_documentation_codeblock_9"
     },
     {
       "relation": "contains",
@@ -53544,9 +53757,9 @@
       "source_file": "API_DOCUMENTATION.md",
       "source_location": "L159",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "option_journal_api_documentation_4_2_create_trade",
-      "target": "option_journal_api_documentation_codeblock_10",
-      "confidence_score": 1.0
+      "target": "option_journal_api_documentation_codeblock_10"
     },
     {
       "relation": "contains",
@@ -53574,9 +53787,9 @@
       "source_file": "API_DOCUMENTATION.md",
       "source_location": "L202",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "option_journal_api_documentation_4_6_all_filtered_ids_cross_page_totals",
-      "target": "option_journal_api_documentation_codeblock_11",
-      "confidence_score": 1.0
+      "target": "option_journal_api_documentation_codeblock_11"
     },
     {
       "relation": "contains",
@@ -53634,9 +53847,9 @@
       "source_file": "API_DOCUMENTATION.md",
       "source_location": "L333",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "option_journal_api_documentation_5_1_calendar_overview",
-      "target": "option_journal_api_documentation_codeblock_14",
-      "confidence_score": 1.0
+      "target": "option_journal_api_documentation_codeblock_14"
     },
     {
       "relation": "contains",
@@ -53835,8 +54048,18 @@
       "source_location": "L12",
       "weight": 1.0,
       "source": "option_journal_changelog_changelog_tradejournal",
-      "target": "option_journal_changelog_1_15_1_2026_11_12",
+      "target": "option_journal_changelog_1_15_2_2026_11_13",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L12",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_changelog_tradejournal",
+      "target": "option_journal_changelog_1_15_1_2026_11_12"
     },
     {
       "relation": "contains",
@@ -54064,9 +54287,29 @@
       "source_file": "CHANGELOG.md",
       "source_location": "L14",
       "weight": 1.0,
-      "source": "option_journal_changelog_1_15_1_2026_11_12",
-      "target": "option_journal_changelog_fixed",
+      "source": "option_journal_changelog_1_15_2_2026_11_13",
+      "target": "option_journal_changelog_fixed_enhanced",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L27",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_12_1_2026_11_01",
+      "target": "option_journal_changelog_fixed_enhanced"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L14",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_15_1_2026_11_12",
+      "target": "option_journal_changelog_fixed"
     },
     {
       "relation": "contains",
@@ -54074,9 +54317,9 @@
       "source_file": "CHANGELOG.md",
       "source_location": "L24",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "option_journal_changelog_1_15_1_2026_11_12",
-      "target": "option_journal_changelog_added_enhanced",
-      "confidence_score": 1.0
+      "target": "option_journal_changelog_added_enhanced"
     },
     {
       "relation": "contains",
@@ -54084,9 +54327,9 @@
       "source_file": "CHANGELOG.md",
       "source_location": "L62",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "option_journal_changelog_1_15_1_2026_11_12",
-      "target": "option_journal_changelog_added_macos_native_application_phase_6",
-      "confidence_score": 1.0
+      "target": "option_journal_changelog_added_macos_native_application_phase_6"
     },
     {
       "relation": "contains",
@@ -54094,9 +54337,9 @@
       "source_file": "CHANGELOG.md",
       "source_location": "L72",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "option_journal_changelog_1_15_1_2026_11_12",
-      "target": "option_journal_changelog_added_macos_native_application_phase_5",
-      "confidence_score": 1.0
+      "target": "option_journal_changelog_added_macos_native_application_phase_5"
     },
     {
       "relation": "contains",
@@ -54162,11 +54405,21 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L87",
+      "source_location": "L98",
       "weight": 1.0,
       "source": "option_journal_changelog_1_14_0_2026_11_10",
-      "target": "option_journal_changelog_added_enhanced_87",
+      "target": "option_journal_changelog_added_enhanced_98",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L87",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_14_0_2026_11_10",
+      "target": "option_journal_changelog_added_enhanced_87"
     },
     {
       "relation": "contains",
@@ -54182,11 +54435,21 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L102",
+      "source_location": "L113",
       "weight": 1.0,
       "source": "option_journal_changelog_1_13_0_2026_11_10",
-      "target": "option_journal_changelog_added_enhanced_102",
+      "target": "option_journal_changelog_added_enhanced_113",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L102",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_13_0_2026_11_10",
+      "target": "option_journal_changelog_added_enhanced_102"
     },
     {
       "relation": "contains",
@@ -54222,11 +54485,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L27",
+      "source_location": "L155",
       "weight": 1.0,
-      "confidence_score": 1.0,
       "source": "option_journal_changelog_1_12_1_2026_11_01",
-      "target": "option_journal_changelog_fixed_enhanced"
+      "target": "option_journal_changelog_fixed_enhanced_155",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -54242,11 +54505,21 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L167",
+      "source_location": "L178",
       "weight": 1.0,
       "source": "option_journal_changelog_1_12_0_2026_11_01",
-      "target": "option_journal_changelog_fixed_enhanced_167",
+      "target": "option_journal_changelog_fixed_enhanced_178",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L167",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_12_0_2026_11_01",
+      "target": "option_journal_changelog_fixed_enhanced_167"
     },
     {
       "relation": "contains",
@@ -54322,10 +54595,10 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L187",
+      "source_location": "L198",
       "weight": 1.0,
       "source": "option_journal_changelog_1_11_6_2026_11_01",
-      "target": "option_journal_changelog_fixed_refined_187",
+      "target": "option_journal_changelog_fixed_refined_198",
       "confidence_score": 1.0
     },
     {
@@ -54352,11 +54625,41 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L213",
+      "source_location": "L224",
       "weight": 1.0,
       "source": "option_journal_changelog_1_11_6_2026_11_01",
-      "target": "option_journal_changelog_fixed_refined_213",
+      "target": "option_journal_changelog_fixed_refined_224",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L237",
+      "weight": 1.0,
+      "source": "option_journal_changelog_1_11_6_2026_11_01",
+      "target": "option_journal_changelog_fixed_refined_237",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L187",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_11_6_2026_11_01",
+      "target": "option_journal_changelog_fixed_refined_187"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L213",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_11_6_2026_11_01",
+      "target": "option_journal_changelog_fixed_refined_213"
     },
     {
       "relation": "contains",
@@ -54364,9 +54667,9 @@
       "source_file": "CHANGELOG.md",
       "source_location": "L226",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "option_journal_changelog_1_11_6_2026_11_01",
-      "target": "option_journal_changelog_fixed_refined_226",
-      "confidence_score": 1.0
+      "target": "option_journal_changelog_fixed_refined_226"
     },
     {
       "relation": "contains",
@@ -54552,11 +54855,21 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L259",
+      "source_location": "L270",
       "weight": 1.0,
       "source": "option_journal_changelog_1_10_0_2026_11_01",
-      "target": "option_journal_changelog_added_259",
+      "target": "option_journal_changelog_added_270",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L259",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_10_0_2026_11_01",
+      "target": "option_journal_changelog_added_259"
     },
     {
       "relation": "contains",
@@ -54622,10 +54935,30 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L272",
+      "source_location": "L283",
       "weight": 1.0,
       "source": "option_journal_changelog_1_9_1_2026_11_01",
-      "target": "option_journal_changelog_fixed_272",
+      "target": "option_journal_changelog_fixed_283",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L272",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_9_1_2026_11_01",
+      "target": "option_journal_changelog_fixed_272"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L293",
+      "weight": 1.0,
+      "source": "option_journal_changelog_1_9_0_2026_11_01",
+      "target": "option_journal_changelog_added_293",
       "confidence_score": 1.0
     },
     {
@@ -54634,9 +54967,9 @@
       "source_file": "CHANGELOG.md",
       "source_location": "L282",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "option_journal_changelog_1_9_0_2026_11_01",
-      "target": "option_journal_changelog_added_282",
-      "confidence_score": 1.0
+      "target": "option_journal_changelog_added_282"
     },
     {
       "relation": "contains",
@@ -54702,11 +55035,31 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L295",
+      "source_location": "L293",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_2_0_2026_10_30",
+      "target": "option_journal_changelog_added_293"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L306",
       "weight": 1.0,
       "source": "option_journal_changelog_1_8_0_2026_10_31",
-      "target": "option_journal_changelog_added_295",
+      "target": "option_journal_changelog_added_306",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L295",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_8_0_2026_10_31",
+      "target": "option_journal_changelog_added_295"
     },
     {
       "relation": "contains",
@@ -54772,11 +55125,21 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L308",
+      "source_location": "L319",
       "weight": 1.0,
       "source": "option_journal_changelog_1_7_0_2026_10_31",
-      "target": "option_journal_changelog_added_308",
+      "target": "option_journal_changelog_added_319",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L308",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_7_0_2026_10_31",
+      "target": "option_journal_changelog_added_308"
     },
     {
       "relation": "contains",
@@ -54842,31 +55205,31 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L308",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "option_journal_changelog_1_6_0_2026_10_31",
-      "target": "option_journal_changelog_added_308"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "CHANGELOG.md",
-      "source_location": "L308",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "option_journal_changelog_1_2_0_2026_10_30",
-      "target": "option_journal_changelog_added_308"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "CHANGELOG.md",
       "source_location": "L319",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "option_journal_changelog_1_6_0_2026_10_31",
-      "target": "option_journal_changelog_added_319",
+      "target": "option_journal_changelog_added_319"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L330",
+      "weight": 1.0,
+      "source": "option_journal_changelog_1_6_0_2026_10_31",
+      "target": "option_journal_changelog_added_330",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L308",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_6_0_2026_10_31",
+      "target": "option_journal_changelog_added_308"
     },
     {
       "relation": "contains",
@@ -54922,11 +55285,21 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L328",
+      "source_location": "L339",
       "weight": 1.0,
       "source": "option_journal_changelog_1_5_0_2026_10_31",
-      "target": "option_journal_changelog_added_328",
+      "target": "option_journal_changelog_added_339",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L328",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_5_0_2026_10_31",
+      "target": "option_journal_changelog_added_328"
     },
     {
       "relation": "contains",
@@ -54992,11 +55365,21 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L338",
+      "source_location": "L349",
       "weight": 1.0,
       "source": "option_journal_changelog_1_4_0_2026_10_30",
-      "target": "option_journal_changelog_added_338",
+      "target": "option_journal_changelog_added_349",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L338",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_4_0_2026_10_30",
+      "target": "option_journal_changelog_added_338"
     },
     {
       "relation": "contains",
@@ -55062,11 +55445,21 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L348",
+      "source_location": "L359",
       "weight": 1.0,
       "source": "option_journal_changelog_1_3_0_2026_10_30",
-      "target": "option_journal_changelog_added_348",
+      "target": "option_journal_changelog_added_359",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L348",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_3_0_2026_10_30",
+      "target": "option_journal_changelog_added_348"
     },
     {
       "relation": "contains",
@@ -55132,11 +55525,31 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L358",
+      "source_location": "L369",
       "weight": 1.0,
       "source": "option_journal_changelog_1_2_0_2026_10_30",
-      "target": "option_journal_changelog_added_358",
+      "target": "option_journal_changelog_added_369",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L308",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_2_0_2026_10_30",
+      "target": "option_journal_changelog_added_308"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L358",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_2_0_2026_10_30",
+      "target": "option_journal_changelog_added_358"
     },
     {
       "relation": "contains",
@@ -55147,16 +55560,6 @@
       "confidence_score": 1.0,
       "source": "option_journal_changelog_1_2_0_2026_10_30",
       "target": "option_journal_changelog_added_347"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "CHANGELOG.md",
-      "source_location": "L293",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "option_journal_changelog_1_2_0_2026_10_30",
-      "target": "option_journal_changelog_added_293"
     },
     {
       "relation": "contains",
@@ -55192,11 +55595,21 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "CHANGELOG.md",
-      "source_location": "L367",
+      "source_location": "L378",
       "weight": 1.0,
       "source": "option_journal_changelog_1_1_0_2026_10_30",
-      "target": "option_journal_changelog_added_367",
+      "target": "option_journal_changelog_added_378",
       "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CHANGELOG.md",
+      "source_location": "L367",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "option_journal_changelog_1_1_0_2026_10_30",
+      "target": "option_journal_changelog_added_367"
     },
     {
       "relation": "contains",
@@ -79103,5 +79516,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "65b73ea3f12298b6697767ccfd2e0e1c836ad6aa"
+  "built_at_commit": "230fdcb9a82c34548cca6a2bef514f59f5f393b8"
 }

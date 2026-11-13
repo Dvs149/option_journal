@@ -143,8 +143,11 @@
 - **Realized P&L Attribution by Square-Off / Execution Date**:
   - Automatically attributes closed multi-day trades (BTST, overnight, positional) to their actual exit / square-off date.
   - In partial order scaling/exits, attributes realized P&L and charges to the latest executed order date.
-- **Itemized Daily Trades Inspection**:
-  - Displays all executions on the selected calendar date with Status badges (`CLOSED`, `PARTIAL`, `OPEN`).
-  - Displays multi-day `Entry: <Date>` indicator when a trade was taken on an earlier date and squared off on the selected date.
+- **Itemized Daily Trades Inspection (Unified with All Trades)**:
+  - Comprehensive 15-column table with full parity to `AllTrades.jsx`: `Date` (with weekday tooltip), `Index`, `Type`, `Status` (with `X Orders v` pill), `CE/PE`, `Strike`, `Expiry` (with weekday tooltip), `Lots`, `Entry` (with dual `C:... P:...` leg support for straddles), `Exit`, `Gross P/L`, `Charges`, `Net P&L`, `Strategy`, and `Actions`.
+  - Expandable inline order execution breakdowns (`Executed Orders Breakdown`) displaying individual order prices, quantities, turnovers, charges, and order-level realized P&L.
+  - Interactive actions directly on the calendar: edit trade (`EditTradeModal`), delete trade, edit executed order (`EditOrderModal`), delete order, and execute partial exits (`PartialExitModal`).
+  - Identical newest-first sorting (`id desc`) matching All Trades.
+  - Displays multi-day `Exit: <Date>` indicator when a trade was taken on an earlier date and squared off on the selected date.
 - Synchronized monthly KPIs, bar charts, cumulative equity trend line, and weekday performance distribution.
 

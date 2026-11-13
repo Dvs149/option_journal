@@ -287,15 +287,29 @@ Content-Type: application/json
             "strategy_name": "Long Straddle",
             "option_type": "Both",
             "strike_price": 25000,
+            "expiry_date": "2026-11-05",
             "lots": 1,
             "quantity": 65,
             "open_quantity": 0,
             "entry_premium": 171.05,
             "exit_premium": 216.11,
+            "gross_profit": 2928.90,
+            "gross_loss": 0.00,
+            "total_charges": 771.59,
             "net_pnl": 2157.31,
             "trade_date": "2026-11-01",
             "exit_date": "2026-11-02",
-            "effective_date": "2026-11-02"
+            "effective_date": "2026-11-02",
+            "orders": [
+              {
+                "id": 1940,
+                "trade_id": 2981,
+                "order_type": "BUY",
+                "quantity": 65,
+                "price": 171.05,
+                "total_charges": 385.70
+              }
+            ]
           }
         ]
       }

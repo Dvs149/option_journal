@@ -64,7 +64,7 @@ The system addresses the core needs of active option traders:
    - Dynamic realized P&L attribution: places multi-day/BTST trades on their exit/square-off date, and partial orders on the latest order executed date.
    - Indian Stock Market (NSE & BSE) Trading Holidays: official exchange schedule marked across all calendar components (main Trading Calendar and Dashboard mini calendar) with amber cells, `🇮🇳 Holiday` signs/badges, holiday names, and market closed tooltips/banners.
    - Automatic next working day calculation skipping both weekends and market holidays.
-   - Daily trade volume count and net profit/loss aggregated per calendar day with itemized trades breakdown and multi-day entry indicators.
+   - Daily trade volume count and net profit/loss aggregated per calendar day with itemized trades breakdown (15-column format unified with All Trades, including expandable inline executions and order action dialogs) and multi-day exit indicators.
 4. **Risk Management & Guardrails**:
    - Daily maximum allowable loss and daily profit target tracking with live violation alerts.
    - Monthly drawdown monitoring.
