@@ -11,6 +11,7 @@ import {
   Wallet,
   SlidersHorizontal,
   Code2,
+  Flame,
 } from 'lucide-react';
 import api from '../api/client';
 
@@ -102,6 +103,14 @@ export const APP_MODULES = [
     icon: SlidersHorizontal,
     desc: 'Manage, activate & deactivate dropdown options module-wise across Add Trade, All Trades, etc.',
     category: 'Settings',
+  },
+  {
+    id: 'zerodha',
+    name: 'Zerodha Kite',
+    path: '/zerodha',
+    icon: Flame,
+    desc: 'Live read-only portfolio overview: Margins, executed orders, net & day positions, and holdings from Zerodha Kite Connect',
+    category: 'Broker',
   },
 ];
 

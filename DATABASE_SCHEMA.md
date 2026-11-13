@@ -388,3 +388,33 @@ Records deposits and withdrawals impacting available trading capital.
 | `notes` | TEXT | Yes | NULL | Transaction notes / bank reference |
 | `created_at` | TIMESTAMP | Yes | NULL | Creation timestamp |
 | `updated_at` | TIMESTAMP | Yes | NULL | Last update timestamp |
+
+---
+
+### 3.12 `zerodha_integrations`
+Stores credentials, tokens, profile details, and sync status for Zerodha Kite Connect integration.
+| Column | Type | Nullable | Default | Description |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | No | AUTO_INCREMENT | Primary Key |
+| `user_id` | BIGINT UNSIGNED | No | - | Foreign Key -> `users.id` (ON DELETE CASCADE, UNIQUE) |
+| `api_key` | VARCHAR(255) | Yes | NULL | Kite Connect API Key |
+| `api_secret` | TEXT | Yes | NULL | Kite Connect API Secret (encrypted/hidden) |
+| `access_token` | TEXT | Yes | NULL | Active session access token |
+| `request_token` | VARCHAR(255) | Yes | NULL | Transient request token from login flow |
+| `public_token` | VARCHAR(255) | Yes | NULL | Public token |
+| `broker_user_id` | VARCHAR(50) | Yes | NULL | Zerodha Client ID (e.g. `ZR113592`) |
+| `user_name` | VARCHAR(255) | Yes | NULL | User's full name as per broker records |
+| `user_shortname` | VARCHAR(255) | Yes | NULL | Short/first name |
+| `email` | VARCHAR(255) | Yes | NULL | Registered broker email |
+| `user_type` | VARCHAR(255) | Yes | 'individual' | Account classification (`individual`, `corporate`) |
+| `broker` | VARCHAR(50) | Yes | 'ZERODHA' | Brokerage name |
+| `avatar_url` | VARCHAR(255) | Yes | NULL | Avatar/profile image URL |
+| `is_connected` | BOOLEAN | No | 0 (false) | Active connection state |
+| `is_demo` | BOOLEAN | No | 0 (false) | Sandbox / simulation mode flag |
+| `connected_at` | TIMESTAMP | Yes | NULL | Timestamp of initial connection |
+| `token_generated_at`| TIMESTAMP | Yes | NULL | When current token was generated |
+| `token_expires_at` | TIMESTAMP | Yes | NULL | Token expiration timestamp (~6:00 AM next day) |
+| `last_synced_at` | TIMESTAMP | Yes | NULL | Timestamp of last portfolio sync |
+| `meta` | JSON | Yes | NULL | JSON metadata (enabled exchanges, products, order types) |
+| `created_at` | TIMESTAMP | Yes | NULL | Creation timestamp |
+| `updated_at` | TIMESTAMP | Yes | NULL | Last update timestamp |

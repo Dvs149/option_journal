@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Navbar from './Navbar';
 import MobileNav from './MobileNav';
 import ErrorBoundary from '../common/ErrorBoundary';
 import { useFilter } from '../../context/FilterContext';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useToast } from '../../context/ToastContext';
+import api from '../../api/client';
 
 export default function AppLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const navigate = useNavigate();
+  const { showToast } = useToast();
 
   // Close mobile sidebar on Escape
   useEscapeKey(() => setMobileSidebarOpen(false), mobileSidebarOpen);
@@ -20,6 +24,29 @@ export default function AppLayout() {
     customTo,
     updateCustomDates,
   } = useFilter();
+
+  // Global Zerodha Kite Login Redirect Handler
+  // Detects ?request_token=... on any landing route (e.g. http://localhost:5173/?request_token=...)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('request_token');
+    if (token) {
+      showToast('Authenticating Zerodha Kite daily session...', 'info');
+      api.post('/zerodha/exchange-token', { request_token: token })
+        .then((res) => {
+          showToast('🎉 Zerodha Kite session authenticated! Loading your live portfolio...', 'success');
+          // Clean the query parameter from URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          // Navigate to /zerodha so user immediately sees live portfolio
+          navigate('/zerodha');
+        })
+        .catch((err) => {
+          console.error('Kite token exchange error', err);
+          showToast(err.response?.data?.message || 'Failed to exchange Zerodha request token', 'error');
+          window.history.replaceState({}, document.title, window.location.pathname);
+        });
+    }
+  }, [navigate, showToast]);
 
   return (
     <div className="flex h-screen w-full bg-[#0b0f19] light:bg-[#f8fafc] overflow-hidden text-slate-100 light:text-slate-800">

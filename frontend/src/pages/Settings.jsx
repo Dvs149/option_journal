@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Sliders,
   TrendingUp,
@@ -33,6 +33,7 @@ import {
   Receipt,
   SlidersHorizontal,
   ChevronRight,
+  ExternalLink,
 } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -73,9 +74,105 @@ export default function Settings() {
     loading: dropdownsLoading,
   } = useDropdown();
 
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
   // Active Tab
-  const [activeTab, setActiveTab] = useState('All');
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'All');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Zerodha Integration State
+  const [zerodhaStatus, setZerodhaStatus] = useState(null);
+  const [zerodhaLoading, setZerodhaLoading] = useState(false);
+  const [showZerodhaModal, setShowZerodhaModal] = useState(false);
+  const [zerodhaEmail, setZerodhaEmail] = useState('');
+  const [zerodhaPassword, setZerodhaPassword] = useState('');
+  const [showZerodhaPassword, setShowZerodhaPassword] = useState(false);
+  const [zerodhaApiKey, setZerodhaApiKey] = useState('');
+  const [zerodhaApiSecret, setZerodhaApiSecret] = useState('');
+  const [zerodhaConnecting, setZerodhaConnecting] = useState(false);
+
+  const fetchZerodhaStatus = useCallback(async () => {
+    try {
+      setZerodhaLoading(true);
+      const res = await api.get('/zerodha/status');
+      setZerodhaStatus(res.data);
+      if (res.data?.integration?.broker_user_id) {
+        setZerodhaEmail(res.data.integration.broker_user_id);
+      } else if (res.data?.integration?.email) {
+        setZerodhaEmail(res.data.integration.email);
+      }
+      if (res.data?.integration?.api_key && res.data.integration.api_key !== 'DEMO_KITE_KEY') {
+        setZerodhaApiKey(res.data.integration.api_key);
+      } else if (res.data?.integration?.meta?.api_key) {
+        setZerodhaApiKey(res.data.integration.meta.api_key);
+      }
+    } catch (e) {
+      console.warn('Failed to load Zerodha status in settings', e);
+    } finally {
+      setZerodhaLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+    fetchZerodhaStatus();
+  }, [searchParams, fetchZerodhaStatus]);
+
+  const handleConnectZerodha = async (e) => {
+    e.preventDefault();
+    if (!zerodhaEmail.trim() && !zerodhaApiKey.trim()) {
+      triggerToast('Please provide your Zerodha Client ID or Kite API Key', 'error');
+      return;
+    }
+    try {
+      setZerodhaConnecting(true);
+      const res = await api.post('/zerodha/connect', {
+        email: zerodhaEmail.trim() || null,
+        password: zerodhaPassword.trim() || null,
+        api_key: zerodhaApiKey.trim() || null,
+        api_secret: zerodhaApiSecret.trim() || null,
+      });
+      triggerToast(res.data?.message || 'Zerodha Kite Connected Successfully!', 'success');
+      setShowZerodhaModal(false);
+      fetchZerodhaStatus();
+    } catch (err) {
+      console.error('Zerodha connect failed', err);
+      triggerToast(err.response?.data?.message || 'Failed to connect Zerodha', 'error');
+    } finally {
+      setZerodhaConnecting(false);
+    }
+  };
+
+  const handleConnectZerodhaDemo = async () => {
+    try {
+      setZerodhaConnecting(true);
+      const res = await api.post('/zerodha/connect-demo');
+      triggerToast('Connected in Demo Sandbox mode with sample portfolio!', 'success');
+      setShowZerodhaModal(false);
+      fetchZerodhaStatus();
+    } catch (err) {
+      console.error('Demo connect failed', err);
+      triggerToast('Failed to connect Demo account', 'error');
+    } finally {
+      setZerodhaConnecting(false);
+    }
+  };
+
+  const handleDisconnectZerodha = async () => {
+    if (!window.confirm('Are you sure you want to disconnect Zerodha Kite Connect?')) return;
+    try {
+      await api.post('/zerodha/disconnect');
+      triggerToast('Zerodha Kite disconnected', 'info');
+      fetchZerodhaStatus();
+    } catch (err) {
+      console.error('Disconnect failed', err);
+      triggerToast('Failed to disconnect Zerodha', 'error');
+    }
+  };
 
   // General Settings State
   const [currency, setCurrency] = useState('INR (₹) - Indian Rupee');
@@ -1565,27 +1662,141 @@ export default function Settings() {
             <div className="space-y-4 text-xs">
               {/* Broker Integration */}
               <div>
-                <div className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider mb-2">
-                  Broker Integration
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] text-slate-400 uppercase font-semibold tracking-wider">
+                    Broker Integration (Strictly Read-Only)
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-medium">Zero Order Placement</span>
                 </div>
-                <div className="flex items-center justify-between p-2.5 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b]">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-orange-600/20 text-orange-500 font-bold flex items-center justify-center text-xs">
-                      ▲
+
+                <div className="p-4 rounded-2xl bg-[#0e1626] light:bg-slate-50 border border-[#1e293b] space-y-3">
+                  {/* Top Header Row */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-xl bg-orange-600/20 text-orange-500 font-extrabold flex items-center justify-center text-sm shrink-0 border border-orange-500/25">
+                        ▲
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-xs font-bold text-white light:text-slate-900">
+                            Zerodha Kite Connect
+                          </span>
+                          {zerodhaStatus?.is_connected ? (
+                            zerodhaStatus?.is_demo ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 whitespace-nowrap">
+                                Demo Mode
+                              </span>
+                            ) : zerodhaStatus?.is_authenticated ? (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5 whitespace-nowrap">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                Connected (Live)
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 flex items-center gap-1.5 whitespace-nowrap">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />
+                                Pending Daily Login
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-[10px] text-rose-400 flex items-center gap-1 font-medium whitespace-nowrap">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Not Connected
+                            </span>
+                          )}
+                        </div>
+
+                        {zerodhaStatus?.is_connected ? (
+                          <div className="text-[11px] text-slate-400 mt-0.5 flex flex-wrap items-center gap-2">
+                            <span>Client ID: <strong className="text-white font-mono">{zerodhaStatus.integration?.broker_user_id}</strong></span>
+                            <span>•</span>
+                            <span>{zerodhaStatus.integration?.user_name || 'Trader'}</span>
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-slate-500 mt-0.5">
+                            Connect to sync funds, executed orders, net/day positions & holdings.
+                          </p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <span className="text-xs font-semibold text-white light:text-slate-900 block">Zerodha Kite Connect</span>
-                      <span className="text-[10px] text-rose-400 flex items-center gap-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Not Connected
-                      </span>
+
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+                      {zerodhaStatus?.is_connected ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => navigate('/zerodha')}
+                            className="px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white text-[11px] font-semibold transition-all shadow-sm shadow-orange-600/20 flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer"
+                          >
+                            <span>Open Zerodha</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowZerodhaModal(true)}
+                            className="px-2.5 py-1.5 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-slate-300 text-[11px] font-semibold transition-all border border-[#1e293b] whitespace-nowrap shrink-0 cursor-pointer"
+                            title="Reconfigure Kite credentials"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleDisconnectZerodha}
+                            className="px-2.5 py-1.5 rounded-xl bg-[#162033] hover:bg-rose-500/20 text-rose-400 text-[11px] font-semibold transition-all border border-[#1e293b] whitespace-nowrap shrink-0 cursor-pointer"
+                            title="Disconnect Zerodha"
+                          >
+                            Disconnect
+                          </button>
+                        </>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={handleConnectZerodhaDemo}
+                            className="px-3 py-1.5 rounded-xl bg-[#162033] hover:bg-[#202d45] text-amber-400 text-[11px] font-semibold transition-all border border-amber-500/30 flex items-center gap-1 whitespace-nowrap shrink-0 cursor-pointer"
+                          >
+                            <Sparkles className="w-3 h-3 text-amber-400" />
+                            <span>Demo</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowZerodhaModal(true)}
+                            className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-semibold transition-all shadow-md shadow-blue-600/20 whitespace-nowrap shrink-0 cursor-pointer"
+                          >
+                            Connect
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <button
-                    onClick={() => triggerToast('Zerodha Kite Connect integration opened!')}
-                    className="px-3 py-1 rounded-xl bg-[#162033] light:bg-slate-200 hover:bg-blue-600 hover:text-white text-slate-300 text-[11px] font-semibold transition-all border border-[#1e293b]"
-                  >
-                    Connect
-                  </button>
+
+                  {/* Dedicated Alert / 1-Click Login Banner when Daily Session authorization is pending */}
+                  {zerodhaStatus?.is_connected && !zerodhaStatus?.is_authenticated && !zerodhaStatus?.is_demo && (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/10 border border-amber-500/25">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-6 h-6 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-semibold text-amber-300 block">
+                            Daily Login Authorization Required
+                          </span>
+                          <p className="text-[11px] text-slate-400 mt-0.5">
+                            Authorize with your Zerodha 2FA once today to unlock live portfolio, orders, and balances.
+                          </p>
+                        </div>
+                      </div>
+
+                      <a
+                        href={zerodhaStatus?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${zerodhaApiKey || 'rc8uazcn34krax8l'}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-4 py-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-orange-600/20 transition-all whitespace-nowrap shrink-0 cursor-pointer"
+                      >
+                        <span>🔑 1-Click Kite Login</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -2440,6 +2651,135 @@ export default function Settings() {
                 >
                   Update Password
                 </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Zerodha Kite Connect Modal */}
+      {showZerodhaModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4 animate-fadeIn">
+          <div className="w-full max-w-md bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#1e293b] light:border-slate-200">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-orange-600/20 text-orange-500 font-extrabold flex items-center justify-center text-sm">
+                  ▲
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white light:text-slate-900">
+                    Connect Zerodha Kite
+                  </h3>
+                  <p className="text-[11px] text-slate-400">Strictly Read-Only Portfolio Sync</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowZerodhaModal(false)}
+                className="text-slate-400 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleConnectZerodha} className="space-y-3.5 text-xs">
+              <div>
+                <label className="text-slate-400 block mb-1">
+                  Zerodha Client ID / Email <span className="text-rose-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. NQ2990 or trader@example.com"
+                  value={zerodhaEmail}
+                  onChange={(e) => setZerodhaEmail(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-white light:text-slate-900 text-xs focus:outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-slate-400 block mb-1">
+                  Zerodha Password <span className="text-slate-500 text-[10px] font-normal">(Optional — daily login uses Kite OAuth)</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showZerodhaPassword ? 'text' : 'password'}
+                    placeholder="Optional: enter password or leave blank"
+                    value={zerodhaPassword}
+                    onChange={(e) => setZerodhaPassword(e.target.value)}
+                    className="w-full px-3 py-2 pr-10 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-white light:text-slate-900 text-xs focus:outline-none focus:border-blue-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowZerodhaPassword(!showZerodhaPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                  >
+                    {showZerodhaPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="text-slate-400 block mb-1 text-[11px]">
+                    Kite API Key <span className="text-slate-500">(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. i7nm8563g7p5a2dw"
+                    value={zerodhaApiKey}
+                    onChange={(e) => setZerodhaApiKey(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-white light:text-slate-900 font-mono text-xs focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-slate-400 block mb-1 text-[11px]">
+                    API Secret Key <span className="text-slate-500">(Optional)</span>
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="Enter API Secret"
+                    value={zerodhaApiSecret}
+                    onChange={(e) => setZerodhaApiSecret(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-white light:text-slate-900 font-mono text-xs focus:outline-none focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-300 text-[11px] space-y-1">
+                <span className="font-semibold block">Don't have a paid Zerodha API key?</span>
+                <p className="text-slate-400">
+                  Zerodha Kite charges ₹2,000/mo. Click <strong>"Connect Demo"</strong> below to test immediately with realistic simulated data!
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-[#1e293b] light:border-slate-200">
+                <button
+                  type="button"
+                  onClick={handleConnectZerodhaDemo}
+                  disabled={zerodhaConnecting}
+                  className="px-3 py-2 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-amber-400 font-semibold text-xs border border-amber-500/30 flex items-center gap-1.5 transition-all"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Connect Demo
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowZerodhaModal(false)}
+                    className="px-3.5 py-2 text-slate-400 hover:text-white"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={zerodhaConnecting}
+                    className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-bold shadow-md shadow-orange-600/30 disabled:opacity-50"
+                  >
+                    {zerodhaConnecting ? 'Connecting...' : 'Connect Live'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

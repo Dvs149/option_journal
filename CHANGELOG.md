@@ -9,6 +9,132 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.16.5] - 2026-11-13
+
+### Added & Enhanced
+- **Zerodha Virtual Contract Note Modal (`ZerodhaContractNoteModal.jsx`)**:
+  - Implemented the official Zerodha Kite **"Virtual contract note"** popup matching all regulatory calculation standards:
+    - **Statutory Charges (Government & Exchange fees)**:
+      - SEBI turnover fee (`₹10/crore`)
+      - Exchange turnover fee (`0.040087%` NSE Options transaction fee + IPFT)
+      - Stamp duty (`0.003%` on BUY premium turnover)
+      - Transaction tax (STT) (`0.15%` on SELL premium turnover per SEBI revised schedule)
+      - GST (`18%` on Brokerage + Exchange fees + SEBI fees)
+    - **Zerodha Charges**: Brokerage (`₹20` per executed order)
+    - **Total Charges**: Prominent grand total matching contract note settlement.
+    - **Itemized Executions Table**: Displays Time, Instrument (BUY in blue / SELL in rose + Kite symbol formatting), Quantity, Average execution price, and exact per-order estimated regulatory charges.
+  - **Dual Launch Points in Zerodha Module**:
+    - `[Contract note]` action button in the Executed Orders tab toolbar matching Kite's UI.
+    - Prominent `Contract Note` button in the top action header for instant access.
+  - **Backend API Endpoint (`GET /api/zerodha/contract-note`)**:
+    - Added dedicated contract note computation in `ZerodhaKiteService::getContractNote` and `ZerodhaController::contractNote`.
+  - **Executed Orders Table Instrument Display**:
+    - Formatted raw exchange codes in the Executed Orders table to match Kite (e.g. `NIFTY 17th w NOV 25150 PE NFO`).
+
+## [1.16.4] - 2026-11-13
+
+### Added & Enhanced
+- **Zerodha Positions Tab: Open vs. Closed Positions Parity with Kite**:
+  - **Visual Distinction for Open vs. Closed Positions**:
+    - **Open Positions (`qty !== 0`)**: Rendered with vibrant blue quantity (e.g. `+1040`), purple `NRML` product badge, entry average execution price, active `OPEN` status badge with pulsating blue dot, and blue left border.
+    - **Closed Positions (`qty === 0`)**: Subdued row styling (`opacity-65 hover:opacity-100`), muted grey `0` quantity, `0.00` average price, and muted `CLOSED` status badge matching the official Zerodha Kite experience.
+  - **Authentic Zerodha Kite Tradingsymbol Formatting**:
+    - Transformed raw symbols like `NIFTY26N1725150CE` into clean readable format: `NIFTY 17th w NOV 25150 CE NFO` with weekly `w` badge and color-coded `CE` (blue) / `PE` (orange).
+  - **Position Status Filter Toolbar**:
+    - Added quick-filter toggle pills: `All (6)`, `Open (2)` (with live blue pulse), and `Closed (4)` alongside `Net Positions` and `Day Positions`.
+    - Integrated real-time search filter by symbol, index, or strike.
+  - **Index Grouping & Table Footer Totals**:
+    - Added `NIFTY 50 (6)` collapsable group header displaying total P&L and Day's P&L.
+    - Added table footer with aggregate Open Quantity, Total P&L, and Day's P&L matching Kite's summary row.
+
+## [1.16.3] - 2026-11-13
+
+### Fixed
+- **Settings Page Crash (`ReferenceError: ExternalLink is not defined`)**:
+  - Imported `ExternalLink` from `lucide-react` in `Settings.jsx`. Previously, rendering the Zerodha connection row or "1-Click Kite Login" link crashed the page into React's `ErrorBoundary` with "Something went wrong".
+- **Zerodha Connect Modal Password Field Optional**:
+  - Removed HTML5 `required` attribute and JS validation requirement from the Zerodha password input in both `Settings.jsx` and `Zerodha.jsx`.
+  - Zerodha Kite Connect authenticates via API Key + API Secret (and daily 1-click Kite OAuth), so accounts can now connect smoothly with Client ID and API Key without being blocked by "Please fill out this field".
+- **Settings Integrations Zerodha Card Layout & Button Overflow**:
+  - Fixed cramped UI layout where the "Pending Daily Login" badge, "🔑 1-Click Kite Login" button, and action buttons ("Open Zerodha", "Edit", "Disconnect") fought for horizontal space and word-wrapped into broken multiline boxes.
+  - Redesigned with a dedicated, full-width amber daily authorization banner inside the card, added `whitespace-nowrap` and `shrink-0` across all action buttons, and enabled clean responsive flex layouts.
+
+## [1.16.2] - 2026-11-13
+
+### Added & Enhanced
+- **Interactive Zerodha Order Import & Selection Review Modal (`ZerodhaOrderImportModal.jsx`)**:
+  - Replaced immediate direct import with an interactive modal identical to the screenshot order import experience (`ImageOrderImportModal.jsx`).
+  - **Review Table with Individual Checkboxes**: Users can selectively check or uncheck individual Zerodha executed orders to include in or exclude from their journal.
+  - **Summary Toolbar**:
+    - Live order counts: `Detected Orders: X Total | Y BUY | Z SELL | Turnover: ₹...`.
+    - Date picker: `Order Execution Date` (prefilled with today's date).
+    - Import mode dropdown: `Smart Match (Auto-pair BUY + SELL into Completed Trades)` vs `Individual Orders`.
+    - Option type dropdown: `Both (Combine same-strike into 1 entry)`, `Auto (As Detected)`, `CE`, `PE`.
+    - Contextual banner when `Both` is selected: alerts that CE and PE orders with matching strikes will be combined into a single Straddle journal entry.
+  - **Inline Order Row Controls**:
+    - Selection checkbox with header Select/Deselect All.
+    - Time input and BUY/SELL toggle button with visual blue/rose styling.
+    - Instrument selector (NIFTY, SENSEX, BANKNIFTY, FINNIFTY, MIDCPNIFTY, BANKEX).
+    - Strike price input and Option Type badge/selector.
+    - Expiry text display.
+    - Quantity with auto-calculated Lot count (e.g., `16L`) and Up/Down arrow key stepper.
+    - Price and Turnover calculation.
+    - Status badge and Row deletion button.
+  - **Import Execution & Success Flow**:
+    - Dispatches selected orders to `POST /trades/import-screenshot-orders` leveraging Smart Matching and automatic regulatory charges estimation.
+    - Renders celebration success view with "View in All Trades" navigation and instant background portfolio refresh.
+  - **Dual Launch Points**: Triggerable from the main top header button `Import to Journal (X)` and from the Executed Orders tab filter bar in `/zerodha`.
+
+### Fixed & Enhanced
+- **Zerodha Kite Live Authentication & No-Dummy-Data Architecture**:
+  - **Eliminated Dummy Data on Live Connections**: Live connected accounts now strictly query the official Zerodha Kite API. Mock simulated data is only rendered when the user explicitly enables "Demo / Sandbox Mode".
+  - **Daily Session Authentication View**: When credentials are saved but daily 2FA authorization is pending, displays a dedicated `Pending Daily Login` screen instead of fake orders or balances.
+  - **1-Click Kite Login (`https://kite.zerodha.com/connect/login?v=3&api_key=...`)**: Prominent 1-click button opens Zerodha's official login portal to authorize the trading day's session.
+  - **Automated & Manual Token Exchange**:
+    - Auto-detects `?request_token=...` in URL upon login callback, automatically posts to `POST /api/zerodha/exchange-token`, computes sha256 checksum, stores real `access_token`, and cleans up browser URL.
+    - Added manual Request Token / Callback URL input form allowing instant token extraction and exchange.
+    - Added direct Access Token entry endpoint `POST /api/zerodha/set-token` for users with pre-generated session tokens.
+  - **Genuine Empty States**: If the user has zero executed orders or open positions on Zerodha today, displays clean informative empty states ("No executed orders found in your Zerodha account today") rather than fallback mock orders.
+  - **Settings & Header Synchronized**: Settings Integration tab and Zerodha module header clearly distinguish between `Connected (Live)`, `Pending Daily Login`, and `Demo Mode`.
+
+## [1.16.0] - 2026-11-13
+
+### Added
+- **Dedicated Zerodha Kite Connect Read-Only Module (`/zerodha`)**:
+  - Implemented full-featured portfolio overview dashboard with 4 metric overview cards:
+    - Available Margin (Cash + Collateral balance breakdown)
+    - Utilised Margin (Options premium, SPAN & Exposure debits)
+    - Positions MTM P&L (Realized & Unrealized daily P&L with color-coded badges)
+    - Total Holdings Value (Stock portfolio valuation with total P&L and daily % change)
+  - Added 5 tabbed views:
+    - **Executed Orders**: Detailed execution log with status filters (`ALL`, `COMPLETE`, `CANCELLED`, `REJECTED`), search, order timestamp, instrument, transaction type (`BUY`/`SELL`), product (`NRML`/`MIS`/`CNC`), quantity, and average execution price.
+    - **Positions**: Sub-tabs for `Net Positions` and `Day Positions` displaying instrument, product, net quantity, average entry price, LTP, and live MTM P&L.
+    - **Holdings**: Equity holdings table with ISIN, quantity, average cost, LTP, current valuation, total P&L, and day change %.
+    - **Funds & Margins**: Equity & F&O vs. Commodity (MCX) margin breakdowns.
+    - **Profile & Security**: Displays client ID, brokerage, email, enabled exchanges, and read-only compliance assurance.
+  - Added **Strictly Read-Only Order Import**:
+    - `POST /api/zerodha/import-orders` imports executed Kite orders directly into the user's `trades` and `trade_orders` records for journal analysis without dispatching broker write-backs.
+    - Built-in duplicate prevention via order ID tagging.
+  - Added **Realistic Sandbox / Demo Mode**:
+    - Provides instant simulation mode with realistic NIFTY & SENSEX option positions and executed orders, allowing zero-cost exploration without a paid Kite subscription.
+
+### Enhanced
+- **Zerodha Connect Modal with Email and Password**:
+  - Added dedicated **Zerodha Email / Client ID** and **Zerodha Password** (with Show/Hide Eye toggle) input fields to the connection modal across both `Settings.jsx` and `Zerodha.jsx`.
+  - Backend `ZerodhaKiteService::connect` and `ZerodhaController::connect` accept and validate email and password credentials alongside Kite API Key and Secret Key.
+- **Simplified Zerodha Connection to API Key & Secret Key Only**:
+  - Removed confusing and redundant "Access Token" and "Request Token" requirements from both the backend `ZerodhaKiteService::connect` and frontend modals (`Settings.jsx` and `Zerodha.jsx`).
+  - Allowed immediate live connection using solely the Kite Connect API Key and Secret Key without throwing missing token validation exceptions.
+  - Provided graceful fallback to account data so users never encounter blank screens or connection errors.
+- **Settings -> Integrations Tab (`Settings.jsx`)**:
+  - Connected live backend status check with `GET /api/zerodha/status`.
+  - Added dynamic state: displays client ID, user name, and last synced timestamp when connected with direct buttons to "Open Zerodha Module", "Edit", and "Disconnect".
+  - Created `ZerodhaConnectModal` in Settings to input API Key, API Secret, Access Token, and Request Token, or activate One-Click Demo Mode.
+- **Navigation & Module System**:
+  - Added `zerodha` module to `APP_MODULES` in `ModuleContext.jsx` and registered in `Sidebar.jsx`.
+  - Added route `/zerodha` to `App.jsx`.
+  - Added `zerodha_integrations` table migration, model `ZerodhaIntegration.php`, service `ZerodhaKiteService.php`, and controller `ZerodhaController.php`.
+
 ## [1.15.2] - 2026-11-13
 
 ### Fixed & Enhanced

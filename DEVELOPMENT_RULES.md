@@ -134,3 +134,19 @@ TradeJournal uses Graphify (`graphifyy`) for codebase structure discovery, AST r
 - **Synchronization**:
   - Run `export PATH="$HOME/.local/bin:$PATH" && graphify update .` to re-extract AST nodes whenever code changes occur.
   - Exclusions are maintained in `.graphifyignore` (`vendor/`, `node_modules/`, `build/`, `dist/`, `.env`).
+
+---
+
+## 9. Broker Integrations & Read-Only Standards
+
+1. **Strictly Read-Only Guarantee**:
+   - Broker integrations must NEVER provide or invoke order execution, cancellation, or modification endpoints (`POST /orders`, `PUT /orders`, `DELETE /orders`).
+   - Only implement read endpoints (Margins, Orders, Positions, Holdings, Profile).
+2. **Read-Only Trade Journal Ingestion**:
+   - Importing orders from a broker must purely copy historical execution data into internal journal tables (`trades`, `trade_orders`).
+   - Never send any write operations or confirmations back to the broker.
+3. **Sandbox / Simulation Provisioning**:
+   - Provide a realistic demo mode for testing and evaluation without requiring live paid broker subscriptions.
+4. **Zero Dummy Data on Live Connections**:
+   - Live connected broker integrations must never display simulated mock orders or fake balances.
+   - If a broker session expires or requires daily 2FA authorization, the system must clearly indicate `Pending Daily Login` and provide a 1-click authorization link and token exchange rather than falling back to dummy mock data.

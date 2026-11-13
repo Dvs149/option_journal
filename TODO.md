@@ -16,6 +16,16 @@ This document tracks prioritized future improvements, architectural tasks, and p
   - Bound top KPI cards (Total Trades, Net P&L, Gross Profit, Gross Loss, Total Charges, Win Rate) in `AllTrades.jsx` to pre-paginated query aggregate summary in `TradeController::index`, ensuring instant updates whenever an order is edited, deleted, or partially exited, and across all active filter combinations.
 - [x] **Trading Calendar Daily Trades Table Parity with All Trades**:
   - Upgraded daily trades list in `TradingCalendar.jsx` to 15-column format matching `AllTrades.jsx` with expandable order executions breakdown, Expiry/Gross P&L/Charges/Strategy columns, straddle leg prices, newest-first ordering, and inline partial exit/order edit modals.
+- [x] **Zerodha Kite Connect Read-Only Module & Settings Integration**:
+  - Added dedicated `/zerodha` module with 4 summary metric cards (Available Margin, Used Margin, Positions MTM P&L, Holdings Value) and 5 tabbed sections (Executed Orders, Positions, Holdings, Funds & Margins, Profile & Security).
+  - Strictly enforced read-only architecture: zero order creation, modification, or cancellation APIs.
+  - Added Zerodha Email / Client ID and Password fields (with show/hide eye toggle) alongside Kite API Key & Secret Key in connection modals.
+  - Eliminated dummy mock data for live connected accounts: prompts for daily 2FA session login (`needs_auth`) with 1-Click Kite Login button (`https://kite.zerodha.com/connect/login?v=3&api_key=...`) and automated callback exchange.
+  - Implemented interactive order review & selection modal (`ZerodhaOrderImportModal.jsx`) allowing selective order imports, Smart Match pairing into closed trades, Both (straddle) leg consolidation, inline quantity/price/type edits, and turnover tracking matching the screenshot import experience.
+  - Implemented Zerodha Virtual Contract Note modal (`ZerodhaContractNoteModal.jsx`) and API (`GET /api/zerodha/contract-note`) with statutory charges breakdown (SEBI, Exchange, Stamp duty, STT, GST), brokerage, total charges, and per-order itemized breakdown matching official Kite contract note.
+  - Added visual Open vs Closed position distinction in Positions tab with Kite-matched bold blue quantity, muted closed rows, All/Open/Closed filters, and index summary headers.
+  - Added instant Demo / Sandbox simulation mode for testing without a paid Kite subscription.
+  - Integrated live credentials configuration, connection status, and navigation in `Settings -> Integrations`.
 - [ ] **Automated Tests for Calculation Engine**:
   - Add PHPUnit / Pest tests in `backend/tests/Feature/TradingCalculationTest.php` testing STT, exchange fees, GST, SEBI turnover fees, and stamp duty edge cases against known Indian broker contract notes.
 - [ ] **Bulk Import Parser Validation Suite**:

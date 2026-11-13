@@ -82,6 +82,13 @@ The system addresses the core needs of active option traders:
    - Dropdown options manager (activate/deactivate or add custom indices, strategies, order types).
    - Dynamic lot sizes per index.
    - Multi-theme engine (Zerodha Kite platform theme, Midnight Dark, Light, and System preference) persisted in LocalStorage.
+9. **Zerodha Kite Connect Integration**:
+   - Dedicated `/zerodha` module providing strictly read-only visibility into available/utilized funds, real-time net/day positions, executed orders, and equity holdings.
+   - Zero order placement/execution capability for 100% account and fund safety.
+   - Live authentication with 1-Click Kite Login (`https://kite.zerodha.com/connect/login?v=3&api_key=...`) and automated callback exchange; zero dummy data on live accounts.
+   - Built-in interactive order review modal (`ZerodhaOrderImportModal.jsx`) with checkbox selection, Smart Match auto-pairing into closed trades, Both (straddle) leg consolidation, and turnover tracking matching screenshot import.
+   - Instant sandbox/demo simulation mode for testing without a paid Kite subscription.
+   - Settings -> Integrations tab for credentials management and live connection status.
 
 ---
 

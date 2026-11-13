@@ -457,3 +457,24 @@ Graphify provides AST-based structural knowledge graphing of the codebase (`grap
    - Never refactor or touch files outside the scope of the user's request.
 7. **Preserve Existing Application Functionality**:
    - Never break existing features, routes, or API contracts when adding or modifying code.
+
+---
+
+## 19. BROKER INTEGRATIONS SECURITY & READ-ONLY ENFORCEMENT
+
+Broker integrations (Zerodha Kite Connect, etc.) are strictly read-only analytical and journaling tools.
+
+### Mandatory Rules for Broker Modules
+1. **Strictly Read-Only Operations**:
+   - Never implement or call APIs that create, modify, trigger, or cancel orders at the broker.
+   - Only implement read endpoints (Margins/Funds, Executed Orders, Positions, Holdings, User Profile).
+2. **Read-Only Journal Import**:
+   - Order imports from the broker into TradeJournal must only create internal journal and trade history records (`trades`, `trade_orders`) for historical analysis.
+   - Never dispatch any order execution requests back to the broker.
+3. **Graceful Unconnected State**:
+   - When broker credentials are not configured or connected, modules must render informative fallback screens with direct guidance to configure settings.
+4. **Realistic Demo / Sandbox Support**:
+   - Always support a simulation/demo mode for zero-cost sandbox testing and offline evaluation.
+5. **Zero Dummy Data on Live Connections**:
+   - Live connected broker integrations must never display simulated mock orders or fake balances.
+   - If a broker session expires or requires daily 2FA authorization, the system must clearly indicate `Session Login Required` and provide a 1-click authorization link and token exchange rather than falling back to dummy mock data.

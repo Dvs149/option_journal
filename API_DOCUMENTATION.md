@@ -408,3 +408,192 @@ Content-Type: application/json
 - **`GET /export/pdf`**: Compiles and streams formatted PDF trading report via DomPDF.
 - **`GET /export/backup`**: Full JSON snapshot of user account, trades, journals, settings.
 - **`POST /export/restore`**: Restores user database from uploaded JSON snapshot.
+
+---
+
+## 11. Zerodha Kite Connect Endpoints (STRICTLY READ-ONLY)
+
+> **Important**: This integration is strictly read-only. It contains zero order placement, modification, or cancellation APIs.
+
+### 11.1 Check Connection Status
+- **`GET /zerodha/status`**
+- **Description**: Returns current Zerodha integration status, broker client ID, and connection mode.
+- **Response**:
+  ```json
+  {
+    "is_connected": true,
+    "is_demo": false,
+    "integration": {
+      "id": 1,
+      "broker_user_id": "ZR113592",
+      "user_name": "Trader",
+      "email": "trader@example.com",
+      "broker": "ZERODHA",
+      "is_connected": true,
+      "is_demo": false,
+      "last_synced_at": "2026-11-13T15:59:32+05:30"
+    }
+  }
+  ```
+
+### 11.2 Connect Credentials (Email, Password, API Key & Secret Key)
+- **`POST /zerodha/connect`**
+- **Description**: Connects Zerodha using user's Email / Client ID, Password, and Kite API Key & Secret Key.
+- **Request Body**:
+  ```json
+  {
+    "email": "trader@example.com",
+    "password": "your_zerodha_password",
+    "api_key": "i7nm8563g7p5a2dw",
+    "api_secret": "your_api_secret_key"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "status": "success",
+    "message": "Successfully connected to Zerodha Kite Connect in READ-ONLY mode.",
+    "integration": { ... }
+  }
+  ```
+
+### 11.3 Connect Demo / Sandbox Mode
+- **`POST /zerodha/connect-demo`**
+- **Description**: Connects simulated Zerodha portfolio with realistic margins, executed orders, net/day positions, and holdings.
+- **Response**:
+  ```json
+  {
+    "status": "success",
+    "message": "Zerodha Kite Demo connection activated with realistic portfolio and orders.",
+    "integration": { ... }
+  }
+  ```
+
+### 11.4 Disconnect Integration
+- **`POST /zerodha/disconnect`**
+- **Description**: Clears active session tokens and disconnects Zerodha.
+
+### 11.5 Get Full Portfolio Details (Read-Only)
+- **`GET /zerodha/details`**
+- **Description**: Consolidated portfolio data containing available/used margins, executed orders, net & day positions with MTM, and stock holdings.
+- **Response Modes**:
+  - `status: "needs_auth"`: Returned when the user has saved credentials but the daily Kite Connect session token has expired or not yet been authorized. Contains `login_url` pointing to `https://kite.zerodha.com/connect/login?v=3&api_key=...`.
+  - `status: "success"`: Returned with live real data when active session token is present.
+  - `status: "demo"`: Returned when user has explicitly activated Demo Sandbox mode.
+
+### 11.6 Exchange Request Token for Live Session
+- **`POST /zerodha/exchange-token`**
+- **Description**: Exchanges the `request_token` generated during daily Zerodha login redirect (`https://kite.zerodha.com/connect/login?v=3&api_key=...`) for a live Kite `access_token` using sha256 checksum exchange.
+- **Request Body**:
+  ```json
+  {
+    "request_token": "8fa76b92xxxxxx"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "status": "success",
+    "message": "Zerodha Kite daily session authenticated successfully! Real portfolio & orders unlocked.",
+    "integration": { ... }
+  }
+  ```
+
+### 11.7 Save Direct Access Token
+- **`POST /zerodha/set-token`**
+- **Description**: Directly sets and validates an active Kite session `access_token` against Kite's `/user/profile` endpoint.
+- **Request Body**:
+  ```json
+  {
+    "access_token": "78kd92jd01xxxx"
+  }
+  ```
+
+### 11.8 Import Executed Orders to TradeJournal
+- **`POST /zerodha/import-orders`**
+- **Description**: Purely internal read-only import that copies executed broker orders into TradeJournal trades and trade orders for analysis. Does not dispatch any broker orders.
+- **Optional Request Body**: `{ "order_ids": ["26111300049281"] }`
+- **Response**:
+  ```json
+  {
+    "status": "success",
+    "imported_count": 5,
+    "message": "Successfully imported 5 executed Zerodha order(s) into your TradeJournal."
+  }
+  ```
+
+### 11.9 Interactive Zerodha Order Review & Import
+- **`POST /trades/import-screenshot-orders`**
+- **Description**: Powers the interactive `ZerodhaOrderImportModal` popup. Takes user-reviewed and selected orders from Zerodha, with configurable `import_mode` (`smart` vs `individual`) and `option_type` (`Both`, `auto`, `CE`, `PE`), automatically pairing CE and PE orders with matching strikes into a single Straddle trade entry.
+- **Request Body**:
+  ```json
+  {
+    "orders": [
+      {
+        "id": "26111300049281",
+        "time": "09:20:14",
+        "type": "BUY",
+        "index_name": "NIFTY",
+        "strike_price": "25200",
+        "option_type": "CE",
+        "expiry_date": "2026-11-26",
+        "quantity": 250,
+        "price": 216.80
+      }
+    ],
+    "trade_date": "2026-11-13",
+    "import_mode": "smart",
+    "option_type": "Both"
+  }
+  ```
+- **Response**:
+  ```json
+  {
+    "success": true,
+    "message": "Successfully imported 1 trades with 2 orders",
+    "imported_trades_count": 1,
+    "imported_orders_count": 2
+  }
+  ```
+
+### 11.10 Virtual Contract Note
+- **`GET /zerodha/contract-note`**
+- **Description**: Returns estimated statutory and broker charges for all executed orders today, matching Zerodha Kite's official Virtual Contract Note popup.
+- **Response**:
+  ```json
+  {
+    "status": "success",
+    "trade_date": "2026-11-13",
+    "executed_orders_count": 14,
+    "statutory_charges": {
+      "sebi_turnover_fee": 0.96,
+      "exchange_turnover_fee": 339.74,
+      "stamp_duty": 13.00,
+      "stt": 637.01,
+      "gst": 111.73
+    },
+    "zerodha_charges": {
+      "brokerage": 280.00
+    },
+    "total_charges": 1382.44,
+    "turnover": {
+      "buy": 422841.25,
+      "sell": 424674.25,
+      "total": 847515.50
+    },
+    "orders": [
+      {
+        "order_id": "2121087078346301440",
+        "order_timestamp": "2026-11-13 09:15:42",
+        "transaction_type": "SELL",
+        "tradingsymbol": "NIFTY26N1725300CE",
+        "exchange": "NFO",
+        "product": "NRML",
+        "quantity": 845,
+        "average_price": 115.26,
+        "turnover": 97392.75,
+        "charges": 215.89
+      }
+    ]
+  }
+  ```

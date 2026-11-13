@@ -22,6 +22,7 @@
 | **Brokerage & Tax Schedule Editor** | Production Ready | `pages/Settings.jsx` | `BrokerageSettingController.php`, `BrokerageSetting.php` |
 | **Dynamic Module Visibility** | Production Ready | `pages/Settings.jsx`, `components/layout/Sidebar.jsx` | `ModuleVisibilityController.php`, `UserModuleVisibility.php` |
 | **Zerodha Kite & Multi-Theme System** | Production Ready | `context/ThemeContext.jsx`, `pages/Settings.jsx`, `index.css` | Native Theme Tokens (`index.css`), LocalStorage |
+| **Zerodha Kite Connect Integration** | Production Ready | `pages/Zerodha.jsx`, `pages/Settings.jsx` | `ZerodhaController.php`, `ZerodhaKiteService.php` |
 
 ---
 
@@ -150,4 +151,54 @@
   - Identical newest-first sorting (`id desc`) matching All Trades.
   - Displays multi-day `Exit: <Date>` indicator when a trade was taken on an earlier date and squared off on the selected date.
 - Synchronized monthly KPIs, bar charts, cumulative equity trend line, and weekday performance distribution.
+
+### 2.11 Zerodha Kite Connect Read-Only Module (`Zerodha.jsx`, `Settings.jsx`)
+- **Strictly Read-Only Guarantee**: Zero capability to execute, place, alter, or cancel broker orders.
+- **Genuine Live Data with Zero Dummy Data**:
+  - Live connections strictly query the official Kite Connect API. No mock or dummy orders are ever displayed for live accounts.
+  - When the daily session expires, the UI clearly displays `Pending Daily Login` with an authorization card.
+- **1-Click Kite Login & Automated Callback**:
+  - Generates official Kite authorization URL: `https://kite.zerodha.com/connect/login?v=3&api_key=...`.
+  - Auto-detects `?request_token=...` upon redirect callback and performs instant sha256 session token exchange.
+  - Manual request token or callback URL paste fallback.
+  - Direct access token entry endpoint for power users.
+- **Funds & Margins Sync**:
+  - Live available cash balance and collateral margin (Equity & Commodity MCX).
+  - Used intraday debits, options premium blocked, SPAN, and exposure margins.
+- **Real-Time Positions Tracking (Open vs. Closed Parity)**:
+  - Sub-views for **Net Positions** and **Day Positions**.
+  - Visual parity with official Zerodha Kite:
+    - **Open positions**: Vibrant blue quantity (`+1040`), purple `NRML` badge, entry average price, and active `OPEN` status pill with pulsing blue dot.
+    - **Closed positions**: Subdued row styling (`opacity-65`), grey `0` quantity, `0.00` average price, and muted `CLOSED` status pill.
+  - Quick-filter pills for **All (6)**, **Open (2)**, and **Closed (4)** with real-time symbol search.
+  - Formatted symbols like `NIFTY 17th w NOV 25150 PE NFO` with weekly `w` badge and CE/PE color coding.
+  - Collapsible index header (`NIFTY 50 (6)`) and table footer with aggregate Open Quantity, Total P&L, and Day's P&L.
+- **Zerodha Virtual Contract Note Modal (`ZerodhaContractNoteModal.jsx`)**:
+  - Replicates Zerodha Kite's official **Virtual contract note** modal:
+    - Statutory charges: SEBI turnover fee, Exchange turnover fee (0.040087%), Stamp duty (0.003% buy), STT (0.15% sell), GST (18%).
+    - Brokerage: ₹20 per executed order.
+    - Grand total charges.
+    - Itemized breakdown of all orders today with execution timestamp, BUY/SELL badges, formatted symbol, quantity, average price, and exact estimated regulatory charges.
+  - Triggerable via `[Contract note]` in Executed Orders toolbar and `Contract Note` header button.
+  - Dedicated API endpoint `GET /api/zerodha/contract-note`.
+- **Executed Orders Log**:
+  - Live order executions itemizing order timestamp, trading symbol, exchange (NSE, NFO, BFO), order type (BUY/SELL), product (NRML, MIS, CNC), filled vs total quantity, and average execution price.
+  - Interactive status filtering (`ALL`, `COMPLETE`, `CANCELLED`, `REJECTED`) and symbol/order ID search.
+- **Holdings Valuation**:
+  - Stock portfolio display with ISIN, quantity, average cost, LTP, current valuation, cumulative P&L, and daily % change.
+- **One-Click Read-Only Journal Ingestion**:
+  - Imports completed broker orders directly into TradeJournal trades and trade orders with automatic index detection and charge estimation.
+  - Built-in duplicate detection prevents re-importing previously recorded orders.
+- **Interactive Order Selection & Review Modal (`ZerodhaOrderImportModal.jsx`)**:
+  - Replaces direct blind import with an interactive selection popup identical to the screenshot import modal (`ImageOrderImportModal.jsx`).
+  - Checkbox selection on every order with header Select All/Deselect All toggle.
+  - Controls for execution date, import mode (`Smart Match` vs `Individual Orders`), and option type (`Both`, `auto`, `CE`, `PE`).
+  - Auto-combines matching strike CE and PE orders into a unified Straddle (`Both`) journal entry.
+  - Inline order editor for execution time, BUY/SELL toggle, strike price, lots stepper, price, and turnover.
+  - Post-import summary with direct "View in All Trades" navigation and instant portfolio sync.
+- **Instant Simulation / Sandbox Mode**:
+  - Realistic demo account option for zero-cost exploration without a paid Kite subscription.
+- **Settings -> Integrations Hub**:
+  - Configuration card with **Zerodha Email / Client ID**, **Password** (with show/hide toggle), and **Kite API Key & Secret Key**.
+  - Connection status badge (`Connected (Live)`, `Pending Daily Login`, `Demo Mode`), client ID, user name, last synced time, and 1-Click Kite Login button.
 

@@ -74,4 +74,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(DropdownOption::class);
     }
+
+    public function zerodhaIntegration(): HasOne
+    {
+        return $this->hasOne(ZerodhaIntegration::class);
+    }
 }

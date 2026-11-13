@@ -26,7 +26,7 @@ export function ToastProvider({ children }) {
   }, [removeToast]);
 
   return (
-    <ToastContext.Provider value={{ showToast, addToast: showToast, removeToast }}>
+    <ToastContext.Provider value={{ showToast, addToast: showToast, triggerToast: showToast, removeToast }}>
       {children}
       
       {/* Floating Popup Toaster Container (Top Right) */}
@@ -97,6 +97,7 @@ export function useToast() {
     return {
       showToast: (msg) => console.log('Toast:', msg),
       addToast: (msg) => console.log('Toast:', msg),
+      triggerToast: (msg) => console.log('Toast:', msg),
       removeToast: () => {},
     };
   }

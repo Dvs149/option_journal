@@ -21,6 +21,7 @@ import {
   TrendingUp,
   SlidersHorizontal,
   Code2,
+  Flame,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -46,6 +47,7 @@ export default function Sidebar({ onCloseMobile }) {
     { name: 'Capital Management', path: '/capital-management', icon: Wallet },
     { name: 'Pine Script Manager', path: '/pine-scripts', icon: Code2 },
     { name: 'Dropdown Manager', path: '/dropdown-manager', icon: SlidersHorizontal },
+    { name: 'Zerodha', path: '/zerodha', icon: Flame },
     { name: 'Settings', path: '/settings', icon: Settings },
   ];
 

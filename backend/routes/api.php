@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\PineScriptController;
 use App\Http\Controllers\Api\RiskController;
 use App\Http\Controllers\Api\StrategyController;
 use App\Http\Controllers\Api\TradeController;
+use App\Http\Controllers\Api\ZerodhaController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -133,4 +134,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/export/pdf', [ExportController::class, 'pdf']);
     Route::get('/export/backup', [ExportController::class, 'backup']);
     Route::post('/export/restore', [ExportController::class, 'restore']);
+
+    // Zerodha Kite Connect Integration (STRICTLY READ-ONLY)
+    Route::prefix('zerodha')->group(function () {
+        Route::get('/status', [ZerodhaController::class, 'status']);
+        Route::post('/connect', [ZerodhaController::class, 'connect']);
+        Route::post('/connect-demo', [ZerodhaController::class, 'connectDemo']);
+        Route::post('/disconnect', [ZerodhaController::class, 'disconnect']);
+        Route::get('/details', [ZerodhaController::class, 'details']);
+        Route::get('/contract-note', [ZerodhaController::class, 'contractNote']);
+        Route::post('/exchange-token', [ZerodhaController::class, 'exchangeToken']);
+        Route::post('/set-token', [ZerodhaController::class, 'setToken']);
+        Route::post('/import-orders', [ZerodhaController::class, 'importOrders']);
+    });
 });

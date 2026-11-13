@@ -34,6 +34,12 @@ The user interface matches modern financial trading terminals (Zerodha Kite, Tra
   - Activate, deactivate, add custom options, or reset to system defaults.
 - **Trading Calendar & Heatmap**:
   - Interactive calendar displaying daily P&L color-coded by win/loss, realized P&L attribution on square-off dates, daily trade summaries, and official Indian Stock Market (NSE & BSE) trading holidays marked with badges, names, and closure notifications.
+- **Zerodha Kite Connect Module (Strictly Read-Only)**:
+  - Live portfolio overview displaying available/used margins, executed orders, net & day positions with MTM, and equity holdings.
+  - Zero order execution capability for complete fund safety.
+  - Live session authentication via 1-Click Kite Login (`https://kite.zerodha.com/connect/login?v=3&api_key=...`) and automated token exchange; no dummy data served on live accounts.
+  - One-click read-only import of broker executions to TradeJournal.
+  - Realistic Demo/Sandbox mode for zero-cost exploration without a paid Kite subscription.
 - **Equity Curve & Capital Management**:
   - Cumulative equity curve, high-water mark, peak-to-trough drawdown calculation, and capital deposit/withdrawal tracking.
 - **Risk Management**:

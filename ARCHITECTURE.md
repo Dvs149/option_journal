@@ -204,3 +204,52 @@ graph LR
    - `graphify explain`: Summarizes node attributes, inbound/outbound edges, and file origins.
 4. **Antigravity Rule Integration**:
    - Projects rules in `.agents/rules/graphify.md` require querying `graph.json` before answering architecture questions or planning major refactors.
+
+---
+
+## 6. Broker Integrations Architecture (Zerodha Kite Connect)
+
+TradeJournal integrates with Zerodha Kite Connect in a **Strictly Read-Only** architectural configuration:
+
+```mermaid
+graph LR
+    subgraph Frontend ["React SPA (/zerodha & /settings)"]
+        UI["Zerodha.jsx Page"]
+        MODAL["ZerodhaConnectModal"]
+        SETT["Settings.jsx (Integrations Tab)"]
+    end
+
+    subgraph Backend ["Laravel API Layer"]
+        CTRL["ZerodhaController"]
+        SVC["ZerodhaKiteService"]
+        MODEL["ZerodhaIntegration (Eloquent)"]
+    end
+
+    subgraph External ["External / Simulated"]
+        KITE["Zerodha Kite Connect API (v3)"]
+        DEMO["Sandbox Mock Engine"]
+    end
+
+    subgraph DB ["MySQL Database"]
+        ZTABLE[("zerodha_integrations")]
+        TTABLE[("trades & trade_orders")]
+    end
+
+    UI --> CTRL
+    MODAL --> CTRL
+    SETT --> CTRL
+    CTRL --> SVC
+    SVC --> MODEL
+    MODEL --> ZTABLE
+    SVC -.->|GET Read-Only| KITE
+    SVC -.->|Simulated Data| DEMO
+    SVC -->|Import Orders (Read-Only)| TTABLE
+```
+
+### Architectural Guarantees
+1. **Zero Order Execution Capability**: The `ZerodhaKiteService` contains no methods or endpoints for placing, modifying, or canceling orders.
+2. **Dual-Mode Operation**:
+   - **Live Mode**: Directly queries Kite v3 endpoints (`/user/margins`, `/orders`, `/portfolio/positions`, `/portfolio/holdings`) using official daily session access tokens.
+   - **Demo / Sandbox Mode**: Provides zero-subscription simulated data mirroring live Indian index options (NIFTY, SENSEX) and equity holdings only when explicitly activated.
+3. **No Dummy Data on Live Connections**: Live connected integrations never return fallback mock orders. If the daily session requires re-authentication, the system renders `needs_auth` with 1-Click Kite login (`https://kite.zerodha.com/connect/login?v=3&api_key=...`) and automated callback exchange.
+4. **One-Click Read-Only Journal Ingestion**: Ingests executed broker orders into internal `trades` and `trade_orders` models with automated brokerage and regulatory tax computation without broker write-backs.
