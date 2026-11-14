@@ -5832,7 +5832,7 @@
       "source_file": "frontend/src/context/ToastContext.jsx",
       "source_location": "L94",
       "id": "context_toastcontext_usetoast",
-      "community": 92,
+      "community": 15,
       "norm_label": "usetoast()"
     },
     {
@@ -6066,7 +6066,7 @@
       "source_file": "frontend/src/context/ModuleContext.jsx",
       "source_location": "L1",
       "id": "frontend_src_context_modulecontext_jsx",
-      "community": 18,
+      "community": 129,
       "norm_label": "modulecontext.jsx"
     },
     {
@@ -6075,7 +6075,7 @@
       "source_file": "frontend/src/context/ModuleContext.jsx",
       "source_location": "L18",
       "id": "context_modulecontext_app_modules",
-      "community": 18,
+      "community": 129,
       "norm_label": "app_modules"
     },
     {
@@ -6084,7 +6084,7 @@
       "source_file": "frontend/src/context/ModuleContext.jsx",
       "source_location": "L119",
       "id": "context_modulecontext_default_visibility",
-      "community": 18,
+      "community": 129,
       "norm_label": "default_visibility"
     },
     {
@@ -6093,7 +6093,7 @@
       "source_file": "frontend/src/context/ModuleContext.jsx",
       "source_location": "L124",
       "id": "context_modulecontext_modulecontext",
-      "community": 18,
+      "community": 129,
       "norm_label": "modulecontext"
     },
     {
@@ -6102,7 +6102,7 @@
       "source_file": "frontend/src/context/ModuleContext.jsx",
       "source_location": "L126",
       "id": "context_modulecontext_moduleprovider",
-      "community": 18,
+      "community": 129,
       "norm_label": "moduleprovider()"
     },
     {
@@ -6111,7 +6111,7 @@
       "source_file": "frontend/src/context/ModuleContext.jsx",
       "source_location": "L301",
       "id": "context_modulecontext_usemodules",
-      "community": 18,
+      "community": 129,
       "norm_label": "usemodules()"
     },
     {
@@ -6228,7 +6228,7 @@
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L1",
       "id": "frontend_src_utils_formatters_js",
-      "community": 15,
+      "community": 95,
       "norm_label": "formatters.js"
     },
     {
@@ -6255,7 +6255,7 @@
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L40",
       "id": "utils_formatters_formatpct",
-      "community": 15,
+      "community": 95,
       "norm_label": "formatpct()"
     },
     {
@@ -6282,7 +6282,7 @@
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L139",
       "id": "utils_formatters_formattime",
-      "community": 15,
+      "community": 95,
       "norm_label": "formattime()"
     },
     {
@@ -6291,7 +6291,7 @@
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L177",
       "id": "utils_formatters_formatdatetime",
-      "community": 15,
+      "community": 95,
       "norm_label": "formatdatetime()"
     },
     {
@@ -6417,7 +6417,7 @@
       "source_file": "frontend/src/components/trades/ZerodhaOrderImportModal.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_trades_zerodhaorderimportmodal_jsx",
-      "community": 92,
+      "community": 15,
       "norm_label": "zerodhaorderimportmodal.jsx"
     },
     {
@@ -6426,7 +6426,7 @@
       "source_file": "frontend/src/components/trades/ZerodhaOrderImportModal.jsx",
       "source_location": "L20",
       "id": "trades_zerodhaorderimportmodal_zerodhaorderimportmodal",
-      "community": 92,
+      "community": 15,
       "norm_label": "zerodhaorderimportmodal()"
     },
     {
@@ -6444,7 +6444,7 @@
       "source_file": "frontend/src/components/trades/PartialExitModal.jsx",
       "source_location": "L25",
       "id": "trades_partialexitmodal_partialexitmodal",
-      "community": 92,
+      "community": 15,
       "norm_label": "partialexitmodal()"
     },
     {
@@ -6462,7 +6462,7 @@
       "source_file": "frontend/src/components/trades/OptionChainModal.jsx",
       "source_location": "L23",
       "id": "trades_optionchainmodal_optionchainmodal",
-      "community": 129,
+      "community": 15,
       "norm_label": "optionchainmodal()"
     },
     {
@@ -6471,7 +6471,7 @@
       "source_file": "frontend/src/components/trades/ZerodhaContractNoteModal.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_trades_zerodhacontractnotemodal_jsx",
-      "community": 92,
+      "community": 15,
       "norm_label": "zerodhacontractnotemodal.jsx"
     },
     {
@@ -6480,7 +6480,7 @@
       "source_file": "frontend/src/components/trades/ZerodhaContractNoteModal.jsx",
       "source_location": "L13",
       "id": "trades_zerodhacontractnotemodal_formatkiteinstrument",
-      "community": 92,
+      "community": 15,
       "norm_label": "formatkiteinstrument()"
     },
     {
@@ -6489,7 +6489,7 @@
       "source_file": "frontend/src/components/trades/ZerodhaContractNoteModal.jsx",
       "source_location": "L71",
       "id": "trades_zerodhacontractnotemodal_zerodhacontractnotemodal",
-      "community": 92,
+      "community": 15,
       "norm_label": "zerodhacontractnotemodal()"
     },
     {
@@ -6543,7 +6543,7 @@
       "source_file": "frontend/src/components/trades/ExportModal.jsx",
       "source_location": "L93",
       "id": "trades_exportmodal_exportmodal",
-      "community": 92,
+      "community": 15,
       "norm_label": "exportmodal()"
     },
     {
@@ -6552,7 +6552,7 @@
       "source_file": "frontend/src/components/trades/ImageOrderImportModal.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_trades_imageorderimportmodal_jsx",
-      "community": 92,
+      "community": 95,
       "norm_label": "imageorderimportmodal.jsx"
     },
     {
@@ -6561,7 +6561,7 @@
       "source_file": "frontend/src/components/trades/ImageOrderImportModal.jsx",
       "source_location": "L28",
       "id": "trades_imageorderimportmodal_imageorderimportmodal",
-      "community": 92,
+      "community": 15,
       "norm_label": "imageorderimportmodal()"
     },
     {
@@ -6876,7 +6876,7 @@
       "source_file": "frontend/src/components/trades/EditOrderModal.jsx",
       "source_location": "L26",
       "id": "trades_editordermodal_editordermodal",
-      "community": 92,
+      "community": 15,
       "norm_label": "editordermodal()"
     },
     {
@@ -6885,7 +6885,7 @@
       "source_file": "frontend/src/components/layout/AppLayout.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_layout_applayout_jsx",
-      "community": 18,
+      "community": 15,
       "norm_label": "applayout.jsx"
     },
     {
@@ -6894,7 +6894,7 @@
       "source_file": "frontend/src/components/layout/AppLayout.jsx",
       "source_location": "L12",
       "id": "layout_applayout_applayout",
-      "community": 92,
+      "community": 15,
       "norm_label": "applayout()"
     },
     {
@@ -6903,7 +6903,7 @@
       "source_file": "frontend/src/components/layout/Sidebar.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_layout_sidebar_jsx",
-      "community": 18,
+      "community": 129,
       "norm_label": "sidebar.jsx"
     },
     {
@@ -6912,7 +6912,7 @@
       "source_file": "frontend/src/components/layout/Sidebar.jsx",
       "source_location": "L30",
       "id": "layout_sidebar_sidebar",
-      "community": 18,
+      "community": 129,
       "norm_label": "sidebar()"
     },
     {
@@ -6957,7 +6957,7 @@
       "source_file": "frontend/src/components/common/ErrorBoundary.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_common_errorboundary_jsx",
-      "community": 18,
+      "community": 15,
       "norm_label": "errorboundary.jsx"
     },
     {
@@ -7074,7 +7074,7 @@
       "source_file": "frontend/src/hooks/useEscapeKey.js",
       "source_location": "L128",
       "id": "hooks_useescapekey_useescapekey",
-      "community": 92,
+      "community": 15,
       "norm_label": "useescapekey()"
     },
     {
@@ -7083,7 +7083,7 @@
       "source_file": "frontend/src/api/client.js",
       "source_location": "L1",
       "id": "frontend_src_api_client_js",
-      "community": 18,
+      "community": 95,
       "norm_label": "client.js"
     },
     {
@@ -7092,7 +7092,7 @@
       "source_file": "frontend/src/api/client.js",
       "source_location": "L3",
       "id": "api_client_api",
-      "community": 18,
+      "community": 95,
       "norm_label": "api"
     },
     {
@@ -7101,7 +7101,7 @@
       "source_file": "frontend/src/api/client.js",
       "source_location": "L12",
       "id": "api_client_token",
-      "community": 18,
+      "community": 95,
       "norm_label": "token"
     },
     {
@@ -7110,7 +7110,7 @@
       "source_file": "frontend/src/pages/Zerodha.jsx",
       "source_location": "L1",
       "id": "frontend_src_pages_zerodha_jsx",
-      "community": 92,
+      "community": 15,
       "norm_label": "zerodha.jsx"
     },
     {
@@ -7119,7 +7119,7 @@
       "source_file": "frontend/src/pages/Zerodha.jsx",
       "source_location": "L38",
       "id": "pages_zerodha_formatkiteinstrument",
-      "community": 92,
+      "community": 15,
       "norm_label": "formatkiteinstrument()"
     },
     {
@@ -7128,7 +7128,7 @@
       "source_file": "frontend/src/pages/Zerodha.jsx",
       "source_location": "L96",
       "id": "pages_zerodha_zerodha",
-      "community": 92,
+      "community": 15,
       "norm_label": "zerodha()"
     },
     {
@@ -7173,7 +7173,7 @@
       "source_file": "frontend/src/pages/AllTrades.jsx",
       "source_location": "L1",
       "id": "frontend_src_pages_alltrades_jsx",
-      "community": 15,
+      "community": 95,
       "norm_label": "alltrades.jsx"
     },
     {
@@ -7182,7 +7182,7 @@
       "source_file": "frontend/src/pages/AllTrades.jsx",
       "source_location": "L66",
       "id": "pages_alltrades_getlegprices",
-      "community": 15,
+      "community": 95,
       "norm_label": "getlegprices()"
     },
     {
@@ -7452,7 +7452,7 @@
       "source_file": "frontend/src/pages/DropdownManager.jsx",
       "source_location": "L47",
       "id": "pages_dropdownmanager_dropdownmanager",
-      "community": 92,
+      "community": 129,
       "norm_label": "dropdownmanager()"
     },
     {
@@ -10807,7 +10807,7 @@
       "label": ".getContractNote()",
       "file_type": "code",
       "source_file": "backend/app/Services/ZerodhaKiteService.php",
-      "source_location": "L405",
+      "source_location": "L435",
       "id": "services_zerodhakiteservice_zerodhakiteservice_getcontractnote",
       "community": 74,
       "norm_label": ".getcontractnote()"
@@ -10816,7 +10816,7 @@
       "label": ".importOrdersToJournal()",
       "file_type": "code",
       "source_file": "backend/app/Services/ZerodhaKiteService.php",
-      "source_location": "L525",
+      "source_location": "L555",
       "id": "services_zerodhakiteservice_zerodhakiteservice_importorderstojournal",
       "community": 74,
       "norm_label": ".importorderstojournal()"
@@ -10825,7 +10825,7 @@
       "label": ".extractRequestToken()",
       "file_type": "code",
       "source_file": "backend/app/Services/ZerodhaKiteService.php",
-      "source_location": "L625",
+      "source_location": "L655",
       "id": "services_zerodhakiteservice_zerodhakiteservice_extractrequesttoken",
       "community": 74,
       "norm_label": ".extractrequesttoken()"
@@ -10834,7 +10834,7 @@
       "label": ".exchangeAndSaveToken()",
       "file_type": "code",
       "source_file": "backend/app/Services/ZerodhaKiteService.php",
-      "source_location": "L639",
+      "source_location": "L669",
       "id": "services_zerodhakiteservice_zerodhakiteservice_exchangeandsavetoken",
       "community": 74,
       "norm_label": ".exchangeandsavetoken()"
@@ -10843,7 +10843,7 @@
       "label": ".saveAccessTokenDirect()",
       "file_type": "code",
       "source_file": "backend/app/Services/ZerodhaKiteService.php",
-      "source_location": "L693",
+      "source_location": "L723",
       "id": "services_zerodhakiteservice_zerodhakiteservice_saveaccesstokendirect",
       "community": 74,
       "norm_label": ".saveaccesstokendirect()"
@@ -10852,7 +10852,7 @@
       "label": ".exchangeRequestToken()",
       "file_type": "code",
       "source_file": "backend/app/Services/ZerodhaKiteService.php",
-      "source_location": "L736",
+      "source_location": "L766",
       "id": "services_zerodhakiteservice_zerodhakiteservice_exchangerequesttoken",
       "community": 74,
       "norm_label": ".exchangerequesttoken()"
@@ -10861,7 +10861,7 @@
       "label": ".fetchProfileFromKite()",
       "file_type": "code",
       "source_file": "backend/app/Services/ZerodhaKiteService.php",
-      "source_location": "L757",
+      "source_location": "L787",
       "id": "services_zerodhakiteservice_zerodhakiteservice_fetchprofilefromkite",
       "community": 74,
       "norm_label": ".fetchprofilefromkite()"
@@ -10870,7 +10870,7 @@
       "label": ".filterExecutedOrders()",
       "file_type": "code",
       "source_file": "backend/app/Services/ZerodhaKiteService.php",
-      "source_location": "L776",
+      "source_location": "L806",
       "id": "services_zerodhakiteservice_zerodhakiteservice_filterexecutedorders",
       "community": 74,
       "norm_label": ".filterexecutedorders()"
@@ -10879,7 +10879,7 @@
       "label": ".calculateSummary()",
       "file_type": "code",
       "source_file": "backend/app/Services/ZerodhaKiteService.php",
-      "source_location": "L787",
+      "source_location": "L817",
       "id": "services_zerodhakiteservice_zerodhakiteservice_calculatesummary",
       "community": 74,
       "norm_label": ".calculatesummary()"
@@ -10888,7 +10888,7 @@
       "label": ".parseTradingSymbol()",
       "file_type": "code",
       "source_file": "backend/app/Services/ZerodhaKiteService.php",
-      "source_location": "L894",
+      "source_location": "L943",
       "id": "services_zerodhakiteservice_zerodhakiteservice_parsetradingsymbol",
       "community": 74,
       "norm_label": ".parsetradingsymbol()"
@@ -10897,7 +10897,7 @@
       "label": ".formatIntegrationResponse()",
       "file_type": "code",
       "source_file": "backend/app/Services/ZerodhaKiteService.php",
-      "source_location": "L936",
+      "source_location": "L985",
       "id": "services_zerodhakiteservice_zerodhakiteservice_formatintegrationresponse",
       "community": 74,
       "norm_label": ".formatintegrationresponse()"
@@ -10906,7 +10906,7 @@
       "label": ".getMockDetails()",
       "file_type": "code",
       "source_file": "backend/app/Services/ZerodhaKiteService.php",
-      "source_location": "L959",
+      "source_location": "L1008",
       "id": "services_zerodhakiteservice_zerodhakiteservice_getmockdetails",
       "community": 74,
       "norm_label": ".getmockdetails()"
@@ -12357,7 +12357,7 @@
       "source_file": "API_DOCUMENTATION.md",
       "source_location": "L237",
       "id": "option_journal_api_documentation_codeblock_12",
-      "community": 219,
+      "community": 209,
       "norm_label": "code:json ({)"
     },
     {
@@ -17486,7 +17486,7 @@
       "file_type": "document",
       "source_file": "API_DOCUMENTATION.md",
       "source_location": "L208",
-      "community": 218,
+      "community": 210,
       "norm_label": "6. risk management endpoints",
       "id": "option_journal_api_documentation_6_risk_management_endpoints"
     },
@@ -17495,7 +17495,7 @@
       "file_type": "document",
       "source_file": "API_DOCUMENTATION.md",
       "source_location": "L210",
-      "community": 218,
+      "community": 210,
       "norm_label": "6.1 get risk metrics & guardrails",
       "id": "option_journal_api_documentation_6_1_get_risk_metrics_guardrails"
     },
@@ -17504,7 +17504,7 @@
       "file_type": "document",
       "source_file": "API_DOCUMENTATION.md",
       "source_location": "L230",
-      "community": 218,
+      "community": 210,
       "norm_label": "6.2 update risk limits",
       "id": "option_journal_api_documentation_6_2_update_risk_limits"
     },
@@ -17513,7 +17513,7 @@
       "file_type": "document",
       "source_file": "API_DOCUMENTATION.md",
       "source_location": "L236",
-      "community": 219,
+      "community": 209,
       "norm_label": "7. trading journal endpoints",
       "id": "option_journal_api_documentation_7_trading_journal_endpoints"
     },
@@ -17522,7 +17522,7 @@
       "file_type": "document",
       "source_file": "API_DOCUMENTATION.md",
       "source_location": "L238",
-      "community": 219,
+      "community": 209,
       "norm_label": "7.1 list journal entries",
       "id": "option_journal_api_documentation_7_1_list_journal_entries"
     },
@@ -17531,7 +17531,7 @@
       "file_type": "document",
       "source_file": "API_DOCUMENTATION.md",
       "source_location": "L243",
-      "community": 219,
+      "community": 209,
       "norm_label": "7.2 update journal record",
       "id": "option_journal_api_documentation_7_2_update_journal_record"
     },
@@ -17684,7 +17684,7 @@
       "file_type": "code",
       "source_file": "frontend/src/api/client.js",
       "source_location": "L3",
-      "community": 18,
+      "community": 95,
       "norm_label": "getbaseurl()",
       "id": "api_client_getbaseurl"
     },
@@ -17693,7 +17693,7 @@
       "file_type": "code",
       "source_file": "OptionChainModal.jsx",
       "source_location": "L1",
-      "community": 129,
+      "community": 15,
       "norm_label": "optionchainmodal.jsx",
       "id": "optionchainmodal_jsx"
     },
@@ -84886,5 +84886,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "d9c6120995aef8643ceef08b3f2f705c8a5ffb5e"
+  "built_at_commit": "a47db1a0c2ea3648246909d73c302bee402b26f9"
 }

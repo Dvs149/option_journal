@@ -268,6 +268,7 @@ class ZerodhaKiteService
                 'all_orders' => [],
                 'positions' => ['net' => [], 'day' => []],
                 'holdings' => [],
+                'mf_holdings' => [],
                 'summary' => [
                     'available_margin' => 0,
                     'used_margin' => 0,
@@ -342,9 +343,36 @@ class ZerodhaKiteService
             $positionsRes = Http::withHeaders($headers)->timeout(6)->get("{$this->baseUrl}/portfolio/positions");
             $positions = $positionsRes->successful() ? ($positionsRes->json('data') ?? ['net' => [], 'day' => []]) : ['net' => [], 'day' => []];
 
-            // 4. Holdings
+            // 4. Holdings (Equity)
             $holdingsRes = Http::withHeaders($headers)->timeout(6)->get("{$this->baseUrl}/portfolio/holdings");
             $holdings = $holdingsRes->successful() ? ($holdingsRes->json('data') ?? []) : [];
+
+            // 5. Mutual Funds Holdings
+            $mfHoldings = [];
+            try {
+                $mfHoldingsRes = Http::withHeaders($headers)->timeout(6)->get("{$this->baseUrl}/mf/holdings");
+                if ($mfHoldingsRes->successful()) {
+                    $rawMf = $mfHoldingsRes->json('data') ?? [];
+                    $mfHoldings = array_map(function ($mf) {
+                        $qty = (float)($mf['quantity'] ?? 0);
+                        $avgPrice = (float)($mf['average_price'] ?? 0);
+                        $lastPrice = (float)($mf['last_price'] ?? 0);
+                        $invested = round($qty * $avgPrice, 2);
+                        $curValue = round($qty * $lastPrice, 2);
+                        $pnl = round($curValue - $invested, 2);
+                        $pnlPercentage = $invested > 0 ? round(($pnl / $invested) * 100, 2) : 0.0;
+
+                        return array_merge($mf, [
+                            'invested' => $invested,
+                            'current_value' => $curValue,
+                            'pnl' => $pnl,
+                            'pnl_percentage' => $pnlPercentage,
+                        ]);
+                    }, $rawMf);
+                }
+            } catch (Exception $mfEx) {
+                Log::info('Failed to fetch MF holdings: ' . $mfEx->getMessage());
+            }
 
             $integration->update(['last_synced_at' => Carbon::now()]);
 
@@ -359,7 +387,8 @@ class ZerodhaKiteService
                 'all_orders' => $orders,
                 'positions' => $positions,
                 'holdings' => $holdings,
-                'summary' => $this->calculateSummary($margins, $positions, $holdings, $orders, $user),
+                'mf_holdings' => $mfHoldings,
+                'summary' => $this->calculateSummary($margins, $positions, $holdings, $orders, $user, $mfHoldings),
             ];
         } catch (Exception $e) {
             Log::info('Kite API live fetch exception: ' . $e->getMessage());
@@ -377,6 +406,7 @@ class ZerodhaKiteService
                 'all_orders' => [],
                 'positions' => ['net' => [], 'day' => []],
                 'holdings' => [],
+                'mf_holdings' => [],
                 'summary' => [
                     'available_margin' => 0,
                     'used_margin' => 0,
@@ -784,7 +814,7 @@ class ZerodhaKiteService
     /**
      * Compute aggregated portfolio summary with net P&L after contract note charges
      */
-    protected function calculateSummary(array $margins, array $positions, array $holdings, array $orders, ?User $user = null): array
+    protected function calculateSummary(array $margins, array $positions, array $holdings, array $orders, ?User $user = null, array $mfHoldings = []): array
     {
         $equityMargin = $margins['equity'] ?? [];
         $availableCash = (float)($equityMargin['available']['cash'] ?? $equityMargin['net'] ?? 0);
@@ -821,6 +851,19 @@ class ZerodhaKiteService
             $holdingsValue += ($qty * $ltp);
             $holdingsPnl += $pnl;
         }
+
+        // Mutual Funds holdings aggregation
+        $mfInvested = 0;
+        $mfValue = 0;
+        $mfPnl = 0;
+        foreach ($mfHoldings as $mf) {
+            $mfInvested += (float)($mf['invested'] ?? 0);
+            $mfValue += (float)($mf['current_value'] ?? 0);
+            $mfPnl += (float)($mf['pnl'] ?? 0);
+        }
+
+        $totalHoldingsValue = $holdingsValue + $mfValue;
+        $totalHoldingsPnl = $holdingsPnl + $mfPnl;
 
         $executedOrders = $this->filterExecutedOrders($orders);
         $executedOrdersCount = count($executedOrders);
@@ -880,7 +923,13 @@ class ZerodhaKiteService
             'realized_pnl' => $realizedPnl,
             'holdings_value' => $holdingsValue,
             'holdings_pnl' => $holdingsPnl,
-            'total_portfolio_pnl' => $positionsMtm + $holdingsPnl,
+            'mf_holdings_count' => count($mfHoldings),
+            'mf_invested' => round($mfInvested, 2),
+            'mf_value' => round($mfValue, 2),
+            'mf_pnl' => round($mfPnl, 2),
+            'total_holdings_value' => round($totalHoldingsValue, 2),
+            'total_holdings_pnl' => round($totalHoldingsPnl, 2),
+            'total_portfolio_pnl' => $positionsMtm + $totalHoldingsPnl,
             'executed_orders_count' => $executedOrdersCount,
             'total_orders_count' => count($orders),
             'contract_note_charges' => $contractChargesTotal,
@@ -1359,6 +1408,23 @@ class ZerodhaKiteService
             ],
         ];
 
+        $mfHoldings = [
+            [
+                'tradingsymbol' => 'INF966L01648',
+                'fund' => 'Quant Large & Mid Cap Fund',
+                'folio' => '51057320952',
+                'quantity' => 1113.241,
+                'average_price' => 125.75,
+                'last_price' => 141.93,
+                'invested' => 139992.73,
+                'current_value' => 158002.41,
+                'pnl' => 18009.68,
+                'pnl_percentage' => 12.86,
+                'day_change' => -664.60,
+                'day_change_percentage' => -0.42,
+            ],
+        ];
+
         return [
             'status' => 'success',
             'is_demo' => (bool)$integration->is_demo,
@@ -1369,7 +1435,8 @@ class ZerodhaKiteService
             'all_orders' => $orders,
             'positions' => $positions,
             'holdings' => $holdings,
-            'summary' => $this->calculateSummary($margins, $positions, $holdings, $orders, $integration->user),
+            'mf_holdings' => $mfHoldings,
+            'summary' => $this->calculateSummary($margins, $positions, $holdings, $orders, $integration->user, $mfHoldings),
         ];
     }
 }

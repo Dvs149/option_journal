@@ -1,16 +1,16 @@
 # Graph Report - option_journal  (2026-11-14)
 
 ## Corpus Check
-- 232 files · ~267,526 words
+- 232 files · ~268,907 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2850 nodes · 4968 edges · 231 communities (166 shown, 65 thin omitted)
+- 2850 nodes · 4968 edges · 229 communities (164 shown, 65 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 205 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `d9c61209`
+- Built from commit: `a47db1a0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -190,8 +190,6 @@
 - [[_COMMUNITY_Community 215|Community 215]]
 - [[_COMMUNITY_Community 216|Community 216]]
 - [[_COMMUNITY_Community 217|Community 217]]
-- [[_COMMUNITY_Community 218|Community 218]]
-- [[_COMMUNITY_Community 219|Community 219]]
 - [[_COMMUNITY_Community 220|Community 220]]
 - [[_COMMUNITY_Community 221|Community 221]]
 - [[_COMMUNITY_Community 222|Community 222]]
@@ -226,7 +224,7 @@
 - `3.3 Controller Inventory` --references--> `CapitalController`  [INFERRED]
   ARCHITECTURE.md → backend/app/Http/Controllers/Api/CapitalController.php
 
-## Communities (231 total, 65 thin omitted)
+## Communities (229 total, 65 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.07
@@ -281,8 +279,8 @@ Cohesion: 0.15
 Nodes (12): 1. Feature Status Matrix, 2.1 Dashboard & Visual Analytics, 2.2 Trade Logging Engine (`AddTrade.jsx`), 2.3 All Trades Explorer (`AllTrades.jsx`), 2.4 Trading Journal & Reflection Drawer (`TradingJournal.jsx`), 2.5 Pine Script Manager (`PineScriptManager.jsx`), 2.6 Dynamic Dropdown Manager (`DropdownManager.jsx`), 2.7 Document Generation & Export (`ExportModal.jsx`) (+4 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.16
-Nodes (10): ToastContext, ToastProvider(), activeEscapeHandlers, handled, DAILY_COLUMNS, MONTHLY_COLUMNS, TRADE_COLUMNS, YEARLY_COLUMNS (+2 more)
+Cohesion: 0.12
+Nodes (19): ToastContext, ToastProvider(), useToast(), activeEscapeHandlers, handled, useEscapeKey(), AppLayout(), Zerodha() (+11 more)
 
 ### Community 16 - "Community 16"
 Cohesion: 0.12
@@ -293,8 +291,8 @@ Cohesion: 0.10
 Nodes (10): AuthController, BrokerageSettingController, CapitalController, DropdownOptionController, LotSizeController, ModuleVisibilityController, PineScriptController, PineScript (+2 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.11
-Nodes (24): api, token, AuthContext, AuthProvider(), useAuth(), BrokerageContext, BrokerageProvider(), DEFAULT_BROKERAGE_RATES (+16 more)
+Cohesion: 0.16
+Nodes (16): AuthContext, AuthProvider(), useAuth(), BrokerageContext, BrokerageProvider(), DEFAULT_BROKERAGE_RATES, DropdownContext, DropdownProvider() (+8 more)
 
 ### Community 19 - "Community 19"
 Cohesion: 0.18
@@ -513,16 +511,16 @@ Cohesion: 0.11
 Nodes (5): AuthResponse, GenericMessageResponse, LoginRequest, User, UserProfileResponse
 
 ### Community 92 - "Community 92"
-Cohesion: 0.16
-Nodes (22): useBrokerage(), useDropdown(), useLotSizes(), useToast(), useEscapeKey(), AppLayout(), AddTrade(), DropdownManager() (+14 more)
+Cohesion: 0.32
+Nodes (11): useBrokerage(), useDropdown(), useLotSizes(), AddTrade(), Settings(), EditTradeModal(), DEFAULT_INDEX_CONFIG, getIndexAtmStrike() (+3 more)
 
 ### Community 93 - "Community 93"
 Cohesion: 0.09
 Nodes (21): Hashable, Identifiable, CalendarDayItem, EquityPoint, StrategyPerformanceItem, CapitalGrowthPoint, CapitalTransaction, JournalTradeItem (+13 more)
 
 ### Community 95 - "Community 95"
-Cohesion: 0.15
-Nodes (21): useFilter(), AllTrades(), AnalyticsReports(), CapitalManagement(), EquityCurve(), RiskManagement(), STRATEGY_THEME, StrategyAnalysis() (+13 more)
+Cohesion: 0.13
+Nodes (25): api, token, useFilter(), AllTrades(), AnalyticsReports(), CapitalManagement(), EquityCurve(), RiskManagement() (+17 more)
 
 ### Community 96 - "Community 96"
 Cohesion: 0.17
@@ -577,8 +575,8 @@ Cohesion: 0.40
 Nodes (4): colors, info, author, version
 
 ### Community 129 - "Community 129"
-Cohesion: 0.18
-Nodes (12): CompactMetricCard(), MainStatsCard(), MODULE_METADATA, ThemeContext, ThemeProvider(), useTheme(), MobileNav(), Dashboard() (+4 more)
+Cohesion: 0.14
+Nodes (18): CompactMetricCard(), MainStatsCard(), MODULE_METADATA, APP_MODULES, DEFAULT_VISIBILITY, ModuleContext, ModuleProvider(), useModules() (+10 more)
 
 ### Community 130 - "Community 130"
 Cohesion: 0.08
@@ -661,12 +659,12 @@ Cohesion: 0.22
 Nodes (3): {closure#1}(), {closure#1}(), Illuminate\Support\Facades\Schema
 
 ### Community 209 - "Community 209"
-Cohesion: 0.18
-Nodes (10): 10. Document Generation & Backup Endpoints, 1. Authentication & Headers, 3.1 Get Dashboard Overview, 3. Dashboard Endpoints, 5. Trading Calendar & Heatmap Endpoints, 8. Pine Script Manager Endpoints, 9. Dropdown Manager Endpoints, API DOCUMENTATION — TradeJournal REST API (+2 more)
+Cohesion: 0.13
+Nodes (14): 10. Document Generation & Backup Endpoints, 1. Authentication & Headers, 3.1 Get Dashboard Overview, 3. Dashboard Endpoints, 5. Trading Calendar & Heatmap Endpoints, 7.1 List Journal Entries, 7.2 Update Journal Record, 7. Trading Journal Endpoints (+6 more)
 
 ### Community 210 - "Community 210"
-Cohesion: 0.18
-Nodes (13): 4.1 List Trades, 4.2 Create Trade, 4.3 Get Single Trade, 4.4 Update Trade, 4.5 Delete Trade, 4.6 All Filtered IDs & Cross-Page Totals, 4.6 Bulk Operations, 4.7 Order Execution Operations (Partial Exits & Scaling) (+5 more)
+Cohesion: 0.14
+Nodes (16): 4.1 List Trades, 4.2 Create Trade, 4.3 Get Single Trade, 4.4 Update Trade, 4.5 Delete Trade, 4.6 All Filtered IDs & Cross-Page Totals, 4.6 Bulk Operations, 4.7 Order Execution Operations (Partial Exits & Scaling) (+8 more)
 
 ### Community 214 - "Community 214"
 Cohesion: 0.14
@@ -683,14 +681,6 @@ Nodes (14): [1.3.0] - 2026-10-30, Added, Added, Added, Added, Added, Added, Adde
 ### Community 217 - "Community 217"
 Cohesion: 0.17
 Nodes (7): ObservableObject, AppAppearance, dark, light, system, PreferencesManager, AuthViewModel
-
-### Community 218 - "Community 218"
-Cohesion: 0.67
-Nodes (3): 6.1 Get Risk Metrics & Guardrails, 6.2 Update Risk Limits, 6. Risk Management Endpoints
-
-### Community 219 - "Community 219"
-Cohesion: 0.50
-Nodes (4): 7.1 List Journal Entries, 7.2 Update Journal Record, 7. Trading Journal Endpoints, code:json ({)
 
 ### Community 221 - "Community 221"
 Cohesion: 0.40

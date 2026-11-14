@@ -111,6 +111,7 @@ export default function Zerodha() {
   const [orderFilter, setOrderFilter] = useState('ALL'); // ALL, COMPLETE, CANCELLED, REJECTED
   const [searchQuery, setSearchQuery] = useState('');
   const [showConnectModal, setShowConnectModal] = useState(false);
+  const [holdingsCategory, setHoldingsCategory] = useState('ALL'); // ALL, EQUITY, MF
 
   // Form states for connect (Email, Password, API Key, Secret)
   const [email, setEmail] = useState('');
@@ -329,6 +330,7 @@ export default function Zerodha() {
   const allOrders = details?.all_orders || orders;
   const positions = details?.positions || { net: [], day: [] };
   const holdings = details?.holdings || [];
+  const mfHoldings = details?.mf_holdings || [];
 
   // Calculate Virtual Contract Note total charges for today's executed orders
   const contractNoteCharges = useMemo(() => {
@@ -409,6 +411,56 @@ export default function Zerodha() {
   const overallNetPnl = summary.overall_net_pnl != null
     ? Number(summary.overall_net_pnl)
     : Math.round((overallGrossPnl - contractNoteCharges) * 100) / 100;
+
+  // Mutual Funds holdings summary
+  const mfSummary = useMemo(() => {
+    let invested = 0;
+    let curValue = 0;
+    let pnl = 0;
+    mfHoldings.forEach((mf) => {
+      const q = Number(mf.quantity || 0);
+      const avg = Number(mf.average_price || 0);
+      const ltp = Number(mf.last_price || 0);
+      const inv = Number(mf.invested != null ? mf.invested : (q * avg));
+      const val = Number(mf.current_value != null ? mf.current_value : (q * ltp));
+      const p = Number(mf.pnl != null ? mf.pnl : (val - inv));
+      invested += inv;
+      curValue += val;
+      pnl += p;
+    });
+    const pnlPercentage = invested > 0 ? (pnl / invested) * 100 : 0;
+    return {
+      invested: Math.round(invested * 100) / 100,
+      curValue: Math.round(curValue * 100) / 100,
+      pnl: Math.round(pnl * 100) / 100,
+      pnlPercentage: Math.round(pnlPercentage * 100) / 100,
+    };
+  }, [mfHoldings]);
+
+  // Equity holdings summary
+  const equitySummary = useMemo(() => {
+    let invested = 0;
+    let curValue = 0;
+    let pnl = 0;
+    holdings.forEach((h) => {
+      const q = Number(h.quantity || 0);
+      const avg = Number(h.average_price || 0);
+      const ltp = Number(h.last_price || 0);
+      const inv = q * avg;
+      const val = q * ltp;
+      const p = Number(h.pnl != null ? h.pnl : (val - inv));
+      invested += inv;
+      curValue += val;
+      pnl += p;
+    });
+    const pnlPercentage = invested > 0 ? (pnl / invested) * 100 : 0;
+    return {
+      invested: Math.round(invested * 100) / 100,
+      curValue: Math.round(curValue * 100) / 100,
+      pnl: Math.round(pnl * 100) / 100,
+      pnlPercentage: Math.round(pnlPercentage * 100) / 100,
+    };
+  }, [holdings]);
 
   if (loading) {
     return (
@@ -954,27 +1006,32 @@ export default function Zerodha() {
               </div>
             </div>
 
-            {/* Card 4: Holdings Portfolio */}
+            {/* Card 4: Holdings Portfolio (Equity + Mutual Funds) */}
             <div className="bg-[#121b2d] border border-[#1e293b] rounded-2xl p-4 shadow-sm flex flex-col justify-between">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-                <span>Holdings Value ({holdings.length} stocks)</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-white">Holdings Value</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-medium">
+                    {holdings.length} stock{holdings.length !== 1 ? 's' : ''}{mfHoldings.length > 0 ? ` • ${mfHoldings.length} MF` : ''}
+                  </span>
+                </div>
                 <div className="w-7 h-7 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center">
                   <ArrowUpRight className="w-3.5 h-3.5" />
                 </div>
               </div>
               <div>
                 <div className="text-xl font-black text-white font-mono">
-                  {formatCurrency(summary.holdings_value ?? 0)}
+                  {formatCurrency(summary.total_holdings_value ?? (equitySummary.curValue + mfSummary.curValue))}
                 </div>
                 <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
                   <span>Total P&L:</span>
                   <span
                     className={`font-semibold font-mono ${
-                      (summary.holdings_pnl ?? 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                      (summary.total_holdings_pnl ?? (equitySummary.pnl + mfSummary.pnl)) >= 0 ? 'text-emerald-400' : 'text-rose-400'
                     }`}
                   >
-                    {(summary.holdings_pnl ?? 0) >= 0 ? '+' : ''}
-                    {formatCurrency(summary.holdings_pnl ?? 0)}
+                    {(summary.total_holdings_pnl ?? (equitySummary.pnl + mfSummary.pnl)) >= 0 ? '+' : ''}
+                    {formatCurrency(summary.total_holdings_pnl ?? (equitySummary.pnl + mfSummary.pnl))}
                   </span>
                 </div>
               </div>
@@ -986,7 +1043,7 @@ export default function Zerodha() {
             {[
               { id: 'orders', label: `Executed Orders (${orders.length})` },
               { id: 'positions', label: `Positions (${positions.net?.length ?? 0})` },
-              { id: 'holdings', label: `Holdings (${holdings.length})` },
+              { id: 'holdings', label: `Holdings (${holdings.length + mfHoldings.length})` },
               { id: 'margins', label: 'Funds & Margins' },
               { id: 'profile', label: 'Profile & Security' },
             ].map((tab) => (
@@ -1532,67 +1589,297 @@ export default function Zerodha() {
             );
           })()}
 
-          {/* TAB 3: HOLDINGS */}
-          {activeTab === 'holdings' && (
-            <div className="space-y-4">
-              {holdings.length === 0 ? (
-                <div className="bg-[#121b2d] border border-[#1e293b] rounded-2xl p-12 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-2xl bg-white/5 mx-auto flex items-center justify-center text-slate-500">
-                    <ArrowUpRight className="w-6 h-6" />
+          {/* TAB 3: HOLDINGS (EQUITY & MUTUAL FUNDS) */}
+          {activeTab === 'holdings' && (() => {
+            const totalCount = holdings.length + mfHoldings.length;
+            const currentInvested =
+              holdingsCategory === 'MF'
+                ? mfSummary.invested
+                : holdingsCategory === 'EQUITY'
+                ? equitySummary.invested
+                : equitySummary.invested + mfSummary.invested;
+
+            const currentVal =
+              holdingsCategory === 'MF'
+                ? mfSummary.curValue
+                : holdingsCategory === 'EQUITY'
+                ? equitySummary.curValue
+                : equitySummary.curValue + mfSummary.curValue;
+
+            const currentPnl =
+              holdingsCategory === 'MF'
+                ? mfSummary.pnl
+                : holdingsCategory === 'EQUITY'
+                ? equitySummary.pnl
+                : equitySummary.pnl + mfSummary.pnl;
+
+            const currentPnlPct =
+              currentInvested > 0 ? (currentPnl / currentInvested) * 100 : 0;
+
+            return (
+              <div className="space-y-4">
+                {/* Holdings Category Filter Toolbar & Metrics (Kite Style) */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-[#121b2d] border border-[#1e293b] p-3 rounded-2xl">
+                  {/* Category Filter Pills */}
+                  <div className="flex items-center gap-1.5 bg-[#090f1d] p-1 rounded-xl border border-[#1e293b]">
+                    <button
+                      type="button"
+                      onClick={() => setHoldingsCategory('ALL')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        holdingsCategory === 'ALL'
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      All ({totalCount})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHoldingsCategory('EQUITY')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        holdingsCategory === 'EQUITY'
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Equity ({holdings.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setHoldingsCategory('MF')}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                        holdingsCategory === 'MF'
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      Mutual funds ({mfHoldings.length})
+                    </button>
                   </div>
-                  <h4 className="text-sm font-bold text-white">No demat stock holdings</h4>
-                  <p className="text-xs text-slate-400 max-w-md mx-auto">
-                    Long-term CNC equity shares in your Zerodha Demat account will be displayed here.
-                  </p>
-                </div>
-              ) : (
-                <div className="bg-[#121b2d] border border-[#1e293b] rounded-2xl overflow-hidden shadow-sm">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-[#0e1626] border-b border-[#1e293b] text-slate-400 uppercase text-[10px] tracking-wider font-semibold">
-                        <tr>
-                          <th className="py-3 px-4">Instrument</th>
-                          <th className="py-3 px-4">Qty</th>
-                          <th className="py-3 px-4">Avg Price</th>
-                          <th className="py-3 px-4">LTP</th>
-                          <th className="py-3 px-4">Cur. Value</th>
-                          <th className="py-3 px-4">P&L</th>
-                          <th className="py-3 px-4">Day Chg</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#1e293b] text-slate-200">
-                        {holdings.map((h, idx) => {
-                          const pnl = Number(h.pnl || 0);
-                          const isProfit = pnl >= 0;
-                          const curValue = (Number(h.quantity || 0) * Number(h.last_price || 0));
-                          return (
-                            <tr key={h.tradingsymbol || idx} className="hover:bg-[#162238]/40 transition-colors">
-                              <td className="py-3 px-4 font-semibold text-white">
-                                {h.tradingsymbol}
-                                <span className="text-[10px] text-slate-500 ml-1.5">{h.exchange}</span>
-                              </td>
-                              <td className="py-3 px-4 font-mono font-bold text-white">{h.quantity}</td>
-                              <td className="py-3 px-4 font-mono text-slate-300">₹{Number(h.average_price || 0).toFixed(2)}</td>
-                              <td className="py-3 px-4 font-mono font-semibold text-white">₹{Number(h.last_price || 0).toFixed(2)}</td>
-                              <td className="py-3 px-4 font-mono font-bold text-white">{formatCurrency(curValue)}</td>
-                              <td className="py-3 px-4 font-mono font-bold">
-                                <span className={isProfit ? 'text-emerald-400' : 'text-rose-400'}>
-                                  {isProfit ? '+' : ''}{formatCurrency(pnl)}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 font-mono text-[11px] text-slate-400">
-                                {Number(h.day_change_percentage || 0).toFixed(2)}%
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+
+                  {/* Summary Metric Badges */}
+                  <div className="flex items-center gap-4 text-xs font-mono flex-wrap">
+                    <div>
+                      <span className="text-[11px] text-slate-400 font-sans mr-1.5">Total investment:</span>
+                      <span className="font-bold text-white">{formatCurrency(currentInvested)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[11px] text-slate-400 font-sans mr-1.5">Current value:</span>
+                      <span className="font-bold text-white">{formatCurrency(currentVal)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[11px] text-slate-400 font-sans mr-1.5">Total P&L:</span>
+                      <span className={`font-bold ${currentPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {currentPnl >= 0 ? '+' : ''}{formatCurrency(currentPnl)}
+                        <span className="text-[11px] font-normal ml-1">
+                          ({currentPnlPct >= 0 ? '+' : ''}{currentPnlPct.toFixed(2)}%)
+                        </span>
+                      </span>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-          )}
+
+                {/* MUTUAL FUNDS SECTION */}
+                {(holdingsCategory === 'MF' || holdingsCategory === 'ALL') && (
+                  <div className="space-y-2">
+                    {holdingsCategory === 'ALL' && (
+                      <div className="flex items-center justify-between px-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-white tracking-wide">
+                            Mutual Funds Holdings
+                          </span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20 font-semibold">
+                            {mfHoldings.length} Funds
+                          </span>
+                        </div>
+                        <span className="text-xs font-mono font-bold text-emerald-400">
+                          +{formatCurrency(mfSummary.pnl)} ({mfSummary.pnlPercentage}%)
+                        </span>
+                      </div>
+                    )}
+
+                    {mfHoldings.length === 0 ? (
+                      <div className="bg-[#121b2d] border border-[#1e293b] rounded-2xl p-8 text-center text-xs text-slate-400">
+                        No mutual fund holdings found in this account.
+                      </div>
+                    ) : (
+                      <div className="bg-[#121b2d] border border-[#1e293b] rounded-2xl overflow-hidden shadow-sm">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs">
+                            <thead className="bg-[#0e1626] border-b border-[#1e293b] text-slate-400 uppercase text-[10px] tracking-wider font-semibold">
+                              <tr>
+                                <th className="py-3 px-4">Instrument / Scheme</th>
+                                <th className="py-3 px-4 text-right">Qty</th>
+                                <th className="py-3 px-4 text-right">Avg. Cost</th>
+                                <th className="py-3 px-4 text-right">LTP / NAV</th>
+                                <th className="py-3 px-4 text-right">Invested</th>
+                                <th className="py-3 px-4 text-right">Cur. Val</th>
+                                <th className="py-3 px-4 text-right">P&L</th>
+                                <th className="py-3 px-4 text-right">Net Chg.</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#1e293b]/70">
+                              {mfHoldings.map((mf, idx) => {
+                                const qty = Number(mf.quantity || 0);
+                                const avgPrice = Number(mf.average_price || 0);
+                                const lastPrice = Number(mf.last_price || 0);
+                                const invested = Number(mf.invested != null ? mf.invested : (qty * avgPrice));
+                                const curValue = Number(mf.current_value != null ? mf.current_value : (qty * lastPrice));
+                                const pnl = Number(mf.pnl != null ? mf.pnl : (curValue - invested));
+                                const pnlPercent = Number(mf.pnl_percentage != null ? mf.pnl_percentage : (invested > 0 ? (pnl / invested) * 100 : 0));
+                                const isProfit = pnl >= 0;
+                                const fundName = mf.fund || mf.tradingsymbol || 'Mutual Fund';
+
+                                return (
+                                  <tr key={mf.folio || mf.tradingsymbol || idx} className="hover:bg-[#162238]/40 transition-colors">
+                                    <td className="py-3 px-4">
+                                      <div className="flex flex-col">
+                                        <span className="font-semibold text-white text-xs">
+                                          {fundName}
+                                        </span>
+                                        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-500 font-mono">
+                                          {mf.folio && <span>Folio: {mf.folio}</span>}
+                                          {mf.tradingsymbol && <span>• {mf.tradingsymbol}</span>}
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td className="py-3 px-4 text-right font-mono font-medium text-white whitespace-nowrap">
+                                      {qty.toLocaleString('en-IN', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}
+                                    </td>
+                                    <td className="py-3 px-4 text-right font-mono text-slate-300 whitespace-nowrap">
+                                      ₹{avgPrice.toFixed(2)}
+                                    </td>
+                                    <td className="py-3 px-4 text-right font-mono font-semibold text-white whitespace-nowrap">
+                                      ₹{lastPrice.toFixed(2)}
+                                    </td>
+                                    <td className="py-3 px-4 text-right font-mono font-medium text-slate-200 whitespace-nowrap">
+                                      {formatCurrency(invested)}
+                                    </td>
+                                    <td className="py-3 px-4 text-right font-mono font-bold text-white whitespace-nowrap">
+                                      {formatCurrency(curValue)}
+                                    </td>
+                                    <td className="py-3 px-4 text-right font-mono font-bold whitespace-nowrap">
+                                      <span className={isProfit ? 'text-emerald-400' : 'text-rose-400'}>
+                                        {isProfit ? '+' : ''}{formatCurrency(pnl)}
+                                      </span>
+                                    </td>
+                                    <td className="py-3 px-4 text-right font-mono text-[11px] font-semibold whitespace-nowrap">
+                                      <span className={pnlPercent >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                                        {pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%
+                                      </span>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                            <tfoot className="bg-[#0a1120] border-t border-[#1e293b] font-bold text-xs">
+                              <tr>
+                                <td className="py-3 px-4 text-slate-400">Total ({mfHoldings.length} Funds)</td>
+                                <td colSpan={3} />
+                                <td className="py-3 px-4 text-right font-mono text-slate-300">{formatCurrency(mfSummary.invested)}</td>
+                                <td className="py-3 px-4 text-right font-mono text-white">{formatCurrency(mfSummary.curValue)}</td>
+                                <td className="py-3 px-4 text-right font-mono text-emerald-400">
+                                  {mfSummary.pnl >= 0 ? '+' : ''}{formatCurrency(mfSummary.pnl)}
+                                </td>
+                                <td className="py-3 px-4 text-right font-mono text-emerald-400 text-[11px]">
+                                  {mfSummary.pnlPercentage >= 0 ? '+' : ''}{mfSummary.pnlPercentage.toFixed(2)}%
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* EQUITY SECTION */}
+                {(holdingsCategory === 'EQUITY' || holdingsCategory === 'ALL') && (
+                  <div className="space-y-2">
+                    {holdingsCategory === 'ALL' && (
+                      <div className="flex items-center justify-between px-1 pt-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-white tracking-wide">
+                            Equity Demat Stocks
+                          </span>
+                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-semibold">
+                            {holdings.length} Stocks
+                          </span>
+                        </div>
+                        <span className={`text-xs font-mono font-bold ${equitySummary.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                          {equitySummary.pnl >= 0 ? '+' : ''}{formatCurrency(equitySummary.pnl)} ({equitySummary.pnlPercentage}%)
+                        </span>
+                      </div>
+                    )}
+
+                    {holdings.length === 0 ? (
+                      <div className="bg-[#121b2d] border border-[#1e293b] rounded-2xl p-8 text-center text-xs text-slate-400">
+                        No equity holdings found in this account.
+                      </div>
+                    ) : (
+                      <div className="bg-[#121b2d] border border-[#1e293b] rounded-2xl overflow-hidden shadow-sm">
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs">
+                            <thead className="bg-[#0e1626] border-b border-[#1e293b] text-slate-400 uppercase text-[10px] tracking-wider font-semibold">
+                              <tr>
+                                <th className="py-3 px-4">Instrument</th>
+                                <th className="py-3 px-4">Qty</th>
+                                <th className="py-3 px-4">Avg Price</th>
+                                <th className="py-3 px-4">LTP</th>
+                                <th className="py-3 px-4">Cur. Value</th>
+                                <th className="py-3 px-4">P&L</th>
+                                <th className="py-3 px-4">Day Chg</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#1e293b] text-slate-200">
+                              {holdings.map((h, idx) => {
+                                const pnl = Number(h.pnl || 0);
+                                const isProfit = pnl >= 0;
+                                const curValue = (Number(h.quantity || 0) * Number(h.last_price || 0));
+                                return (
+                                  <tr key={h.tradingsymbol || idx} className="hover:bg-[#162238]/40 transition-colors">
+                                    <td className="py-3 px-4 font-semibold text-white">
+                                      {h.tradingsymbol}
+                                      <span className="text-[10px] text-slate-500 ml-1.5">{h.exchange}</span>
+                                    </td>
+                                    <td className="py-3 px-4 font-mono font-bold text-white">{h.quantity}</td>
+                                    <td className="py-3 px-4 font-mono text-slate-300">₹{Number(h.average_price || 0).toFixed(2)}</td>
+                                    <td className="py-3 px-4 font-mono font-semibold text-white">₹{Number(h.last_price || 0).toFixed(2)}</td>
+                                    <td className="py-3 px-4 font-mono font-bold text-white">{formatCurrency(curValue)}</td>
+                                    <td className="py-3 px-4 font-mono font-bold">
+                                      <span className={isProfit ? 'text-emerald-400' : 'text-rose-400'}>
+                                        {isProfit ? '+' : ''}{formatCurrency(pnl)}
+                                      </span>
+                                    </td>
+                                    <td className="py-3 px-4 font-mono text-[11px] text-slate-400">
+                                      {Number(h.day_change_percentage || 0).toFixed(2)}%
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                            <tfoot className="bg-[#0a1120] border-t border-[#1e293b] font-bold text-xs">
+                              <tr>
+                                <td className="py-3 px-4 text-slate-400">Total ({holdings.length} Stocks)</td>
+                                <td colSpan={3} />
+                                <td className="py-3 px-4 font-mono font-bold text-white">{formatCurrency(equitySummary.curValue)}</td>
+                                <td className="py-3 px-4 font-mono font-bold">
+                                  <span className={equitySummary.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
+                                    {equitySummary.pnl >= 0 ? '+' : ''}{formatCurrency(equitySummary.pnl)}
+                                  </span>
+                                </td>
+                                <td />
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* TAB 4: FUNDS & MARGINS */}
           {activeTab === 'margins' && (
