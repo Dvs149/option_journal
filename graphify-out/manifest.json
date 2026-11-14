@@ -2039,8 +2039,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/Zerodha.jsx": {
-    "mtime": 1794580499.2692554,
-    "ast_hash": "a80554105d9b47f8b73b91c7641481fc",
+    "mtime": 1794615772.3191128,
+    "ast_hash": "0aeded02a3e8decb25356e57c649c2d2",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/database/migrations/2026_11_13_150508_create_zerodha_integrations_table.php": {
@@ -2059,8 +2059,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/app/Services/ZerodhaKiteService.php": {
-    "mtime": 1794580478.245945,
-    "ast_hash": "92ff1a521894f9d7557c0dad935ecf0c",
+    "mtime": 1794615703.8803172,
+    "ast_hash": "b618f4cee358ceae54b8bf2bc1be3e01",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/trades/ZerodhaOrderImportModal.jsx": {

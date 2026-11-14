@@ -1,7 +1,7 @@
-# Graph Report - option_journal  (2026-11-13)
+# Graph Report - option_journal  (2026-11-14)
 
 ## Corpus Check
-- 232 files · ~267,265 words
+- 232 files · ~267,526 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `32353f88`
+- Built from commit: `d9c61209`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -281,8 +281,8 @@ Cohesion: 0.15
 Nodes (12): 1. Feature Status Matrix, 2.1 Dashboard & Visual Analytics, 2.2 Trade Logging Engine (`AddTrade.jsx`), 2.3 All Trades Explorer (`AllTrades.jsx`), 2.4 Trading Journal & Reflection Drawer (`TradingJournal.jsx`), 2.5 Pine Script Manager (`PineScriptManager.jsx`), 2.6 Dynamic Dropdown Manager (`DropdownManager.jsx`), 2.7 Document Generation & Export (`ExportModal.jsx`) (+4 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.12
-Nodes (19): ToastContext, ToastProvider(), useToast(), activeEscapeHandlers, handled, useEscapeKey(), AppLayout(), Zerodha() (+11 more)
+Cohesion: 0.16
+Nodes (10): ToastContext, ToastProvider(), activeEscapeHandlers, handled, DAILY_COLUMNS, MONTHLY_COLUMNS, TRADE_COLUMNS, YEARLY_COLUMNS (+2 more)
 
 ### Community 16 - "Community 16"
 Cohesion: 0.12
@@ -293,8 +293,8 @@ Cohesion: 0.10
 Nodes (10): AuthController, BrokerageSettingController, CapitalController, DropdownOptionController, LotSizeController, ModuleVisibilityController, PineScriptController, PineScript (+2 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.16
-Nodes (16): AuthContext, AuthProvider(), useAuth(), BrokerageContext, BrokerageProvider(), DEFAULT_BROKERAGE_RATES, DropdownContext, DropdownProvider() (+8 more)
+Cohesion: 0.11
+Nodes (24): api, token, AuthContext, AuthProvider(), useAuth(), BrokerageContext, BrokerageProvider(), DEFAULT_BROKERAGE_RATES (+16 more)
 
 ### Community 19 - "Community 19"
 Cohesion: 0.18
@@ -513,16 +513,16 @@ Cohesion: 0.11
 Nodes (5): AuthResponse, GenericMessageResponse, LoginRequest, User, UserProfileResponse
 
 ### Community 92 - "Community 92"
-Cohesion: 0.32
-Nodes (11): useBrokerage(), useDropdown(), useLotSizes(), AddTrade(), Settings(), EditTradeModal(), DEFAULT_INDEX_CONFIG, getIndexAtmStrike() (+3 more)
+Cohesion: 0.16
+Nodes (22): useBrokerage(), useDropdown(), useLotSizes(), useToast(), useEscapeKey(), AppLayout(), AddTrade(), DropdownManager() (+14 more)
 
 ### Community 93 - "Community 93"
 Cohesion: 0.09
 Nodes (21): Hashable, Identifiable, CalendarDayItem, EquityPoint, StrategyPerformanceItem, CapitalGrowthPoint, CapitalTransaction, JournalTradeItem (+13 more)
 
 ### Community 95 - "Community 95"
-Cohesion: 0.13
-Nodes (25): api, token, useFilter(), AllTrades(), AnalyticsReports(), CapitalManagement(), EquityCurve(), RiskManagement() (+17 more)
+Cohesion: 0.15
+Nodes (21): useFilter(), AllTrades(), AnalyticsReports(), CapitalManagement(), EquityCurve(), RiskManagement(), STRATEGY_THEME, StrategyAnalysis() (+13 more)
 
 ### Community 96 - "Community 96"
 Cohesion: 0.17
@@ -577,8 +577,8 @@ Cohesion: 0.40
 Nodes (4): colors, info, author, version
 
 ### Community 129 - "Community 129"
-Cohesion: 0.14
-Nodes (18): CompactMetricCard(), MainStatsCard(), MODULE_METADATA, APP_MODULES, DEFAULT_VISIBILITY, ModuleContext, ModuleProvider(), useModules() (+10 more)
+Cohesion: 0.18
+Nodes (12): CompactMetricCard(), MainStatsCard(), MODULE_METADATA, ThemeContext, ThemeProvider(), useTheme(), MobileNav(), Dashboard() (+4 more)
 
 ### Community 130 - "Community 130"
 Cohesion: 0.08

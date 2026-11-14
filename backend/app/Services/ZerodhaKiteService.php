@@ -272,6 +272,12 @@ class ZerodhaKiteService
                     'available_margin' => 0,
                     'used_margin' => 0,
                     'positions_mtm' => 0,
+                    'closed_positions_pnl' => 0,
+                    'open_positions_pnl' => 0,
+                    'overall_gross_pnl' => 0,
+                    'overall_net_pnl' => 0,
+                    'contract_note_charges' => 0,
+                    'net_pnl' => 0,
                     'unrealized_pnl' => 0,
                     'realized_pnl' => 0,
                     'holdings_value' => 0,
@@ -375,6 +381,12 @@ class ZerodhaKiteService
                     'available_margin' => 0,
                     'used_margin' => 0,
                     'positions_mtm' => 0,
+                    'closed_positions_pnl' => 0,
+                    'open_positions_pnl' => 0,
+                    'overall_gross_pnl' => 0,
+                    'overall_net_pnl' => 0,
+                    'contract_note_charges' => 0,
+                    'net_pnl' => 0,
                     'unrealized_pnl' => 0,
                     'realized_pnl' => 0,
                     'holdings_value' => 0,
@@ -852,12 +864,18 @@ class ZerodhaKiteService
         // Net P&L (Today) includes only closed positions minus contract note charges
         $netPnl = round($closedPositionsPnl - $contractChargesTotal, 2);
 
+        // Overall Net P&L includes BOTH closed and open positions minus contract note charges
+        $overallGrossPnl = round($closedPositionsPnl + $openPositionsPnl, 2);
+        $overallNetPnl = round($overallGrossPnl - $contractChargesTotal, 2);
+
         return [
             'available_margin' => $availableCash,
             'used_margin' => $usedMargin,
             'positions_mtm' => $positionsMtm,
             'closed_positions_pnl' => round($closedPositionsPnl, 2),
             'open_positions_pnl' => round($openPositionsPnl, 2),
+            'overall_gross_pnl' => $overallGrossPnl,
+            'overall_net_pnl' => $overallNetPnl,
             'unrealized_pnl' => $unrealizedPnl,
             'realized_pnl' => $realizedPnl,
             'holdings_value' => $holdingsValue,

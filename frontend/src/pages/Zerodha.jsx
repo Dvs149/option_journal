@@ -396,6 +396,20 @@ export default function Zerodha() {
     ? Number(summary.net_pnl)
     : Math.round((closedGrossPnl - contractNoteCharges) * 100) / 100;
 
+  // Gross P&L from ALL positions (both closed and open Total P&L)
+  const overallGrossPnl = useMemo(() => {
+    if (summary.overall_gross_pnl != null) {
+      return Number(summary.overall_gross_pnl);
+    }
+    if (netPositionsList.length === 0) return 0;
+    return netPositionsList.reduce((acc, p) => acc + Number(p.pnl ?? 0), 0);
+  }, [netPositionsList, summary.overall_gross_pnl]);
+
+  // Overall Net P&L: Both closed and open Total P&L minus contract note charges
+  const overallNetPnl = summary.overall_net_pnl != null
+    ? Number(summary.overall_net_pnl)
+    : Math.round((overallGrossPnl - contractNoteCharges) * 100) / 100;
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-slate-400 space-y-4">
@@ -821,49 +835,11 @@ export default function Zerodha() {
         <>
           {/* 4 Top Summary Metric Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Card 1: Available Margin */}
-            <div className="bg-[#121b2d] border border-[#1e293b] rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-              <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-                <span>Available Margin</span>
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                  <Wallet className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <div>
-                <div className="text-xl font-black text-white font-mono">
-                  {formatCurrency(summary.available_margin ?? 0)}
-                </div>
-                <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-                  <span>Cash: {formatCurrency(margins?.equity?.available?.cash ?? 0)}</span>
-                  <span>Collateral: {formatCurrency(margins?.equity?.available?.collateral ?? 0)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 2: Used Margin */}
-            <div className="bg-[#121b2d] border border-[#1e293b] rounded-2xl p-4 shadow-sm flex flex-col justify-between">
-              <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-                <span>Used Margin (Debits)</span>
-                <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
-                  <Layers className="w-3.5 h-3.5" />
-                </div>
-              </div>
-              <div>
-                <div className="text-xl font-black text-white font-mono">
-                  {formatCurrency(summary.used_margin ?? 0)}
-                </div>
-                <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-                  <span>Option Prem: {formatCurrency(margins?.equity?.utilised?.option_premium ?? 0)}</span>
-                  <span>SPAN: {formatCurrency(margins?.equity?.utilised?.span ?? 0)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 3: Net P&L (Today) - Closed positions gross P&L minus contract note charges */}
+            {/* Card 1: Closed Position Net P&L (Gross Total P&L of closed positions minus charges) */}
             <div className="bg-[#121b2d] border border-[#1e293b] rounded-2xl p-4 shadow-sm flex flex-col justify-between">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-white">Net P&L</span>
+                  <span className="font-semibold text-white">Closed Net P&L</span>
                   <span className="text-[10px] px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 font-medium">
                     Today
                   </span>
@@ -905,6 +881,75 @@ export default function Zerodha() {
                       -{formatCurrency(contractNoteCharges)}
                     </span>
                   </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Overall Net P&L (Total P&L of both closed and open positions minus charges) */}
+            <div className="bg-[#121b2d] border border-[#1e293b] rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-white">Overall Net P&L</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 font-medium">
+                    Open + Closed
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-white/5 text-slate-400">
+                    All ({netPositionsList.length})
+                  </span>
+                </div>
+                <div
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center ${
+                    overallNetPnl >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'
+                  }`}
+                >
+                  {overallNetPnl >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                </div>
+              </div>
+              <div>
+                <div
+                  className={`text-xl font-black font-mono ${
+                    overallNetPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'
+                  }`}
+                >
+                  {overallNetPnl >= 0 ? '+' : ''}
+                  {formatCurrency(overallNetPnl)}
+                </div>
+                <div className="text-[11px] text-slate-400 mt-1 flex items-center justify-between font-mono">
+                  <span>
+                    Gross: <span className={overallGrossPnl >= 0 ? 'text-emerald-400 font-semibold' : 'text-rose-400 font-semibold'}>
+                      {overallGrossPnl >= 0 ? '+' : ''}{formatCurrency(overallGrossPnl)}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowContractNoteModal(true)}
+                    className="text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-1 group"
+                    title="View Virtual Contract Note breakdown"
+                  >
+                    <span>Charges:</span>
+                    <span className="text-orange-400 font-semibold group-hover:underline">
+                      -{formatCurrency(contractNoteCharges)}
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Used Margin */}
+            <div className="bg-[#121b2d] border border-[#1e293b] rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+              <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
+                <span>Used Margin (Debits)</span>
+                <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                  <Layers className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <div>
+                <div className="text-xl font-black text-white font-mono">
+                  {formatCurrency(summary.used_margin ?? 0)}
+                </div>
+                <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
+                  <span>Option Prem: {formatCurrency(margins?.equity?.utilised?.option_premium ?? 0)}</span>
+                  <span>SPAN: {formatCurrency(margins?.equity?.utilised?.span ?? 0)}</span>
                 </div>
               </div>
             </div>
