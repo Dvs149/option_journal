@@ -761,9 +761,23 @@ class TradingAnalyticsService
             ['date' => '2026-11-10', 'day' => 10, 'month' => 11, 'year' => 2026, 'weekday' => 'Tuesday', 'name' => 'Diwali-Balipratipada'],
             ['date' => '2026-11-24', 'day' => 24, 'month' => 11, 'year' => 2026, 'weekday' => 'Tuesday', 'name' => 'Prakash Gurpurb Sri Guru Nanak Dev'],
             ['date' => '2026-12-25', 'day' => 25, 'month' => 12, 'year' => 2026, 'weekday' => 'Friday', 'name' => 'Christmas'],
+            ['date' => '2027-01-26', 'day' => 26, 'month' => 1, 'year' => 2027, 'weekday' => 'Tuesday', 'name' => 'Republic Day'],
+            ['date' => '2027-03-06', 'day' => 6, 'month' => 3, 'year' => 2027, 'weekday' => 'Saturday', 'name' => 'Maha Shivratri'],
+            ['date' => '2027-03-10', 'day' => 10, 'month' => 3, 'year' => 2027, 'weekday' => 'Wednesday', 'name' => 'Id-ul-Fitr (Tentative)'],
+            ['date' => '2027-03-22', 'day' => 22, 'month' => 3, 'year' => 2027, 'weekday' => 'Monday', 'name' => 'Holi'],
+            ['date' => '2027-03-26', 'day' => 26, 'month' => 3, 'year' => 2027, 'weekday' => 'Friday', 'name' => 'Good Friday'],
+            ['date' => '2027-04-14', 'day' => 14, 'month' => 4, 'year' => 2027, 'weekday' => 'Wednesday', 'name' => 'Dr. Baba Saheb Ambedkar Jayanti'],
+            ['date' => '2027-04-15', 'day' => 15, 'month' => 4, 'year' => 2027, 'weekday' => 'Thursday', 'name' => 'Shri Ram Navami'],
+            ['date' => '2027-05-01', 'day' => 1, 'month' => 5, 'year' => 2027, 'weekday' => 'Saturday', 'name' => 'Maharashtra Day'],
+            ['date' => '2027-08-15', 'day' => 15, 'month' => 8, 'year' => 2027, 'weekday' => 'Sunday', 'name' => 'Independence Day'],
+            ['date' => '2027-10-02', 'day' => 2, 'month' => 10, 'year' => 2027, 'weekday' => 'Saturday', 'name' => 'Mahatma Gandhi Jayanti'],
+            ['date' => '2027-10-09', 'day' => 9, 'month' => 10, 'year' => 2027, 'weekday' => 'Saturday', 'name' => 'Dussehra (Tentative)'],
+            ['date' => '2027-10-29', 'day' => 29, 'month' => 10, 'year' => 2027, 'weekday' => 'Friday', 'name' => 'Diwali (Tentative)'],
+            ['date' => '2027-12-25', 'day' => 25, 'month' => 12, 'year' => 2027, 'weekday' => 'Saturday', 'name' => 'Christmas'],
+
         ];
 
-        if ($year === 2026) {
+        if ($year === 2026 || $year === 2027) {
             $holidays = $all2026;
         } else {
             $holidays = [
