@@ -218,13 +218,17 @@ class ZerodhaKiteService
     public function getStatus(User $user): array
     {
         $integration = ZerodhaIntegration::where('user_id', $user->id)->first();
+        $apiKey = $integration?->api_key ?: config('services.zerodha.api_key', '44x8vhyiv5gyizqt');
+        $loginUrl = "https://kite.zerodha.com/connect/login?v=3&api_key={$apiKey}";
 
         if (!$integration || !$integration->is_connected) {
             return [
                 'is_connected' => false,
                 'is_authenticated' => false,
+                'login_url' => $loginUrl,
+                'api_key' => $apiKey,
                 'message' => 'Zerodha Kite Connect is not connected.',
-                'integration' => null,
+                'integration' => $integration ? $this->formatIntegrationResponse($integration) : null,
             ];
         }
 
@@ -234,7 +238,8 @@ class ZerodhaKiteService
             'is_connected' => true,
             'is_demo' => (bool)$integration->is_demo,
             'is_authenticated' => $isAuthenticated,
-            'login_url' => "https://kite.zerodha.com/connect/login?v=3&api_key={$integration->api_key}",
+            'login_url' => $loginUrl,
+            'api_key' => $apiKey,
             'integration' => $this->formatIntegrationResponse($integration),
         ];
     }
@@ -668,33 +673,35 @@ class ZerodhaKiteService
      */
     public function exchangeAndSaveToken(User $user, string $requestToken): array
     {
-        $integration = ZerodhaIntegration::where('user_id', $user->id)->first();
-        if (!$integration) {
-            throw new Exception('Zerodha credentials not found. Please add your Kite API credentials in Settings first.');
-        }
+        $integration = ZerodhaIntegration::firstOrNew(['user_id' => $user->id]);
+
+        $apiKey = $integration->api_key ?: config('services.zerodha.api_key', '44x8vhyiv5gyizqt');
+        $apiSecret = $integration->api_secret ?: config('services.zerodha.api_secret', 'prue1z5p6u1t04f72mzz26jijhv7y0y9');
 
         $cleanedToken = $this->extractRequestToken($requestToken);
         if (empty($cleanedToken)) {
             throw new Exception('Request token cannot be empty.');
         }
 
-        if (empty($integration->api_key) || empty($integration->api_secret)) {
+        if (empty($apiKey) || empty($apiSecret)) {
             throw new Exception('API Key and Secret Key are required to exchange request token.');
         }
 
-        $session = $this->exchangeRequestToken($integration->api_key, $integration->api_secret, $cleanedToken);
+        $session = $this->exchangeRequestToken($apiKey, $apiSecret, $cleanedToken);
 
         $accessToken = $session['access_token'] ?? '';
         if (empty($accessToken)) {
             throw new Exception('No access_token returned by Zerodha Kite.');
         }
 
-        $brokerUserId = $session['user_id'] ?? $integration->broker_user_id;
-        $userName = $session['user_name'] ?? $integration->user_name;
-        $email = $session['email'] ?? $integration->email;
+        $brokerUserId = $session['user_id'] ?? $integration->broker_user_id ?? 'ZERODHA';
+        $userName = $session['user_name'] ?? $integration->user_name ?? $user->name ?? 'Trader';
+        $email = $session['email'] ?? $integration->email ?? $user->email;
         $avatarUrl = $session['avatar_url'] ?? $integration->avatar_url;
 
-        $integration->update([
+        $integration->fill([
+            'api_key' => $apiKey,
+            'api_secret' => $apiSecret,
             'access_token' => $accessToken,
             'request_token' => $cleanedToken,
             'public_token' => $session['public_token'] ?? null,
@@ -702,13 +709,17 @@ class ZerodhaKiteService
             'user_name' => $userName,
             'user_shortname' => $session['user_shortname'] ?? explode(' ', $userName)[0],
             'email' => $email,
+            'user_type' => 'individual',
+            'broker' => 'ZERODHA',
             'avatar_url' => $avatarUrl,
             'is_connected' => true,
             'is_demo' => false,
+            'connected_at' => $integration->connected_at ?: Carbon::now(),
             'token_generated_at' => Carbon::now(),
             'token_expires_at' => Carbon::tomorrow()->setTime(6, 0, 0),
             'last_synced_at' => Carbon::now(),
         ]);
+        $integration->save();
 
         return [
             'status' => 'success',

@@ -34,6 +34,16 @@ import { useToast } from '../context/ToastContext';
 import ZerodhaOrderImportModal from '../components/trades/ZerodhaOrderImportModal';
 import ZerodhaContractNoteModal from '../components/trades/ZerodhaContractNoteModal';
 
+// Authentic Zerodha Kite Origami Logo SVG (matches Kite brand icon)
+function KiteIcon({ className = "w-4 h-4 shrink-0" }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="none">
+      <path d="M2.5 12L21.5 2.5L14 12L2.5 12Z" fill="#F6461A" />
+      <path d="M2.5 12L14 12L21.5 21.5L2.5 12Z" fill="#D83915" />
+    </svg>
+  );
+}
+
 // Helper to format raw exchange tradingsymbols into authentic Zerodha Kite display
 function formatKiteInstrument(sym, exchange = 'NFO') {
   if (!sym) return { display: '', isOption: false, exchange };
@@ -221,19 +231,28 @@ export default function Zerodha() {
     }
   };
 
-  // Initial load + Auto-detect request_token from URL callback
+  // Initial load + listen for background authentication events from AppLayout
   useEffect(() => {
     fetchZerodhaData();
 
-    // Check if user just returned from Zerodha login redirect
-    const urlParams = new URLSearchParams(window.location.search);
-    const tokenParam = urlParams.get('request_token');
-    if (tokenParam) {
-      handleExchangeToken(tokenParam);
-      // Clean query parameter from URL without page reload
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
+    const handleAuthEvent = () => {
+      fetchZerodhaData(true);
+    };
+    window.addEventListener('zerodha-authenticated', handleAuthEvent);
+
+    return () => {
+      window.removeEventListener('zerodha-authenticated', handleAuthEvent);
+    };
   }, [fetchZerodhaData]);
+
+  // Inform local redirect server of active origin (so callback returns to divyeshs-macbook-pro.local or localhost seamlessly)
+  const recordOriginAndLogin = () => {
+    if (typeof window !== 'undefined' && window.location.origin) {
+      fetch(`http://localhost:5173/__set_origin?origin=${encodeURIComponent(window.location.origin)}`, {
+        mode: 'no-cors',
+      }).catch(() => {});
+    }
+  };
 
   // Connect via Form with Email & Password + API Key & Secret
   const handleConnect = async (e) => {
@@ -514,14 +533,14 @@ export default function Zerodha() {
               </div>
 
               <div className="flex flex-wrap items-center gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowConnectModal(true)}
-                  className="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-semibold text-xs shadow-lg shadow-orange-600/25 transition-all flex items-center gap-2"
+                <a
+                  href={statusData?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${apiKey || '44x8vhyiv5gyizqt'}`}
+                  onClick={recordOriginAndLogin}
+                  className="px-5 py-2.5 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-white font-semibold text-xs border border-[#2b3a56] hover:border-orange-500/50 shadow-lg shadow-orange-500/10 transition-all flex items-center gap-2 cursor-pointer"
                 >
-                  <Flame className="w-4 h-4" />
-                  Connect Zerodha Kite
-                </button>
+                  <KiteIcon className="w-4 h-4" />
+                  <span>Login with Zerodha</span>
+                </a>
 
                 <button
                   type="button"
@@ -535,11 +554,11 @@ export default function Zerodha() {
 
                 <button
                   type="button"
-                  onClick={() => navigate('/settings?tab=Integrations')}
+                  onClick={() => setShowConnectModal(true)}
                   className="px-4 py-2.5 rounded-xl bg-transparent hover:bg-white/5 text-slate-400 hover:text-white font-medium text-xs transition-all flex items-center gap-1.5"
                 >
-                  <SettingsIcon className="w-4 h-4" />
-                  Configure in Settings
+                  <Key className="w-4 h-4" />
+                  Custom Keys
                 </button>
               </div>
             </div>
@@ -553,15 +572,23 @@ export default function Zerodha() {
                 <span className="text-sm font-bold text-white">Not Connected</span>
               </div>
               <p className="text-[11px] text-slate-500">
-                Enter your Zerodha credentials & Kite API Key to link your live account with zero risk.
+                1-Click dynamic login: Click below to authenticate via Zerodha Kite OAuth without entering secret tokens.
               </p>
+              <a
+                href={statusData?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${apiKey || '44x8vhyiv5gyizqt'}`}
+                onClick={recordOriginAndLogin}
+                className="w-full py-2.5 px-3 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-white text-xs font-semibold border border-[#2b3a56] hover:border-orange-500/50 transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <KiteIcon className="w-4 h-4" />
+                <span>Login with Zerodha</span>
+              </a>
               <a
                 href="https://kite.trade/docs/connect/v3/"
                 target="_blank"
                 rel="noreferrer"
                 className="text-[11px] text-orange-400 hover:underline flex items-center gap-1 pt-1"
               >
-                Kite Connect API Documentation
+                <span>Kite Connect API Documentation</span>
                 <ExternalLink className="w-3 h-3" />
               </a>
             </div>
@@ -646,6 +673,17 @@ export default function Zerodha() {
             <span>{refreshing ? 'Syncing...' : 'Refresh'}</span>
           </button>
 
+          {isNeedsAuth && (
+            <a
+              href={statusData?.login_url || details?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${apiKey || '44x8vhyiv5gyizqt'}`}
+              onClick={recordOriginAndLogin}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-white text-xs font-semibold border border-[#2b3a56] hover:border-orange-500/50 shadow-md transition-all cursor-pointer"
+            >
+              <KiteIcon className="w-3.5 h-3.5" />
+              <span>Login with Zerodha</span>
+            </a>
+          )}
+
           {!isNeedsAuth && (
             <>
               <button
@@ -724,46 +762,64 @@ export default function Zerodha() {
                 </div>
               </div>
 
-              {/* 2-Step Login Process */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                {/* Step 1: 1-Click Kite Login */}
-                <div className="bg-[#121b2d] border border-orange-500/30 rounded-2xl p-5 flex flex-col justify-between space-y-4 shadow-lg">
-                  <div className="space-y-2">
-                    <span className="px-2.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 text-[10px] font-bold uppercase tracking-wider inline-block">
-                      Step 1 (Recommended)
+              {/* 1-Click Dynamic Login Action Card */}
+              <div className="bg-[#121b2d] border border-orange-500/30 rounded-2xl p-6 shadow-xl space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+                  <div className="space-y-1.5">
+                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold uppercase tracking-wider inline-block">
+                      1-Click Dynamic Login
                     </span>
-                    <h3 className="text-sm font-bold text-white">Log in with Zerodha Kite</h3>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      Click below to log in securely through Zerodha's official login portal with your Client ID, Password, and TOTP.
+                    <h3 className="text-base font-bold text-white">Authorize Today's Kite Session</h3>
+                    <p className="text-xs text-slate-400 max-w-xl leading-relaxed">
+                      Click below to log in securely with Zerodha Kite. Upon logging in, Zerodha automatically returns you here and TradeJournal immediately unlocks your real-time orders, positions, and contract notes.
                     </p>
                   </div>
 
                   <a
-                    href={details?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${apiKey || 'i7nm8563g7p5a2dw'}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold text-xs shadow-lg shadow-orange-600/30 flex items-center justify-center gap-2 transition-all"
+                    href={statusData?.login_url || details?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${apiKey || '44x8vhyiv5gyizqt'}`}
+                    onClick={recordOriginAndLogin}
+                    className="inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-white font-bold text-xs border border-[#2b3a56] hover:border-orange-500/50 shadow-lg shadow-orange-500/10 transition-all cursor-pointer shrink-0"
                   >
-                    <Flame className="w-4 h-4 text-white" />
-                    <span>🔑 1-Click Login with Zerodha Kite</span>
+                    <KiteIcon className="w-4 h-4" />
+                    <span>Login with Zerodha</span>
                     <ExternalLink className="w-3.5 h-3.5 opacity-80" />
                   </a>
                 </div>
+              </div>
 
-                {/* Step 2: Paste Request Token / Callback URL */}
-                <div className="bg-[#121b2d] border border-[#1e293b] rounded-2xl p-5 flex flex-col justify-between space-y-4">
-                  <div className="space-y-2">
-                    <span className="px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-400 text-[10px] font-bold uppercase tracking-wider inline-block">
-                      Step 2
-                    </span>
-                    <h3 className="text-sm font-bold text-white">Authenticate Request Token</h3>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
-                      After login, Zerodha redirects you. If not redirected to this tab, copy and paste the redirected URL or <code>request_token</code> below:
+              {/* Advanced Access Token Toggle */}
+              <div className="pt-2 border-t border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setShowDirectToken(!showDirectToken)}
+                  className="text-slate-500 hover:text-slate-300 flex items-center gap-1.5 transition-colors text-[11px]"
+                >
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>{showDirectToken ? 'Hide manual token options' : 'Advanced: Paste request token or access token manually'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleConnectDemo}
+                  disabled={connecting}
+                  className="text-amber-400 hover:underline flex items-center gap-1.5 text-xs font-medium"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Want to test simulation instead? Switch to Demo Mode</span>
+                </button>
+              </div>
+
+              {/* Manual Token Forms (Only shown when expanded) */}
+              {showDirectToken && (
+                <div className="p-4 rounded-2xl bg-[#0b101c] border border-white/10 space-y-4 text-xs">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-white block">
+                      Manual Request Token or Callback URL
+                    </label>
+                    <p className="text-[11px] text-slate-400">
+                      If automatic redirection did not exchange the token, paste the URL or token here:
                     </p>
-                  </div>
-
-                  <form onSubmit={(e) => { e.preventDefault(); handleExchangeToken(); }} className="space-y-2">
-                    <div className="flex gap-2">
+                    <form onSubmit={(e) => { e.preventDefault(); handleExchangeToken(); }} className="flex gap-2">
                       <input
                         type="text"
                         placeholder="Paste request_token or full redirect URL"
@@ -779,62 +835,35 @@ export default function Zerodha() {
                         {isExchanging ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5" />}
                         <span>{isExchanging ? 'Syncing...' : 'Authenticate'}</span>
                       </button>
+                    </form>
+                  </div>
+
+                  <form onSubmit={handleSetAccessToken} className="space-y-1.5 pt-3 border-t border-white/5">
+                    <label className="text-xs font-semibold text-white block">
+                      Direct 32-Character Access Token
+                    </label>
+                    <p className="text-[11px] text-slate-400">
+                      If you already generated an active daily access token externally:
+                    </p>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="e.g. 78kd92jd01xxxx"
+                        value={accessTokenInput}
+                        onChange={(e) => setAccessTokenInput(e.target.value)}
+                        className="flex-1 px-3 py-2 rounded-xl bg-[#090f1d] border border-[#1e293b] text-white text-xs font-mono focus:outline-none focus:border-orange-500"
+                      />
+                      <button
+                        type="submit"
+                        disabled={isSettingToken || !accessTokenInput.trim()}
+                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs disabled:opacity-50 flex items-center gap-1.5"
+                      >
+                        {isSettingToken ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
+                        <span>Save & Activate</span>
+                      </button>
                     </div>
                   </form>
                 </div>
-              </div>
-
-              {/* Advanced Access Token Toggle */}
-              <div className="pt-2 border-t border-white/5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setShowDirectToken(!showDirectToken)}
-                  className="text-slate-400 hover:text-white flex items-center gap-1.5 transition-colors"
-                >
-                  <Lock className="w-3.5 h-3.5 text-slate-500" />
-                  <span>{showDirectToken ? 'Hide Direct Access Token Input' : 'Or enter an active Kite Access Token directly'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleConnectDemo}
-                  disabled={connecting}
-                  className="text-amber-400 hover:underline flex items-center gap-1.5 text-xs font-medium"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Want to test simulation instead? Switch to Demo Mode</span>
-                </button>
-              </div>
-
-              {/* Direct Access Token Form */}
-              {showDirectToken && (
-                <form onSubmit={handleSetAccessToken} className="p-4 rounded-2xl bg-[#0b101c] border border-white/10 space-y-3">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-white block">
-                      Direct Kite Access Token
-                    </label>
-                    <p className="text-[11px] text-slate-400">
-                      If you already have a 32-character active daily session access token generated from Postman or Kite CLI:
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="e.g. 78kd92jd01xxxx"
-                      value={accessTokenInput}
-                      onChange={(e) => setAccessTokenInput(e.target.value)}
-                      className="flex-1 px-3 py-2 rounded-xl bg-[#090f1d] border border-[#1e293b] text-white text-xs font-mono focus:outline-none focus:border-orange-500"
-                    />
-                    <button
-                      type="submit"
-                      disabled={isSettingToken || !accessTokenInput.trim()}
-                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs disabled:opacity-50 flex items-center gap-1.5"
-                    >
-                      {isSettingToken ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                      <span>Save & Activate</span>
-                    </button>
-                  </div>
-                </form>
               )}
             </div>
           </div>
@@ -2059,6 +2088,32 @@ export default function Zerodha() {
             >
               ✕
             </button>
+          </div>
+
+          {/* 1-Click Dynamic Login */}
+          <div className="p-4 rounded-2xl bg-[#162033]/80 border border-[#2b3a56] space-y-2.5">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-bold text-white">Recommended: 1-Click Direct Login</span>
+            </div>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Authenticate directly via Zerodha Kite OAuth without entering secret tokens or credentials manually.
+            </p>
+            <a
+              href={statusData?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${apiKey || '44x8vhyiv5gyizqt'}`}
+              onClick={recordOriginAndLogin}
+              className="inline-flex items-center justify-center gap-2.5 px-5 py-2.5 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-white text-xs font-bold border border-[#2b3a56] hover:border-orange-500/50 shadow-md transition-all cursor-pointer w-full"
+            >
+              <KiteIcon className="w-4 h-4" />
+              <span>Login with Zerodha</span>
+            </a>
+          </div>
+
+          <div className="relative flex items-center justify-center my-1">
+            <div className="border-t border-[#1e293b] w-full" />
+            <span className="bg-[#121b2d] px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider absolute">
+              Or Custom API Credentials (Advanced)
+            </span>
           </div>
 
           <form onSubmit={handleConnect} className="space-y-3.5 text-xs">

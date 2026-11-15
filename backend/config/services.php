@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'zerodha' => [
+        'api_key' => env('ZERODHA_API_KEY'),
+        'api_secret' => env('ZERODHA_API_SECRET'),
+    ],
+
 ];

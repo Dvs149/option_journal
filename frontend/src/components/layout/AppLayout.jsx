@@ -13,6 +13,7 @@ export default function AppLayout() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const exchangingTokenRef = React.useRef(false);
 
   // Close mobile sidebar on Escape
   useEscapeKey(() => setMobileSidebarOpen(false), mobileSidebarOpen);
@@ -25,25 +26,43 @@ export default function AppLayout() {
     updateCustomDates,
   } = useFilter();
 
+  // Dynamically informs local redirect service of the active browser origin (e.g. http://divyeshs-macbook-pro.local:3000)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.origin) {
+      fetch(`http://localhost:5173/__set_origin?origin=${encodeURIComponent(window.location.origin)}`, {
+        mode: 'no-cors',
+      }).catch(() => {});
+    }
+  }, []);
+
   // Global Zerodha Kite Login Redirect Handler
-  // Detects ?request_token=... on any landing route (e.g. http://localhost:5173/?request_token=...)
+  // Dynamically intercepts ?type=login&status=success&request_token=... on ANY landing route
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('request_token');
-    if (token) {
-      showToast('Authenticating Zerodha Kite daily session...', 'info');
+    const status = urlParams.get('status');
+
+    if (token && !exchangingTokenRef.current && status !== 'cancelled') {
+      exchangingTokenRef.current = true;
+
+      // Immediately clean the URL parameters so duplicate runs/refreshes don't fail with a spent token
+      const cleanPath = window.location.pathname === '/' ? '/zerodha' : window.location.pathname;
+      window.history.replaceState({}, document.title, cleanPath);
+
+      showToast('Authenticating Zerodha Kite session...', 'info');
+
       api.post('/zerodha/exchange-token', { request_token: token })
-        .then((res) => {
-          showToast('🎉 Zerodha Kite session authenticated! Loading your live portfolio...', 'success');
-          // Clean the query parameter from URL
-          window.history.replaceState({}, document.title, window.location.pathname);
-          // Navigate to /zerodha so user immediately sees live portfolio
-          navigate('/zerodha');
+        .then(() => {
+          showToast('🎉 Logged in with Zerodha! Loading your live portfolio...', 'success');
+          window.dispatchEvent(new CustomEvent('zerodha-authenticated'));
+          navigate('/zerodha', { replace: true });
         })
         .catch((err) => {
           console.error('Kite token exchange error', err);
           showToast(err.response?.data?.message || 'Failed to exchange Zerodha request token', 'error');
-          window.history.replaceState({}, document.title, window.location.pathname);
+        })
+        .finally(() => {
+          exchangingTokenRef.current = false;
         });
     }
   }, [navigate, showToast]);

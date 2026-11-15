@@ -1719,7 +1719,7 @@ export default function Settings() {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+                    <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto flex-wrap">
                       {zerodhaStatus?.is_connected ? (
                         <>
                           <button
@@ -1730,13 +1730,30 @@ export default function Settings() {
                             <span>Open Zerodha</span>
                             <ChevronRight className="w-3.5 h-3.5" />
                           </button>
+                          {!zerodhaStatus?.is_authenticated && !zerodhaStatus?.is_demo && (
+                            <a
+                              href={zerodhaStatus?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${zerodhaStatus?.api_key || '44x8vhyiv5gyizqt'}`}
+                              onClick={() => {
+                                if (typeof window !== 'undefined' && window.location.origin) {
+                                  fetch(`http://localhost:5173/__set_origin?origin=${encodeURIComponent(window.location.origin)}`, { mode: 'no-cors' }).catch(() => {});
+                                }
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-white text-[11px] font-semibold border border-[#2b3a56] hover:border-orange-500/50 transition-all cursor-pointer whitespace-nowrap shadow-sm"
+                            >
+                              <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" fill="none">
+                                <path d="M2.5 12L21.5 2.5L14 12L2.5 12Z" fill="#F6461A" />
+                                <path d="M2.5 12L14 12L21.5 21.5L2.5 12Z" fill="#D83915" />
+                              </svg>
+                              <span>Login with Zerodha</span>
+                            </a>
+                          )}
                           <button
                             type="button"
                             onClick={() => setShowZerodhaModal(true)}
                             className="px-2.5 py-1.5 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-slate-300 text-[11px] font-semibold transition-all border border-[#1e293b] whitespace-nowrap shrink-0 cursor-pointer"
                             title="Reconfigure Kite credentials"
                           >
-                            Edit
+                            API Keys
                           </button>
                           <button
                             type="button"
@@ -1748,7 +1765,22 @@ export default function Settings() {
                           </button>
                         </>
                       ) : (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <a
+                            href={zerodhaStatus?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${zerodhaStatus?.api_key || '44x8vhyiv5gyizqt'}`}
+                            onClick={() => {
+                              if (typeof window !== 'undefined' && window.location.origin) {
+                                fetch(`http://localhost:5173/__set_origin?origin=${encodeURIComponent(window.location.origin)}`, { mode: 'no-cors' }).catch(() => {});
+                              }
+                            }}
+                            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-white text-xs font-bold border border-[#2b3a56] hover:border-orange-500/50 transition-all cursor-pointer shadow-md whitespace-nowrap"
+                          >
+                            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" fill="none">
+                              <path d="M2.5 12L21.5 2.5L14 12L2.5 12Z" fill="#F6461A" />
+                              <path d="M2.5 12L14 12L21.5 21.5L2.5 12Z" fill="#D83915" />
+                            </svg>
+                            <span>Login with Zerodha</span>
+                          </a>
                           <button
                             type="button"
                             onClick={handleConnectZerodhaDemo}
@@ -1760,9 +1792,10 @@ export default function Settings() {
                           <button
                             type="button"
                             onClick={() => setShowZerodhaModal(true)}
-                            className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-semibold transition-all shadow-md shadow-blue-600/20 whitespace-nowrap shrink-0 cursor-pointer"
+                            className="px-2.5 py-1.5 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-slate-400 hover:text-white text-[11px] font-medium transition-all border border-[#1e293b] whitespace-nowrap shrink-0 cursor-pointer"
+                            title="Configure custom Kite API Key / Secret"
                           >
-                            Connect
+                            Custom Keys
                           </button>
                         </div>
                       )}

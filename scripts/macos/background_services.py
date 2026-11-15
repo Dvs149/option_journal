@@ -41,6 +41,12 @@ SERVICES = (
         ],
         "working_directory": ROOT / "frontend",
     },
+    {
+        "label": "com.optionjournal.kite-redirect",
+        "program": "node",
+        "arguments": [str(ROOT / "scripts" / "zerodha_redirect.js")],
+        "working_directory": ROOT,
+    },
 )
 
 
@@ -94,10 +100,12 @@ def install() -> None:
         arguments = service["arguments"]
         if service["program"] == "php" and not (ROOT / "backend" / "artisan").is_file():
             raise RuntimeError("Laravel entry point not found at backend/artisan.")
-        if service["program"] == "node" and not Path(arguments[0]).is_file():
+        if service["label"] == "com.optionjournal.frontend" and not Path(arguments[0]).is_file():
             raise RuntimeError(
                 "Vite is not installed. Run `npm install` in the frontend directory first."
             )
+        if service["label"] == "com.optionjournal.kite-redirect" and not Path(arguments[0]).is_file():
+            raise RuntimeError("Redirect script not found at scripts/zerodha_redirect.js.")
 
         label = service["label"]
         plist_path = LAUNCH_AGENTS / f"{label}.plist"
