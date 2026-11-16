@@ -828,7 +828,9 @@ class ZerodhaKiteService
     protected function calculateSummary(array $margins, array $positions, array $holdings, array $orders, ?User $user = null, array $mfHoldings = []): array
     {
         $equityMargin = $margins['equity'] ?? [];
-        $availableCash = (float)($equityMargin['available']['cash'] ?? $equityMargin['net'] ?? 0);
+        $availableMargin = isset($equityMargin['net'])
+            ? (float)$equityMargin['net']
+            : (float)($equityMargin['available']['live_balance'] ?? $equityMargin['available']['cash'] ?? $equityMargin['available']['opening_balance'] ?? 0);
         $usedMargin = (float)($equityMargin['utilised']['debits'] ?? 0);
 
         $netPositions = $positions['net'] ?? [];
@@ -923,7 +925,7 @@ class ZerodhaKiteService
         $overallNetPnl = round($overallGrossPnl - $contractChargesTotal, 2);
 
         return [
-            'available_margin' => $availableCash,
+            'available_margin' => $availableMargin,
             'used_margin' => $usedMargin,
             'positions_mtm' => $positionsMtm,
             'closed_positions_pnl' => round($closedPositionsPnl, 2),

@@ -431,6 +431,20 @@ export default function Zerodha() {
     ? Number(summary.overall_net_pnl)
     : Math.round((overallGrossPnl - contractNoteCharges) * 100) / 100;
 
+  // Available Margin: Authoritative available margin from Kite Connect
+  const availableMargin = useMemo(() => {
+    if (summary.available_margin != null && Number(summary.available_margin) > 0) {
+      return Number(summary.available_margin);
+    }
+    const eq = margins?.equity;
+    if (!eq) return Number(summary.available_margin ?? 0);
+    if (eq.net != null && Number(eq.net) > 0) return Number(eq.net);
+    if (eq.available?.live_balance != null && Number(eq.available.live_balance) > 0) return Number(eq.available.live_balance);
+    if (eq.available?.opening_balance != null && Number(eq.available.opening_balance) > 0) return Number(eq.available.opening_balance);
+    if (eq.available?.cash != null && Number(eq.available.cash) > 0) return Number(eq.available.cash);
+    return Number(summary.available_margin ?? 0);
+  }, [summary.available_margin, margins]);
+
   // Mutual Funds holdings summary
   const mfSummary = useMemo(() => {
     let invested = 0;
@@ -1016,21 +1030,21 @@ export default function Zerodha() {
               </div>
             </div>
 
-            {/* Card 3: Used Margin */}
+            {/* Card 3: Available Margin */}
             <div className="bg-[#121b2d] border border-[#1e293b] rounded-2xl p-4 shadow-sm flex flex-col justify-between">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-                <span>Used Margin (Debits)</span>
-                <div className="w-7 h-7 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center">
-                  <Layers className="w-3.5 h-3.5" />
+                <span className="font-semibold text-white">Available Margin</span>
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+                  <Wallet className="w-3.5 h-3.5" />
                 </div>
               </div>
               <div>
                 <div className="text-xl font-black text-white font-mono">
-                  {formatCurrency(summary.used_margin ?? 0)}
+                  {formatCurrency(availableMargin)}
                 </div>
                 <div className="text-[11px] text-slate-500 mt-1 flex items-center justify-between">
-                  <span>Option Prem: {formatCurrency(margins?.equity?.utilised?.option_premium ?? 0)}</span>
-                  <span>SPAN: {formatCurrency(margins?.equity?.utilised?.span ?? 0)}</span>
+                  <span>Opening: {formatCurrency(margins?.equity?.available?.opening_balance ?? margins?.equity?.available?.live_balance ?? availableMargin)}</span>
+                  <span>Used: {formatCurrency(summary.used_margin ?? margins?.equity?.utilised?.debits ?? 0)}</span>
                 </div>
               </div>
             </div>
