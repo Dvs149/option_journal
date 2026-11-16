@@ -2,6 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\IndexLotSize;
+use App\Models\Trade;
+use App\Models\TradeOrder;
+
 class TradingCalculationService
 {
     /**
@@ -218,5 +222,289 @@ class TradingCalculationService
             'other_charges' => 0.00,
             'total_charges' => $totalCharges,
         ];
+    }
+
+    /**
+     * Recalculate a trade's quantities, status, average prices, realized P&L, charges, and net P&L
+     * strictly based on its associated executed TradeOrders.
+     */
+    public function recalculateTradeFromOrders(Trade $trade): Trade
+    {
+        $allOrders = $trade->orders()->orderBy('order_date', 'asc')->orderBy('id', 'asc')->get();
+        if ($allOrders->isEmpty()) {
+            return $trade;
+        }
+
+        $buyOrders = $allOrders->where('order_type', 'BUY');
+        $sellOrders = $allOrders->where('order_type', 'SELL');
+
+        $isBoth = $trade->option_type === 'Both';
+        $ceBuyOrders = $buyOrders->filter(fn($o) => preg_match('/\bCE\b/i', (string) $o->notes));
+        $peBuyOrders = $buyOrders->filter(fn($o) => preg_match('/\bPE\b/i', (string) $o->notes));
+        $ceSellOrders = $sellOrders->filter(fn($o) => preg_match('/\bCE\b/i', (string) $o->notes));
+        $peSellOrders = $sellOrders->filter(fn($o) => preg_match('/\bPE\b/i', (string) $o->notes));
+
+        $hasSplitLegs = $isBoth && (
+            $ceBuyOrders->isNotEmpty() || $peBuyOrders->isNotEmpty() ||
+            $ceSellOrders->isNotEmpty() || $peSellOrders->isNotEmpty()
+        );
+
+        // Determine if initial entry was Short or Long
+        $firstOrder = $allOrders->first();
+        $isShortInitial = $firstOrder && strtoupper($firstOrder->order_type) === 'SELL';
+
+        if ($hasSplitLegs) {
+            // BUY LEG CALCULATIONS
+            if ($ceBuyOrders->isNotEmpty()) {
+                $ceBuyQty = (int) $ceBuyOrders->sum('quantity');
+                $ceBuyCost = 0.0;
+                foreach ($ceBuyOrders as $bo) {
+                    $ceBuyCost += (float) $bo->price * (int) $bo->quantity;
+                }
+                $ceEntryPrice = $ceBuyQty > 0 ? round($ceBuyCost / $ceBuyQty, 2) : (float) ($trade->ce_entry_price ?: 0);
+            } else {
+                $ceBuyQty = (int) $buyOrders->sum('quantity');
+                $ceEntryPrice = (float) ($trade->ce_entry_price ?: 0);
+                $ceBuyCost = $ceEntryPrice * $ceBuyQty;
+            }
+
+            if ($peBuyOrders->isNotEmpty()) {
+                $peBuyQty = (int) $peBuyOrders->sum('quantity');
+                $peBuyCost = 0.0;
+                foreach ($peBuyOrders as $bo) {
+                    $peBuyCost += (float) $bo->price * (int) $bo->quantity;
+                }
+                $peEntryPrice = $peBuyQty > 0 ? round($peBuyCost / $peBuyQty, 2) : (float) ($trade->pe_entry_price ?: 0);
+            } else {
+                $peBuyQty = (int) $buyOrders->sum('quantity');
+                $peEntryPrice = (float) ($trade->pe_entry_price ?: 0);
+                $peBuyCost = $peEntryPrice * $peBuyQty;
+            }
+
+            $totalBuyQty = max($ceBuyQty, $peBuyQty);
+            $avgEntryPrice = round($ceEntryPrice + $peEntryPrice, 2);
+
+            // SELL LEG CALCULATIONS
+            if ($ceSellOrders->isNotEmpty()) {
+                $ceSellQty = (int) $ceSellOrders->sum('quantity');
+                $ceSellProceeds = 0.0;
+                foreach ($ceSellOrders as $so) {
+                    $ceSellProceeds += (float) $so->price * (int) $so->quantity;
+                }
+                $ceExitPrice = $ceSellQty > 0 ? round($ceSellProceeds / $ceSellQty, 2) : null;
+            } else {
+                $ceSellQty = 0;
+                $ceExitPrice = null;
+            }
+
+            if ($peSellOrders->isNotEmpty()) {
+                $peSellQty = (int) $peSellOrders->sum('quantity');
+                $peSellProceeds = 0.0;
+                foreach ($peSellOrders as $so) {
+                    $peSellProceeds += (float) $so->price * (int) $so->quantity;
+                }
+                $peExitPrice = $peSellQty > 0 ? round($peSellProceeds / $peSellQty, 2) : null;
+            } else {
+                $peSellQty = 0;
+                $peExitPrice = null;
+            }
+
+            if ($ceSellOrders->isNotEmpty() || $peSellOrders->isNotEmpty()) {
+                $totalSellQty = max($ceSellQty, $peSellQty);
+                $avgExitPrice = ($ceExitPrice !== null || $peExitPrice !== null)
+                    ? round((float) ($ceExitPrice ?? 0) + (float) ($peExitPrice ?? 0), 2)
+                    : null;
+            } else {
+                $totalSellQty = (int) $sellOrders->sum('quantity');
+                $totalSellProceeds = 0.0;
+                foreach ($sellOrders as $so) {
+                    $totalSellProceeds += (float) $so->price * (int) $so->quantity;
+                }
+                $avgExitPrice = $totalSellQty > 0 ? round($totalSellProceeds / $totalSellQty, 2) : null;
+            }
+
+            // Realized PnL per order (for Long straddle: SELL is exit; for Short straddle: BUY is exit)
+            if (!$isShortInitial) {
+                // Long Straddle: BUY entry, SELL exit
+                foreach ($ceSellOrders as $so) {
+                    $pnl = round(((float) $so->price - $ceEntryPrice) * (int) $so->quantity, 2);
+                    if ((float) $so->realized_pnl !== $pnl) {
+                        $so->update(['realized_pnl' => $pnl]);
+                    }
+                }
+                foreach ($peSellOrders as $so) {
+                    $pnl = round(((float) $so->price - $peEntryPrice) * (int) $so->quantity, 2);
+                    if ((float) $so->realized_pnl !== $pnl) {
+                        $so->update(['realized_pnl' => $pnl]);
+                    }
+                }
+                $otherSellOrders = $sellOrders->reject(fn($o) => preg_match('/\b(CE|PE)\b/i', (string) $o->notes));
+                foreach ($otherSellOrders as $so) {
+                    $pnl = round(((float) $so->price - $avgEntryPrice) * (int) $so->quantity, 2);
+                    if ((float) $so->realized_pnl !== $pnl) {
+                        $so->update(['realized_pnl' => $pnl]);
+                    }
+                }
+                $openQty = max(0, $totalBuyQty - $totalSellQty);
+                $totalExitQty = $totalSellQty;
+            } else {
+                // Short Straddle: SELL entry, BUY exit
+                $ceSellPrice = $ceSellQty > 0 ? round($ceSellProceeds / $ceSellQty, 2) : (float) ($trade->ce_entry_price ?: 0);
+                $peSellPrice = $peSellQty > 0 ? round($peSellProceeds / $peSellQty, 2) : (float) ($trade->pe_entry_price ?: 0);
+                foreach ($ceBuyOrders as $bo) {
+                    $pnl = round(($ceSellPrice - (float) $bo->price) * (int) $bo->quantity, 2);
+                    if ((float) $bo->realized_pnl !== $pnl) {
+                        $bo->update(['realized_pnl' => $pnl]);
+                    }
+                }
+                foreach ($peBuyOrders as $bo) {
+                    $pnl = round(($peSellPrice - (float) $bo->price) * (int) $bo->quantity, 2);
+                    if ((float) $bo->realized_pnl !== $pnl) {
+                        $bo->update(['realized_pnl' => $pnl]);
+                    }
+                }
+                $openQty = max(0, $totalSellQty - $totalBuyQty);
+                $totalExitQty = $totalBuyQty;
+            }
+        } else {
+            // Standard single-leg or combined Both trade
+            if (!$isShortInitial) {
+                // Long position (BUY to open, SELL to exit)
+                $totalBuyQty = (int) $buyOrders->sum('quantity');
+                $totalBuyCost = 0.0;
+                foreach ($buyOrders as $bo) {
+                    $totalBuyCost += (float) $bo->price * (int) $bo->quantity;
+                }
+                $avgEntryPrice = $totalBuyQty > 0 ? round($totalBuyCost / $totalBuyQty, 2) : (float) ($trade->entry_premium ?? 0);
+
+                $totalSellQty = (int) $sellOrders->sum('quantity');
+                $totalSellProceeds = 0.0;
+                foreach ($sellOrders as $so) {
+                    $totalSellProceeds += (float) $so->price * (int) $so->quantity;
+                }
+                $avgExitPrice = $totalSellQty > 0 ? round($totalSellProceeds / $totalSellQty, 2) : null;
+                $ceEntryPrice = null;
+                $peEntryPrice = null;
+                $ceExitPrice = null;
+                $peExitPrice = null;
+
+                foreach ($sellOrders as $so) {
+                    $pnl = round(((float) $so->price - $avgEntryPrice) * (int) $so->quantity, 2);
+                    if ((float) $so->realized_pnl !== $pnl) {
+                        $so->update(['realized_pnl' => $pnl]);
+                    }
+                }
+                $openQty = max(0, $totalBuyQty - $totalSellQty);
+                $totalExitQty = $totalSellQty;
+            } else {
+                // Short position (SELL to open, BUY to exit)
+                $totalSellQty = (int) $sellOrders->sum('quantity');
+                $totalSellProceeds = 0.0;
+                foreach ($sellOrders as $so) {
+                    $totalSellProceeds += (float) $so->price * (int) $so->quantity;
+                }
+                $avgEntryPrice = $totalSellQty > 0 ? round($totalSellProceeds / $totalSellQty, 2) : (float) ($trade->entry_premium ?? 0);
+
+                $totalBuyQty = (int) $buyOrders->sum('quantity');
+                $totalBuyCost = 0.0;
+                foreach ($buyOrders as $bo) {
+                    $totalBuyCost += (float) $bo->price * (int) $bo->quantity;
+                }
+                $avgExitPrice = $totalBuyQty > 0 ? round($totalBuyCost / $totalBuyQty, 2) : null;
+                $ceEntryPrice = null;
+                $peEntryPrice = null;
+                $ceExitPrice = null;
+                $peExitPrice = null;
+
+                foreach ($buyOrders as $bo) {
+                    $pnl = round(($avgEntryPrice - (float) $bo->price) * (int) $bo->quantity, 2);
+                    if ((float) $bo->realized_pnl !== $pnl) {
+                        $bo->update(['realized_pnl' => $pnl]);
+                    }
+                }
+                $openQty = max(0, $totalSellQty - $totalBuyQty);
+                $totalExitQty = $totalBuyQty;
+            }
+        }
+
+        if ($totalExitQty === 0) {
+            $status = 'OPEN';
+        } elseif ($openQty === 0) {
+            $status = 'CLOSED';
+        } else {
+            $status = 'PARTIALLY_CLOSED';
+        }
+
+        // Sum realized PnL across exit orders
+        $exitOrders = $isShortInitial ? $buyOrders : $sellOrders;
+        $totalRealizedPnl = round((float) $exitOrders->sum('realized_pnl'), 2);
+        $grossProfit = $totalRealizedPnl >= 0 ? $totalRealizedPnl : 0.00;
+        $grossLoss = $totalRealizedPnl < 0 ? abs($totalRealizedPnl) : 0.00;
+
+        $brokerage = round((float) $allOrders->sum('brokerage'), 2);
+        $stt = round((float) $allOrders->sum('stt'), 2);
+        $exchangeCharges = round((float) $allOrders->sum('exchange_charges'), 2);
+        $gst = round((float) $allOrders->sum('gst'), 2);
+        $sebiCharges = round((float) $allOrders->sum('sebi_charges'), 2);
+        $stampDuty = round((float) $allOrders->sum('stamp_duty'), 2);
+        $otherCharges = round((float) $allOrders->sum('other_charges'), 2);
+        $sumOfParts = round($brokerage + $stt + $exchangeCharges + $gst + $sebiCharges + $stampDuty + $otherCharges, 2);
+        $sumOfTotals = round((float) $allOrders->sum('total_charges'), 2);
+        $totalCharges = $sumOfTotals > 0 ? $sumOfTotals : $sumOfParts;
+        if (abs($totalCharges - $sumOfParts) > 0.01) {
+            $otherCharges = round($otherCharges + ($totalCharges - $sumOfParts), 2);
+        }
+
+        $netPnl = round($grossProfit - $grossLoss - $totalCharges, 2);
+
+        $latestExit = $exitOrders->sortByDesc('order_date')->first();
+
+        $userLotSize = IndexLotSize::where('user_id', $trade->user_id)
+            ->where('index_name', strtoupper($trade->index_name))
+            ->value('lot_size');
+        if (!$userLotSize) {
+            $defaults = IndexLotSize::getExchangeDefaults();
+            $userLotSize = $defaults[strtoupper($trade->index_name)]['lot_size'] ?? null;
+        }
+        if (!$userLotSize && $trade->lots > 0 && $trade->quantity > 0) {
+            $userLotSize = (int) round($trade->quantity / $trade->lots);
+        }
+        $lotSize = max(1, (int) ($userLotSize ?: 1));
+        $baseTotalQty = !$isShortInitial ? $totalBuyQty : $totalSellQty;
+        $totalLots = max(1, (int) round($baseTotalQty / $lotSize));
+
+        $updateData = [
+            'status' => $status,
+            'quantity' => $baseTotalQty > 0 ? $baseTotalQty : $trade->quantity,
+            'lots' => $totalLots,
+            'open_quantity' => $openQty,
+            'avg_entry_price' => $avgEntryPrice,
+            'avg_exit_price' => $avgExitPrice,
+            'entry_premium' => $avgEntryPrice,
+            'exit_premium' => $avgExitPrice,
+            'exit_date' => $status === 'CLOSED' ? ($latestExit?->order_date ?? now()->format('Y-m-d')) : null,
+            'gross_profit' => $grossProfit,
+            'gross_loss' => $grossLoss,
+            'brokerage' => $brokerage,
+            'stt' => $stt,
+            'exchange_charges' => $exchangeCharges,
+            'gst' => $gst,
+            'sebi_charges' => $sebiCharges,
+            'stamp_duty' => $stampDuty,
+            'other_charges' => $otherCharges,
+            'total_charges' => $totalCharges,
+            'net_pnl' => $netPnl,
+        ];
+
+        if ($hasSplitLegs) {
+            if (!empty($ceEntryPrice)) $updateData['ce_entry_price'] = $ceEntryPrice;
+            if (!empty($peEntryPrice)) $updateData['pe_entry_price'] = $peEntryPrice;
+            if ($ceExitPrice !== null) $updateData['ce_exit_price'] = $ceExitPrice;
+            if ($peExitPrice !== null) $updateData['pe_exit_price'] = $peExitPrice;
+        }
+
+        $trade->update($updateData);
+
+        return $trade;
     }
 }

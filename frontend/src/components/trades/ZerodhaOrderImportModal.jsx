@@ -36,9 +36,78 @@ export default function ZerodhaOrderImportModal({
   const [importMode, setImportMode] = useState('smart'); // 'smart' | 'individual'
   const [optionType, setOptionType] = useState('Both'); // 'Both' | 'auto' | 'CE' | 'PE'
   const [importResult, setImportResult] = useState(null);
+  const [openTrades, setOpenTrades] = useState([]);
 
   // Close modal on Escape key
   useEscapeKey(onClose, isOpen);
+
+  // Fetch active open positions to preview square-off
+  useEffect(() => {
+    if (!isOpen) {
+      setOpenTrades([]);
+      return;
+    }
+    let isMounted = true;
+    api.get('/trades', {
+      params: {
+        status: 'OPEN_OR_PARTIAL',
+        per_page: 50,
+      },
+    })
+      .then((res) => {
+        if (isMounted && res.data?.data) {
+          setOpenTrades(res.data.data);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load open trades for square-off preview:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
+  // Helper to check if an order squares off an open trade
+  const findMatchingTrade = (ord) => {
+    if (!ord || !ord.strike_price || !openTrades.length) return null;
+    const ordStrike = Number(ord.strike_price);
+    const ordIndex = (ord.index_name || '').toUpperCase();
+    const ordType = (ord.type || '').toUpperCase();
+    const ordOpt = (ord.option_type || '').toUpperCase();
+
+    return openTrades.find((t) => {
+      if (!t || Number(t.open_quantity || 0) <= 0) return false;
+      if ((t.index_name || '').toUpperCase() !== ordIndex) return false;
+
+      const tStrike = Number(t.strike_price);
+      const strikesMatch = tStrike === ordStrike ||
+        (tStrike % 100000 > 0 && (tStrike % 100000 === ordStrike % 100000));
+      if (!strikesMatch) return false;
+
+      // Opposing side: trade is long (bought) and ord is SELL, or trade is short and ord is BUY
+      const isLong = !String(t.strategy_name || '').includes('Short');
+      const isOpposing = ordType === 'SELL' ? isLong : !isLong;
+      if (!isOpposing) return false;
+
+      if (optionType === 'Both' && t.option_type === 'Both') {
+        return true;
+      }
+      return t.option_type === ordOpt || t.option_type === 'Both';
+    });
+  };
+
+  const matchedSquareOffTrades = useMemo(() => {
+    if (!openTrades.length || !detectedOrders.length) return [];
+    const matched = [];
+    detectedOrders.filter((o) => o.selected).forEach((ord) => {
+      const t = findMatchingTrade(ord);
+      if (t && !matched.some((m) => m.id === t.id)) {
+        matched.push(t);
+      }
+    });
+    return matched;
+  }, [openTrades, detectedOrders, optionType]);
 
   // Parse and initialize orders from Zerodha Kite when opening
   useEffect(() => {
@@ -75,9 +144,17 @@ export default function ZerodhaOrderImportModal({
         else if (sym.endsWith('CE')) optType = 'CE';
 
         let strike_price = '';
-        const match = sym.match(/(\d{4,6})(CE|PE)$/i);
-        if (match) {
-          strike_price = match[1];
+        const fullMatch = sym.match(/^(?:NIFTY|SENSEX|BANKNIFTY|FINNIFTY|MIDCPNIFTY|BANKEX)\d{2}(?:[1-9OND]\d{2}|[A-Z]{3})(\d+)(CE|PE)$/i);
+        if (fullMatch) {
+          strike_price = fullMatch[1];
+        } else {
+          const match = sym.match(/(\d{4,6})(CE|PE)$/i);
+          if (match) {
+            strike_price = match[1];
+          }
+        }
+        if (index_name === 'NIFTY' && Number(strike_price) > 50000) {
+          strike_price = String(Number(strike_price) % 100000);
         }
 
         // Expiry text parsing from symbol (e.g. NIFTY26N1725150CE -> 17 NOV)
@@ -445,15 +522,25 @@ export default function ZerodhaOrderImportModal({
                 </div>
               </div>
 
-              {/* Informative Banner when Both mode is active */}
-              {optionType === 'Both' && (
+              {/* Informative Banner when Square-Off is detected */}
+              {matchedSquareOffTrades.length > 0 ? (
+                <div className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-medium animate-fade-in">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+                  <span>
+                    <strong>Square Off Detected:</strong> The selected orders will automatically exit and square off open position(s) in your journal{' '}
+                    <span className="font-bold underline">
+                      (Trade #{matchedSquareOffTrades.map((t) => t.id).join(', #')})
+                    </span>.
+                  </span>
+                </div>
+              ) : optionType === 'Both' ? (
                 <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-medium animate-fade-in">
                   <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse flex-shrink-0" />
                   <span>
                     <strong>Option Type "Both" Active:</strong> Two orders with the same strike (CE & PE) will be added into a single <strong>Both (Straddle)</strong> entry.
                   </span>
                 </div>
-              )}
+              ) : null}
 
               {/* Orders Table */}
               <div className="rounded-2xl border border-[#1e293b] light:border-slate-200 overflow-hidden bg-[#121b2d] light:bg-white shadow-sm">
@@ -620,9 +707,21 @@ export default function ZerodhaOrderImportModal({
 
                           {/* Status */}
                           <td className="py-3 px-3 text-center whitespace-nowrap">
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                              {ord.status || 'COMPLETE'}
-                            </span>
+                            {(() => {
+                              const match = findMatchingTrade(ord);
+                              return (
+                                <div className="flex flex-col items-center gap-1">
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                    {ord.status || 'COMPLETE'}
+                                  </span>
+                                  {match && (
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 whitespace-nowrap">
+                                      Squares #{match.id}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
                           </td>
 
                           {/* Actions */}
@@ -726,7 +825,11 @@ export default function ZerodhaOrderImportModal({
                 ) : (
                   <>
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Execute & Import Selected ({selectedCount})</span>
+                    <span>
+                      {matchedSquareOffTrades.length > 0
+                        ? `Execute & Square Off Selected (${selectedCount})`
+                        : `Execute & Import Selected (${selectedCount})`}
+                    </span>
                   </>
                 )}
               </button>

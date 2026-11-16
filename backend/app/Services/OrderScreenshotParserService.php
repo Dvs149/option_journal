@@ -230,7 +230,16 @@ class OrderScreenshotParserService
 
         $rates = \App\Models\BrokerageSetting::forUser($user->id);
         $importedTradeIds = [];
+        $squaredOffTradeIds = [];
         $importedOrdersCount = 0;
+
+        // Fetch user's active open positions to allow automatic square-off
+        $openTrades = Trade::where('user_id', $user->id)
+            ->whereIn('status', ['OPEN', 'PARTIALLY_CLOSED'])
+            ->with(['orders', 'journal'])
+            ->orderBy('trade_date', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
 
         DB::beginTransaction();
         try {
@@ -276,7 +285,7 @@ class OrderScreenshotParserService
                         $importedOrdersCount += 4;
                     }
 
-                    // For remaining open legs (like in user screenshot: 1 CE BUY + 1 PE BUY)
+                    // For remaining legs (e.g. 1 CE SELL + 1 PE SELL or 1 CE BUY + 1 PE BUY)
                     $remCe = array_merge($ceBuys, $ceSells);
                     $remPe = array_merge($peBuys, $peSells);
 
@@ -284,13 +293,94 @@ class OrderScreenshotParserService
                         $c = array_shift($remCe);
                         $p = array_shift($remPe);
 
+                        // If both legs have same order type (e.g. both SELL to exit open position)
+                        if (strtoupper($c['type'] ?? '') === strtoupper($p['type'] ?? '')) {
+                            // 1. Try matching an open "Both" trade to square off
+                            $matchedBoth = $this->findMatchingOpenBothTrade($openTrades, $c['index_name'], $c['strike_price'], $c['type']);
+                            if ($matchedBoth) {
+                                $this->squareOffBothTrade($user, $matchedBoth, $c, $p, $tradeDate, $rates);
+                                $importedTradeIds[] = $matchedBoth->id;
+                                $squaredOffTradeIds[] = $matchedBoth->id;
+                                $importedOrdersCount += 2;
+                                $matchedBoth->open_quantity = 0;
+                                continue;
+                            }
+
+                            // 2. Try matching separate open CE and PE trades to square off
+                            $matchedCe = $this->findMatchingOpenSingleTrade($openTrades, $c['index_name'], $c['strike_price'], 'CE', $c['type']);
+                            $matchedPe = $this->findMatchingOpenSingleTrade($openTrades, $p['index_name'], $p['strike_price'], 'PE', $p['type']);
+
+                            if ($matchedCe && $matchedPe) {
+                                $this->squareOffSingleTrade($user, $matchedCe, $c, $tradeDate, $rates, 'CE');
+                                $this->squareOffSingleTrade($user, $matchedPe, $p, $tradeDate, $rates, 'PE');
+                                $importedTradeIds[] = $matchedCe->id;
+                                $importedTradeIds[] = $matchedPe->id;
+                                $squaredOffTradeIds[] = $matchedCe->id;
+                                $squaredOffTradeIds[] = $matchedPe->id;
+                                $importedOrdersCount += 2;
+                                $matchedCe->open_quantity = 0;
+                                $matchedPe->open_quantity = 0;
+                                continue;
+                            } elseif ($matchedCe) {
+                                $this->squareOffSingleTrade($user, $matchedCe, $c, $tradeDate, $rates, 'CE');
+                                $importedTradeIds[] = $matchedCe->id;
+                                $squaredOffTradeIds[] = $matchedCe->id;
+                                $importedOrdersCount += 1;
+                                $matchedCe->open_quantity = 0;
+                                $remPe[] = $p;
+                                continue;
+                            } elseif ($matchedPe) {
+                                $this->squareOffSingleTrade($user, $matchedPe, $p, $tradeDate, $rates, 'PE');
+                                $importedTradeIds[] = $matchedPe->id;
+                                $squaredOffTradeIds[] = $matchedPe->id;
+                                $importedOrdersCount += 1;
+                                $matchedPe->open_quantity = 0;
+                                $remCe[] = $c;
+                                continue;
+                            }
+                        }
+
+                        // No open trade to square off -> create new Both trade
                         $trade = $this->createBothTradeFromLegs($user, $account->id, $c, $p, $tradeDate, $rates);
                         $importedTradeIds[] = $trade->id;
                         $importedOrdersCount += 2;
                     }
 
-                    // If any single unmatched order remains, create individual open trade
+                    // If any single unmatched order remains, check square-off before creating new open trade
                     foreach (array_merge($remCe, $remPe) as $unmatched) {
+                        $matched = $this->findMatchingOpenSingleTrade(
+                            $openTrades,
+                            $unmatched['index_name'],
+                            $unmatched['strike_price'],
+                            strtoupper($unmatched['option_type'] ?? 'CE'),
+                            $unmatched['type']
+                        );
+
+                        if ($matched) {
+                            $this->squareOffSingleTrade($user, $matched, $unmatched, $tradeDate, $rates, $unmatched['option_type'] ?? 'CE');
+                            $importedTradeIds[] = $matched->id;
+                            $squaredOffTradeIds[] = $matched->id;
+                            $importedOrdersCount += 1;
+                            $matched->open_quantity = 0;
+                            continue;
+                        }
+
+                        $matchedBoth = $this->findMatchingOpenBothTrade(
+                            $openTrades,
+                            $unmatched['index_name'],
+                            $unmatched['strike_price'],
+                            $unmatched['type']
+                        );
+
+                        if ($matchedBoth) {
+                            $this->squareOffSingleTrade($user, $matchedBoth, $unmatched, $tradeDate, $rates, $unmatched['option_type'] ?? 'CE');
+                            $importedTradeIds[] = $matchedBoth->id;
+                            $squaredOffTradeIds[] = $matchedBoth->id;
+                            $importedOrdersCount += 1;
+                            $matchedBoth->open_quantity = 0;
+                            continue;
+                        }
+
                         $trade = $this->createOpenTradeFromOrder($user, $account->id, $unmatched, $tradeDate, $rates);
                         $importedTradeIds[] = $trade->id;
                         $importedOrdersCount += 1;
@@ -314,7 +404,7 @@ class OrderScreenshotParserService
                     $buys = array_values(array_filter($items, fn($o) => strtoupper($o['type']) === 'BUY'));
                     $sells = array_values(array_filter($items, fn($o) => strtoupper($o['type']) === 'SELL'));
 
-                    // Match paired BUY + SELL into closed round-trip trades
+                    // Match paired BUY + SELL into closed round-trip trades within incoming batch
                     while (!empty($buys) && !empty($sells)) {
                         $buy = array_shift($buys);
                         $sell = array_shift($sells);
@@ -324,23 +414,84 @@ class OrderScreenshotParserService
                         $importedOrdersCount += 2;
                     }
 
-                    // Remaining BUYs become OPEN positions
-                    foreach ($buys as $unmatchedBuy) {
-                        $trade = $this->createOpenTradeFromOrder($user, $account->id, $unmatchedBuy, $tradeDate, $rates);
-                        $importedTradeIds[] = $trade->id;
-                        $importedOrdersCount += 1;
-                    }
+                    // Remaining BUYs or SELLs: check if they square off existing open positions
+                    $remainingOrders = array_merge($buys, $sells);
+                    foreach ($remainingOrders as $ord) {
+                        $matchedSingle = $this->findMatchingOpenSingleTrade(
+                            $openTrades,
+                            $ord['index_name'],
+                            $ord['strike_price'],
+                            strtoupper($ord['option_type'] ?? 'CE'),
+                            $ord['type']
+                        );
 
-                    // Remaining SELLs become OPEN positions
-                    foreach ($sells as $unmatchedSell) {
-                        $trade = $this->createOpenTradeFromOrder($user, $account->id, $unmatchedSell, $tradeDate, $rates);
+                        if ($matchedSingle) {
+                            $this->squareOffSingleTrade($user, $matchedSingle, $ord, $tradeDate, $rates, $ord['option_type'] ?? 'CE');
+                            $importedTradeIds[] = $matchedSingle->id;
+                            $squaredOffTradeIds[] = $matchedSingle->id;
+                            $importedOrdersCount += 1;
+                            $matchedSingle->open_quantity = 0;
+                            continue;
+                        }
+
+                        $matchedBoth = $this->findMatchingOpenBothTrade(
+                            $openTrades,
+                            $ord['index_name'],
+                            $ord['strike_price'],
+                            $ord['type']
+                        );
+
+                        if ($matchedBoth) {
+                            $this->squareOffSingleTrade($user, $matchedBoth, $ord, $tradeDate, $rates, $ord['option_type'] ?? 'CE');
+                            $importedTradeIds[] = $matchedBoth->id;
+                            $squaredOffTradeIds[] = $matchedBoth->id;
+                            $importedOrdersCount += 1;
+                            $matchedBoth->open_quantity = 0;
+                            continue;
+                        }
+
+                        // No open trade found -> create new open trade
+                        $trade = $this->createOpenTradeFromOrder($user, $account->id, $ord, $tradeDate, $rates);
                         $importedTradeIds[] = $trade->id;
                         $importedOrdersCount += 1;
                     }
                 }
             } else {
-                // Individual mode: each order becomes its own trade/position
+                // Individual mode: check square-off first; otherwise create individual open position
                 foreach ($selectedOrders as $ord) {
+                    $matchedSingle = $this->findMatchingOpenSingleTrade(
+                        $openTrades,
+                        $ord['index_name'],
+                        $ord['strike_price'],
+                        strtoupper($ord['option_type'] ?? 'CE'),
+                        $ord['type']
+                    );
+
+                    if ($matchedSingle) {
+                        $this->squareOffSingleTrade($user, $matchedSingle, $ord, $tradeDate, $rates, $ord['option_type'] ?? 'CE');
+                        $importedTradeIds[] = $matchedSingle->id;
+                        $squaredOffTradeIds[] = $matchedSingle->id;
+                        $importedOrdersCount += 1;
+                        $matchedSingle->open_quantity = 0;
+                        continue;
+                    }
+
+                    $matchedBoth = $this->findMatchingOpenBothTrade(
+                        $openTrades,
+                        $ord['index_name'],
+                        $ord['strike_price'],
+                        $ord['type']
+                    );
+
+                    if ($matchedBoth) {
+                        $this->squareOffSingleTrade($user, $matchedBoth, $ord, $tradeDate, $rates, $ord['option_type'] ?? 'CE');
+                        $importedTradeIds[] = $matchedBoth->id;
+                        $squaredOffTradeIds[] = $matchedBoth->id;
+                        $importedOrdersCount += 1;
+                        $matchedBoth->open_quantity = 0;
+                        continue;
+                    }
+
                     $trade = $this->createOpenTradeFromOrder($user, $account->id, $ord, $tradeDate, $rates);
                     $importedTradeIds[] = $trade->id;
                     $importedOrdersCount += 1;
@@ -349,10 +500,23 @@ class OrderScreenshotParserService
 
             DB::commit();
 
+            $uniqueSquaredOff = array_values(array_unique($squaredOffTradeIds));
+            $createdCount = count($importedTradeIds) - count($uniqueSquaredOff);
+
+            if (!empty($uniqueSquaredOff)) {
+                $message = "Successfully squared off " . count($uniqueSquaredOff) . " open trade(s) (#" . implode(', #', $uniqueSquaredOff) . ")" .
+                    ($createdCount > 0 ? " and created {$createdCount} new trade(s)" : "") .
+                    " ({$importedOrdersCount} orders executed).";
+            } else {
+                $message = "Successfully imported " . count($importedTradeIds) . " trades (" . $importedOrdersCount . " executed orders).";
+            }
+
             return [
                 'success' => true,
-                'message' => "Successfully imported " . count($importedTradeIds) . " trades (" . $importedOrdersCount . " executed orders).",
+                'message' => $message,
                 'imported_trades_count' => count($importedTradeIds),
+                'squared_off_trades_count' => count($uniqueSquaredOff),
+                'squared_off_trade_ids' => $uniqueSquaredOff,
                 'imported_orders_count' => $importedOrdersCount,
                 'trade_ids' => $importedTradeIds,
             ];
@@ -944,5 +1108,238 @@ class OrderScreenshotParserService
         }
 
         return null;
+    }
+
+    /**
+     * Check if two strikes match, accounting for floating points and NSE weekly options prefixes (e.g. 725150 vs 25150)
+     */
+    public function strikesMatch($strikeA, $strikeB): bool
+    {
+        if (empty($strikeA) || empty($strikeB)) {
+            return false;
+        }
+        $fA = (float)$strikeA;
+        $fB = (float)$strikeB;
+        if (abs($fA - $fB) < 0.01) {
+            return true;
+        }
+        $mA = (int)$fA % 100000;
+        $mB = (int)$fB % 100000;
+        if ($mA > 0 && $mA === $mB) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Find matching open "Both" (Straddle) trade that opposes the incoming order direction.
+     */
+    protected function findMatchingOpenBothTrade($openTrades, string $indexName, $strikePrice, string $incomingSide): ?Trade
+    {
+        $matches = $openTrades->filter(function ($t) use ($indexName, $strikePrice, $incomingSide) {
+            if ($t->option_type !== 'Both' || (int)$t->open_quantity <= 0) {
+                return false;
+            }
+            if (strtoupper(trim($t->index_name)) !== strtoupper(trim($indexName))) {
+                return false;
+            }
+            if (!$this->strikesMatch($t->strike_price, $strikePrice)) {
+                return false;
+            }
+
+            $buyOrders = $t->orders->where('order_type', 'BUY');
+            $sellOrders = $t->orders->where('order_type', 'SELL');
+            $firstOrder = $t->orders->sortBy('id')->first();
+            $isLong = $firstOrder ? (strtoupper($firstOrder->order_type) === 'BUY') : (!str_contains((string)$t->strategy_name, 'Short'));
+
+            if (strtoupper($incomingSide) === 'SELL') {
+                return $isLong && ($buyOrders->sum('quantity') > $sellOrders->sum('quantity'));
+            } else {
+                return !$isLong && ($sellOrders->sum('quantity') > $buyOrders->sum('quantity'));
+            }
+        });
+
+        return $matches->sortByDesc('id')->first();
+    }
+
+    /**
+     * Find matching open single-leg (CE or PE) trade that opposes the incoming order direction.
+     */
+    protected function findMatchingOpenSingleTrade($openTrades, string $indexName, $strikePrice, string $optionType, string $incomingSide): ?Trade
+    {
+        $matches = $openTrades->filter(function ($t) use ($indexName, $strikePrice, $optionType, $incomingSide) {
+            if ($t->option_type !== $optionType || (int)$t->open_quantity <= 0) {
+                return false;
+            }
+            if (strtoupper(trim($t->index_name)) !== strtoupper(trim($indexName))) {
+                return false;
+            }
+            if (!$this->strikesMatch($t->strike_price, $strikePrice)) {
+                return false;
+            }
+
+            $buyOrders = $t->orders->where('order_type', 'BUY');
+            $sellOrders = $t->orders->where('order_type', 'SELL');
+            $firstOrder = $t->orders->sortBy('id')->first();
+            $isLong = $firstOrder ? (strtoupper($firstOrder->order_type) === 'BUY') : (!str_contains((string)$t->strategy_name, 'Short'));
+
+            if (strtoupper($incomingSide) === 'SELL') {
+                return $isLong && ($buyOrders->sum('quantity') > $sellOrders->sum('quantity'));
+            } else {
+                return !$isLong && ($sellOrders->sum('quantity') > $buyOrders->sum('quantity'));
+            }
+        });
+
+        return $matches->sortByDesc('id')->first();
+    }
+
+    /**
+     * Square off both CE and PE legs of an existing "Both" trade.
+     */
+    protected function squareOffBothTrade(
+        User $user,
+        Trade $trade,
+        array $ceOrder,
+        array $peOrder,
+        string $tradeDate,
+        array $rates
+    ): Trade {
+        $indexName = strtoupper($trade->index_name);
+        $exchange = in_array($indexName, ['SENSEX', 'BANKEX']) ? 'BSE' : 'NSE';
+
+        $cQty = max(1, abs((int)($ceOrder['quantity'] ?? 1)));
+        $cLots = max(1, abs((int)($ceOrder['lots'] ?? 1)));
+        $cPrice = max(0.0, abs((float)($ceOrder['price'] ?? 0)));
+        $cType = strtoupper($ceOrder['type'] ?? 'SELL');
+        $cTime = $ceOrder['time'] ?? '15:30:00';
+        $cCharges = $this->calcService->estimateSingleOrderCharges($cType, $cPrice, $cQty, $exchange, $rates);
+
+        $pQty = max(1, abs((int)($peOrder['quantity'] ?? 1)));
+        $pLots = max(1, abs((int)($peOrder['lots'] ?? 1)));
+        $pPrice = max(0.0, abs((float)($peOrder['price'] ?? 0)));
+        $pType = strtoupper($peOrder['type'] ?? 'SELL');
+        $pTime = $peOrder['time'] ?? '15:30:00';
+        $pCharges = $this->calcService->estimateSingleOrderCharges($pType, $pPrice, $pQty, $exchange, $rates);
+
+        TradeOrder::create([
+            'trade_id' => $trade->id,
+            'user_id' => $user->id,
+            'order_type' => $cType,
+            'order_date' => $tradeDate,
+            'order_time' => $cTime,
+            'quantity' => $cQty,
+            'lots' => $cLots,
+            'price' => $cPrice,
+            'brokerage' => $cCharges['brokerage'],
+            'stt' => $cCharges['stt'],
+            'exchange_charges' => $cCharges['exchange_charges'],
+            'gst' => $cCharges['gst'],
+            'sebi_charges' => $cCharges['sebi_charges'],
+            'stamp_duty' => $cCharges['stamp_duty'],
+            'other_charges' => 0.00,
+            'total_charges' => $cCharges['total_charges'],
+            'notes' => "CE Exit / Square Off ({$trade->strike_price} CE)",
+        ]);
+
+        TradeOrder::create([
+            'trade_id' => $trade->id,
+            'user_id' => $user->id,
+            'order_type' => $pType,
+            'order_date' => $tradeDate,
+            'order_time' => $pTime,
+            'quantity' => $pQty,
+            'lots' => $pLots,
+            'price' => $pPrice,
+            'brokerage' => $pCharges['brokerage'],
+            'stt' => $pCharges['stt'],
+            'exchange_charges' => $pCharges['exchange_charges'],
+            'gst' => $pCharges['gst'],
+            'sebi_charges' => $pCharges['sebi_charges'],
+            'stamp_duty' => $pCharges['stamp_duty'],
+            'other_charges' => 0.00,
+            'total_charges' => $pCharges['total_charges'],
+            'notes' => "PE Exit / Square Off ({$trade->strike_price} PE)",
+        ]);
+
+        $this->calcService->recalculateTradeFromOrders($trade);
+
+        if ($trade->status === 'CLOSED') {
+            $trade->update([
+                'exit_reason' => 'Square Off via Order Import',
+            ]);
+        }
+
+        if ($trade->journal) {
+            $existing = $trade->journal->personal_notes ?? '';
+            $trade->journal->update([
+                'personal_notes' => trim($existing . "\n" . "Squared off on {$tradeDate} via Order Import (CE @ ₹{$cPrice}, PE @ ₹{$pPrice})"),
+            ]);
+        }
+
+        return $trade;
+    }
+
+    /**
+     * Square off an individual leg / single trade.
+     */
+    protected function squareOffSingleTrade(
+        User $user,
+        Trade $trade,
+        array $ord,
+        string $tradeDate,
+        array $rates,
+        ?string $leg = null
+    ): Trade {
+        $indexName = strtoupper($trade->index_name);
+        $exchange = in_array($indexName, ['SENSEX', 'BANKEX']) ? 'BSE' : 'NSE';
+
+        $qty = max(1, abs((int)($ord['quantity'] ?? 1)));
+        $lots = max(1, abs((int)($ord['lots'] ?? 1)));
+        $price = max(0.0, abs((float)($ord['price'] ?? 0)));
+        $type = strtoupper($ord['type'] ?? 'SELL');
+        $time = $ord['time'] ?? '15:30:00';
+        $charges = $this->calcService->estimateSingleOrderCharges($type, $price, $qty, $exchange, $rates);
+
+        $optType = strtoupper($leg ?: ($ord['option_type'] ?? $trade->option_type ?? 'CE'));
+        $notes = $trade->option_type === 'Both'
+            ? "{$optType} Exit / Square Off ({$trade->strike_price} {$optType})"
+            : "Exit / Square Off Order ({$type} @ ₹{$price})";
+
+        TradeOrder::create([
+            'trade_id' => $trade->id,
+            'user_id' => $user->id,
+            'order_type' => $type,
+            'order_date' => $tradeDate,
+            'order_time' => $time,
+            'quantity' => $qty,
+            'lots' => $lots,
+            'price' => $price,
+            'brokerage' => $charges['brokerage'],
+            'stt' => $charges['stt'],
+            'exchange_charges' => $charges['exchange_charges'],
+            'gst' => $charges['gst'],
+            'sebi_charges' => $charges['sebi_charges'],
+            'stamp_duty' => $charges['stamp_duty'],
+            'other_charges' => 0.00,
+            'total_charges' => $charges['total_charges'],
+            'notes' => $notes,
+        ]);
+
+        $this->calcService->recalculateTradeFromOrders($trade);
+
+        if ($trade->status === 'CLOSED') {
+            $trade->update([
+                'exit_reason' => 'Square Off via Order Import',
+            ]);
+        }
+
+        if ($trade->journal) {
+            $existing = $trade->journal->personal_notes ?? '';
+            $trade->journal->update([
+                'personal_notes' => trim($existing . "\n" . "Squared off {$optType} leg on {$tradeDate} via Order Import (@ ₹{$price})"),
+            ]);
+        }
+
+        return $trade;
     }
 }
