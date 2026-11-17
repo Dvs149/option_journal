@@ -38,7 +38,7 @@ export const DEFAULT_INDEX_CONFIG = {
     symbol: 'SENSEX',
     name: 'BSE SENSEX',
     exchange: 'BSE',
-    atm_strike: 78700,
+    atm_strike: 82600,
     strike_step: 100,
     lot_size: 20,
   },

@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
   Code2,
   Flame,
+  Layers,
 } from 'lucide-react';
 import api from '../api/client';
 
@@ -71,6 +72,14 @@ export const APP_MODULES = [
     icon: PieChart,
     desc: 'Analyze win rates and profitability breakdown across all option strategies',
     category: 'Analysis',
+  },
+  {
+    id: 'strategy-builder',
+    name: 'Strategy Builder',
+    path: '/strategy-builder',
+    icon: Layers,
+    desc: 'Interactive option strategy builder with payoff graphs, Greeks, Sensibull templates, and paper drafts',
+    category: 'Trading',
   },
   {
     id: 'analytics',

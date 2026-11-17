@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\OptionChainController;
 use App\Http\Controllers\Api\PineScriptController;
 use App\Http\Controllers\Api\RiskController;
 use App\Http\Controllers\Api\StrategyController;
+use App\Http\Controllers\Api\StrategyDraftController;
 use App\Http\Controllers\Api\TradeController;
 use App\Http\Controllers\Api\ZerodhaController;
 use Illuminate\Support\Facades\Route;
@@ -84,6 +85,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/strategies', [StrategyController::class, 'index']);
     Route::post('/strategies', [StrategyController::class, 'store']);
     Route::delete('/strategies/{strategy}', [StrategyController::class, 'destroy']);
+
+    // Strategy Builder & Draft Portfolios
+    Route::get('/strategy-drafts/portfolios', [StrategyDraftController::class, 'portfolios']);
+    Route::post('/strategy-drafts/{strategy_draft}/convert-to-trade', [StrategyDraftController::class, 'convertToTrade']);
+    Route::apiResource('strategy-drafts', StrategyDraftController::class);
 
     // Pine Script Management
     Route::get('/pine-scripts/export-json', [PineScriptController::class, 'exportJson']);

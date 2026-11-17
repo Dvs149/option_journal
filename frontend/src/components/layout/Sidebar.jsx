@@ -22,6 +22,7 @@ import {
   SlidersHorizontal,
   Code2,
   Flame,
+  Layers,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -43,6 +44,7 @@ export default function Sidebar({ onCloseMobile }) {
     { name: 'Risk Management', path: '/risk-management', icon: ShieldAlert },
     { name: 'Trading Journal', path: '/journal', icon: BookOpen },
     { name: 'Strategy Analysis', path: '/strategy-analysis', icon: PieChart },
+    { name: 'Strategy Builder', path: '/strategy-builder', icon: Layers },
     { name: 'Analytics & Reports', path: '/analytics', icon: BarChart3 },
     { name: 'Capital Management', path: '/capital-management', icon: Wallet },
     { name: 'Pine Script Manager', path: '/pine-scripts', icon: Code2 },

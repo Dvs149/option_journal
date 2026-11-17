@@ -547,6 +547,127 @@ export default function AllTrades() {
     }
   };
 
+  // Open selected trades (or a single trade) in Strategy Builder
+  const handleOpenInStrategyBuilder = (tradesToOpen = null) => {
+    let targetTrades = [];
+    if (tradesToOpen) {
+      targetTrades = Array.isArray(tradesToOpen) ? tradesToOpen : [tradesToOpen];
+    } else {
+      if (!selectedRowIds || selectedRowIds.size === 0) return;
+      selectedRowIds.forEach((id) => {
+        const t = knownTradesMap.get(id) || trades.find((x) => x.id === id);
+        if (t) targetTrades.push(t);
+      });
+    }
+
+    if (targetTrades.length === 0) return;
+
+    // Dominant underlying symbol
+    const dominantSymbol = (targetTrades[0].index_name || 'NIFTY').toUpperCase();
+    const legs = [];
+
+    targetTrades.forEach((t, tradeIdx) => {
+      // Determine side (BUY or SELL)
+      let side = 'BUY';
+      if (t.orders && t.orders.length > 0) {
+        if (t.status === 'OPEN' || t.status === 'PARTIALLY_CLOSED') {
+          const netQty = t.orders.reduce((sum, o) => {
+            const q = Number(o.quantity) || 0;
+            return sum + (String(o.order_type).toUpperCase() === 'BUY' ? q : -q);
+          }, 0);
+          if (netQty < 0) side = 'SELL';
+          else if (netQty > 0) side = 'BUY';
+          else side = String(t.orders[0].order_type).toUpperCase() === 'SELL' ? 'SELL' : 'BUY';
+        } else {
+          side = String(t.orders[0].order_type).toUpperCase() === 'SELL' ? 'SELL' : 'BUY';
+        }
+      } else {
+        if (Number(t.open_quantity) < 0) {
+          side = 'SELL';
+        } else {
+          const strat = String(t.strategy_name || '').toLowerCase();
+          const typ = String(t.trading_type || '').toLowerCase();
+          if (strat.includes('sell') || strat.includes('short') || typ.includes('sell') || typ.includes('short')) {
+            side = 'SELL';
+          }
+        }
+      }
+
+      const lots = Math.max(1, Number(t.lots) || 1);
+      const lotSize = Math.max(1, Math.round(Number(t.quantity) / lots) || 25);
+      const expiry = t.expiry_date ? String(t.expiry_date).split('T')[0] : '';
+      const bookedPnL = Number(t.net_pnl) || 0;
+
+      if (t.option_type === 'Both') {
+        const ceEntry = Number(t.ce_entry_price) || (Number(t.entry_premium || t.avg_entry_price) / 2) || 0;
+        const peEntry = Number(t.pe_entry_price) || (Number(t.entry_premium || t.avg_entry_price) / 2) || 0;
+        legs.push({
+          id: `leg_${t.id}_ce_${tradeIdx}`,
+          isActive: true,
+          side,
+          type: 'CE',
+          strike: Number(t.strike_price) || 0,
+          expiry,
+          lots,
+          lotSize,
+          entryPrice: ceEntry,
+          ltp: Number(t.ce_exit_price || ceEntry) || ceEntry,
+          iv: 14.5,
+          bookedPnL: bookedPnL / 2,
+          tradeId: t.id,
+        });
+        legs.push({
+          id: `leg_${t.id}_pe_${tradeIdx}`,
+          isActive: true,
+          side,
+          type: 'PE',
+          strike: Number(t.strike_price) || 0,
+          expiry,
+          lots,
+          lotSize,
+          entryPrice: peEntry,
+          ltp: Number(t.pe_exit_price || peEntry) || peEntry,
+          iv: 14.5,
+          bookedPnL: bookedPnL / 2,
+          tradeId: t.id,
+        });
+      } else {
+        const entryPrice = Number(t.avg_entry_price || t.entry_premium) || 0;
+        const ltp = Number(t.avg_exit_price || entryPrice) || entryPrice;
+        legs.push({
+          id: `leg_${t.id}_${tradeIdx}`,
+          isActive: true,
+          side,
+          type: t.option_type === 'FUT' ? 'FUT' : (t.option_type === 'PE' ? 'PE' : 'CE'),
+          strike: Number(t.strike_price) || 0,
+          expiry,
+          lots,
+          lotSize,
+          entryPrice,
+          ltp,
+          iv: 14.5,
+          bookedPnL,
+          tradeId: t.id,
+        });
+      }
+    });
+
+    const payload = {
+      symbol: dominantSymbol,
+      strategyName: `${dominantSymbol} ${targetTrades.length > 1 ? `${targetTrades.length} Selected Trades` : 'Selected Trade'}`,
+      legs,
+      timestamp: Date.now(),
+    };
+
+    try {
+      sessionStorage.setItem('strategy_builder_import', JSON.stringify(payload));
+    } catch (e) {
+      console.warn('sessionStorage set failed', e);
+    }
+
+    navigate('/strategy-builder', { state: payload });
+  };
+
   // Export handlers
   const [exporting, setExporting] = useState(false);
 
@@ -2018,6 +2139,15 @@ export default function AllTrades() {
                 </button>
                 <button
                   type="button"
+                  onClick={() => handleOpenInStrategyBuilder()}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-md shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer whitespace-nowrap"
+                  title="Analyze selected trades in Strategy Builder"
+                >
+                  <Layers className="w-3.5 h-3.5" />
+                  <span>Strategy Builder ({selectedRowIds.size})</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => setShowBulkDeleteModal(true)}
                   className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-md shadow-rose-600/25 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer whitespace-nowrap"
                 >
@@ -2339,6 +2469,17 @@ export default function AllTrades() {
                                 )}
                                 <button
                                   type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenInStrategyBuilder(trade);
+                                  }}
+                                  className="p-1 rounded hover:bg-[#1e293b] light:hover:bg-slate-200 text-slate-400 hover:text-blue-400 transition-colors"
+                                  title="Analyse in Strategy Builder"
+                                >
+                                  <Layers className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
                                   onClick={(e) => handleOpenEdit(trade, e)}
                                   className="p-1 rounded hover:bg-[#1e293b] light:hover:bg-slate-200 text-slate-400 hover:text-blue-400 transition-colors"
                                   title="Edit Trade"
@@ -2598,8 +2739,16 @@ export default function AllTrades() {
                 </h3>
               </div>
 
-              {/* Action Icons: Edit, Delete, Close */}
+              {/* Action Icons: Builder, Edit, Delete, Close */}
               <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => handleOpenInStrategyBuilder(selectedTrade)}
+                  className="p-1.5 rounded-lg hover:bg-blue-500/10 text-slate-400 hover:text-blue-400 transition-colors"
+                  title="Analyse in Strategy Builder"
+                >
+                  <Layers className="w-4 h-4" />
+                </button>
                 <button
                   type="button"
                   onClick={(e) => handleOpenEdit(selectedTrade, e)}
@@ -2647,14 +2796,25 @@ export default function AllTrades() {
                     )}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setPartialExitTrade(selectedTrade)}
-                  className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5 whitespace-nowrap"
-                >
-                  <SlidersHorizontal className="w-3.5 h-3.5" />
-                  <span>Execute Exit</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenInStrategyBuilder(selectedTrade)}
+                    className="px-2.5 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    title="Analyse in Strategy Builder"
+                  >
+                    <Layers className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Builder</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPartialExitTrade(selectedTrade)}
+                    className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5 whitespace-nowrap"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    <span>Execute Exit</span>
+                  </button>
+                </div>
               </div>
             )}
 
@@ -3581,6 +3741,15 @@ export default function AllTrades() {
             className="text-slate-400 hover:text-white light:text-slate-600 light:hover:text-slate-900 text-xs font-medium px-2 py-1 transition-colors cursor-pointer whitespace-nowrap"
           >
             Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => handleOpenInStrategyBuilder()}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-md shadow-blue-600/30 hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
+            title="Analyze selected trades in Strategy Builder"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>Strategy Builder ({selectedRowIds.size})</span>
           </button>
           <button
             type="button"

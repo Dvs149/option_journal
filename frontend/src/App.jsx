@@ -19,6 +19,7 @@ import EquityCurve from './pages/EquityCurve';
 import RiskManagement from './pages/RiskManagement';
 import TradingJournal from './pages/TradingJournal';
 import StrategyAnalysis from './pages/StrategyAnalysis';
+import StrategyBuilder from './pages/StrategyBuilder';
 import AnalyticsReports from './pages/AnalyticsReports';
 import CapitalManagement from './pages/CapitalManagement';
 import DropdownManager from './pages/DropdownManager';
@@ -80,6 +81,7 @@ export default function App() {
                           <Route path="risk-management" element={<RiskManagement />} />
                           <Route path="journal" element={<TradingJournal />} />
                           <Route path="strategy-analysis" element={<StrategyAnalysis />} />
+                          <Route path="strategy-builder" element={<StrategyBuilder />} />
                           <Route path="analytics" element={<AnalyticsReports />} />
                           <Route path="capital-management" element={<CapitalManagement />} />
                           <Route path="pine-scripts" element={<PineScriptManager />} />

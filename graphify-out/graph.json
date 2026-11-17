@@ -2349,7 +2349,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Analytics.swift",
       "source_location": "L25",
       "id": "models_analytics_dailypnlpoint",
-      "community": 108,
+      "community": 30,
       "norm_label": "dailypnlpoint"
     },
     {
@@ -2358,7 +2358,7 @@
       "source_file": "",
       "source_location": "",
       "id": "hashable",
-      "community": 233,
+      "community": 30,
       "norm_label": "hashable"
     },
     {
@@ -2421,7 +2421,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Analytics.swift",
       "source_location": "L116",
       "id": "models_analytics_equitypoint",
-      "community": 108,
+      "community": 30,
       "norm_label": "equitypoint"
     },
     {
@@ -2430,7 +2430,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Analytics.swift",
       "source_location": "L130",
       "id": "models_analytics_equitypoint_init",
-      "community": 108,
+      "community": 113,
       "norm_label": ".init()"
     },
     {
@@ -2538,7 +2538,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Analytics.swift",
       "source_location": "L276",
       "id": "models_analytics_strategyperformanceitem",
-      "community": 108,
+      "community": 30,
       "norm_label": "strategyperformanceitem"
     },
     {
@@ -2547,7 +2547,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Analytics.swift",
       "source_location": "L287",
       "id": "models_analytics_strategyperformanceitem_init",
-      "community": 108,
+      "community": 113,
       "norm_label": ".init()"
     },
     {
@@ -2637,7 +2637,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Trade.swift",
       "source_location": "L1",
       "id": "macos_optionjournal_optionjournal_models_trade_swift",
-      "community": 30,
+      "community": 173,
       "norm_label": "trade.swift"
     },
     {
@@ -2673,7 +2673,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Trade.swift",
       "source_location": "L135",
       "id": "models_trade_paginatedtradesresponse",
-      "community": 30,
+      "community": 173,
       "norm_label": "paginatedtradesresponse"
     },
     {
@@ -2682,7 +2682,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Trade.swift",
       "source_location": "L146",
       "id": "models_trade_tradeestimaterequest",
-      "community": 30,
+      "community": 173,
       "norm_label": "tradeestimaterequest"
     },
     {
@@ -2691,7 +2691,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Trade.swift",
       "source_location": "L157",
       "id": "models_trade_tradeestimaterequest_init",
-      "community": 30,
+      "community": 173,
       "norm_label": ".init()"
     },
     {
@@ -2700,7 +2700,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Trade.swift",
       "source_location": "L170",
       "id": "models_trade_tradeestimateresponse",
-      "community": 30,
+      "community": 173,
       "norm_label": "tradeestimateresponse"
     },
     {
@@ -2709,7 +2709,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Trade.swift",
       "source_location": "L184",
       "id": "models_trade_createtraderequest",
-      "community": 30,
+      "community": 173,
       "norm_label": "createtraderequest"
     },
     {
@@ -2718,7 +2718,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Trade.swift",
       "source_location": "L226",
       "id": "models_trade_createtraderequest_init",
-      "community": 30,
+      "community": 173,
       "norm_label": ".init()"
     },
     {
@@ -2727,7 +2727,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Trade.swift",
       "source_location": "L304",
       "id": "models_trade_bulktradeitem",
-      "community": 30,
+      "community": 173,
       "norm_label": "bulktradeitem"
     },
     {
@@ -2736,7 +2736,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Trade.swift",
       "source_location": "L316",
       "id": "models_trade_bulktradeitem_init",
-      "community": 30,
+      "community": 173,
       "norm_label": ".init()"
     },
     {
@@ -2745,7 +2745,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Trade.swift",
       "source_location": "L330",
       "id": "models_trade_bulkimportrequest",
-      "community": 30,
+      "community": 173,
       "norm_label": "bulkimportrequest"
     },
     {
@@ -2754,7 +2754,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Trade.swift",
       "source_location": "L333",
       "id": "models_trade_bulkimportrequest_init",
-      "community": 30,
+      "community": 173,
       "norm_label": ".init()"
     },
     {
@@ -2763,7 +2763,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Trade.swift",
       "source_location": "L338",
       "id": "models_trade_bulkimportresponse",
-      "community": 30,
+      "community": 173,
       "norm_label": "bulkimportresponse"
     },
     {
@@ -3006,7 +3006,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Journal.swift",
       "source_location": "L1",
       "id": "macos_optionjournal_optionjournal_models_journal_swift",
-      "community": 233,
+      "community": 30,
       "norm_label": "journal.swift"
     },
     {
@@ -3015,7 +3015,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Journal.swift",
       "source_location": "L4",
       "id": "models_journal_journalresponse",
-      "community": 233,
+      "community": 30,
       "norm_label": "journalresponse"
     },
     {
@@ -3033,7 +3033,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Journal.swift",
       "source_location": "L26",
       "id": "models_journal_journaltradeitem",
-      "community": 233,
+      "community": 30,
       "norm_label": "journaltradeitem"
     },
     {
@@ -3042,7 +3042,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Journal.swift",
       "source_location": "L52",
       "id": "models_journal_tradescreenshot",
-      "community": 233,
+      "community": 30,
       "norm_label": "tradescreenshot"
     },
     {
@@ -3069,7 +3069,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Capital.swift",
       "source_location": "L1",
       "id": "macos_optionjournal_optionjournal_models_capital_swift",
-      "community": 233,
+      "community": 30,
       "norm_label": "capital.swift"
     },
     {
@@ -3087,7 +3087,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Capital.swift",
       "source_location": "L27",
       "id": "models_capital_capitalgrowthpoint",
-      "community": 233,
+      "community": 30,
       "norm_label": "capitalgrowthpoint"
     },
     {
@@ -3096,7 +3096,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Capital.swift",
       "source_location": "L36",
       "id": "models_capital_capitaltransaction",
-      "community": 233,
+      "community": 30,
       "norm_label": "capitaltransaction"
     },
     {
@@ -3105,7 +3105,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Capital.swift",
       "source_location": "L49",
       "id": "models_capital_createtransactionrequest",
-      "community": 233,
+      "community": 30,
       "norm_label": "createtransactionrequest"
     },
     {
@@ -3114,7 +3114,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Models/Capital.swift",
       "source_location": "L55",
       "id": "models_capital_createtransactionrequest_init",
-      "community": 233,
+      "community": 30,
       "norm_label": ".init()"
     },
     {
@@ -3303,7 +3303,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Tools/PineScriptManagerView.swift",
       "source_location": "L1",
       "id": "macos_optionjournal_optionjournal_views_tools_pinescriptmanagerview_swift",
-      "community": 69,
+      "community": 145,
       "norm_label": "pinescriptmanagerview.swift"
     },
     {
@@ -3312,7 +3312,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Tools/PineScriptManagerView.swift",
       "source_location": "L3",
       "id": "tools_pinescriptmanagerview_pinescriptmanagerview",
-      "community": 43,
+      "community": 145,
       "norm_label": "pinescriptmanagerview"
     },
     {
@@ -3321,7 +3321,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Tools/PineScriptManagerView.swift",
       "source_location": "L8",
       "id": "tools_pinescriptmanagerview_pinescriptmanagerview_init",
-      "community": 43,
+      "community": 145,
       "norm_label": ".init()"
     },
     {
@@ -3330,7 +3330,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Tools/PineScriptManagerView.swift",
       "source_location": "L137",
       "id": "tools_pinescriptmanagerview_pinescriptmanagerview_statcard",
-      "community": 43,
+      "community": 145,
       "norm_label": ".statcard()"
     },
     {
@@ -3339,7 +3339,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Tools/PineScriptManagerView.swift",
       "source_location": "L218",
       "id": "tools_pinescriptmanagerview_pinescriptmanagerview_dropdownlabel",
-      "community": 43,
+      "community": 145,
       "norm_label": ".dropdownlabel()"
     },
     {
@@ -3348,7 +3348,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Tools/PineScriptManagerView.swift",
       "source_location": "L316",
       "id": "tools_pinescriptmanagerview_pinescriptmanagerview_scriptinspectorcard",
-      "community": 43,
+      "community": 145,
       "norm_label": ".scriptinspectorcard()"
     },
     {
@@ -3357,7 +3357,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Tools/PineScriptManagerView.swift",
       "source_location": "L439",
       "id": "tools_pinescriptmanagerview_pinescriptmanagerview_tabpill",
-      "community": 43,
+      "community": 145,
       "norm_label": ".tabpill()"
     },
     {
@@ -3366,7 +3366,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Tools/PineScriptManagerView.swift",
       "source_location": "L454",
       "id": "tools_pinescriptmanagerview_pinescriptmanagerview_codecolorfor",
-      "community": 43,
+      "community": 145,
       "norm_label": ".codecolorfor()"
     },
     {
@@ -3474,7 +3474,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L1",
       "id": "macos_optionjournal_optionjournal_views_capital_capitalmanagementview_swift",
-      "community": 140,
+      "community": 69,
       "norm_label": "capitalmanagementview.swift"
     },
     {
@@ -3726,7 +3726,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L1",
       "id": "macos_optionjournal_optionjournal_views_trades_tradestableview_swift",
-      "community": 43,
+      "community": 140,
       "norm_label": "tradestableview.swift"
     },
     {
@@ -3735,7 +3735,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L4",
       "id": "trades_tradestableview_tradestableview",
-      "community": 43,
+      "community": 140,
       "norm_label": "tradestableview"
     },
     {
@@ -3744,7 +3744,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L15",
       "id": "trades_tradestableview_tradestableview_init",
-      "community": 43,
+      "community": 140,
       "norm_label": ".init()"
     },
     {
@@ -3753,7 +3753,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L151",
       "id": "trades_tradestableview_tradestableview_tradestatcard",
-      "community": 43,
+      "community": 140,
       "norm_label": ".tradestatcard()"
     },
     {
@@ -3762,7 +3762,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L343",
       "id": "trades_tradestableview_tradestableview_filterdropdown",
-      "community": 43,
+      "community": 140,
       "norm_label": ".filterdropdown()"
     },
     {
@@ -3771,7 +3771,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L550",
       "id": "trades_tradestableview_tradestableview_paginationpagebutton",
-      "community": 43,
+      "community": 140,
       "norm_label": ".paginationpagebutton()"
     },
     {
@@ -3780,7 +3780,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L565",
       "id": "trades_tradestableview_tradestableview_headercell",
-      "community": 43,
+      "community": 140,
       "norm_label": ".headercell()"
     },
     {
@@ -3789,7 +3789,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L572",
       "id": "trades_tradestableview_tradestableview_tradetablerow",
-      "community": 43,
+      "community": 140,
       "norm_label": ".tradetablerow()"
     },
     {
@@ -3798,7 +3798,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L705",
       "id": "trades_tradestableview_tradestableview_tradedetailsinspector",
-      "community": 43,
+      "community": 140,
       "norm_label": ".tradedetailsinspector()"
     },
     {
@@ -3807,7 +3807,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L775",
       "id": "trades_tradestableview_tradestableview_tabbutton",
-      "community": 43,
+      "community": 140,
       "norm_label": ".tabbutton()"
     },
     {
@@ -3816,7 +3816,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L790",
       "id": "trades_tradestableview_tradestableview_detailstabcontent",
-      "community": 43,
+      "community": 140,
       "norm_label": ".detailstabcontent()"
     },
     {
@@ -3825,7 +3825,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L887",
       "id": "trades_tradestableview_tradestableview_chargestabcontent",
-      "community": 43,
+      "community": 140,
       "norm_label": ".chargestabcontent()"
     },
     {
@@ -3834,7 +3834,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L912",
       "id": "trades_tradestableview_tradestableview_journaltabcontent",
-      "community": 43,
+      "community": 140,
       "norm_label": ".journaltabcontent()"
     },
     {
@@ -3843,7 +3843,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L924",
       "id": "trades_tradestableview_tradestableview_journalentrycard",
-      "community": 43,
+      "community": 140,
       "norm_label": ".journalentrycard()"
     },
     {
@@ -3852,7 +3852,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L939",
       "id": "trades_tradestableview_tradestableview_chargeitem",
-      "community": 43,
+      "community": 140,
       "norm_label": ".chargeitem()"
     },
     {
@@ -3861,7 +3861,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L951",
       "id": "trades_tradestableview_tradestableview_specrow",
-      "community": 43,
+      "community": 140,
       "norm_label": ".specrow()"
     },
     {
@@ -3870,7 +3870,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L975",
       "id": "trades_tradestableview_tradestableview_summaryrow",
-      "community": 43,
+      "community": 140,
       "norm_label": ".summaryrow()"
     },
     {
@@ -3879,7 +3879,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Trades/TradesTableView.swift",
       "source_location": "L1080",
       "id": "trades_tradestableview_breakdownitem",
-      "community": 43,
+      "community": 140,
       "norm_label": "breakdownitem"
     },
     {
@@ -4059,7 +4059,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Shell/SidebarView.swift",
       "source_location": "L3",
       "id": "shell_sidebarview_sidebaritem",
-      "community": 233,
+      "community": 93,
       "norm_label": "sidebaritem"
     },
     {
@@ -4068,7 +4068,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Shell/SidebarView.swift",
       "source_location": "L8",
       "id": "shell_sidebarview_sidebaritem_init",
-      "community": 233,
+      "community": 93,
       "norm_label": ".init()"
     },
     {
@@ -4518,7 +4518,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L2117",
       "id": "dashboard_dashboardview_color",
-      "community": 43,
+      "community": 140,
       "norm_label": "color"
     },
     {
@@ -4527,7 +4527,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Dashboard/DashboardView.swift",
       "source_location": "L2118",
       "id": "dashboard_dashboardview_color_init",
-      "community": 43,
+      "community": 140,
       "norm_label": ".init()"
     },
     {
@@ -4536,7 +4536,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Analytics/EquityCurveView.swift",
       "source_location": "L1",
       "id": "macos_optionjournal_optionjournal_views_analytics_equitycurveview_swift",
-      "community": 43,
+      "community": 140,
       "norm_label": "equitycurveview.swift"
     },
     {
@@ -4545,7 +4545,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Analytics/EquityCurveView.swift",
       "source_location": "L4",
       "id": "analytics_equitycurveview_equitycurveview",
-      "community": 43,
+      "community": 140,
       "norm_label": "equitycurveview"
     },
     {
@@ -4554,7 +4554,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Analytics/EquityCurveView.swift",
       "source_location": "L9",
       "id": "analytics_equitycurveview_equitycurveview_init",
-      "community": 43,
+      "community": 140,
       "norm_label": ".init()"
     },
     {
@@ -4563,7 +4563,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Analytics/EquityCurveView.swift",
       "source_location": "L150",
       "id": "analytics_equitycurveview_equitycurveview_equitykpicard",
-      "community": 43,
+      "community": 140,
       "norm_label": ".equitykpicard()"
     },
     {
@@ -4572,7 +4572,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Analytics/EquityCurveView.swift",
       "source_location": "L258",
       "id": "analytics_equitycurveview_equitycurveview_charttabbutton",
-      "community": 43,
+      "community": 140,
       "norm_label": ".charttabbutton()"
     },
     {
@@ -4581,7 +4581,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Analytics/EquityCurveView.swift",
       "source_location": "L315",
       "id": "analytics_equitycurveview_equitycurveview_breakdownlegendrow",
-      "community": 43,
+      "community": 140,
       "norm_label": ".breakdownlegendrow()"
     },
     {
@@ -4590,7 +4590,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Analytics/EquityCurveView.swift",
       "source_location": "L608",
       "id": "analytics_equitycurveview_equitycurveview_metricrow",
-      "community": 43,
+      "community": 140,
       "norm_label": ".metricrow()"
     },
     {
@@ -4599,7 +4599,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Views/Analytics/EquityCurveView.swift",
       "source_location": "L684",
       "id": "analytics_equitycurveview_equitycurveview_insightitem",
-      "community": 43,
+      "community": 140,
       "norm_label": ".insightitem()"
     },
     {
@@ -4905,7 +4905,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Services/ExportService.swift",
       "source_location": "L1",
       "id": "macos_optionjournal_optionjournal_services_exportservice_swift",
-      "community": 29,
+      "community": 176,
       "norm_label": "exportservice.swift"
     },
     {
@@ -4950,7 +4950,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Services/ExportService.swift",
       "source_location": "L36",
       "id": "services_exportservice_exportserviceprotocol",
-      "community": 29,
+      "community": 176,
       "norm_label": "exportserviceprotocol"
     },
     {
@@ -4959,7 +4959,7 @@
       "source_file": "backend/app/Services/ExportService.php",
       "source_location": "L10",
       "id": "services_exportservice_exportservice",
-      "community": 29,
+      "community": 176,
       "norm_label": "exportservice"
     },
     {
@@ -4968,7 +4968,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Services/ExportService.swift",
       "source_location": "L45",
       "id": "services_exportservice_exportservice_init",
-      "community": 29,
+      "community": 176,
       "norm_label": ".init()"
     },
     {
@@ -4977,7 +4977,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Services/ExportService.swift",
       "source_location": "L49",
       "id": "services_exportservice_exportservice_downloadreport",
-      "community": 29,
+      "community": 176,
       "norm_label": ".downloadreport()"
     },
     {
@@ -4986,7 +4986,7 @@
       "source_file": "macos/OptionJournal/OptionJournal/Services/ExportService.swift",
       "source_location": "L53",
       "id": "services_exportservice_exportservice_savefiletodisk",
-      "community": 29,
+      "community": 176,
       "norm_label": ".savefiletodisk()"
     },
     {
@@ -5697,7 +5697,7 @@
       "source_file": "frontend/src/main.jsx",
       "source_location": "L1",
       "id": "frontend_src_main_jsx",
-      "community": 76,
+      "community": 43,
       "norm_label": "main.jsx"
     },
     {
@@ -5713,7 +5713,7 @@
       "label": "ProtectedRoute()",
       "file_type": "code",
       "source_file": "frontend/src/App.jsx",
-      "source_location": "L31",
+      "source_location": "L32",
       "id": "src_app_protectedroute",
       "community": 18,
       "norm_label": "protectedroute()"
@@ -5722,7 +5722,7 @@
       "label": "App()",
       "file_type": "code",
       "source_file": "frontend/src/App.jsx",
-      "source_location": "L49",
+      "source_location": "L50",
       "id": "src_app_app",
       "community": 18,
       "norm_label": "app()"
@@ -5769,7 +5769,7 @@
       "source_file": "frontend/src/context/ThemeContext.jsx",
       "source_location": "L1",
       "id": "frontend_src_context_themecontext_jsx",
-      "community": 37,
+      "community": 76,
       "norm_label": "themecontext.jsx"
     },
     {
@@ -5778,7 +5778,7 @@
       "source_file": "frontend/src/context/ThemeContext.jsx",
       "source_location": "L3",
       "id": "context_themecontext_themecontext",
-      "community": 37,
+      "community": 76,
       "norm_label": "themecontext"
     },
     {
@@ -5787,7 +5787,7 @@
       "source_file": "frontend/src/context/ThemeContext.jsx",
       "source_location": "L5",
       "id": "context_themecontext_themeprovider",
-      "community": 37,
+      "community": 18,
       "norm_label": "themeprovider()"
     },
     {
@@ -5796,7 +5796,7 @@
       "source_file": "frontend/src/context/ThemeContext.jsx",
       "source_location": "L73",
       "id": "context_themecontext_usetheme",
-      "community": 37,
+      "community": 76,
       "norm_label": "usetheme()"
     },
     {
@@ -5805,7 +5805,7 @@
       "source_file": "frontend/src/context/ToastContext.jsx",
       "source_location": "L1",
       "id": "frontend_src_context_toastcontext_jsx",
-      "community": 15,
+      "community": 37,
       "norm_label": "toastcontext.jsx"
     },
     {
@@ -5814,7 +5814,7 @@
       "source_file": "frontend/src/context/ToastContext.jsx",
       "source_location": "L4",
       "id": "context_toastcontext_toastcontext",
-      "community": 15,
+      "community": 37,
       "norm_label": "toastcontext"
     },
     {
@@ -5823,16 +5823,16 @@
       "source_file": "frontend/src/context/ToastContext.jsx",
       "source_location": "L6",
       "id": "context_toastcontext_toastprovider",
-      "community": 15,
+      "community": 37,
       "norm_label": "toastprovider()"
     },
     {
       "label": "useToast()",
       "file_type": "code",
       "source_file": "frontend/src/context/ToastContext.jsx",
-      "source_location": "L94",
+      "source_location": "L114",
       "id": "context_toastcontext_usetoast",
-      "community": 15,
+      "community": 76,
       "norm_label": "usetoast()"
     },
     {
@@ -5922,7 +5922,7 @@
       "source_file": "frontend/src/context/DropdownContext.jsx",
       "source_location": "L1",
       "id": "frontend_src_context_dropdowncontext_jsx",
-      "community": 15,
+      "community": 37,
       "norm_label": "dropdowncontext.jsx"
     },
     {
@@ -5931,7 +5931,7 @@
       "source_file": "frontend/src/context/DropdownContext.jsx",
       "source_location": "L6",
       "id": "context_dropdowncontext_dropdowncontext",
-      "community": 15,
+      "community": 37,
       "norm_label": "dropdowncontext"
     },
     {
@@ -5940,7 +5940,7 @@
       "source_file": "frontend/src/context/DropdownContext.jsx",
       "source_location": "L9",
       "id": "context_dropdowncontext_module_metadata",
-      "community": 15,
+      "community": 37,
       "norm_label": "module_metadata"
     },
     {
@@ -5949,7 +5949,7 @@
       "source_file": "frontend/src/context/DropdownContext.jsx",
       "source_location": "L30",
       "id": "context_dropdowncontext_dropdownprovider",
-      "community": 15,
+      "community": 37,
       "norm_label": "dropdownprovider()"
     },
     {
@@ -5958,7 +5958,7 @@
       "source_file": "frontend/src/context/DropdownContext.jsx",
       "source_location": "L270",
       "id": "context_dropdowncontext_usedropdown",
-      "community": 92,
+      "community": 37,
       "norm_label": "usedropdown()"
     },
     {
@@ -6003,7 +6003,7 @@
       "source_file": "frontend/src/context/BrokerageContext.jsx",
       "source_location": "L254",
       "id": "context_brokeragecontext_usebrokerage",
-      "community": 92,
+      "community": 76,
       "norm_label": "usebrokerage()"
     },
     {
@@ -6073,7 +6073,7 @@
       "label": "APP_MODULES",
       "file_type": "code",
       "source_file": "frontend/src/context/ModuleContext.jsx",
-      "source_location": "L18",
+      "source_location": "L19",
       "id": "context_modulecontext_app_modules",
       "community": 18,
       "norm_label": "app_modules"
@@ -6082,7 +6082,7 @@
       "label": "DEFAULT_VISIBILITY",
       "file_type": "code",
       "source_file": "frontend/src/context/ModuleContext.jsx",
-      "source_location": "L119",
+      "source_location": "L128",
       "id": "context_modulecontext_default_visibility",
       "community": 18,
       "norm_label": "default_visibility"
@@ -6091,7 +6091,7 @@
       "label": "ModuleContext",
       "file_type": "code",
       "source_file": "frontend/src/context/ModuleContext.jsx",
-      "source_location": "L124",
+      "source_location": "L133",
       "id": "context_modulecontext_modulecontext",
       "community": 18,
       "norm_label": "modulecontext"
@@ -6100,7 +6100,7 @@
       "label": "ModuleProvider()",
       "file_type": "code",
       "source_file": "frontend/src/context/ModuleContext.jsx",
-      "source_location": "L126",
+      "source_location": "L135",
       "id": "context_modulecontext_moduleprovider",
       "community": 18,
       "norm_label": "moduleprovider()"
@@ -6109,7 +6109,7 @@
       "label": "useModules()",
       "file_type": "code",
       "source_file": "frontend/src/context/ModuleContext.jsx",
-      "source_location": "L301",
+      "source_location": "L310",
       "id": "context_modulecontext_usemodules",
       "community": 18,
       "norm_label": "usemodules()"
@@ -6223,12 +6223,66 @@
       "norm_label": "downloadcustomsampletemplate()"
     },
     {
+      "label": "blackScholes.js",
+      "file_type": "code",
+      "source_file": "frontend/src/utils/blackScholes.js",
+      "source_location": "L1",
+      "id": "frontend_src_utils_blackscholes_js",
+      "community": 207,
+      "norm_label": "blackscholes.js"
+    },
+    {
+      "label": "standardNormalCdf()",
+      "file_type": "code",
+      "source_file": "frontend/src/utils/blackScholes.js",
+      "source_location": "L7",
+      "id": "utils_blackscholes_standardnormalcdf",
+      "community": 207,
+      "norm_label": "standardnormalcdf()"
+    },
+    {
+      "label": "standardNormalPdf()",
+      "file_type": "code",
+      "source_file": "frontend/src/utils/blackScholes.js",
+      "source_location": "L26",
+      "id": "utils_blackscholes_standardnormalpdf",
+      "community": 207,
+      "norm_label": "standardnormalpdf()"
+    },
+    {
+      "label": "calculateBlackScholes()",
+      "file_type": "code",
+      "source_file": "frontend/src/utils/blackScholes.js",
+      "source_location": "L42",
+      "id": "utils_blackscholes_calculateblackscholes",
+      "community": 207,
+      "norm_label": "calculateblackscholes()"
+    },
+    {
+      "label": "impliedVolatility()",
+      "file_type": "code",
+      "source_file": "frontend/src/utils/blackScholes.js",
+      "source_location": "L117",
+      "id": "utils_blackscholes_impliedvolatility",
+      "community": 207,
+      "norm_label": "impliedvolatility()"
+    },
+    {
+      "label": "generatePayoffCurve()",
+      "file_type": "code",
+      "source_file": "frontend/src/utils/blackScholes.js",
+      "source_location": "L155",
+      "id": "utils_blackscholes_generatepayoffcurve",
+      "community": 207,
+      "norm_label": "generatepayoffcurve()"
+    },
+    {
       "label": "formatters.js",
       "file_type": "code",
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L1",
       "id": "frontend_src_utils_formatters_js",
-      "community": 37,
+      "community": 95,
       "norm_label": "formatters.js"
     },
     {
@@ -6255,7 +6309,7 @@
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L40",
       "id": "utils_formatters_formatpct",
-      "community": 37,
+      "community": 95,
       "norm_label": "formatpct()"
     },
     {
@@ -6264,7 +6318,7 @@
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L46",
       "id": "utils_formatters_formatdate",
-      "community": 37,
+      "community": 95,
       "norm_label": "formatdate()"
     },
     {
@@ -6273,7 +6327,7 @@
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L97",
       "id": "utils_formatters_getdayofweek",
-      "community": 37,
+      "community": 95,
       "norm_label": "getdayofweek()"
     },
     {
@@ -6282,7 +6336,7 @@
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L139",
       "id": "utils_formatters_formattime",
-      "community": 37,
+      "community": 95,
       "norm_label": "formattime()"
     },
     {
@@ -6291,7 +6345,7 @@
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L177",
       "id": "utils_formatters_formatdatetime",
-      "community": 37,
+      "community": 95,
       "norm_label": "formatdatetime()"
     },
     {
@@ -6412,6 +6466,222 @@
       "norm_label": "getindexnearestexpiry()"
     },
     {
+      "label": "strategyPresets.js",
+      "file_type": "code",
+      "source_file": "frontend/src/utils/strategyPresets.js",
+      "source_location": "L1",
+      "id": "frontend_src_utils_strategypresets_js",
+      "community": 218,
+      "norm_label": "strategypresets.js"
+    },
+    {
+      "label": "STRATEGY_CATEGORIES",
+      "file_type": "code",
+      "source_file": "frontend/src/utils/strategyPresets.js",
+      "source_location": "L6",
+      "id": "utils_strategypresets_strategy_categories",
+      "community": 218,
+      "norm_label": "strategy_categories"
+    },
+    {
+      "label": "READY_MADE_STRATEGIES",
+      "file_type": "code",
+      "source_file": "frontend/src/utils/strategyPresets.js",
+      "source_location": "L22",
+      "id": "utils_strategypresets_ready_made_strategies",
+      "community": 218,
+      "norm_label": "ready_made_strategies"
+    },
+    {
+      "label": "GreeksTable.jsx",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/GreeksTable.jsx",
+      "source_location": "L1",
+      "id": "frontend_src_components_strategy_builder_greekstable_jsx",
+      "community": 207,
+      "norm_label": "greekstable.jsx"
+    },
+    {
+      "label": "GreeksTable()",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/GreeksTable.jsx",
+      "source_location": "L4",
+      "id": "strategy_builder_greekstable_greekstable",
+      "community": 207,
+      "norm_label": "greekstable()"
+    },
+    {
+      "label": "UnderlyingSelectorModal.jsx",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/UnderlyingSelectorModal.jsx",
+      "source_location": "L1",
+      "id": "frontend_src_components_strategy_builder_underlyingselectormodal_jsx",
+      "community": 92,
+      "norm_label": "underlyingselectormodal.jsx"
+    },
+    {
+      "label": "POPULAR_INDICES",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/UnderlyingSelectorModal.jsx",
+      "source_location": "L5",
+      "id": "strategy_builder_underlyingselectormodal_popular_indices",
+      "community": 92,
+      "norm_label": "popular_indices"
+    },
+    {
+      "label": "POPULAR_STOCKS",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/UnderlyingSelectorModal.jsx",
+      "source_location": "L14",
+      "id": "strategy_builder_underlyingselectormodal_popular_stocks",
+      "community": 92,
+      "norm_label": "popular_stocks"
+    },
+    {
+      "label": "UnderlyingSelectorModal()",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/UnderlyingSelectorModal.jsx",
+      "source_location": "L25",
+      "id": "strategy_builder_underlyingselectormodal_underlyingselectormodal",
+      "community": 92,
+      "norm_label": "underlyingselectormodal()"
+    },
+    {
+      "label": "StrategyMetricsHeader.jsx",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/StrategyMetricsHeader.jsx",
+      "source_location": "L1",
+      "id": "frontend_src_components_strategy_builder_strategymetricsheader_jsx",
+      "community": 92,
+      "norm_label": "strategymetricsheader.jsx"
+    },
+    {
+      "label": "StrategyMetricsHeader()",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/StrategyMetricsHeader.jsx",
+      "source_location": "L4",
+      "id": "strategy_builder_strategymetricsheader_strategymetricsheader",
+      "community": 92,
+      "norm_label": "strategymetricsheader()"
+    },
+    {
+      "label": "OptionChainModal.jsx",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/OptionChainModal.jsx",
+      "source_location": "L1",
+      "id": "frontend_src_components_strategy_builder_optionchainmodal_jsx",
+      "community": 92,
+      "norm_label": "optionchainmodal.jsx"
+    },
+    {
+      "label": "OptionChainModal()",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/OptionChainModal.jsx",
+      "source_location": "L14",
+      "id": "strategy_builder_optionchainmodal_optionchainmodal",
+      "community": 92,
+      "norm_label": "optionchainmodal()"
+    },
+    {
+      "label": "DraftPortfoliosModal.jsx",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/DraftPortfoliosModal.jsx",
+      "source_location": "L1",
+      "id": "frontend_src_components_strategy_builder_draftportfoliosmodal_jsx",
+      "community": 92,
+      "norm_label": "draftportfoliosmodal.jsx"
+    },
+    {
+      "label": "DraftPortfoliosModal()",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/DraftPortfoliosModal.jsx",
+      "source_location": "L18",
+      "id": "strategy_builder_draftportfoliosmodal_draftportfoliosmodal",
+      "community": 92,
+      "norm_label": "draftportfoliosmodal()"
+    },
+    {
+      "label": "ReadyMadeStrategiesModal.jsx",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/ReadyMadeStrategiesModal.jsx",
+      "source_location": "L1",
+      "id": "frontend_src_components_strategy_builder_readymadestrategiesmodal_jsx",
+      "community": 218,
+      "norm_label": "readymadestrategiesmodal.jsx"
+    },
+    {
+      "label": "ReadyMadeStrategiesModal()",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/ReadyMadeStrategiesModal.jsx",
+      "source_location": "L5",
+      "id": "strategy_builder_readymadestrategiesmodal_readymadestrategiesmodal",
+      "community": 218,
+      "norm_label": "readymadestrategiesmodal()"
+    },
+    {
+      "label": "StrategyPayoffChart.jsx",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/StrategyPayoffChart.jsx",
+      "source_location": "L1",
+      "id": "frontend_src_components_strategy_builder_strategypayoffchart_jsx",
+      "community": 92,
+      "norm_label": "strategypayoffchart.jsx"
+    },
+    {
+      "label": "StrategyPayoffChart()",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/StrategyPayoffChart.jsx",
+      "source_location": "L29",
+      "id": "strategy_builder_strategypayoffchart_strategypayoffchart",
+      "community": 92,
+      "norm_label": "strategypayoffchart()"
+    },
+    {
+      "label": "PnLTable.jsx",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/PnLTable.jsx",
+      "source_location": "L1",
+      "id": "frontend_src_components_strategy_builder_pnltable_jsx",
+      "community": 92,
+      "norm_label": "pnltable.jsx"
+    },
+    {
+      "label": "PnLTable()",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/PnLTable.jsx",
+      "source_location": "L3",
+      "id": "strategy_builder_pnltable_pnltable",
+      "community": 92,
+      "norm_label": "pnltable()"
+    },
+    {
+      "label": "StrategyLegsTable.jsx",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/StrategyLegsTable.jsx",
+      "source_location": "L1",
+      "id": "frontend_src_components_strategy_builder_strategylegstable_jsx",
+      "community": 92,
+      "norm_label": "strategylegstable.jsx"
+    },
+    {
+      "label": "formatLegExpiry()",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/StrategyLegsTable.jsx",
+      "source_location": "L4",
+      "id": "strategy_builder_strategylegstable_formatlegexpiry",
+      "community": 92,
+      "norm_label": "formatlegexpiry()"
+    },
+    {
+      "label": "StrategyLegsTable()",
+      "file_type": "code",
+      "source_file": "frontend/src/components/strategy-builder/StrategyLegsTable.jsx",
+      "source_location": "L17",
+      "id": "strategy_builder_strategylegstable_strategylegstable",
+      "community": 92,
+      "norm_label": "strategylegstable()"
+    },
+    {
       "label": "ZerodhaOrderImportModal.jsx",
       "file_type": "code",
       "source_file": "frontend/src/components/trades/ZerodhaOrderImportModal.jsx",
@@ -6435,7 +6705,7 @@
       "source_file": "frontend/src/components/trades/PartialExitModal.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_trades_partialexitmodal_jsx",
-      "community": 37,
+      "community": 76,
       "norm_label": "partialexitmodal.jsx"
     },
     {
@@ -6453,7 +6723,7 @@
       "source_file": "frontend/src/components/trades/OptionChainModal.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_trades_optionchainmodal_jsx",
-      "community": 37,
+      "community": 76,
       "norm_label": "optionchainmodal.jsx"
     },
     {
@@ -6462,7 +6732,7 @@
       "source_file": "frontend/src/components/trades/OptionChainModal.jsx",
       "source_location": "L23",
       "id": "trades_optionchainmodal_optionchainmodal",
-      "community": 15,
+      "community": 76,
       "norm_label": "optionchainmodal()"
     },
     {
@@ -6471,7 +6741,7 @@
       "source_file": "frontend/src/components/trades/ZerodhaContractNoteModal.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_trades_zerodhacontractnotemodal_jsx",
-      "community": 76,
+      "community": 43,
       "norm_label": "zerodhacontractnotemodal.jsx"
     },
     {
@@ -6480,7 +6750,7 @@
       "source_file": "frontend/src/components/trades/ZerodhaContractNoteModal.jsx",
       "source_location": "L13",
       "id": "trades_zerodhacontractnotemodal_formatkiteinstrument",
-      "community": 76,
+      "community": 43,
       "norm_label": "formatkiteinstrument()"
     },
     {
@@ -6489,7 +6759,7 @@
       "source_file": "frontend/src/components/trades/ZerodhaContractNoteModal.jsx",
       "source_location": "L71",
       "id": "trades_zerodhacontractnotemodal_zerodhacontractnotemodal",
-      "community": 76,
+      "community": 43,
       "norm_label": "zerodhacontractnotemodal()"
     },
     {
@@ -6498,7 +6768,7 @@
       "source_file": "frontend/src/components/trades/ExportModal.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_trades_exportmodal_jsx",
-      "community": 15,
+      "community": 37,
       "norm_label": "exportmodal.jsx"
     },
     {
@@ -6507,7 +6777,7 @@
       "source_file": "frontend/src/components/trades/ExportModal.jsx",
       "source_location": "L29",
       "id": "trades_exportmodal_trade_columns",
-      "community": 15,
+      "community": 37,
       "norm_label": "trade_columns"
     },
     {
@@ -6516,7 +6786,7 @@
       "source_file": "frontend/src/components/trades/ExportModal.jsx",
       "source_location": "L52",
       "id": "trades_exportmodal_daily_columns",
-      "community": 15,
+      "community": 37,
       "norm_label": "daily_columns"
     },
     {
@@ -6525,7 +6795,7 @@
       "source_file": "frontend/src/components/trades/ExportModal.jsx",
       "source_location": "L66",
       "id": "trades_exportmodal_monthly_columns",
-      "community": 15,
+      "community": 37,
       "norm_label": "monthly_columns"
     },
     {
@@ -6534,7 +6804,7 @@
       "source_file": "frontend/src/components/trades/ExportModal.jsx",
       "source_location": "L80",
       "id": "trades_exportmodal_yearly_columns",
-      "community": 15,
+      "community": 37,
       "norm_label": "yearly_columns"
     },
     {
@@ -6543,7 +6813,7 @@
       "source_file": "frontend/src/components/trades/ExportModal.jsx",
       "source_location": "L93",
       "id": "trades_exportmodal_exportmodal",
-      "community": 15,
+      "community": 37,
       "norm_label": "exportmodal()"
     },
     {
@@ -6858,7 +7128,7 @@
       "source_file": "frontend/src/components/trades/EditTradeModal.jsx",
       "source_location": "L69",
       "id": "trades_edittrademodal_edittrademodal",
-      "community": 92,
+      "community": 76,
       "norm_label": "edittrademodal()"
     },
     {
@@ -6867,7 +7137,7 @@
       "source_file": "frontend/src/components/trades/EditOrderModal.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_trades_editordermodal_jsx",
-      "community": 37,
+      "community": 76,
       "norm_label": "editordermodal.jsx"
     },
     {
@@ -6885,7 +7155,7 @@
       "source_file": "frontend/src/components/layout/AppLayout.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_layout_applayout_jsx",
-      "community": 76,
+      "community": 18,
       "norm_label": "applayout.jsx"
     },
     {
@@ -6910,7 +7180,7 @@
       "label": "Sidebar()",
       "file_type": "code",
       "source_file": "frontend/src/components/layout/Sidebar.jsx",
-      "source_location": "L30",
+      "source_location": "L31",
       "id": "layout_sidebar_sidebar",
       "community": 18,
       "norm_label": "sidebar()"
@@ -6921,7 +7191,7 @@
       "source_file": "frontend/src/components/layout/Navbar.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_layout_navbar_jsx",
-      "community": 76,
+      "community": 18,
       "norm_label": "navbar.jsx"
     },
     {
@@ -6930,7 +7200,7 @@
       "source_file": "frontend/src/components/layout/Navbar.jsx",
       "source_location": "L17",
       "id": "layout_navbar_navbar",
-      "community": 76,
+      "community": 18,
       "norm_label": "navbar()"
     },
     {
@@ -6946,7 +7216,7 @@
       "label": "MobileNav()",
       "file_type": "code",
       "source_file": "frontend/src/components/layout/MobileNav.jsx",
-      "source_location": "L27",
+      "source_location": "L28",
       "id": "layout_mobilenav_mobilenav",
       "community": 18,
       "norm_label": "mobilenav()"
@@ -6957,7 +7227,7 @@
       "source_file": "frontend/src/components/common/ErrorBoundary.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_common_errorboundary_jsx",
-      "community": 76,
+      "community": 18,
       "norm_label": "errorboundary.jsx"
     },
     {
@@ -7011,7 +7281,7 @@
       "source_file": "frontend/src/components/common/StatsCard.jsx",
       "source_location": "L1",
       "id": "frontend_src_components_common_statscard_jsx",
-      "community": 37,
+      "community": 95,
       "norm_label": "statscard.jsx"
     },
     {
@@ -7020,7 +7290,7 @@
       "source_file": "frontend/src/components/common/StatsCard.jsx",
       "source_location": "L5",
       "id": "common_statscard_mainstatscard",
-      "community": 37,
+      "community": 95,
       "norm_label": "mainstatscard()"
     },
     {
@@ -7029,7 +7299,7 @@
       "source_file": "frontend/src/components/common/StatsCard.jsx",
       "source_location": "L98",
       "id": "common_statscard_compactmetriccard",
-      "community": 37,
+      "community": 95,
       "norm_label": "compactmetriccard()"
     },
     {
@@ -7038,7 +7308,7 @@
       "source_file": "frontend/src/hooks/useEscapeKey.js",
       "source_location": "L1",
       "id": "frontend_src_hooks_useescapekey_js",
-      "community": 76,
+      "community": 43,
       "norm_label": "useescapekey.js"
     },
     {
@@ -7047,7 +7317,7 @@
       "source_file": "frontend/src/hooks/useEscapeKey.js",
       "source_location": "L4",
       "id": "hooks_useescapekey_activeescapehandlers",
-      "community": 76,
+      "community": 43,
       "norm_label": "activeescapehandlers"
     },
     {
@@ -7056,7 +7326,7 @@
       "source_file": "frontend/src/hooks/useEscapeKey.js",
       "source_location": "L10",
       "id": "hooks_useescapekey_closetopmostdommodal",
-      "community": 76,
+      "community": 43,
       "norm_label": "closetopmostdommodal()"
     },
     {
@@ -7065,7 +7335,7 @@
       "source_file": "frontend/src/hooks/useEscapeKey.js",
       "source_location": "L109",
       "id": "hooks_useescapekey_handled",
-      "community": 76,
+      "community": 43,
       "norm_label": "handled"
     },
     {
@@ -7083,7 +7353,7 @@
       "source_file": "frontend/src/api/client.js",
       "source_location": "L1",
       "id": "frontend_src_api_client_js",
-      "community": 95,
+      "community": 92,
       "norm_label": "client.js"
     },
     {
@@ -7092,7 +7362,7 @@
       "source_file": "frontend/src/api/client.js",
       "source_location": "L3",
       "id": "api_client_api",
-      "community": 95,
+      "community": 92,
       "norm_label": "api"
     },
     {
@@ -7101,7 +7371,7 @@
       "source_file": "frontend/src/api/client.js",
       "source_location": "L12",
       "id": "api_client_token",
-      "community": 95,
+      "community": 92,
       "norm_label": "token"
     },
     {
@@ -7110,7 +7380,7 @@
       "source_file": "frontend/src/pages/Zerodha.jsx",
       "source_location": "L1",
       "id": "frontend_src_pages_zerodha_jsx",
-      "community": 15,
+      "community": 43,
       "norm_label": "zerodha.jsx"
     },
     {
@@ -7119,7 +7389,7 @@
       "source_file": "frontend/src/pages/Zerodha.jsx",
       "source_location": "L38",
       "id": "pages_zerodha_kiteicon",
-      "community": 15,
+      "community": 43,
       "norm_label": "kiteicon()"
     },
     {
@@ -7128,7 +7398,7 @@
       "source_file": "frontend/src/pages/Zerodha.jsx",
       "source_location": "L48",
       "id": "pages_zerodha_formatkiteinstrument",
-      "community": 15,
+      "community": 43,
       "norm_label": "formatkiteinstrument()"
     },
     {
@@ -7137,7 +7407,7 @@
       "source_file": "frontend/src/pages/Zerodha.jsx",
       "source_location": "L106",
       "id": "pages_zerodha_zerodha",
-      "community": 15,
+      "community": 43,
       "norm_label": "zerodha()"
     },
     {
@@ -7182,7 +7452,7 @@
       "source_file": "frontend/src/pages/AllTrades.jsx",
       "source_location": "L1",
       "id": "frontend_src_pages_alltrades_jsx",
-      "community": 37,
+      "community": 76,
       "norm_label": "alltrades.jsx"
     },
     {
@@ -7191,7 +7461,7 @@
       "source_file": "frontend/src/pages/AllTrades.jsx",
       "source_location": "L66",
       "id": "pages_alltrades_getlegprices",
-      "community": 37,
+      "community": 76,
       "norm_label": "getlegprices()"
     },
     {
@@ -7200,7 +7470,7 @@
       "source_file": "frontend/src/pages/AllTrades.jsx",
       "source_location": "L88",
       "id": "pages_alltrades_alltrades",
-      "community": 37,
+      "community": 76,
       "norm_label": "alltrades()"
     },
     {
@@ -7218,7 +7488,7 @@
       "source_file": "frontend/src/pages/AddTrade.jsx",
       "source_location": "L40",
       "id": "pages_addtrade_addtrade",
-      "community": 92,
+      "community": 76,
       "norm_label": "addtrade()"
     },
     {
@@ -7245,7 +7515,7 @@
       "source_file": "frontend/src/pages/TradingJournal.jsx",
       "source_location": "L1",
       "id": "frontend_src_pages_tradingjournal_jsx",
-      "community": 37,
+      "community": 95,
       "norm_label": "tradingjournal.jsx"
     },
     {
@@ -7254,7 +7524,7 @@
       "source_file": "frontend/src/pages/TradingJournal.jsx",
       "source_location": "L47",
       "id": "pages_tradingjournal_resolvescreenshot",
-      "community": 37,
+      "community": 95,
       "norm_label": "resolvescreenshot()"
     },
     {
@@ -7263,7 +7533,7 @@
       "source_file": "frontend/src/pages/TradingJournal.jsx",
       "source_location": "L69",
       "id": "pages_tradingjournal_gettradescreenshots",
-      "community": 37,
+      "community": 95,
       "norm_label": "gettradescreenshots()"
     },
     {
@@ -7272,7 +7542,7 @@
       "source_file": "frontend/src/pages/TradingJournal.jsx",
       "source_location": "L102",
       "id": "pages_tradingjournal_getlegprices",
-      "community": 37,
+      "community": 95,
       "norm_label": "getlegprices()"
     },
     {
@@ -7281,7 +7551,7 @@
       "source_file": "frontend/src/pages/TradingJournal.jsx",
       "source_location": "L123",
       "id": "pages_tradingjournal_formatjournalentry",
-      "community": 37,
+      "community": 95,
       "norm_label": "formatjournalentry()"
     },
     {
@@ -7290,7 +7560,7 @@
       "source_file": "frontend/src/pages/TradingJournal.jsx",
       "source_location": "L147",
       "id": "pages_tradingjournal_tradingjournal",
-      "community": 37,
+      "community": 95,
       "norm_label": "tradingjournal()"
     },
     {
@@ -7299,7 +7569,7 @@
       "source_file": "frontend/src/pages/Dashboard.jsx",
       "source_location": "L1",
       "id": "frontend_src_pages_dashboard_jsx",
-      "community": 37,
+      "community": 95,
       "norm_label": "dashboard.jsx"
     },
     {
@@ -7308,7 +7578,7 @@
       "source_file": "frontend/src/pages/Dashboard.jsx",
       "source_location": "L41",
       "id": "pages_dashboard_dashboard",
-      "community": 37,
+      "community": 95,
       "norm_label": "dashboard()"
     },
     {
@@ -7434,7 +7704,7 @@
       "source_file": "frontend/src/pages/DropdownManager.jsx",
       "source_location": "L1",
       "id": "frontend_src_pages_dropdownmanager_jsx",
-      "community": 15,
+      "community": 37,
       "norm_label": "dropdownmanager.jsx"
     },
     {
@@ -7443,7 +7713,7 @@
       "source_file": "frontend/src/pages/DropdownManager.jsx",
       "source_location": "L30",
       "id": "pages_dropdownmanager_color_variants",
-      "community": 15,
+      "community": 37,
       "norm_label": "color_variants"
     },
     {
@@ -7452,7 +7722,7 @@
       "source_file": "frontend/src/pages/DropdownManager.jsx",
       "source_location": "L41",
       "id": "pages_dropdownmanager_module_icons",
-      "community": 15,
+      "community": 37,
       "norm_label": "module_icons"
     },
     {
@@ -7461,7 +7731,7 @@
       "source_file": "frontend/src/pages/DropdownManager.jsx",
       "source_location": "L47",
       "id": "pages_dropdownmanager_dropdownmanager",
-      "community": 15,
+      "community": 37,
       "norm_label": "dropdownmanager()"
     },
     {
@@ -7528,12 +7798,30 @@
       "norm_label": "register()"
     },
     {
+      "label": "StrategyBuilder.jsx",
+      "file_type": "code",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L1",
+      "id": "frontend_src_pages_strategybuilder_jsx",
+      "community": 92,
+      "norm_label": "strategybuilder.jsx"
+    },
+    {
+      "label": "StrategyBuilder()",
+      "file_type": "code",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L32",
+      "id": "pages_strategybuilder_strategybuilder",
+      "community": 92,
+      "norm_label": "strategybuilder()"
+    },
+    {
       "label": "PineScriptManager.jsx",
       "file_type": "code",
       "source_file": "frontend/src/pages/PineScriptManager.jsx",
       "source_location": "L1",
       "id": "frontend_src_pages_pinescriptmanager_jsx",
-      "community": 15,
+      "community": 76,
       "norm_label": "pinescriptmanager.jsx"
     },
     {
@@ -7542,7 +7830,7 @@
       "source_file": "frontend/src/pages/PineScriptManager.jsx",
       "source_location": "L39",
       "id": "pages_pinescriptmanager_pinescriptmanager",
-      "community": 15,
+      "community": 76,
       "norm_label": "pinescriptmanager()"
     },
     {
@@ -8491,6 +8779,33 @@
       "norm_label": "down()"
     },
     {
+      "label": "2026_11_17_160000_create_strategy_drafts_table.php",
+      "file_type": "code",
+      "source_file": "backend/database/migrations/2026_11_17_160000_create_strategy_drafts_table.php",
+      "source_location": "L1",
+      "id": "backend_database_migrations_2026_11_17_160000_create_strategy_drafts_table_php",
+      "community": 230,
+      "norm_label": "2026_11_17_160000_create_strategy_drafts_table.php"
+    },
+    {
+      "label": "up()",
+      "file_type": "code",
+      "source_file": "backend/database/migrations/2026_11_17_160000_create_strategy_drafts_table.php",
+      "source_location": "L12",
+      "id": "migrations_2026_11_17_160000_create_strategy_drafts_table_up",
+      "community": 230,
+      "norm_label": "up()"
+    },
+    {
+      "label": "down()",
+      "file_type": "code",
+      "source_file": "backend/database/migrations/2026_11_17_160000_create_strategy_drafts_table.php",
+      "source_location": "L33",
+      "id": "migrations_2026_11_17_160000_create_strategy_drafts_table_down",
+      "community": 230,
+      "norm_label": "down()"
+    },
+    {
       "label": "2026_11_01_020000_add_username_to_users_table.php",
       "file_type": "code",
       "source_file": "backend/database/migrations/2026_11_01_020000_add_username_to_users_table.php",
@@ -8550,7 +8865,7 @@
       "source_file": "backend/database/seeders/DatabaseSeeder.php",
       "source_location": "L1",
       "id": "backend_database_seeders_databaseseeder_php",
-      "community": 116,
+      "community": 52,
       "norm_label": "databaseseeder.php"
     },
     {
@@ -8559,7 +8874,7 @@
       "source_file": "backend/database/seeders/DatabaseSeeder.php",
       "source_location": "L14",
       "id": "seeders_databaseseeder_databaseseeder",
-      "community": 116,
+      "community": 52,
       "norm_label": "databaseseeder"
     },
     {
@@ -8568,7 +8883,7 @@
       "source_file": "backend/database/seeders/DatabaseSeeder.php",
       "source_location": "L16",
       "id": "seeders_databaseseeder_databaseseeder_run",
-      "community": 116,
+      "community": 52,
       "norm_label": ".run()"
     },
     {
@@ -9126,6 +9441,33 @@
       "source_file": "backend/app/Models/TradeOrder.php",
       "source_location": "L58",
       "id": "models_tradeorder_tradeorder_user",
+      "community": 53,
+      "norm_label": ".user()"
+    },
+    {
+      "label": "StrategyDraft.php",
+      "file_type": "code",
+      "source_file": "backend/app/Models/StrategyDraft.php",
+      "source_location": "L1",
+      "id": "backend_app_models_strategydraft_php",
+      "community": 53,
+      "norm_label": "strategydraft.php"
+    },
+    {
+      "label": "StrategyDraft",
+      "file_type": "code",
+      "source_file": "backend/app/Models/StrategyDraft.php",
+      "source_location": "L9",
+      "id": "models_strategydraft_strategydraft",
+      "community": 53,
+      "norm_label": "strategydraft"
+    },
+    {
+      "label": ".user()",
+      "file_type": "code",
+      "source_file": "backend/app/Models/StrategyDraft.php",
+      "source_location": "L33",
+      "id": "models_strategydraft_strategydraft_user",
       "community": 53,
       "norm_label": ".user()"
     },
@@ -10462,6 +10804,96 @@
       "norm_label": ".index()"
     },
     {
+      "label": "StrategyDraftController.php",
+      "file_type": "code",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L1",
+      "id": "backend_app_http_controllers_api_strategydraftcontroller_php",
+      "community": 53,
+      "norm_label": "strategydraftcontroller.php"
+    },
+    {
+      "label": "StrategyDraftController",
+      "file_type": "code",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L16",
+      "id": "api_strategydraftcontroller_strategydraftcontroller",
+      "community": 53,
+      "norm_label": "strategydraftcontroller"
+    },
+    {
+      "label": ".__construct()",
+      "file_type": "code",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L18",
+      "id": "api_strategydraftcontroller_strategydraftcontroller_construct",
+      "community": 53,
+      "norm_label": ".__construct()"
+    },
+    {
+      "label": ".index()",
+      "file_type": "code",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L25",
+      "id": "api_strategydraftcontroller_strategydraftcontroller_index",
+      "community": 53,
+      "norm_label": ".index()"
+    },
+    {
+      "label": ".portfolios()",
+      "file_type": "code",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L49",
+      "id": "api_strategydraftcontroller_strategydraftcontroller_portfolios",
+      "community": 53,
+      "norm_label": ".portfolios()"
+    },
+    {
+      "label": ".store()",
+      "file_type": "code",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L102",
+      "id": "api_strategydraftcontroller_strategydraftcontroller_store",
+      "community": 53,
+      "norm_label": ".store()"
+    },
+    {
+      "label": ".show()",
+      "file_type": "code",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L138",
+      "id": "api_strategydraftcontroller_strategydraftcontroller_show",
+      "community": 53,
+      "norm_label": ".show()"
+    },
+    {
+      "label": ".update()",
+      "file_type": "code",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L153",
+      "id": "api_strategydraftcontroller_strategydraftcontroller_update",
+      "community": 53,
+      "norm_label": ".update()"
+    },
+    {
+      "label": ".destroy()",
+      "file_type": "code",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L183",
+      "id": "api_strategydraftcontroller_strategydraftcontroller_destroy",
+      "community": 53,
+      "norm_label": ".destroy()"
+    },
+    {
+      "label": ".convertToTrade()",
+      "file_type": "code",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L200",
+      "id": "api_strategydraftcontroller_strategydraftcontroller_converttotrade",
+      "community": 53,
+      "norm_label": ".converttotrade()"
+    },
+    {
       "label": "ModuleVisibilityController.php",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/ModuleVisibilityController.php",
@@ -11340,7 +11772,7 @@
       "source_file": "backend/app/Services/ExportService.php",
       "source_location": "L1",
       "id": "backend_app_services_exportservice_php",
-      "community": 29,
+      "community": 176,
       "norm_label": "exportservice.php"
     },
     {
@@ -11349,7 +11781,7 @@
       "source_file": "backend/app/Services/ExportService.php",
       "source_location": "L15",
       "id": "services_exportservice_exportservice_exportcsv",
-      "community": 29,
+      "community": 176,
       "norm_label": ".exportcsv()"
     },
     {
@@ -11358,7 +11790,7 @@
       "source_file": "backend/app/Services/ExportService.php",
       "source_location": "L113",
       "id": "services_exportservice_exportservice_exportexcel",
-      "community": 29,
+      "community": 176,
       "norm_label": ".exportexcel()"
     },
     {
@@ -11367,7 +11799,7 @@
       "source_file": "backend/app/Services/ExportService.php",
       "source_location": "L121",
       "id": "services_exportservice_exportservice_exportpdf",
-      "community": 29,
+      "community": 176,
       "norm_label": ".exportpdf()"
     },
     {
@@ -17828,7 +18260,7 @@
       "file_type": "code",
       "source_file": "frontend/src/api/client.js",
       "source_location": "L3",
-      "community": 95,
+      "community": 92,
       "norm_label": "getbaseurl()",
       "id": "api_client_getbaseurl"
     },
@@ -17837,7 +18269,7 @@
       "file_type": "code",
       "source_file": "OptionChainModal.jsx",
       "source_location": "L1",
-      "community": 15,
+      "community": 76,
       "norm_label": "optionchainmodal.jsx",
       "id": "optionchainmodal_jsx"
     },
@@ -17990,7 +18422,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/Views/Tools/PineScriptManagerView.swift",
       "source_location": "L175",
-      "community": 43,
+      "community": 145,
       "norm_label": ".scriptlistitem()",
       "id": "tools_pinescriptmanagerview_pinescriptmanagerview_scriptlistitem"
     },
@@ -17999,7 +18431,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/Views/Tools/PineScriptManagerView.swift",
       "source_location": "L228",
-      "community": 43,
+      "community": 145,
       "norm_label": ".rightcodepane()",
       "id": "tools_pinescriptmanagerview_pinescriptmanagerview_rightcodepane"
     },
@@ -18008,7 +18440,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/Views/Tools/PineScriptManagerView.swift",
       "source_location": "L333",
-      "community": 69,
+      "community": 145,
       "norm_label": "pinescripteditorsheet",
       "id": "tools_pinescriptmanagerview_pinescripteditorsheet"
     },
@@ -18098,7 +18530,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/Views/Capital/CapitalManagementView.swift",
       "source_location": "L365",
-      "community": 140,
+      "community": 69,
       "norm_label": "addtransactionsheet",
       "id": "capital_capitalmanagementview_addtransactionsheet"
     },
@@ -18314,7 +18746,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/Views/Analytics/EquityCurveView.swift",
       "source_location": "L187",
-      "community": 43,
+      "community": 140,
       "norm_label": ".kpicard()",
       "id": "analytics_equitycurveview_equitycurveview_kpicard"
     },
@@ -18323,7 +18755,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/Views/Analytics/EquityCurveView.swift",
       "source_location": "L436",
-      "community": 43,
+      "community": 140,
       "norm_label": ".formatcurrency()",
       "id": "analytics_equitycurveview_equitycurveview_formatcurrency"
     },
@@ -18332,7 +18764,7 @@
       "file_type": "code",
       "source_file": "macos/OptionJournal/OptionJournal/Views/Analytics/EquityCurveView.swift",
       "source_location": "L444",
-      "community": 43,
+      "community": 140,
       "norm_label": ".formatcompactcurrency()",
       "id": "analytics_equitycurveview_equitycurveview_formatcompactcurrency"
     },
@@ -18772,7 +19204,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "calendarcontroller",
@@ -18785,7 +19217,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "dashboardcontroller",
@@ -18798,7 +19230,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "riskcontroller",
@@ -18824,7 +19256,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "controller",
@@ -18837,7 +19269,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 17,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "journalcontroller",
@@ -19019,7 +19451,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 145,
+      "community": 68,
       "community_name": "UserFactory.php",
       "file_type": "code",
       "norm_label": "userfactory",
@@ -19032,7 +19464,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 17,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "norm_label": "capitalcontroller",
@@ -20063,7 +20495,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 1,
+      "community": 217,
       "community_name": "Illuminate\\Database\\Schema\\Blueprint",
       "file_type": "code",
       "metadata": {
@@ -20114,7 +20546,7 @@
       "label": "{closure#2}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 1,
+      "community": 217,
       "community_name": "Illuminate\\Database\\Schema\\Blueprint",
       "file_type": "code",
       "metadata": {
@@ -20144,7 +20576,7 @@
       "label": "{closure#3}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 1,
+      "community": 217,
       "community_name": "Illuminate\\Database\\Schema\\Blueprint",
       "file_type": "code",
       "metadata": {
@@ -20195,7 +20627,7 @@
       "label": "down()",
       "_callable": true,
       "_origin": "ast",
-      "community": 1,
+      "community": 217,
       "community_name": "Illuminate\\Database\\Schema\\Blueprint",
       "file_type": "code",
       "metadata": {
@@ -20218,7 +20650,7 @@
       "label": "up()",
       "_callable": true,
       "_origin": "ast",
-      "community": 1,
+      "community": 217,
       "community_name": "Illuminate\\Database\\Schema\\Blueprint",
       "file_type": "code",
       "metadata": {
@@ -20654,7 +21086,7 @@
       "label": ".__construct()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": ".__construct()",
@@ -20666,7 +21098,7 @@
       "label": ".index()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 68,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "metadata": {
@@ -20703,7 +21135,7 @@
       "label": ".__construct()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": ".__construct()",
@@ -20715,7 +21147,7 @@
       "label": ".index()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "metadata": {
@@ -20745,7 +21177,7 @@
       "label": ".__construct()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": ".__construct()",
@@ -20757,7 +21189,7 @@
       "label": ".updateLimits()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "metadata": {
@@ -20852,7 +21284,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 17,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "metadata": {
@@ -20903,7 +21335,7 @@
       "label": "GET /ping()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 17,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "get /ping()",
@@ -20915,7 +21347,7 @@
       "label": "GET /()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 169,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "get /()",
@@ -20963,7 +21395,7 @@
       "label": ".index()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 17,
       "community_name": "JournalController.php",
       "file_type": "code",
       "metadata": {
@@ -21014,7 +21446,7 @@
       "label": ".show()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 17,
       "community_name": "JournalController.php",
       "file_type": "code",
       "metadata": {
@@ -21067,7 +21499,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "{closure#1}()",
@@ -21079,7 +21511,7 @@
       "label": "{closure#2}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "JournalController.php",
       "file_type": "code",
       "metadata": {
@@ -21370,7 +21802,7 @@
       "label": "cleanNumber()",
       "_callable": true,
       "_origin": "ast",
-      "community": 0,
+      "community": 15,
       "community_name": "bulkTradeParser.js",
       "file_type": "code",
       "norm_label": "cleannumber()",
@@ -21382,7 +21814,7 @@
       "label": "downloadCustomSampleTemplate()",
       "_callable": true,
       "_origin": "ast",
-      "community": 0,
+      "community": 15,
       "community_name": "bulkTradeParser.js",
       "file_type": "code",
       "norm_label": "downloadcustomsampletemplate()",
@@ -21394,7 +21826,7 @@
       "label": "formatExcelDate()",
       "_callable": true,
       "_origin": "ast",
-      "community": 0,
+      "community": 15,
       "community_name": "bulkTradeParser.js",
       "file_type": "code",
       "norm_label": "formatexceldate()",
@@ -21406,7 +21838,7 @@
       "label": "parseCustomRows()",
       "_callable": true,
       "_origin": "ast",
-      "community": 0,
+      "community": 15,
       "community_name": "bulkTradeParser.js",
       "file_type": "code",
       "norm_label": "parsecustomrows()",
@@ -21418,7 +21850,7 @@
       "label": "parseKotakNeoRows()",
       "_callable": true,
       "_origin": "ast",
-      "community": 0,
+      "community": 15,
       "community_name": "bulkTradeParser.js",
       "file_type": "code",
       "norm_label": "parsekotakneorows()",
@@ -21430,7 +21862,7 @@
       "label": "parseKotakNeoScript()",
       "_callable": true,
       "_origin": "ast",
-      "community": 0,
+      "community": 15,
       "community_name": "bulkTradeParser.js",
       "file_type": "code",
       "norm_label": "parsekotakneoscript()",
@@ -21442,7 +21874,7 @@
       "label": "parseTradesSpreadsheet()",
       "_callable": true,
       "_origin": "ast",
-      "community": 0,
+      "community": 15,
       "community_name": "bulkTradeParser.js",
       "file_type": "code",
       "norm_label": "parsetradesspreadsheet()",
@@ -21454,7 +21886,7 @@
       "label": "parseZerodhaRows()",
       "_callable": true,
       "_origin": "ast",
-      "community": 0,
+      "community": 15,
       "community_name": "bulkTradeParser.js",
       "file_type": "code",
       "norm_label": "parsezerodharows()",
@@ -21466,7 +21898,7 @@
       "label": "parseZerodhaSymbol()",
       "_callable": true,
       "_origin": "ast",
-      "community": 0,
+      "community": 15,
       "community_name": "bulkTradeParser.js",
       "file_type": "code",
       "norm_label": "parsezerodhasymbol()",
@@ -21633,7 +22065,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 68,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "{closure#1}()",
@@ -21872,7 +22304,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 145,
+      "community": 68,
       "community_name": "UserFactory.php",
       "file_type": "code",
       "norm_label": "{closure#1}()",
@@ -21884,7 +22316,7 @@
       "label": ".definition()",
       "_callable": true,
       "_origin": "ast",
-      "community": 145,
+      "community": 68,
       "community_name": "UserFactory.php",
       "file_type": "code",
       "metadata": {
@@ -21914,7 +22346,7 @@
       "label": ".unverified()",
       "_callable": true,
       "_origin": "ast",
-      "community": 145,
+      "community": 68,
       "community_name": "UserFactory.php",
       "file_type": "code",
       "norm_label": ".unverified()",
@@ -22654,7 +23086,7 @@
       "label": ".destroyTransaction()",
       "_callable": true,
       "_origin": "ast",
-      "community": 2,
+      "community": 17,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "metadata": {
@@ -22677,7 +23109,7 @@
       "label": ".index()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 17,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "metadata": {
@@ -22714,7 +23146,7 @@
       "label": ".storeTransaction()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 17,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "metadata": {
@@ -22744,7 +23176,7 @@
       "label": ".updateInitialCapital()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 17,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "metadata": {
@@ -23209,7 +23641,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 213,
+      "community": 2,
       "community_name": "Illuminate\\Http\\JsonResponse",
       "file_type": "code",
       "norm_label": "{closure#1}()",
@@ -23221,7 +23653,7 @@
       "label": "{closure#2}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 213,
+      "community": 2,
       "community_name": "Illuminate\\Http\\JsonResponse",
       "file_type": "code",
       "norm_label": "{closure#2}()",
@@ -23233,7 +23665,7 @@
       "label": "{closure#3}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 213,
+      "community": 2,
       "community_name": "Illuminate\\Http\\JsonResponse",
       "file_type": "code",
       "norm_label": "{closure#3}()",
@@ -24046,7 +24478,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 208,
+      "community": 73,
       "community_name": "Illuminate\\Database\\Migrations\\Migration",
       "file_type": "code",
       "metadata": {
@@ -24111,7 +24543,7 @@
       "label": "down()",
       "_callable": true,
       "_origin": "ast",
-      "community": 208,
+      "community": 73,
       "community_name": "Illuminate\\Database\\Migrations\\Migration",
       "file_type": "code",
       "metadata": {
@@ -24134,7 +24566,7 @@
       "label": "up()",
       "_callable": true,
       "_origin": "ast",
-      "community": 208,
+      "community": 73,
       "community_name": "Illuminate\\Database\\Migrations\\Migration",
       "file_type": "code",
       "metadata": {
@@ -24291,7 +24723,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 207,
+      "community": 163,
       "community_name": "Illuminate\\Support\\Facades\\Schema",
       "file_type": "code",
       "metadata": {
@@ -24342,7 +24774,7 @@
       "label": "down()",
       "_callable": true,
       "_origin": "ast",
-      "community": 207,
+      "community": 163,
       "community_name": "Illuminate\\Support\\Facades\\Schema",
       "file_type": "code",
       "metadata": {
@@ -24365,7 +24797,7 @@
       "label": "up()",
       "_callable": true,
       "_origin": "ast",
-      "community": 207,
+      "community": 163,
       "community_name": "Illuminate\\Support\\Facades\\Schema",
       "file_type": "code",
       "metadata": {
@@ -24970,7 +25402,7 @@
       "label": ".tradingAccounts()",
       "_callable": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 68,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": ".tradingaccounts()",
@@ -25114,7 +25546,7 @@
       "label": ".exportPdf()",
       "_callable": true,
       "_origin": "ast",
-      "community": 68,
+      "community": 65,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "metadata": {
@@ -25479,7 +25911,7 @@
       "label": ".getTradingCalendar()",
       "_callable": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 68,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "metadata": {
@@ -26042,7 +26474,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 73,
+      "community": 227,
       "community_name": "2026_10_30_160000_create_user_module_visibilities_table.php",
       "file_type": "code",
       "metadata": {
@@ -26114,7 +26546,7 @@
       "label": "down()",
       "_callable": true,
       "_origin": "ast",
-      "community": 73,
+      "community": 227,
       "community_name": "2026_10_30_160000_create_user_module_visibilities_table.php",
       "file_type": "code",
       "metadata": {
@@ -26137,7 +26569,7 @@
       "label": "up()",
       "_callable": true,
       "_origin": "ast",
-      "community": 73,
+      "community": 227,
       "community_name": "2026_10_30_160000_create_user_module_visibilities_table.php",
       "file_type": "code",
       "metadata": {
@@ -26388,7 +26820,7 @@
       "label": ".allIds()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 17,
       "community_name": "Trade",
       "file_type": "code",
       "metadata": {
@@ -26430,7 +26862,7 @@
       "label": ".bulkDestroy()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 17,
       "community_name": "Trade",
       "file_type": "code",
       "metadata": {
@@ -27717,7 +28149,7 @@
     {
       "label": "0001_01_01_000000_create_users_table.php",
       "_origin": "ast",
-      "community": 1,
+      "community": 217,
       "community_name": "Illuminate\\Database\\Schema\\Blueprint",
       "file_type": "code",
       "norm_label": "0001_01_01_000000_create_users_table.php",
@@ -27989,7 +28421,7 @@
     {
       "label": "DashboardController.php",
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "dashboardcontroller.php",
@@ -28011,7 +28443,7 @@
     {
       "label": "Controller.php",
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "controller.php",
@@ -28022,7 +28454,7 @@
     {
       "label": "api.php",
       "_origin": "ast",
-      "community": 70,
+      "community": 17,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "api.php",
@@ -28033,7 +28465,7 @@
     {
       "label": "web.php",
       "_origin": "ast",
-      "community": 70,
+      "community": 169,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "web.php",
@@ -28044,7 +28476,7 @@
     {
       "label": "Illuminate\\Support\\Facades\\Route",
       "_origin": "ast",
-      "community": 70,
+      "community": 169,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "illuminate\\support\\facades\\route",
@@ -28079,7 +28511,7 @@
     {
       "label": "3.3 Controller Inventory",
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "TradingAnalyticsService",
       "file_type": "document",
       "node_kind": "heading",
@@ -28358,7 +28790,7 @@
     {
       "label": "CalendarController.php",
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "calendarcontroller.php",
@@ -28380,7 +28812,7 @@
     {
       "label": "RiskController.php",
       "_origin": "ast",
-      "community": 70,
+      "community": 12,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "riskcontroller.php",
@@ -28616,7 +29048,7 @@
     {
       "label": "bulkTradeParser.js",
       "_origin": "ast",
-      "community": 0,
+      "community": 15,
       "community_name": "bulkTradeParser.js",
       "file_type": "code",
       "norm_label": "bulktradeparser.js",
@@ -28627,7 +29059,7 @@
     {
       "label": "BROKER_OPTIONS",
       "_origin": "ast",
-      "community": 0,
+      "community": 15,
       "community_name": "bulkTradeParser.js",
       "file_type": "code",
       "norm_label": "broker_options",
@@ -28638,7 +29070,7 @@
     {
       "label": "DEFAULT_LOT_SIZES",
       "_origin": "ast",
-      "community": 0,
+      "community": 15,
       "community_name": "bulkTradeParser.js",
       "file_type": "code",
       "norm_label": "default_lot_sizes",
@@ -28649,7 +29081,7 @@
     {
       "label": "DropdownOptionController.php",
       "_origin": "ast",
-      "community": 17,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "dropdownoptioncontroller.php",
@@ -28715,7 +29147,7 @@
     {
       "label": "Trade.php",
       "_origin": "ast",
-      "community": 68,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "trade.php",
@@ -28847,7 +29279,7 @@
     {
       "label": "Illuminate\\Database\\Eloquent\\SoftDeletes",
       "_origin": "ast",
-      "community": 68,
+      "community": 9,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "illuminate\\database\\eloquent\\softdeletes",
@@ -29105,7 +29537,7 @@
     {
       "label": "AuthController.php",
       "_origin": "ast",
-      "community": 17,
+      "community": 68,
       "community_name": "UserFactory.php",
       "file_type": "code",
       "norm_label": "authcontroller.php",
@@ -29149,7 +29581,7 @@
     {
       "label": "UserFactory.php",
       "_origin": "ast",
-      "community": 145,
+      "community": 68,
       "community_name": "UserFactory.php",
       "file_type": "code",
       "norm_label": "userfactory.php",
@@ -29160,7 +29592,7 @@
     {
       "label": "Illuminate\\Database\\Eloquent\\Factories\\Factory",
       "_origin": "ast",
-      "community": 145,
+      "community": 68,
       "community_name": "UserFactory.php",
       "file_type": "code",
       "norm_label": "illuminate\\database\\eloquent\\factories\\factory",
@@ -29171,7 +29603,7 @@
     {
       "label": "Illuminate\\Support\\Facades\\Hash",
       "_origin": "ast",
-      "community": 2,
+      "community": 68,
       "community_name": "UserFactory.php",
       "file_type": "code",
       "norm_label": "illuminate\\support\\facades\\hash",
@@ -29193,7 +29625,7 @@
     {
       "label": "Illuminate\\Validation\\ValidationException",
       "_origin": "ast",
-      "community": 17,
+      "community": 68,
       "community_name": "UserFactory.php",
       "file_type": "code",
       "norm_label": "illuminate\\validation\\validationexception",
@@ -29215,7 +29647,7 @@
     {
       "label": "static",
       "_origin": "ast",
-      "community": 145,
+      "community": 68,
       "community_name": "UserFactory.php",
       "file_type": "code",
       "norm_label": "static",
@@ -29336,7 +29768,7 @@
     {
       "label": "LotSizeController.php",
       "_origin": "ast",
-      "community": 213,
+      "community": 2,
       "community_name": "Illuminate\\Http\\JsonResponse",
       "file_type": "code",
       "norm_label": "lotsizecontroller.php",
@@ -29657,7 +30089,7 @@
     {
       "label": "2026_10_30_130000_create_index_lot_sizes_table.php",
       "_origin": "ast",
-      "community": 208,
+      "community": 73,
       "community_name": "Illuminate\\Database\\Migrations\\Migration",
       "file_type": "code",
       "norm_label": "2026_10_30_130000_create_index_lot_sizes_table.php",
@@ -30286,7 +30718,7 @@
     {
       "label": "2026_10_31_012515_create_brokerage_settings_table.php",
       "_origin": "ast",
-      "community": 207,
+      "community": 163,
       "community_name": "Illuminate\\Support\\Facades\\Schema",
       "file_type": "code",
       "norm_label": "2026_10_31_012515_create_brokerage_settings_table.php",
@@ -30308,7 +30740,7 @@
     {
       "label": "Illuminate\\Support\\Facades\\Schema",
       "_origin": "ast",
-      "community": 208,
+      "community": 163,
       "community_name": "Illuminate\\Support\\Facades\\Schema",
       "file_type": "code",
       "norm_label": "illuminate\\support\\facades\\schema",
@@ -31086,7 +31518,7 @@
     {
       "label": "2026_10_30_160000_create_user_module_visibilities_table.php",
       "_origin": "ast",
-      "community": 73,
+      "community": 227,
       "community_name": "2026_10_30_160000_create_user_module_visibilities_table.php",
       "file_type": "code",
       "norm_label": "2026_10_30_160000_create_user_module_visibilities_table.php",
@@ -31176,7 +31608,7 @@
     {
       "label": "3. Backend Development Standards (Laravel 12 / PHP 8.3+)",
       "_origin": "ast",
-      "community": 55,
+      "community": 65,
       "community_name": "TradingCalculationService",
       "file_type": "document",
       "node_kind": "heading",
@@ -43814,6 +44246,17 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "frontend_src_app_jsx",
+      "target": "frontend_src_pages_strategybuilder_jsx"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/App.jsx",
+      "source_location": "L22",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_app_jsx",
       "target": "frontend_src_pages_analyticsreports_jsx"
     },
     {
@@ -44876,6 +45319,17 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/DraftPortfoliosModal.jsx",
+      "source_location": "L16",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_draftportfoliosmodal_jsx",
+      "target": "frontend_src_context_toastcontext_jsx"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "frontend/src/components/trades/ZerodhaOrderImportModal.jsx",
       "source_location": "L15",
       "weight": 1.0,
@@ -45068,6 +45522,17 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "frontend_src_pages_settings_jsx",
+      "target": "frontend_src_context_toastcontext_jsx"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
       "target": "frontend_src_context_toastcontext_jsx"
     },
     {
@@ -45096,6 +45561,17 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/DraftPortfoliosModal.jsx",
+      "source_location": "L16",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_draftportfoliosmodal_jsx",
+      "target": "context_toastcontext_usetoast"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "frontend/src/components/trades/ZerodhaOrderImportModal.jsx",
       "source_location": "L15",
       "weight": 1.0,
@@ -45294,6 +45770,17 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
+      "target": "context_toastcontext_usetoast"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "frontend/src/pages/PineScriptManager.jsx",
       "source_location": "L36",
       "weight": 1.0,
@@ -45310,6 +45797,17 @@
       "source_location": "L32",
       "weight": 1.0,
       "source": "context_dropdowncontext_dropdownprovider",
+      "target": "context_toastcontext_usetoast"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "frontend/src/components/strategy-builder/DraftPortfoliosModal.jsx",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "strategy_builder_draftportfoliosmodal_draftportfoliosmodal",
       "target": "context_toastcontext_usetoast"
     },
     {
@@ -45497,6 +45995,17 @@
       "source_location": "L274",
       "weight": 1.0,
       "source": "pages_settings_settings",
+      "target": "context_toastcontext_usetoast"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "source": "pages_strategybuilder_strategybuilder",
       "target": "context_toastcontext_usetoast"
     },
     {
@@ -47423,6 +47932,144 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "frontend/src/utils/blackScholes.js",
+      "source_location": "L7",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_utils_blackscholes_js",
+      "target": "utils_blackscholes_standardnormalcdf"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/utils/blackScholes.js",
+      "source_location": "L26",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_utils_blackscholes_js",
+      "target": "utils_blackscholes_standardnormalpdf"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/utils/blackScholes.js",
+      "source_location": "L42",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_utils_blackscholes_js",
+      "target": "utils_blackscholes_calculateblackscholes"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/utils/blackScholes.js",
+      "source_location": "L117",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_utils_blackscholes_js",
+      "target": "utils_blackscholes_impliedvolatility"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/utils/blackScholes.js",
+      "source_location": "L155",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_utils_blackscholes_js",
+      "target": "utils_blackscholes_generatepayoffcurve"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/GreeksTable.jsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_greekstable_jsx",
+      "target": "frontend_src_utils_blackscholes_js"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L20",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
+      "target": "frontend_src_utils_blackscholes_js"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/utils/blackScholes.js",
+      "source_location": "L68",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_blackscholes_calculateblackscholes",
+      "target": "utils_blackscholes_standardnormalcdf"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/utils/blackScholes.js",
+      "source_location": "L390",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_blackscholes_generatepayoffcurve",
+      "target": "utils_blackscholes_standardnormalcdf"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/utils/blackScholes.js",
+      "source_location": "L72",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_blackscholes_calculateblackscholes",
+      "target": "utils_blackscholes_standardnormalpdf"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/utils/blackScholes.js",
+      "source_location": "L125",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "utils_blackscholes_impliedvolatility",
+      "target": "utils_blackscholes_calculateblackscholes"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/GreeksTable.jsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_greekstable_jsx",
+      "target": "utils_blackscholes_calculateblackscholes"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L20",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
+      "target": "utils_blackscholes_generatepayoffcurve"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "frontend/src/utils/formatters.js",
       "source_location": "L5",
       "weight": 1.0,
@@ -48726,6 +49373,17 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/UnderlyingSelectorModal.jsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_underlyingselectormodal_jsx",
+      "target": "frontend_src_utils_marketdata_js"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "frontend/src/components/trades/EditTradeModal.jsx",
       "source_location": "L22",
       "weight": 1.0,
@@ -48745,6 +49403,28 @@
       "target": "frontend_src_utils_marketdata_js"
     },
     {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L19",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
+      "target": "frontend_src_utils_marketdata_js"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/UnderlyingSelectorModal.jsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_underlyingselectormodal_jsx",
+      "target": "utils_marketdata_default_index_config"
+    },
+    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -48753,6 +49433,17 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "frontend_src_pages_addtrade_jsx",
+      "target": "utils_marketdata_default_index_config"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L19",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
       "target": "utils_marketdata_default_index_config"
     },
     {
@@ -48786,6 +49477,17 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "utils_marketdata_getindexnearestexpiry",
+      "target": "utils_marketdata_normalizeindexsymbol"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L19",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
       "target": "utils_marketdata_normalizeindexsymbol"
     },
     {
@@ -48875,6 +49577,289 @@
       "confidence_score": 1.0,
       "source": "frontend_src_pages_addtrade_jsx",
       "target": "utils_marketdata_getindexnearestexpiry"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/utils/strategyPresets.js",
+      "source_location": "L6",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_utils_strategypresets_js",
+      "target": "utils_strategypresets_strategy_categories"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/utils/strategyPresets.js",
+      "source_location": "L22",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_utils_strategypresets_js",
+      "target": "utils_strategypresets_ready_made_strategies"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/ReadyMadeStrategiesModal.jsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_readymadestrategiesmodal_jsx",
+      "target": "frontend_src_utils_strategypresets_js"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/ReadyMadeStrategiesModal.jsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_readymadestrategiesmodal_jsx",
+      "target": "utils_strategypresets_strategy_categories"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/ReadyMadeStrategiesModal.jsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_readymadestrategiesmodal_jsx",
+      "target": "utils_strategypresets_ready_made_strategies"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/GreeksTable.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_greekstable_jsx",
+      "target": "strategy_builder_greekstable_greekstable"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L27",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
+      "target": "frontend_src_components_strategy_builder_greekstable_jsx"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/UnderlyingSelectorModal.jsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_underlyingselectormodal_jsx",
+      "target": "strategy_builder_underlyingselectormodal_popular_indices"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/UnderlyingSelectorModal.jsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_underlyingselectormodal_jsx",
+      "target": "strategy_builder_underlyingselectormodal_popular_stocks"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/UnderlyingSelectorModal.jsx",
+      "source_location": "L25",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_underlyingselectormodal_jsx",
+      "target": "strategy_builder_underlyingselectormodal_underlyingselectormodal"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L28",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
+      "target": "frontend_src_components_strategy_builder_underlyingselectormodal_jsx"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/StrategyMetricsHeader.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_strategymetricsheader_jsx",
+      "target": "strategy_builder_strategymetricsheader_strategymetricsheader"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L21",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
+      "target": "frontend_src_components_strategy_builder_strategymetricsheader_jsx"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/OptionChainModal.jsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_optionchainmodal_jsx",
+      "target": "strategy_builder_optionchainmodal_optionchainmodal"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L29",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
+      "target": "frontend_src_components_strategy_builder_optionchainmodal_jsx"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/DraftPortfoliosModal.jsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_draftportfoliosmodal_jsx",
+      "target": "frontend_src_api_client_js"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/DraftPortfoliosModal.jsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_draftportfoliosmodal_jsx",
+      "target": "strategy_builder_draftportfoliosmodal_draftportfoliosmodal"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L25",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
+      "target": "frontend_src_components_strategy_builder_draftportfoliosmodal_jsx"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/ReadyMadeStrategiesModal.jsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_readymadestrategiesmodal_jsx",
+      "target": "strategy_builder_readymadestrategiesmodal_readymadestrategiesmodal"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L24",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
+      "target": "frontend_src_components_strategy_builder_readymadestrategiesmodal_jsx"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/StrategyPayoffChart.jsx",
+      "source_location": "L16",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_strategypayoffchart_jsx",
+      "target": "strategy_builder_strategypayoffchart_strategypayoffchart"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L22",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
+      "target": "frontend_src_components_strategy_builder_strategypayoffchart_jsx"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/PnLTable.jsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_pnltable_jsx",
+      "target": "strategy_builder_pnltable_pnltable"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L26",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
+      "target": "frontend_src_components_strategy_builder_pnltable_jsx"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/StrategyLegsTable.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "frontend_src_components_strategy_builder_strategylegstable_jsx",
+      "target": "strategy_builder_strategylegstable_formatlegexpiry",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/components/strategy-builder/StrategyLegsTable.jsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_components_strategy_builder_strategylegstable_jsx",
+      "target": "strategy_builder_strategylegstable_strategylegstable"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
+      "target": "frontend_src_components_strategy_builder_strategylegstable_jsx"
     },
     {
       "relation": "imports_from",
@@ -50579,6 +51564,17 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
+      "target": "frontend_src_api_client_js"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "frontend/src/pages/PineScriptManager.jsx",
       "source_location": "L35",
       "weight": 1.0,
@@ -50948,6 +51944,16 @@
       "confidence_score": 1.0,
       "source": "frontend_src_pages_register_jsx",
       "target": "pages_register_register"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "frontend/src/pages/StrategyBuilder.jsx",
+      "source_location": "L30",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "frontend_src_pages_strategybuilder_jsx",
+      "target": "pages_strategybuilder_strategybuilder"
     },
     {
       "relation": "contains",
@@ -52213,6 +53219,26 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "backend/database/migrations/2026_11_17_160000_create_strategy_drafts_table.php",
+      "source_location": "L12",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "backend_database_migrations_2026_11_17_160000_create_strategy_drafts_table_php",
+      "target": "migrations_2026_11_17_160000_create_strategy_drafts_table_up"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/database/migrations/2026_11_17_160000_create_strategy_drafts_table.php",
+      "source_location": "L33",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "backend_database_migrations_2026_11_17_160000_create_strategy_drafts_table_php",
+      "target": "migrations_2026_11_17_160000_create_strategy_drafts_table_down"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "backend/database/migrations/2026_11_01_020000_add_username_to_users_table.php",
       "source_location": "L14",
       "weight": 1.0,
@@ -52966,6 +53992,17 @@
       "context": "call",
       "confidence": "INFERRED",
       "confidence_score": 0.8,
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L261",
+      "weight": 1.0,
+      "source": "api_strategydraftcontroller_strategydraftcontroller_converttotrade",
+      "target": "models_tradeorder_tradeorder"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
       "source_file": "backend/app/Services/ZerodhaKiteService.php",
       "source_location": "L279",
       "weight": 1.0,
@@ -53037,6 +54074,59 @@
       "weight": 1.0,
       "source": "services_orderscreenshotparserservice_orderscreenshotparserservice_squareoffsingletrade",
       "target": "models_tradeorder_tradeorder"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/Models/StrategyDraft.php",
+      "source_location": "L9",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "backend_app_models_strategydraft_php",
+      "target": "models_strategydraft_strategydraft"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/Models/StrategyDraft.php",
+      "source_location": "L33",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "models_strategydraft_strategydraft",
+      "target": "models_strategydraft_strategydraft_user"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "api_strategydraftcontroller_strategydraftcontroller_index",
+      "target": "models_strategydraft_strategydraft"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L52",
+      "weight": 1.0,
+      "source": "api_strategydraftcontroller_strategydraftcontroller_portfolios",
+      "target": "models_strategydraft_strategydraft"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L115",
+      "weight": 1.0,
+      "source": "api_strategydraftcontroller_strategydraftcontroller_store",
+      "target": "models_strategydraft_strategydraft"
     },
     {
       "relation": "calls",
@@ -54574,6 +55664,96 @@
       "confidence_score": 1.0,
       "source": "api_calendarcontroller_calendarcontroller",
       "target": "api_calendarcontroller_calendarcontroller_index"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L16",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "backend_app_http_controllers_api_strategydraftcontroller_php",
+      "target": "api_strategydraftcontroller_strategydraftcontroller"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L18",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "api_strategydraftcontroller_strategydraftcontroller",
+      "target": "api_strategydraftcontroller_strategydraftcontroller_construct"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L25",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "api_strategydraftcontroller_strategydraftcontroller",
+      "target": "api_strategydraftcontroller_strategydraftcontroller_index"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L49",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "api_strategydraftcontroller_strategydraftcontroller",
+      "target": "api_strategydraftcontroller_strategydraftcontroller_portfolios"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L102",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "api_strategydraftcontroller_strategydraftcontroller",
+      "target": "api_strategydraftcontroller_strategydraftcontroller_store"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L138",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "api_strategydraftcontroller_strategydraftcontroller",
+      "target": "api_strategydraftcontroller_strategydraftcontroller_show"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L153",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "api_strategydraftcontroller_strategydraftcontroller",
+      "target": "api_strategydraftcontroller_strategydraftcontroller_update"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L183",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "api_strategydraftcontroller_strategydraftcontroller",
+      "target": "api_strategydraftcontroller_strategydraftcontroller_destroy"
+    },
+    {
+      "relation": "method",
+      "confidence": "EXTRACTED",
+      "source_file": "backend/app/Http/Controllers/Api/StrategyDraftController.php",
+      "source_location": "L200",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "api_strategydraftcontroller_strategydraftcontroller",
+      "target": "api_strategydraftcontroller_strategydraftcontroller_converttotrade"
     },
     {
       "relation": "contains",
@@ -85416,5 +86596,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "2d171b97239923fd0359e2927bea8c5a5a4423c4"
+  "built_at_commit": "f65191f6e082bb3fc349cbbfc858415b5de1f1fa"
 }

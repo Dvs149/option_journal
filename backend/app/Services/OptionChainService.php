@@ -358,7 +358,7 @@ class OptionChainService
             'BANKNIFTY' => 57000.0,
             'FINNIFTY' => 26250.0,
             'MIDCPNIFTY' => 13925.0,
-            'SENSEX' => 78700.0,
+            'SENSEX' => 82600.0,
             'BANKEX' => 64250.0,
         ];
 

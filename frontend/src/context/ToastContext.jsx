@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { CheckCircle2, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
 
 const ToastContext = createContext(null);
@@ -25,8 +25,28 @@ export function ToastProvider({ children }) {
     return id;
   }, [removeToast]);
 
+  const success = useCallback((msg, duration) => showToast(msg, 'success', duration), [showToast]);
+  const error = useCallback((msg, duration) => showToast(msg, 'error', duration), [showToast]);
+  const info = useCallback((msg, duration) => showToast(msg, 'info', duration), [showToast]);
+  const warning = useCallback((msg, duration) => showToast(msg, 'warning', duration), [showToast]);
+
+  const contextValue = useMemo(
+    () => ({
+      showToast,
+      addToast: showToast,
+      triggerToast: showToast,
+      show: showToast,
+      removeToast,
+      success,
+      error,
+      info,
+      warning,
+    }),
+    [showToast, success, error, info, warning, removeToast]
+  );
+
   return (
-    <ToastContext.Provider value={{ showToast, addToast: showToast, triggerToast: showToast, removeToast }}>
+    <ToastContext.Provider value={contextValue}>
       {children}
       
       {/* Floating Popup Toaster Container (Top Right) */}
@@ -98,7 +118,12 @@ export function useToast() {
       showToast: (msg) => console.log('Toast:', msg),
       addToast: (msg) => console.log('Toast:', msg),
       triggerToast: (msg) => console.log('Toast:', msg),
+      show: (msg) => console.log('Toast:', msg),
       removeToast: () => {},
+      success: (msg) => console.log('Toast success:', msg),
+      error: (msg) => console.log('Toast error:', msg),
+      info: (msg) => console.log('Toast info:', msg),
+      warning: (msg) => console.log('Toast warning:', msg),
     };
   }
   return context;
