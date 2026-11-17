@@ -10366,7 +10366,7 @@
       "label": ".updateOrder()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1307",
+      "source_location": "L1308",
       "id": "api_tradecontroller_tradecontroller_updateorder",
       "community": 116,
       "norm_label": ".updateorder()"
@@ -10375,7 +10375,7 @@
       "label": ".destroyOrder()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1433",
+      "source_location": "L1435",
       "id": "api_tradecontroller_tradecontroller_destroyorder",
       "community": 116,
       "norm_label": ".destroyorder()"
@@ -10384,7 +10384,7 @@
       "label": ".recalculateTradeFromOrders()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1457",
+      "source_location": "L1459",
       "id": "api_tradecontroller_tradecontroller_recalculatetradefromorders",
       "community": 116,
       "norm_label": ".recalculatetradefromorders()"
@@ -10393,7 +10393,7 @@
       "label": ".syncOrdersFromTrade()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1462",
+      "source_location": "L1464",
       "id": "api_tradecontroller_tradecontroller_syncordersfromtrade",
       "community": 116,
       "norm_label": ".syncordersfromtrade()"
@@ -10402,7 +10402,7 @@
       "label": ".authorizeTrade()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1694",
+      "source_location": "L1696",
       "id": "api_tradecontroller_tradecontroller_authorizetrade",
       "community": 116,
       "norm_label": ".authorizetrade()"
@@ -10411,7 +10411,7 @@
       "label": ".parseScreenshot()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1701",
+      "source_location": "L1703",
       "id": "api_tradecontroller_tradecontroller_parsescreenshot",
       "community": 116,
       "norm_label": ".parsescreenshot()"
@@ -10420,7 +10420,7 @@
       "label": ".importScreenshotOrders()",
       "file_type": "code",
       "source_file": "backend/app/Http/Controllers/Api/TradeController.php",
-      "source_location": "L1722",
+      "source_location": "L1724",
       "id": "api_tradecontroller_tradecontroller_importscreenshotorders",
       "community": 116,
       "norm_label": ".importscreenshotorders()"
@@ -18772,7 +18772,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "calendarcontroller",
@@ -18785,7 +18785,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "dashboardcontroller",
@@ -18798,7 +18798,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "riskcontroller",
@@ -18824,7 +18824,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "controller",
@@ -18837,7 +18837,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 70,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "journalcontroller",
@@ -18993,7 +18993,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "databaseseeder",
@@ -19006,7 +19006,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "lotsizeseeder",
@@ -19032,7 +19032,7 @@
       "_callable": true,
       "_callable_class": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 70,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "norm_label": "capitalcontroller",
@@ -20654,7 +20654,7 @@
       "label": ".__construct()",
       "_callable": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": ".__construct()",
@@ -20666,7 +20666,7 @@
       "label": ".index()",
       "_callable": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "metadata": {
@@ -20703,7 +20703,7 @@
       "label": ".__construct()",
       "_callable": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": ".__construct()",
@@ -20715,7 +20715,7 @@
       "label": ".index()",
       "_callable": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "metadata": {
@@ -20745,7 +20745,7 @@
       "label": ".__construct()",
       "_callable": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": ".__construct()",
@@ -20757,7 +20757,7 @@
       "label": ".updateLimits()",
       "_callable": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "metadata": {
@@ -20852,7 +20852,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "metadata": {
@@ -20903,7 +20903,7 @@
       "label": "GET /ping()",
       "_callable": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "get /ping()",
@@ -20915,7 +20915,7 @@
       "label": "GET /()",
       "_callable": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "get /()",
@@ -20927,7 +20927,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 70,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "{closure#1}()",
@@ -20939,7 +20939,7 @@
       "label": "{closure#2}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 70,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "{closure#2}()",
@@ -20951,7 +20951,7 @@
       "label": "{closure#3}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 70,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "{closure#3}()",
@@ -20963,7 +20963,7 @@
       "label": ".index()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 70,
       "community_name": "JournalController.php",
       "file_type": "code",
       "metadata": {
@@ -21014,7 +21014,7 @@
       "label": ".show()",
       "_callable": true,
       "_origin": "ast",
-      "community": 9,
+      "community": 70,
       "community_name": "JournalController.php",
       "file_type": "code",
       "metadata": {
@@ -21067,7 +21067,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "{closure#1}()",
@@ -21079,7 +21079,7 @@
       "label": "{closure#2}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "JournalController.php",
       "file_type": "code",
       "metadata": {
@@ -21585,7 +21585,7 @@
       "label": ".getExchangeDefaults()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": ".getexchangedefaults()",
@@ -21597,7 +21597,7 @@
       "label": ".seedDefaultsForUser()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": ".seeddefaultsforuser()",
@@ -21777,7 +21777,7 @@
       "label": ".run()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "metadata": {
@@ -21800,7 +21800,7 @@
       "label": ".run()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": ".run()",
@@ -21835,7 +21835,7 @@
       "label": "{closure#2}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "metadata": {
@@ -22677,7 +22677,7 @@
       "label": ".index()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 70,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "metadata": {
@@ -22714,7 +22714,7 @@
       "label": ".storeTransaction()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 70,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "metadata": {
@@ -22744,7 +22744,7 @@
       "label": ".updateInitialCapital()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 70,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "metadata": {
@@ -22774,7 +22774,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 17,
+      "community": 70,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "norm_label": "{closure#1}()",
@@ -23209,7 +23209,7 @@
       "label": "{closure#1}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 213,
       "community_name": "Illuminate\\Http\\JsonResponse",
       "file_type": "code",
       "norm_label": "{closure#1}()",
@@ -23221,7 +23221,7 @@
       "label": "{closure#2}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 213,
       "community_name": "Illuminate\\Http\\JsonResponse",
       "file_type": "code",
       "norm_label": "{closure#2}()",
@@ -23233,7 +23233,7 @@
       "label": "{closure#3}()",
       "_callable": true,
       "_origin": "ast",
-      "community": 70,
+      "community": 213,
       "community_name": "Illuminate\\Http\\JsonResponse",
       "file_type": "code",
       "norm_label": "{closure#3}()",
@@ -27989,7 +27989,7 @@
     {
       "label": "DashboardController.php",
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "dashboardcontroller.php",
@@ -28011,7 +28011,7 @@
     {
       "label": "Controller.php",
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "controller.php",
@@ -28022,7 +28022,7 @@
     {
       "label": "api.php",
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "api.php",
@@ -28033,7 +28033,7 @@
     {
       "label": "web.php",
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "web.php",
@@ -28044,7 +28044,7 @@
     {
       "label": "Illuminate\\Support\\Facades\\Route",
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "code",
       "norm_label": "illuminate\\support\\facades\\route",
@@ -28079,7 +28079,7 @@
     {
       "label": "3.3 Controller Inventory",
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "TradingAnalyticsService",
       "file_type": "document",
       "node_kind": "heading",
@@ -28358,7 +28358,7 @@
     {
       "label": "CalendarController.php",
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "calendarcontroller.php",
@@ -28369,7 +28369,7 @@
     {
       "label": "JournalController.php",
       "_origin": "ast",
-      "community": 9,
+      "community": 70,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "journalcontroller.php",
@@ -28380,7 +28380,7 @@
     {
       "label": "RiskController.php",
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "riskcontroller.php",
@@ -28391,7 +28391,7 @@
     {
       "label": "Carbon\\Carbon",
       "_origin": "ast",
-      "community": 12,
+      "community": 70,
       "community_name": "JournalController.php",
       "file_type": "code",
       "norm_label": "carbon\\carbon",
@@ -28792,7 +28792,7 @@
     {
       "label": "LotSizeSeeder.php",
       "_origin": "ast",
-      "community": 70,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "lotsizeseeder.php",
@@ -28858,7 +28858,7 @@
     {
       "label": "Illuminate\\Database\\Seeder",
       "_origin": "ast",
-      "community": 70,
+      "community": 2,
       "community_name": "Illuminate\\Database\\Eloquent\\Factories\\HasFactory",
       "file_type": "code",
       "norm_label": "illuminate\\database\\seeder",
@@ -29105,7 +29105,7 @@
     {
       "label": "AuthController.php",
       "_origin": "ast",
-      "community": 2,
+      "community": 17,
       "community_name": "UserFactory.php",
       "file_type": "code",
       "norm_label": "authcontroller.php",
@@ -29193,7 +29193,7 @@
     {
       "label": "Illuminate\\Validation\\ValidationException",
       "_origin": "ast",
-      "community": 2,
+      "community": 17,
       "community_name": "UserFactory.php",
       "file_type": "code",
       "norm_label": "illuminate\\validation\\validationexception",
@@ -29248,7 +29248,7 @@
     {
       "label": "CapitalController.php",
       "_origin": "ast",
-      "community": 17,
+      "community": 70,
       "community_name": "DropdownOptionController",
       "file_type": "code",
       "norm_label": "capitalcontroller.php",
@@ -29336,7 +29336,7 @@
     {
       "label": "LotSizeController.php",
       "_origin": "ast",
-      "community": 70,
+      "community": 213,
       "community_name": "Illuminate\\Http\\JsonResponse",
       "file_type": "code",
       "norm_label": "lotsizecontroller.php",
@@ -55701,9 +55701,9 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L1116",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_orderscreenshotparserservice_orderscreenshotparserservice",
-      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_strikesmatch",
-      "confidence_score": 1.0
+      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_strikesmatch"
     },
     {
       "relation": "method",
@@ -55711,9 +55711,9 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L1137",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_orderscreenshotparserservice_orderscreenshotparserservice",
-      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_findmatchingopenbothtrade",
-      "confidence_score": 1.0
+      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_findmatchingopenbothtrade"
     },
     {
       "relation": "method",
@@ -55721,9 +55721,9 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L1168",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_orderscreenshotparserservice_orderscreenshotparserservice",
-      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_findmatchingopensingletrade",
-      "confidence_score": 1.0
+      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_findmatchingopensingletrade"
     },
     {
       "relation": "method",
@@ -55731,9 +55731,9 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L1199",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_orderscreenshotparserservice_orderscreenshotparserservice",
-      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_squareoffbothtrade",
-      "confidence_score": 1.0
+      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_squareoffbothtrade"
     },
     {
       "relation": "method",
@@ -55741,9 +55741,9 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L1285",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_orderscreenshotparserservice_orderscreenshotparserservice",
-      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_squareoffsingletrade",
-      "confidence_score": 1.0
+      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_squareoffsingletrade"
     },
     {
       "relation": "calls",
@@ -55807,9 +55807,9 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L299",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_orderscreenshotparserservice_orderscreenshotparserservice_importorders",
-      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_findmatchingopenbothtrade",
-      "confidence_score": 1.0
+      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_findmatchingopenbothtrade"
     },
     {
       "relation": "calls",
@@ -55818,9 +55818,9 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L301",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_orderscreenshotparserservice_orderscreenshotparserservice_importorders",
-      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_squareoffbothtrade",
-      "confidence_score": 1.0
+      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_squareoffbothtrade"
     },
     {
       "relation": "calls",
@@ -55829,9 +55829,9 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L310",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_orderscreenshotparserservice_orderscreenshotparserservice_importorders",
-      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_findmatchingopensingletrade",
-      "confidence_score": 1.0
+      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_findmatchingopensingletrade"
     },
     {
       "relation": "calls",
@@ -55840,9 +55840,9 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L314",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_orderscreenshotparserservice_orderscreenshotparserservice_importorders",
-      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_squareoffsingletrade",
-      "confidence_score": 1.0
+      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_squareoffsingletrade"
     },
     {
       "relation": "calls",
@@ -55884,9 +55884,9 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L1146",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_orderscreenshotparserservice_orderscreenshotparserservice_findmatchingopenbothtrade",
-      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_strikesmatch",
-      "confidence_score": 1.0
+      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_strikesmatch"
     },
     {
       "relation": "calls",
@@ -55895,9 +55895,9 @@
       "source_file": "backend/app/Services/OrderScreenshotParserService.php",
       "source_location": "L1177",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_orderscreenshotparserservice_orderscreenshotparserservice_findmatchingopensingletrade",
-      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_strikesmatch",
-      "confidence_score": 1.0
+      "target": "services_orderscreenshotparserservice_orderscreenshotparserservice_strikesmatch"
     },
     {
       "relation": "contains",
@@ -56217,9 +56217,9 @@
       "source_file": "backend/app/Services/TradingCalculationService.php",
       "source_location": "L231",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "services_tradingcalculationservice_tradingcalculationservice",
-      "target": "services_tradingcalculationservice_tradingcalculationservice_recalculatetradefromorders",
-      "confidence_score": 1.0
+      "target": "services_tradingcalculationservice_tradingcalculationservice_recalculatetradefromorders"
     },
     {
       "relation": "contains",
@@ -85416,5 +85416,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "961e7ac56648b31df9a6fe7dadbae3c8615a4552"
+  "built_at_commit": "2d171b97239923fd0359e2927bea8c5a5a4423c4"
 }

@@ -238,6 +238,18 @@ class TradingCalculationService
         $buyOrders = $allOrders->where('order_type', 'BUY');
         $sellOrders = $allOrders->where('order_type', 'SELL');
 
+        // STT is strictly 0.00 for all BUY orders in Indian Options trading (only charged on SELL)
+        foreach ($buyOrders as $bo) {
+            if ((float) $bo->stt !== 0.0) {
+                $prevStt = (float) $bo->stt;
+                $newTotal = max(0.0, round((float) $bo->total_charges - $prevStt, 2));
+                $bo->update([
+                    'stt' => 0.00,
+                    'total_charges' => $newTotal,
+                ]);
+            }
+        }
+
         $isBoth = $trade->option_type === 'Both';
         $ceBuyOrders = $buyOrders->filter(fn($o) => preg_match('/\bCE\b/i', (string) $o->notes));
         $peBuyOrders = $buyOrders->filter(fn($o) => preg_match('/\bPE\b/i', (string) $o->notes));

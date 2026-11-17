@@ -1235,9 +1235,10 @@ class TradeController extends Controller
 
             $autoCharges = $this->calcService->estimateSingleOrderCharges($side, $price, $quantity, $exchange, $rates);
 
+            $isBuyOrder = strtoupper(trim($side)) === 'BUY';
             if ($request->has('total_charges') || $request->has('brokerage')) {
                 $brokerage = $request->has('brokerage') ? (float) $validated['brokerage'] : (float) ($autoCharges['brokerage'] ?? 20.0);
-                $stt = $request->has('stt') ? (float) $validated['stt'] : (float) ($autoCharges['stt'] ?? 0.0);
+                $stt = $isBuyOrder ? 0.00 : ($request->has('stt') ? (float) $validated['stt'] : (float) ($autoCharges['stt'] ?? 0.0));
                 $exchangeCharges = $request->has('exchange_charges') ? (float) $validated['exchange_charges'] : (float) ($autoCharges['exchange_charges'] ?? 0.0);
                 $gst = $request->has('gst') ? (float) $validated['gst'] : (float) ($autoCharges['gst'] ?? 0.0);
                 $sebiCharges = $request->has('sebi_charges') ? (float) $validated['sebi_charges'] : (float) ($autoCharges['sebi_charges'] ?? 0.0);
@@ -1366,9 +1367,10 @@ class TradeController extends Controller
 
         $autoCharges = $this->calcService->estimateSingleOrderCharges($order->order_type, $price, $quantity, $exchange, $rates);
 
+        $isBuyOrder = strtoupper(trim($order->order_type)) === 'BUY';
         if ($request->has('total_charges') || $request->has('brokerage')) {
             $brokerage = $request->has('brokerage') ? (float) $validated['brokerage'] : (float) ($autoCharges['brokerage'] ?? 20.0);
-            $stt = $request->has('stt') ? (float) $validated['stt'] : (float) ($autoCharges['stt'] ?? 0.0);
+            $stt = $isBuyOrder ? 0.00 : ($request->has('stt') ? (float) $validated['stt'] : (float) ($autoCharges['stt'] ?? 0.0));
             $exchangeCharges = $request->has('exchange_charges') ? (float) $validated['exchange_charges'] : (float) ($autoCharges['exchange_charges'] ?? 0.0);
             $gst = $request->has('gst') ? (float) $validated['gst'] : (float) ($autoCharges['gst'] ?? 0.0);
             $sebiCharges = $request->has('sebi_charges') ? (float) $validated['sebi_charges'] : (float) ($autoCharges['sebi_charges'] ?? 0.0);

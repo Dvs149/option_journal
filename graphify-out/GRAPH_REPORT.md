@@ -1,16 +1,16 @@
-# Graph Report - option_journal  (2026-11-16)
+# Graph Report - option_journal  (2026-11-17)
 
 ## Corpus Check
-- 233 files · ~272,177 words
+- 233 files · ~272,326 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2866 nodes · 5005 edges · 224 communities (157 shown, 67 thin omitted)
+- 2866 nodes · 5005 edges · 224 communities (158 shown, 66 thin omitted)
 - Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 215 edges (avg confidence: 0.83)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `961e7ac5`
+- Built from commit: `2d171b97`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -210,16 +210,16 @@
 ## Surprising Connections (you probably didn't know these)
 - `2.1 State Management via React Context` --references--> `DropdownOption`  [INFERRED]
   ARCHITECTURE.md → backend/app/Models/DropdownOption.php
-- `3.3 Controller Inventory` --references--> `JournalController`  [INFERRED]
-  ARCHITECTURE.md → backend/app/Http/Controllers/Api/JournalController.php
+- `3.3 Controller Inventory` --references--> `AnalyticsController`  [INFERRED]
+  ARCHITECTURE.md → backend/app/Http/Controllers/Api/AnalyticsController.php
+- `3.3 Controller Inventory` --references--> `StrategyController`  [INFERRED]
+  ARCHITECTURE.md → backend/app/Http/Controllers/Api/StrategyController.php
 - `3.3 Controller Inventory` --references--> `PineScriptController`  [INFERRED]
   ARCHITECTURE.md → backend/app/Http/Controllers/Api/PineScriptController.php
-- `3.3 Controller Inventory` --references--> `CapitalController`  [INFERRED]
-  ARCHITECTURE.md → backend/app/Http/Controllers/Api/CapitalController.php
 - `3.3 Controller Inventory` --references--> `DropdownOptionController`  [INFERRED]
   ARCHITECTURE.md → backend/app/Http/Controllers/Api/DropdownOptionController.php
 
-## Communities (224 total, 67 thin omitted)
+## Communities (224 total, 66 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.06
@@ -230,8 +230,8 @@ Cohesion: 0.21
 Nodes (9): {closure#1}(), {closure#2}(), {closure#3}(), {closure#1}(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}() (+1 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.09
-Nodes (17): BrokerageSetting, CapitalTransaction, DropdownOption, IndexLotSize, TradeJournal, TradeScreenshot, TradingAccount, TradingStrategy (+9 more)
+Cohesion: 0.08
+Nodes (20): BrokerageSetting, CapitalTransaction, DropdownOption, IndexLotSize, TradeJournal, TradeScreenshot, TradingAccount, TradingStrategy (+12 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.15
@@ -250,8 +250,8 @@ Cohesion: 0.18
 Nodes (16): frontend/package.json, devDependencies, tailwindcss, @tailwindcss/vite, @types/react, @types/react-dom, vite, tailwindcss (+8 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.12
-Nodes (5): JournalController, {closure#3}(), TradeController, Trade, DateTimeInterface
+Cohesion: 0.17
+Nodes (4): {closure#3}(), TradeController, Trade, DateTimeInterface
 
 ### Community 10 - "Community 10"
 Cohesion: 0.15
@@ -262,8 +262,8 @@ Cohesion: 0.22
 Nodes (8): 1. Executive Summary, 2. Target Audience & Market Domain, 3. Technology Stack & Operational Environment, 4. Key Functional Subsystems, 5. System Constraints & Assumptions, 6. Developer Tooling & Codebase Knowledge Graph (Graphify), Default Ports & Development Servers, PROJECT CONTEXT — TradeJournal
 
 ### Community 12 - "Community 12"
-Cohesion: 0.08
-Nodes (11): 3.3 Controller Inventory, AnalyticsController, CalendarController, DashboardController, RiskController, StrategyController, Controller, TradingAnalyticsService (+3 more)
+Cohesion: 0.15
+Nodes (4): AnalyticsController, StrategyController, TradingAnalyticsService, Illuminate\Support\Collection
 
 ### Community 13 - "Community 13"
 Cohesion: 0.15
@@ -282,8 +282,8 @@ Cohesion: 0.12
 Nodes (15): 1. Overview, 2. Entity-Relationship Diagram, 3.10 `index_lot_sizes`, 3.11 `capital_transactions`, 3.1 `users`, 3.2 `trading_accounts`, 3.3 `trades`, 3.4 `trade_journals` (+7 more)
 
 ### Community 17 - "Community 17"
-Cohesion: 0.09
-Nodes (10): AuthController, BrokerageSettingController, CapitalController, DropdownOptionController, LotSizeController, ModuleVisibilityController, PineScriptController, PineScript (+2 more)
+Cohesion: 0.10
+Nodes (10): AuthController, BrokerageSettingController, DropdownOptionController, LotSizeController, ModuleVisibilityController, PineScriptController, PineScript, Illuminate\Http\JsonResponse (+2 more)
 
 ### Community 18 - "Community 18"
 Cohesion: 0.13
@@ -438,8 +438,8 @@ Cohesion: 0.06
 Nodes (25): MetricCard, RecentTradeRow, SummaryStrip, ContentView, SettingsView, MainSplitView, SidebarRow, SidebarView (+17 more)
 
 ### Community 70 - "Community 70"
-Cohesion: 0.18
-Nodes (5): {closure#3}(), DatabaseSeeder, LotSizeSeeder, {closure#2}(), Illuminate\Database\Seeder
+Cohesion: 0.08
+Nodes (9): 3.3 Controller Inventory, CalendarController, CapitalController, DashboardController, JournalController, RiskController, Controller, Carbon\Carbon (+1 more)
 
 ### Community 71 - "Community 71"
 Cohesion: 0.16
@@ -641,6 +641,10 @@ Nodes (10): 10. Document Generation & Backup Endpoints, 1. Authentication & Head
 Cohesion: 0.18
 Nodes (13): 4.1 List Trades, 4.2 Create Trade, 4.3 Get Single Trade, 4.4 Update Trade, 4.5 Delete Trade, 4.6 All Filtered IDs & Cross-Page Totals, 4.6 Bulk Operations, 4.7 Order Execution Operations (Partial Exits & Scaling) (+5 more)
 
+### Community 213 - "Community 213"
+Cohesion: 0.11
+Nodes (3): {closure#3}(), {closure#2}(), Illuminate\Support\Facades\DB
+
 ### Community 214 - "Community 214"
 Cohesion: 0.11
 Nodes (18): [1.13.0] - 2026-11-10, [1.16.4] - 2026-11-13, [1.16.5] - 2026-11-13, Added & Enhanced, Added & Enhanced, Added & Enhanced, Added & Enhanced, Added & Enhanced (+10 more)
@@ -672,7 +676,7 @@ Nodes (3): 6.1 Get Risk Metrics & Guardrails, 6.2 Update Risk Limits, 6. Risk Ma
 ## Knowledge Gaps
 - **722 isolated node(s):** `get`, `post`, `put`, `delete`, `patch` (+717 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **67 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **66 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -690,4 +694,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.0628714419768533 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.09013605442176871 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07662337662337662 - nodes in this community are weakly interconnected._

@@ -93,7 +93,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
 
       setTotalCharges(order.total_charges != null ? parseFloat(order.total_charges).toFixed(2) : '0.00');
       setBrokerage(order.brokerage != null ? parseFloat(order.brokerage).toFixed(2) : '20.00');
-      setStt(order.stt != null ? parseFloat(order.stt).toFixed(2) : '0.00');
+      setStt(isSell ? (order.stt != null ? parseFloat(order.stt).toFixed(2) : '0.00') : '0.00');
       setExchangeCharges(order.exchange_charges != null ? parseFloat(order.exchange_charges).toFixed(2) : '0.00');
       setGst(order.gst != null ? parseFloat(order.gst).toFixed(2) : '0.00');
       setSebiCharges(order.sebi_charges != null ? parseFloat(order.sebi_charges).toFixed(2) : '0.00');
@@ -115,10 +115,8 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
     const isBse = ['SENSEX', 'BANKEX'].includes((trade?.index_name || '').toUpperCase());
 
     const brk = parseFloat(rates?.brokerage_per_order) || 20.0;
-    const sttRate = isSell
-      ? (parseFloat(rates?.stt_rate_percent) || 0.15) / 100
-      : (parseFloat(rates?.stt_rate_percent) || 0.125) / 100;
-    const s = turnover * sttRate;
+    // STT is strictly 0 on BUY orders in Indian Options trading; only charged on SELL
+    const s = isSell ? turnover * ((parseFloat(rates?.stt_rate_percent) || 0.15) / 100) : 0.0;
     const txnRate = isBse
       ? (parseFloat(rates?.bse_txn_rate_percent) || 0.0325) / 100
       : (parseFloat(rates?.nse_txn_rate_percent) || 0.03553) / 100;
@@ -142,7 +140,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
   const handleAutoCalculateCharges = () => {
     const est = calculateEstimatedBreakdown(parsedQty, parsedPrice);
     setBrokerage(est.brokerage);
-    setStt(est.stt);
+    setStt(isSell ? est.stt : '0.00');
     setExchangeCharges(est.exchangeCharges);
     setGst(est.gst);
     setSebiCharges(est.sebiCharges);
@@ -178,9 +176,10 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
 
   const handleBreakdownChange = (field, val) => {
     const clean = val.replace(/-/g, '').replace(/[^0-9.]/g, '');
+    const cleanStt = isSell ? (field === 'stt' ? clean : stt) : '0.00';
     const updated = {
       brokerage: field === 'brokerage' ? clean : brokerage,
-      stt: field === 'stt' ? clean : stt,
+      stt: cleanStt,
       exchangeCharges: field === 'exchangeCharges' ? clean : exchangeCharges,
       gst: field === 'gst' ? clean : gst,
       sebiCharges: field === 'sebiCharges' ? clean : sebiCharges,
@@ -188,7 +187,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
       otherCharges: field === 'otherCharges' ? clean : otherCharges,
     };
     if (field === 'brokerage') setBrokerage(clean);
-    if (field === 'stt') setStt(clean);
+    if (field === 'stt') setStt(isSell ? clean : '0.00');
     if (field === 'exchangeCharges') setExchangeCharges(clean);
     if (field === 'gst') setGst(clean);
     if (field === 'sebiCharges') setSebiCharges(clean);
@@ -250,7 +249,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
         notes: notes,
         total_charges: activeCharges >= 0 ? activeCharges : undefined,
         brokerage: parseFloat(brokerage) >= 0 ? parseFloat(brokerage) : undefined,
-        stt: parseFloat(stt) >= 0 ? parseFloat(stt) : undefined,
+        stt: isSell ? (parseFloat(stt) >= 0 ? parseFloat(stt) : 0.0) : 0.0,
         exchange_charges: parseFloat(exchangeCharges) >= 0 ? parseFloat(exchangeCharges) : undefined,
         gst: parseFloat(gst) >= 0 ? parseFloat(gst) : undefined,
         sebi_charges: parseFloat(sebiCharges) >= 0 ? parseFloat(sebiCharges) : undefined,
@@ -472,15 +471,29 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
                     />
                   </div>
                   <div>
-                    <label className="block text-slate-400 mb-1">STT / CTT</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-slate-400">STT / CTT</label>
+                      {/* {!isSell && (
+                        <span className="text-[10px] text-amber-400 font-semibold bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">
+                          ₹0 on BUY
+                        </span>
+                      )} */}
+                    </div>
                     <input
                       type="number"
                       step="any"
                       min="0"
-                      value={stt}
+                      disabled={!isSell}
+                      readOnly={!isSell}
+                      value={isSell ? stt : '0.00'}
                       onChange={(e) => handleBreakdownChange('stt', e.target.value)}
                       onKeyDown={blockNegativeKeys}
-                      className="w-full px-2 py-1.5 rounded-lg bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 font-mono text-xs"
+                      className={`w-full px-2 py-1.5 rounded-lg border text-white light:text-slate-900 font-mono text-xs ${
+                        !isSell
+                          ? 'bg-slate-800/40 text-slate-500 border-slate-800 cursor-not-allowed select-none'
+                          : 'bg-[#0e1626] light:bg-white border-[#1e293b] light:border-slate-300'
+                      }`}
+                      title={!isSell ? 'STT/CTT is always zero for BUY orders' : undefined}
                     />
                   </div>
                   <div>
