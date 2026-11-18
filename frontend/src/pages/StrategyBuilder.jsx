@@ -27,7 +27,7 @@ import DraftPortfoliosModal from '../components/strategy-builder/DraftPortfolios
 import PnLTable from '../components/strategy-builder/PnLTable';
 import GreeksTable from '../components/strategy-builder/GreeksTable';
 import UnderlyingSelectorModal from '../components/strategy-builder/UnderlyingSelectorModal';
-import OptionChainModal from '../components/strategy-builder/OptionChainModal';
+import OptionChainModal from '../components/trades/OptionChainModal';
 
 export default function StrategyBuilder() {
   const toast = useToast();
@@ -644,19 +644,19 @@ export default function StrategyBuilder() {
       <OptionChainModal
         isOpen={isOptionChainOpen}
         onClose={() => setIsOptionChainOpen(false)}
-        symbol={symbol}
-        spotPrice={spotPrice}
-        spotChange={spotChange}
-        spotChangePct={spotChangePct}
-        strikeStep={strikeStep}
-        lotSize={lotSize}
-        expiryDates={expiryDates}
-        selectedExpiry={selectedExpiry}
-        onSelectExpiry={handleSelectExpiryFromChain}
-        optionChain={optionChain}
+        initialSymbol={symbol}
+        initialExpiry={selectedExpiry}
+        mode="builder"
         activeLegs={legs}
         onAddLegFromChain={handleAddLegFromChain}
         onRemoveLeg={handleRemoveLegById}
+        onSymbolChange={(newSym) => {
+          setSymbol(newSym);
+          fetchMarketData(newSym);
+        }}
+        onExpiryChange={(newExp) => {
+          setSelectedExpiry(newExp);
+        }}
       />
     </div>
   );

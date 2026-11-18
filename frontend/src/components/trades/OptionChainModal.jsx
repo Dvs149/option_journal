@@ -28,6 +28,12 @@ export default function OptionChainModal({
   initialOptionType = null,
   initialExpiry = null,
   onSelectOption, // callback: ({ index_name, strike_price, option_type, expiry_date, price, lot_size }) => void
+  mode = 'trade', // 'trade' | 'builder'
+  activeLegs = [],
+  onAddLegFromChain,
+  onRemoveLeg,
+  onSymbolChange,
+  onExpiryChange,
 }) {
   const { isKite } = useTheme();
   const { showToast } = useToast();
@@ -52,7 +58,7 @@ export default function OptionChainModal({
       if (initialExpiry) setSelectedExpiry(initialExpiry);
       fetchOptionChain(initialSymbol || symbol, initialExpiry || selectedExpiry);
     }
-  }, [isOpen, initialSymbol]);
+  }, [isOpen, initialSymbol, initialExpiry]);
 
   // Fetch option chain data
   const fetchOptionChain = async (sym = symbol, exp = selectedExpiry) => {
@@ -66,6 +72,7 @@ export default function OptionChainModal({
         setData(res.data);
         if (res.data.selected_expiry) {
           setSelectedExpiry(res.data.selected_expiry);
+          onExpiryChange?.(res.data.selected_expiry);
         }
       } else {
         showToast('Failed to load Option Chain data', 'error');
@@ -83,12 +90,102 @@ export default function OptionChainModal({
     setSymbol(newSym);
     setSelectedExpiry('');
     fetchOptionChain(newSym, '');
+    onSymbolChange?.(newSym);
   };
 
   // Change Expiry
   const handleExpiryChange = (newExp) => {
     setSelectedExpiry(newExp);
     fetchOptionChain(symbol, newExp);
+    onExpiryChange?.(newExp);
+  };
+
+  // Helper to check if a specific leg is active in strategy builder
+  const getLegStatus = (strike, optType, side) => {
+    if (!Array.isArray(activeLegs)) return null;
+    return activeLegs.find(
+      (leg) =>
+        Number(leg.strike) === Number(strike) &&
+        String(leg.type).toUpperCase() === String(optType).toUpperCase() &&
+        String(leg.side).toUpperCase() === String(side).toUpperCase() &&
+        leg.isActive !== false
+    );
+  };
+
+  // Get lots count for leg if active
+  const getLegLots = (strike, optType, side) => {
+    const leg = getLegStatus(strike, optType, side);
+    return leg ? Number(leg.lots || 1) : 0;
+  };
+
+  // Toggle leg in builder mode
+  const handleToggleLeg = (strike, optType, side, price, iv) => {
+    const existing = getLegStatus(strike, optType, side);
+    if (existing) {
+      if (onRemoveLeg) {
+        onRemoveLeg(existing.id);
+        showToast(`Removed ${side} ${strike} ${optType}`, 'info');
+      }
+    } else {
+      if (onAddLegFromChain) {
+        const lot = data?.lot_size || (symbol === 'SENSEX' || symbol === 'BANKEX' ? 10 : (symbol === 'BANKNIFTY' ? 30 : 25));
+        onAddLegFromChain({
+          side,
+          type: optType,
+          strike: Number(strike),
+          expiry: data?.selected_expiry || selectedExpiry,
+          lots: 1,
+          lotSize: lot,
+          entryPrice: Number(price) || 0,
+          ltp: Number(price) || 0,
+          iv: Number(iv) || 14.5,
+          bookedPnL: 0,
+        });
+        showToast(`Added ${side} ${strike} ${optType} @ ₹${Number(price).toFixed(2)}`, 'success');
+      }
+    }
+  };
+
+  // Toggle Straddle in builder mode
+  const handleToggleStraddle = (strike, cePrice, pePrice, ceIv, peIv) => {
+    const ceExisting = getLegStatus(strike, 'CE', 'BUY');
+    const peExisting = getLegStatus(strike, 'PE', 'BUY');
+    if (ceExisting && peExisting) {
+      onRemoveLeg?.(ceExisting.id);
+      onRemoveLeg?.(peExisting.id);
+      showToast(`Removed ${strike} Straddle`, 'info');
+    } else {
+      const lot = data?.lot_size || (symbol === 'SENSEX' || symbol === 'BANKEX' ? 10 : (symbol === 'BANKNIFTY' ? 30 : 25));
+      if (!ceExisting && onAddLegFromChain) {
+        onAddLegFromChain({
+          side: 'BUY',
+          type: 'CE',
+          strike: Number(strike),
+          expiry: data?.selected_expiry || selectedExpiry,
+          lots: 1,
+          lotSize: lot,
+          entryPrice: Number(cePrice) || 0,
+          ltp: Number(cePrice) || 0,
+          iv: Number(ceIv) || 14.5,
+          bookedPnL: 0,
+        });
+      }
+      if (!peExisting && onAddLegFromChain) {
+        onAddLegFromChain({
+          side: 'BUY',
+          type: 'PE',
+          strike: Number(strike),
+          expiry: data?.selected_expiry || selectedExpiry,
+          lots: 1,
+          lotSize: lot,
+          entryPrice: Number(pePrice) || 0,
+          ltp: Number(pePrice) || 0,
+          iv: Number(peIv) || 14.5,
+          bookedPnL: 0,
+        });
+      }
+      showToast(`Added ${strike} Straddle (CE + PE)`, 'success');
+    }
   };
 
   // Filter strikes based on range and search
@@ -212,7 +309,15 @@ export default function OptionChainModal({
                 )}
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Click Call/Put LTP for single order, or click <span className="text-cyan-400 font-bold">Strike</span> for <span className="text-orange-400 font-bold">"Both"</span> (Straddle)
+                {mode === 'builder' ? (
+                  <>
+                    Click <span className="text-blue-400 font-bold">B</span> (Buy) or <span className="text-rose-400 font-bold">S</span> (Sell) to add/remove legs to Builder, or click <span className="text-cyan-400 font-bold">Strike</span> for <span className="text-orange-400 font-bold">Straddle</span>
+                  </>
+                ) : (
+                  <>
+                    Click Call/Put LTP for single order, or click <span className="text-cyan-400 font-bold">Strike</span> for <span className="text-orange-400 font-bold">&quot;Both&quot;</span> (Straddle)
+                  </>
+                )}
               </p>
             </div>
           </div>
@@ -490,20 +595,20 @@ export default function OptionChainModal({
                     </>
                   )}
                   <th className="py-2 px-3 text-right border-r border-[#1e293b] bg-blue-950/20 text-white font-bold">
-                    LTP (₹)
+                    {mode === 'builder' ? 'ORDER / LTP (₹)' : 'LTP (₹)'}
                   </th>
 
                   {/* STRIKE COLUMN */}
                   <th
                     className="py-2 px-4 text-center font-bold text-cyan-400 bg-[#162033] border-r border-[#1e293b]"
-                    title="Click any strike to create Both (Straddle) order"
+                    title={mode === 'builder' ? 'Click any strike to toggle Straddle (Both CE + PE)' : 'Click any strike to create Both (Straddle) order'}
                   >
-                    Strike (Both)
+                    {mode === 'builder' ? 'Strike (Straddle)' : 'Strike (Both)'}
                   </th>
 
                   {/* PUTS COLUMNS */}
                   <th className="py-2 px-3 text-left border-r border-[#1e293b] bg-orange-950/20 text-white font-bold">
-                    LTP (₹)
+                    {mode === 'builder' ? 'LTP (₹) / ORDER' : 'LTP (₹)'}
                   </th>
                   {viewMode === 'greeks' ? (
                     <>
@@ -597,14 +702,65 @@ export default function OptionChainModal({
 
                       {/* CALL: LTP (Clickable) */}
                       <td
-                        onClick={() => handleSelectStrike(row.strike_price, 'CE', row.call.ltp)}
-                        className={`py-2 px-3 text-right font-bold text-white border-r border-[#1e293b] cursor-pointer hover:bg-blue-600/30 transition-colors ${
+                        className={`py-2 px-3 text-right font-bold text-white border-r border-[#1e293b] transition-colors ${
                           callItm ? 'bg-blue-950/30 text-blue-200' : 'bg-transparent'
                         }`}
-                        title={`Click to select ${row.strike_price} CE @ ₹${row.call.ltp}`}
+                        title={
+                          mode === 'builder'
+                            ? `Buy or Sell ${row.strike_price} CE @ ₹${row.call.ltp}`
+                            : `Click to select ${row.strike_price} CE @ ₹${row.call.ltp}`
+                        }
                       >
-                        <div className="flex items-center justify-end gap-1.5">
-                          <span>₹{row.call.ltp.toFixed(2)}</span>
+                        <div className="flex items-center justify-end gap-2">
+                          {mode === 'builder' && (
+                            <div className="flex items-center gap-1 mr-1">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleLeg(row.strike_price, 'CE', 'BUY', row.call.ltp, row.call.iv);
+                                }}
+                                className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-extrabold transition-all cursor-pointer ${
+                                  getLegStatus(row.strike_price, 'CE', 'BUY')
+                                    ? 'bg-blue-500 text-white ring-2 ring-blue-300 shadow-sm'
+                                    : 'bg-blue-500/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30'
+                                }`}
+                                title={`Buy ${row.strike_price} CE`}
+                              >
+                                B
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleLeg(row.strike_price, 'CE', 'SELL', row.call.ltp, row.call.iv);
+                                }}
+                                className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-extrabold transition-all cursor-pointer ${
+                                  getLegStatus(row.strike_price, 'CE', 'SELL')
+                                    ? 'bg-rose-500 text-white ring-2 ring-rose-300 shadow-sm'
+                                    : 'bg-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white border border-rose-500/30'
+                                }`}
+                                title={`Sell ${row.strike_price} CE`}
+                              >
+                                S
+                              </button>
+                            </div>
+                          )}
+
+                          <span
+                            onClick={() => {
+                              if (mode === 'builder') {
+                                handleToggleLeg(row.strike_price, 'CE', 'BUY', row.call.ltp, row.call.iv);
+                              } else {
+                                handleSelectStrike(row.strike_price, 'CE', row.call.ltp);
+                              }
+                            }}
+                            className="cursor-pointer hover:underline"
+                            title={mode === 'builder' ? `Click to Buy ${row.strike_price} CE` : undefined}
+                          >
+                            ₹{row.call.ltp.toFixed(2)}
+                          </span>
+
                           <span
                             className={`text-[9px] font-semibold ${
                               row.call.change >= 0 ? 'text-emerald-400' : 'text-rose-400'
@@ -616,22 +772,36 @@ export default function OptionChainModal({
                         </div>
                       </td>
 
-                      {/* STRIKE PRICE (Center) - Click to create "Both" Straddle order */}
+                      {/* STRIKE PRICE (Center) */}
                       <td
-                        onClick={() =>
-                          handleSelectStrike(
-                            row.strike_price,
-                            'Both',
-                            (row.call.ltp + row.put.ltp).toFixed(2),
-                            { ce_price: row.call.ltp, pe_price: row.put.ltp }
-                          )
-                        }
+                        onClick={() => {
+                          if (mode === 'builder') {
+                            handleToggleStraddle(
+                              row.strike_price,
+                              row.call.ltp,
+                              row.put.ltp,
+                              row.call.iv,
+                              row.put.iv
+                            );
+                          } else {
+                            handleSelectStrike(
+                              row.strike_price,
+                              'Both',
+                              (row.call.ltp + row.put.ltp).toFixed(2),
+                              { ce_price: row.call.ltp, pe_price: row.put.ltp }
+                            );
+                          }
+                        }}
                         className={`py-2 px-4 text-center font-bold border-r border-[#1e293b] whitespace-nowrap cursor-pointer transition-all hover:scale-105 select-none ${
                           isAtm
                             ? 'bg-cyan-500/25 text-cyan-300 ring-2 ring-cyan-400/80 hover:bg-cyan-500/40 shadow-sm'
                             : 'bg-[#121b2d] text-white hover:bg-cyan-950/60 hover:text-cyan-300'
                         }`}
-                        title={`Click to create "Both" (Straddle) trade for strike ${row.strike_price} (CE @ ₹${row.call.ltp} + PE @ ₹${row.put.ltp})`}
+                        title={
+                          mode === 'builder'
+                            ? `Click to toggle Straddle for strike ${row.strike_price} (CE @ ₹${row.call.ltp} + PE @ ₹${row.put.ltp})`
+                            : `Click to create "Both" (Straddle) trade for strike ${row.strike_price} (CE @ ₹${row.call.ltp} + PE @ ₹${row.put.ltp})`
+                        }
                       >
                         <div className="flex items-center justify-center gap-1.5">
                           <span className="text-xs">{row.strike_price}</span>
@@ -641,7 +811,7 @@ export default function OptionChainModal({
                             </span>
                           ) : (
                             <span className="opacity-0 group-hover:opacity-100 px-1 py-0.2 rounded text-[8px] font-bold bg-cyan-500/20 text-cyan-400 transition-opacity">
-                              BOTH
+                              {mode === 'builder' ? 'STRADDLE' : 'BOTH'}
                             </span>
                           )}
                         </div>
@@ -649,14 +819,30 @@ export default function OptionChainModal({
 
                       {/* PUT: LTP (Clickable) */}
                       <td
-                        onClick={() => handleSelectStrike(row.strike_price, 'PE', row.put.ltp)}
-                        className={`py-2 px-3 text-left font-bold text-white border-r border-[#1e293b] cursor-pointer hover:bg-orange-600/30 transition-colors ${
+                        className={`py-2 px-3 text-left font-bold text-white border-r border-[#1e293b] transition-colors ${
                           putItm ? 'bg-orange-950/30 text-orange-200' : 'bg-transparent'
                         }`}
-                        title={`Click to select ${row.strike_price} PE @ ₹${row.put.ltp}`}
+                        title={
+                          mode === 'builder'
+                            ? `Buy or Sell ${row.strike_price} PE @ ₹${row.put.ltp}`
+                            : `Click to select ${row.strike_price} PE @ ₹${row.put.ltp}`
+                        }
                       >
-                        <div className="flex items-center justify-start gap-1.5">
-                          <span>₹{row.put.ltp.toFixed(2)}</span>
+                        <div className="flex items-center justify-start gap-2">
+                          <span
+                            onClick={() => {
+                              if (mode === 'builder') {
+                                handleToggleLeg(row.strike_price, 'PE', 'BUY', row.put.ltp, row.put.iv);
+                              } else {
+                                handleSelectStrike(row.strike_price, 'PE', row.put.ltp);
+                              }
+                            }}
+                            className="cursor-pointer hover:underline"
+                            title={mode === 'builder' ? `Click to Buy ${row.strike_price} PE` : undefined}
+                          >
+                            ₹{row.put.ltp.toFixed(2)}
+                          </span>
+
                           <span
                             className={`text-[9px] font-semibold ${
                               row.put.change >= 0 ? 'text-emerald-400' : 'text-rose-400'
@@ -665,6 +851,41 @@ export default function OptionChainModal({
                             {row.put.change >= 0 ? '+' : ''}
                             {row.put.change.toFixed(1)}
                           </span>
+
+                          {mode === 'builder' && (
+                            <div className="flex items-center gap-1 ml-1">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleLeg(row.strike_price, 'PE', 'BUY', row.put.ltp, row.put.iv);
+                                }}
+                                className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-extrabold transition-all cursor-pointer ${
+                                  getLegStatus(row.strike_price, 'PE', 'BUY')
+                                    ? 'bg-blue-500 text-white ring-2 ring-blue-300 shadow-sm'
+                                    : 'bg-blue-500/20 text-blue-400 hover:bg-blue-600 hover:text-white border border-blue-500/30'
+                                }`}
+                                title={`Buy ${row.strike_price} PE`}
+                              >
+                                B
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleLeg(row.strike_price, 'PE', 'SELL', row.put.ltp, row.put.iv);
+                                }}
+                                className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-extrabold transition-all cursor-pointer ${
+                                  getLegStatus(row.strike_price, 'PE', 'SELL')
+                                    ? 'bg-rose-500 text-white ring-2 ring-rose-300 shadow-sm'
+                                    : 'bg-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white border border-rose-500/30'
+                                }`}
+                                title={`Sell ${row.strike_price} PE`}
+                              >
+                                S
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </td>
 
@@ -730,23 +951,77 @@ export default function OptionChainModal({
           )}
         </div>
 
-        {/* Modal Bottom Bar / Instructions */}
-        <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 border-t border-[#1e293b] light:border-slate-200 bg-[#121b2d]/80 light:bg-slate-50/80 text-xs">
-          <div className="flex items-center gap-2 text-slate-400 text-[11px]">
-            <Info className="w-3.5 h-3.5 text-cyan-400" />
-            <span>
-              Yellow/Blue highlighted rows represent <strong>In-The-Money (ITM)</strong> contracts. Click any LTP cell to insert contract.
-            </span>
-          </div>
+        {/* Modal Bottom Bar / Instructions / Selected Builder Legs */}
+        {mode === 'builder' ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 border-t border-[#1e293b] light:border-slate-200 bg-[#0e1626] light:bg-slate-50 text-xs">
+            <div className="flex flex-wrap items-center gap-2 max-w-3xl">
+              <span className="text-xs font-semibold text-slate-300">
+                Selected in Builder ({activeLegs.length}):
+              </span>
+              {activeLegs.length === 0 ? (
+                <span className="text-xs text-slate-500 italic">
+                  Click B (Buy) or S (Sell) next to any strike to add legs
+                </span>
+              ) : (
+                activeLegs.map((leg) => {
+                  const isBuy = String(leg.side).toUpperCase() === 'BUY';
+                  return (
+                    <span
+                      key={leg.id || `${leg.side}_${leg.strike}_${leg.type}`}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
+                        isBuy
+                          ? 'bg-blue-500/20 text-blue-300 border-blue-500/40'
+                          : 'bg-rose-500/20 text-rose-300 border-rose-500/40'
+                      }`}
+                    >
+                      <span>
+                        {leg.side} {leg.lots || 1}L {leg.strike} {leg.type}
+                      </span>
+                      {onRemoveLeg && (
+                        <button
+                          type="button"
+                          onClick={() => onRemoveLeg(leg.id)}
+                          className="hover:text-white cursor-pointer ml-1 text-slate-400 hover:text-rose-400 font-extrabold"
+                          title="Remove leg"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </span>
+                  );
+                })
+              )}
+            </div>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-5 py-2 rounded-xl text-xs font-semibold bg-[#1e293b] light:bg-slate-200 text-slate-300 light:text-slate-700 hover:text-white transition-colors cursor-pointer"
-          >
-            Close Option Chain
-          </button>
-        </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-5 py-2 rounded-xl text-xs font-bold bg-[#ff5722] hover:bg-[#f4511e] text-white shadow-lg shadow-[#ff5722]/20 transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <span>Done / View Payoff Graph</span>
+                <span>→</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 border-t border-[#1e293b] light:border-slate-200 bg-[#121b2d]/80 light:bg-slate-50/80 text-xs">
+            <div className="flex items-center gap-2 text-slate-400 text-[11px]">
+              <Info className="w-3.5 h-3.5 text-cyan-400" />
+              <span>
+                Yellow/Blue highlighted rows represent <strong>In-The-Money (ITM)</strong> contracts. Click any LTP cell to insert contract.
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2 rounded-xl text-xs font-semibold bg-[#1e293b] light:bg-slate-200 text-slate-300 light:text-slate-700 hover:text-white transition-colors cursor-pointer"
+            >
+              Close Option Chain
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
