@@ -678,6 +678,7 @@ class TradeController extends Controller
                 $trade->journal->delete();
             }
 
+            $trade->orders()->delete();
             $trade->delete();
         });
 
@@ -840,6 +841,7 @@ class TradeController extends Controller
                     $trade->journal->delete();
                 }
 
+                $trade->orders()->delete();
                 $trade->delete();
                 $deletedCount++;
             }
@@ -1314,6 +1316,7 @@ class TradeController extends Controller
         }
 
         $validated = $request->validate([
+            'order_type' => ['nullable', 'string', 'in:BUY,SELL,buy,sell'],
             'quantity' => ['required', 'integer', 'min:1'],
             'price' => ['required', 'numeric', 'min:0'],
             'order_date' => ['nullable', 'date'],
@@ -1329,6 +1332,7 @@ class TradeController extends Controller
             'other_charges' => ['nullable', 'numeric', 'min:0'],
         ]);
 
+        $newOrderType = $request->filled('order_type') ? strtoupper(trim($validated['order_type'])) : $order->order_type;
         $quantity = (int) $validated['quantity'];
         $price = (float) $validated['price'];
 
@@ -1345,15 +1349,15 @@ class TradeController extends Controller
         }
         $lotSize = max(1, (int) ($userLotSize ?: 1));
 
-        // If SELL: verify that new quantity doesn't exceed open_quantity + this order's quantity
-        if ($order->order_type === 'SELL') {
+        // If SELL on an OPEN trade: verify that new quantity doesn't exceed permissible quantity
+        if ($newOrderType === 'SELL' && $order->order_type === 'SELL' && $trade->status === 'OPEN') {
             $maxSellable = (int) ($trade->open_quantity ?? 0) + (int) $order->quantity;
             if ($quantity > $maxSellable) {
                 return response()->json([
                     'message' => "Exit quantity ({$quantity}) exceeds max permissible quantity ({$maxSellable} Qty).",
                 ], 422);
             }
-        } else {
+        } elseif ($newOrderType === 'BUY' && $order->order_type === 'BUY' && $trade->status !== 'CLOSED') {
             // BUY order: ensure reducing buy quantity doesn't drop below already sold quantity
             $soldQty = (int) $trade->orders()->where('order_type', 'SELL')->sum('quantity');
             $otherBuyQty = (int) $trade->orders()->where('order_type', 'BUY')->where('id', '!=', $order->id)->sum('quantity');
@@ -1365,9 +1369,9 @@ class TradeController extends Controller
             }
         }
 
-        $autoCharges = $this->calcService->estimateSingleOrderCharges($order->order_type, $price, $quantity, $exchange, $rates);
+        $autoCharges = $this->calcService->estimateSingleOrderCharges($newOrderType, $price, $quantity, $exchange, $rates);
 
-        $isBuyOrder = strtoupper(trim($order->order_type)) === 'BUY';
+        $isBuyOrder = $newOrderType === 'BUY';
         if ($request->has('total_charges') || $request->has('brokerage')) {
             $brokerage = $request->has('brokerage') ? (float) $validated['brokerage'] : (float) ($autoCharges['brokerage'] ?? 20.0);
             $stt = $isBuyOrder ? 0.00 : ($request->has('stt') ? (float) $validated['stt'] : (float) ($autoCharges['stt'] ?? 0.0));
@@ -1402,10 +1406,11 @@ class TradeController extends Controller
             $charges['other_charges'] = (float) ($order->other_charges ?? 0.0);
         }
 
-        DB::transaction(function () use ($trade, $order, $quantity, $price, $validated, $charges, $lotSize) {
+        DB::transaction(function () use ($trade, $order, $quantity, $price, $newOrderType, $validated, $charges, $lotSize) {
             $lots = max(1, (int) round($quantity / $lotSize));
 
             $order->update([
+                'order_type' => $newOrderType,
                 'quantity' => $quantity,
                 'lots' => $lots,
                 'price' => $price,

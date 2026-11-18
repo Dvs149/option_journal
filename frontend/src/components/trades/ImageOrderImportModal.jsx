@@ -321,8 +321,15 @@ export default function ImageOrderImportModal({
 
     setImporting(true);
     try {
+      // Sort in ascending order of execution time (whichever order was created first is added first)
+      const sortedForImport = [...selectedOrders].sort((a, b) => {
+        const tA = String(a.raw_timestamp || a.time || '');
+        const tB = String(b.raw_timestamp || b.time || '');
+        return tA.localeCompare(tB);
+      });
+
       const payload = {
-        orders: selectedOrders,
+        orders: sortedForImport,
         trade_date: tradeDate,
         import_mode: importMode,
         option_type: optionType,

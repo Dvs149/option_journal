@@ -152,5 +152,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/exchange-token', [ZerodhaController::class, 'exchangeToken']);
         Route::post('/set-token', [ZerodhaController::class, 'setToken']);
         Route::post('/import-orders', [ZerodhaController::class, 'importOrders']);
+        Route::post('/sync-today-orders', [ZerodhaController::class, 'syncTodayOrders']);
     });
 });

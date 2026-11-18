@@ -39,11 +39,12 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
     return 50;
   }, [trade, getLotSize]);
 
-  const isSell = order?.order_type === 'SELL';
+  const [orderType, setOrderType] = useState('BUY');
+  const isSell = orderType === 'SELL';
 
   const maxPermissibleQty = useMemo(() => {
     if (!trade || !order) return 999999;
-    if (isSell) {
+    if (isSell && trade.status === 'OPEN') {
       const openQty = trade.open_quantity != null ? parseInt(trade.open_quantity, 10) : 0;
       return openQty + parseInt(order.quantity, 10);
     }
@@ -85,6 +86,9 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
 
   useEffect(() => {
     if (isOpen && order) {
+      const type = order.order_type ? order.order_type.toUpperCase() : 'BUY';
+      setOrderType(type);
+      const isInitialSell = type === 'SELL';
       setQuantity(order.quantity ? order.quantity.toString() : '');
       setPrice(order.price ? parseFloat(order.price).toString() : '');
       setOrderDate(order.order_date || '');
@@ -93,7 +97,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
 
       setTotalCharges(order.total_charges != null ? parseFloat(order.total_charges).toFixed(2) : '0.00');
       setBrokerage(order.brokerage != null ? parseFloat(order.brokerage).toFixed(2) : '20.00');
-      setStt(isSell ? (order.stt != null ? parseFloat(order.stt).toFixed(2) : '0.00') : '0.00');
+      setStt(isInitialSell ? (order.stt != null ? parseFloat(order.stt).toFixed(2) : '0.00') : '0.00');
       setExchangeCharges(order.exchange_charges != null ? parseFloat(order.exchange_charges).toFixed(2) : '0.00');
       setGst(order.gst != null ? parseFloat(order.gst).toFixed(2) : '0.00');
       setSebiCharges(order.sebi_charges != null ? parseFloat(order.sebi_charges).toFixed(2) : '0.00');
@@ -107,7 +111,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
   const parsedPrice = parseFloat(price) || 0;
 
   // Helper to calculate standard regulatory breakdown
-  const calculateEstimatedBreakdown = (q, p) => {
+  const calculateEstimatedBreakdown = (q, p, forSell = isSell) => {
     if (q <= 0 || p <= 0) {
       return { brokerage: '0.00', stt: '0.00', exchangeCharges: '0.00', sebiCharges: '0.00', stampDuty: '0.00', gst: '0.00', total: '0.00' };
     }
@@ -116,13 +120,13 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
 
     const brk = parseFloat(rates?.brokerage_per_order) || 20.0;
     // STT is strictly 0 on BUY orders in Indian Options trading; only charged on SELL
-    const s = isSell ? turnover * ((parseFloat(rates?.stt_rate_percent) || 0.15) / 100) : 0.0;
+    const s = forSell ? turnover * ((parseFloat(rates?.stt_rate_percent) || 0.15) / 100) : 0.0;
     const txnRate = isBse
       ? (parseFloat(rates?.bse_txn_rate_percent) || 0.0325) / 100
       : (parseFloat(rates?.nse_txn_rate_percent) || 0.03553) / 100;
     const ex = turnover * txnRate;
     const sebi = turnover * ((parseFloat(rates?.sebi_per_crore) || 10.0) / 10000000);
-    const sd = isSell ? 0.0 : turnover * ((parseFloat(rates?.stamp_duty_rate_percent) || 0.003) / 100);
+    const sd = forSell ? 0.0 : turnover * ((parseFloat(rates?.stamp_duty_rate_percent) || 0.003) / 100);
     const g = (brk + ex + sebi) * ((parseFloat(rates?.gst_rate_percent) || 18.0) / 100);
     const tot = Math.round((brk + s + ex + sebi + sd + g) * 100) / 100;
 
@@ -137,10 +141,25 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
     };
   };
 
-  const handleAutoCalculateCharges = () => {
-    const est = calculateEstimatedBreakdown(parsedQty, parsedPrice);
+  const handleSideChange = (newSide) => {
+    setOrderType(newSide);
+    const forSell = newSide === 'SELL';
+    const est = calculateEstimatedBreakdown(parsedQty, parsedPrice, forSell);
     setBrokerage(est.brokerage);
-    setStt(isSell ? est.stt : '0.00');
+    setStt(est.stt);
+    setExchangeCharges(est.exchangeCharges);
+    setGst(est.gst);
+    setSebiCharges(est.sebiCharges);
+    setStampDuty(est.stampDuty);
+    setOtherCharges('0.00');
+    setTotalCharges(est.total);
+    showToast(`Order side set to ${newSide}. Regulatory charges updated.`, 'info');
+  };
+
+  const handleAutoCalculateCharges = () => {
+    const est = calculateEstimatedBreakdown(parsedQty, parsedPrice, isSell);
+    setBrokerage(est.brokerage);
+    setStt(est.stt);
     setExchangeCharges(est.exchangeCharges);
     setGst(est.gst);
     setSebiCharges(est.sebiCharges);
@@ -242,6 +261,7 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
     try {
       setSubmitting(true);
       const res = await api.put(`/trades/${trade.id}/orders/${order.id}`, {
+        order_type: orderType,
         quantity: parsedQty,
         price: parsedPrice,
         order_date: orderDate || undefined,
@@ -315,6 +335,39 @@ export default function EditOrderModal({ trade, order, isOpen, onClose, onSucces
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
+          {/* Order Side Selector: BUY / SELL */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 light:text-slate-700 mb-1.5">
+              Order Side (Action) <span className="text-rose-400">*</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-[#0b1322] light:bg-slate-100 border border-[#1e293b] light:border-slate-300">
+              <button
+                type="button"
+                onClick={() => handleSideChange('BUY')}
+                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  orderType === 'BUY'
+                    ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25 ring-1 ring-emerald-400/50'
+                    : 'text-slate-400 hover:text-slate-200 light:hover:text-slate-700'
+                }`}
+              >
+                <TrendingUp className="w-3.5 h-3.5" />
+                <span>BUY (Entry)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSideChange('SELL')}
+                className={`py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  orderType === 'SELL'
+                    ? 'bg-rose-500 text-white shadow-md shadow-rose-500/25 ring-1 ring-rose-400/50'
+                    : 'text-slate-400 hover:text-slate-200 light:hover:text-slate-700'
+                }`}
+              >
+                <TrendingDown className="w-3.5 h-3.5" />
+                <span>SELL (Exit)</span>
+              </button>
+            </div>
+          </div>
+
           {/* Quantity & Price */}
           <div className="grid grid-cols-2 gap-3.5">
             <div>

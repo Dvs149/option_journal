@@ -60,6 +60,7 @@ import ExportModal from '../components/trades/ExportModal';
 import PartialExitModal from '../components/trades/PartialExitModal';
 import EditOrderModal from '../components/trades/EditOrderModal';
 import OptionChainModal from '../components/trades/OptionChainModal';
+import { KiteIcon } from './Zerodha';
 import * as XLSX from 'xlsx';
 
 // Helper to resolve individual CE and PE leg prices
@@ -194,9 +195,33 @@ export default function AllTrades() {
   const drawerFileInputRef = useRef(null);
   const [sortBy, setSortBy] = useState('trade_date');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [syncingZerodha, setSyncingZerodha] = useState(false);
   const { showToast } = useToast();
   const setFeedbackMessage = (msg, type = 'success') => {
     if (msg) showToast(msg, type);
+  };
+
+  // 1-Click Auto-sync today's executed Zerodha orders to All Trades
+  const handleAutoSyncZerodha = async () => {
+    try {
+      setSyncingZerodha(true);
+      const res = await api.post('/zerodha/sync-today-orders');
+      if (res.data?.status === 'success') {
+        const count = res.data.synced_count ?? 0;
+        showToast(res.data.message || 'Orders synced successfully', count > 0 ? 'success' : 'info');
+        if (count > 0) {
+          fetchTrades();
+        }
+      } else {
+        showToast(res.data?.message || 'Failed to sync Zerodha orders', 'error');
+      }
+    } catch (err) {
+      console.error('Zerodha auto-sync error:', err);
+      const msg = err.response?.data?.message || err.message || 'Failed to sync Zerodha orders';
+      showToast(msg, 'error');
+    } finally {
+      setSyncingZerodha(false);
+    }
   };
 
   const handleSort = (field) => {
@@ -1953,6 +1978,17 @@ export default function AllTrades() {
 
             <button
               type="button"
+              onClick={handleAutoSyncZerodha}
+              disabled={syncingZerodha}
+              className="px-3.5 py-2 rounded-xl bg-orange-600/15 hover:bg-orange-600/25 border border-orange-500/30 text-orange-400 hover:text-orange-300 text-xs font-semibold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer shadow-sm shadow-orange-500/10 disabled:opacity-50"
+              title="Auto-fetch today's executed orders from Zerodha Kite and import unadded orders into All Trades"
+            >
+              <KiteIcon className={`w-3.5 h-3.5 ${syncingZerodha ? 'animate-spin' : ''}`} />
+              <span>{syncingZerodha ? 'Syncing...' : 'Sync Zerodha'}</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setShowImageOrderModal(true)}
               className="px-3.5 py-2 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-cyan-500/30 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-600/10 text-xs font-semibold flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer shadow-sm"
               title="Import executed orders from order book screenshot (Zerodha Kite, Groww, etc.)"
@@ -2567,15 +2603,21 @@ export default function AllTrades() {
                                                   #{oIdx + 1}
                                                 </td>
                                                 <td className="py-2 px-3">
-                                                  <span
-                                                    className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      setEditOrderModal({ isOpen: true, trade, order: ord });
+                                                    }}
+                                                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer hover:scale-105 ${
                                                       isBuy
-                                                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                                                        : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                                                        ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25'
+                                                        : 'bg-rose-500/15 text-rose-400 border border-rose-500/30 hover:bg-rose-500/25'
                                                     }`}
+                                                    title="Click to change order side (BUY/SELL) or edit order"
                                                   >
                                                     {ord.order_type}
-                                                  </span>
+                                                  </button>
                                                 </td>
                                                 <td className="py-2 px-3 text-slate-300 light:text-slate-700">
                                                   <span title={getDayOfWeek(ord.order_date || ord.order_time)} className="cursor-help hover:text-blue-400 transition-colors">{formatDateTime(ord.order_date, ord.order_time)}</span>

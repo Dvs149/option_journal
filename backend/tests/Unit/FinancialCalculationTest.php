@@ -95,4 +95,33 @@ class FinancialCalculationTest extends TestCase
         $this->assertEquals(50000.00, $res['max_drawdown']);
         $this->assertEquals(10000.00, $res['current_drawdown']);
     }
+
+    public function test_zerodha_kite_virtual_contract_note_single_order_parity(): void
+    {
+        // 1) 15:21:11 SELL SENSEX 19th NOV 82100 CE BFO 400 @ 313.00 -> Kite: 259.56
+        $sellOrder = $this->calcService->estimateSingleOrderCharges('SELL', 313.00, 400, 'BFO');
+        $this->assertEquals(259.56, $sellOrder['total_charges']);
+        $this->assertEquals(40.69, $sellOrder['exchange_charges']);
+        $this->assertEquals(187.80, $sellOrder['stt']);
+        $this->assertEquals(20.00, $sellOrder['brokerage']);
+
+        // 2) 15:19:52 BUY SENSEX 19th NOV 82100 CE BFO 400 @ 305.90 -> Kite: 74.67
+        $buyOrder = $this->calcService->estimateSingleOrderCharges('BUY', 305.90, 400, 'BFO');
+        $this->assertEquals(74.67, $buyOrder['total_charges']);
+        $this->assertEquals(39.77, $buyOrder['exchange_charges']);
+        $this->assertEquals(4.0, $buyOrder['stamp_duty']);
+        $this->assertEquals(0.00, $buyOrder['stt']);
+
+        // 3) 15:08:59 BUY SENSEX 19th NOV 82100 PE BFO 400 @ 337.68 -> Kite: 79.56
+        $buyPeOrder = $this->calcService->estimateSingleOrderCharges('BUY', 337.68, 400, 'BFO');
+        $this->assertEquals(79.56, $buyPeOrder['total_charges']);
+        $this->assertEquals(43.90, $buyPeOrder['exchange_charges']);
+        $this->assertEquals(4.0, $buyPeOrder['stamp_duty']);
+
+        // 4) 14:47:24 SELL SENSEX 19th NOV 82100 CE BFO 300 @ 323.83 -> turnover 97149: 206.69 (if 97150: 206.70)
+        $sellCeOrder = $this->calcService->estimateSingleOrderCharges('SELL', 323.83, 300, 'BFO');
+        $this->assertEquals(206.69, $sellCeOrder['total_charges']);
+        $this->assertEquals(31.57, $sellCeOrder['exchange_charges']);
+        $this->assertEquals(145.72, $sellCeOrder['stt']);
+    }
 }

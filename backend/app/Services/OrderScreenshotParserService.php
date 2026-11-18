@@ -233,6 +233,13 @@ class OrderScreenshotParserService
         $squaredOffTradeIds = [];
         $importedOrdersCount = 0;
 
+        // Ensure incoming orders are sorted in ascending order of execution time (whichever order was created first is processed first)
+        usort($selectedOrders, function ($a, $b) {
+            $ta = $a['raw_timestamp'] ?? ($a['time'] ?? '');
+            $tb = $b['raw_timestamp'] ?? ($b['time'] ?? '');
+            return strcmp($ta, $tb);
+        });
+
         // Fetch user's active open positions to allow automatic square-off
         $openTrades = Trade::where('user_id', $user->id)
             ->whereIn('status', ['OPEN', 'PARTIALLY_CLOSED'])
@@ -256,7 +263,16 @@ class OrderScreenshotParserService
                     $grouped[$key][] = $ord;
                 }
 
+                $pendingBothActions = [];
+
                 foreach ($grouped as $key => $items) {
+                    // Sort items in this instrument ascending by time
+                    usort($items, function ($a, $b) {
+                        $ta = $a['raw_timestamp'] ?? ($a['time'] ?? '');
+                        $tb = $b['raw_timestamp'] ?? ($b['time'] ?? '');
+                        return strcmp($ta, $tb);
+                    });
+
                     $ceOrders = array_values(array_filter($items, fn($o) => strtoupper($o['option_type'] ?? '') === 'CE'));
                     $peOrders = array_values(array_filter($items, fn($o) => strtoupper($o['option_type'] ?? '') === 'PE'));
 
@@ -280,9 +296,23 @@ class OrderScreenshotParserService
                         $peB = array_shift($peBuys);
                         $peS = array_shift($peSells);
 
-                        $trade = $this->createClosedBothTrade($user, $account->id, $ceB, $ceS, $peB, $peS, $tradeDate, $rates);
-                        $importedTradeIds[] = $trade->id;
-                        $importedOrdersCount += 4;
+                        $times = array_filter([
+                            $ceB['raw_timestamp'] ?? ($ceB['time'] ?? null),
+                            $ceS['raw_timestamp'] ?? ($ceS['time'] ?? null),
+                            $peB['raw_timestamp'] ?? ($peB['time'] ?? null),
+                            $peS['raw_timestamp'] ?? ($peS['time'] ?? null),
+                        ]);
+                        sort($times);
+                        $earliestTime = !empty($times) ? $times[0] : '09:30:00';
+
+                        $pendingBothActions[] = [
+                            'action' => 'closed_both',
+                            'time' => $earliestTime,
+                            'ce_b' => $ceB,
+                            'ce_s' => $ceS,
+                            'pe_b' => $peB,
+                            'pe_s' => $peS,
+                        ];
                     }
 
                     // For remaining legs (e.g. 1 CE SELL + 1 PE SELL or 1 CE BUY + 1 PE BUY)
@@ -292,6 +322,44 @@ class OrderScreenshotParserService
                     while (!empty($remCe) && !empty($remPe)) {
                         $c = array_shift($remCe);
                         $p = array_shift($remPe);
+
+                        $cTime = $c['raw_timestamp'] ?? ($c['time'] ?? '09:30:00');
+                        $pTime = $p['raw_timestamp'] ?? ($p['time'] ?? '09:30:00');
+                        $earliestTime = strcmp($cTime, $pTime) <= 0 ? $cTime : $pTime;
+
+                        $pendingBothActions[] = [
+                            'action' => 'both_legs',
+                            'time' => $earliestTime,
+                            'c' => $c,
+                            'p' => $p,
+                        ];
+                    }
+
+                    // If any single unmatched order remains, check square-off before creating new open trade
+                    foreach (array_merge($remCe, $remPe) as $unmatched) {
+                        $ordTime = $unmatched['raw_timestamp'] ?? ($unmatched['time'] ?? '09:30:00');
+                        $pendingBothActions[] = [
+                            'action' => 'unmatched',
+                            'time' => $ordTime,
+                            'order' => $unmatched,
+                        ];
+                    }
+                }
+
+                // Sort all pending Both actions in strictly ASCENDING order by execution time
+                // (whichever order was created first is added first into the database)
+                usort($pendingBothActions, function ($a, $b) {
+                    return strcmp($a['time'] ?? '', $b['time'] ?? '');
+                });
+
+                foreach ($pendingBothActions as $act) {
+                    if ($act['action'] === 'closed_both') {
+                        $trade = $this->createClosedBothTrade($user, $account->id, $act['ce_b'], $act['ce_s'], $act['pe_b'], $act['pe_s'], $tradeDate, $rates);
+                        $importedTradeIds[] = $trade->id;
+                        $importedOrdersCount += 4;
+                    } elseif ($act['action'] === 'both_legs') {
+                        $c = $act['c'];
+                        $p = $act['p'];
 
                         // If both legs have same order type (e.g. both SELL to exit open position)
                         if (strtoupper($c['type'] ?? '') === strtoupper($p['type'] ?? '')) {
@@ -327,7 +395,20 @@ class OrderScreenshotParserService
                                 $squaredOffTradeIds[] = $matchedCe->id;
                                 $importedOrdersCount += 1;
                                 $matchedCe->open_quantity = 0;
-                                $remPe[] = $p;
+                                // Still process $p as unmatched
+                                $unmatchedP = $p;
+                                $matchedSingleP = $this->findMatchingOpenSingleTrade($openTrades, $unmatchedP['index_name'], $unmatchedP['strike_price'], 'PE', $unmatchedP['type']);
+                                if ($matchedSingleP) {
+                                    $this->squareOffSingleTrade($user, $matchedSingleP, $unmatchedP, $tradeDate, $rates, 'PE');
+                                    $importedTradeIds[] = $matchedSingleP->id;
+                                    $squaredOffTradeIds[] = $matchedSingleP->id;
+                                    $importedOrdersCount += 1;
+                                    $matchedSingleP->open_quantity = 0;
+                                } else {
+                                    $t = $this->createOpenTradeFromOrder($user, $account->id, $unmatchedP, $tradeDate, $rates);
+                                    $importedTradeIds[] = $t->id;
+                                    $importedOrdersCount += 1;
+                                }
                                 continue;
                             } elseif ($matchedPe) {
                                 $this->squareOffSingleTrade($user, $matchedPe, $p, $tradeDate, $rates, 'PE');
@@ -335,7 +416,20 @@ class OrderScreenshotParserService
                                 $squaredOffTradeIds[] = $matchedPe->id;
                                 $importedOrdersCount += 1;
                                 $matchedPe->open_quantity = 0;
-                                $remCe[] = $c;
+                                // Still process $c as unmatched
+                                $unmatchedC = $c;
+                                $matchedSingleC = $this->findMatchingOpenSingleTrade($openTrades, $unmatchedC['index_name'], $unmatchedC['strike_price'], 'CE', $unmatchedC['type']);
+                                if ($matchedSingleC) {
+                                    $this->squareOffSingleTrade($user, $matchedSingleC, $unmatchedC, $tradeDate, $rates, 'CE');
+                                    $importedTradeIds[] = $matchedSingleC->id;
+                                    $squaredOffTradeIds[] = $matchedSingleC->id;
+                                    $importedOrdersCount += 1;
+                                    $matchedSingleC->open_quantity = 0;
+                                } else {
+                                    $t = $this->createOpenTradeFromOrder($user, $account->id, $unmatchedC, $tradeDate, $rates);
+                                    $importedTradeIds[] = $t->id;
+                                    $importedOrdersCount += 1;
+                                }
                                 continue;
                             }
                         }
@@ -344,10 +438,8 @@ class OrderScreenshotParserService
                         $trade = $this->createBothTradeFromLegs($user, $account->id, $c, $p, $tradeDate, $rates);
                         $importedTradeIds[] = $trade->id;
                         $importedOrdersCount += 2;
-                    }
-
-                    // If any single unmatched order remains, check square-off before creating new open trade
-                    foreach (array_merge($remCe, $remPe) as $unmatched) {
+                    } elseif ($act['action'] === 'unmatched') {
+                        $unmatched = $act['order'];
                         $matched = $this->findMatchingOpenSingleTrade(
                             $openTrades,
                             $unmatched['index_name'],
@@ -400,7 +492,16 @@ class OrderScreenshotParserService
                     $grouped[$key][] = $ord;
                 }
 
+                $pendingSmartActions = [];
+
                 foreach ($grouped as $key => $items) {
+                    // Sort items in this instrument by time ascending
+                    usort($items, function ($a, $b) {
+                        $ta = $a['raw_timestamp'] ?? ($a['time'] ?? '');
+                        $tb = $b['raw_timestamp'] ?? ($b['time'] ?? '');
+                        return strcmp($ta, $tb);
+                    });
+
                     $buys = array_values(array_filter($items, fn($o) => strtoupper($o['type']) === 'BUY'));
                     $sells = array_values(array_filter($items, fn($o) => strtoupper($o['type']) === 'SELL'));
 
@@ -409,14 +510,43 @@ class OrderScreenshotParserService
                         $buy = array_shift($buys);
                         $sell = array_shift($sells);
 
-                        $trade = $this->createClosedTradeFromPair($user, $account->id, $buy, $sell, $tradeDate, $rates);
-                        $importedTradeIds[] = $trade->id;
-                        $importedOrdersCount += 2;
+                        $buyTime = $buy['raw_timestamp'] ?? ($buy['time'] ?? '09:30:00');
+                        $sellTime = $sell['raw_timestamp'] ?? ($sell['time'] ?? '15:30:00');
+                        $earliestTime = strcmp($buyTime, $sellTime) <= 0 ? $buyTime : $sellTime;
+
+                        $pendingSmartActions[] = [
+                            'action' => 'closed_pair',
+                            'time' => $earliestTime,
+                            'buy' => $buy,
+                            'sell' => $sell,
+                        ];
                     }
 
                     // Remaining BUYs or SELLs: check if they square off existing open positions
                     $remainingOrders = array_merge($buys, $sells);
                     foreach ($remainingOrders as $ord) {
+                        $ordTime = $ord['raw_timestamp'] ?? ($ord['time'] ?? '09:30:00');
+                        $pendingSmartActions[] = [
+                            'action' => 'single',
+                            'time' => $ordTime,
+                            'order' => $ord,
+                        ];
+                    }
+                }
+
+                // Sort all pending actions in strictly ASCENDING order by execution time
+                // (whichever order was created first is added first into the database)
+                usort($pendingSmartActions, function ($a, $b) {
+                    return strcmp($a['time'] ?? '', $b['time'] ?? '');
+                });
+
+                foreach ($pendingSmartActions as $act) {
+                    if ($act['action'] === 'closed_pair') {
+                        $trade = $this->createClosedTradeFromPair($user, $account->id, $act['buy'], $act['sell'], $tradeDate, $rates);
+                        $importedTradeIds[] = $trade->id;
+                        $importedOrdersCount += 2;
+                    } else {
+                        $ord = $act['order'];
                         $matchedSingle = $this->findMatchingOpenSingleTrade(
                             $openTrades,
                             $ord['index_name'],
@@ -548,9 +678,9 @@ class OrderScreenshotParserService
         $buyPrice = max(0.0, abs((float)($buy['price'] ?? 0)));
         $sellPrice = max(0.0, abs((float)($sell['price'] ?? 0)));
 
-        // Determine which order was executed first based on time
-        $buyTime = $buy['time'] ?? '09:30:00';
-        $sellTime = $sell['time'] ?? '15:30:00';
+        // Determine which order was executed first based on time (earliest executed order is added as Leg 1)
+        $buyTime = $buy['raw_timestamp'] ?? ($buy['time'] ?? '09:30:00');
+        $sellTime = $sell['raw_timestamp'] ?? ($sell['time'] ?? '15:30:00');
         $isLongEntry = strcmp($buyTime, $sellTime) <= 0;
 
         $entryPremium = $isLongEntry ? $buyPrice : $sellPrice;
@@ -645,7 +775,7 @@ class OrderScreenshotParserService
             'stamp_duty' => $firstCharges['stamp_duty'],
             'other_charges' => 0.00,
             'total_charges' => $firstCharges['total_charges'],
-            'notes' => 'Imported Order (Leg 1)',
+            'notes' => (!empty($firstOrder['order_id']) ? "[Zerodha:{$firstOrder['order_id']}] " : '') . 'Imported Order (Leg 1)',
         ]);
 
         TradeOrder::create([
@@ -665,7 +795,7 @@ class OrderScreenshotParserService
             'stamp_duty' => $secondCharges['stamp_duty'],
             'other_charges' => 0.00,
             'total_charges' => $secondCharges['total_charges'],
-            'notes' => 'Imported Order (Leg 2)',
+            'notes' => (!empty($secondOrder['order_id']) ? "[Zerodha:{$secondOrder['order_id']}] " : '') . 'Imported Order (Leg 2)',
         ]);
 
         $this->calcService->recalculateTradeFromOrders($trade);
@@ -751,7 +881,7 @@ class OrderScreenshotParserService
             'stamp_duty' => $charges['stamp_duty'],
             'other_charges' => 0.00,
             'total_charges' => $totalCharges,
-            'notes' => 'Initial Order from Screenshot',
+            'notes' => (!empty($ord['order_id']) ? "[Zerodha:{$ord['order_id']}] " : '') . 'Initial Order from Screenshot',
         ]);
 
         $this->calcService->recalculateTradeFromOrders($trade);
@@ -856,7 +986,7 @@ class OrderScreenshotParserService
             'stamp_duty' => $ceCharges['stamp_duty'],
             'other_charges' => 0.00,
             'total_charges' => $ceCharges['total_charges'],
-            'notes' => "CE Leg ({$strike} CE)",
+            'notes' => (!empty($ceOrder['order_id']) ? "[Zerodha:{$ceOrder['order_id']}] " : '') . "CE Leg ({$strike} CE)",
         ]);
 
         TradeOrder::create([
@@ -876,7 +1006,7 @@ class OrderScreenshotParserService
             'stamp_duty' => $peCharges['stamp_duty'],
             'other_charges' => 0.00,
             'total_charges' => $peCharges['total_charges'],
-            'notes' => "PE Leg ({$strike} PE)",
+            'notes' => (!empty($peOrder['order_id']) ? "[Zerodha:{$peOrder['order_id']}] " : '') . "PE Leg ({$strike} PE)",
         ]);
 
         $this->calcService->recalculateTradeFromOrders($trade);
@@ -1019,7 +1149,7 @@ class OrderScreenshotParserService
                 'stamp_duty' => $chg['stamp_duty'],
                 'other_charges' => 0.00,
                 'total_charges' => $chg['total_charges'],
-                'notes' => ($ord['option_type'] ?? '') . " " . $type,
+                'notes' => (!empty($ord['order_id']) ? "[Zerodha:{$ord['order_id']}] " : '') . (($ord['option_type'] ?? '') . " " . $type),
             ]);
         }
 
@@ -1281,7 +1411,7 @@ class OrderScreenshotParserService
             'stamp_duty' => $cCharges['stamp_duty'],
             'other_charges' => 0.00,
             'total_charges' => $cCharges['total_charges'],
-            'notes' => "CE Exit / Square Off ({$trade->strike_price} CE)",
+            'notes' => (!empty($ceOrder['order_id']) ? "[Zerodha:{$ceOrder['order_id']}] " : '') . "CE Exit / Square Off ({$trade->strike_price} CE)",
         ]);
 
         TradeOrder::create([
@@ -1301,7 +1431,7 @@ class OrderScreenshotParserService
             'stamp_duty' => $pCharges['stamp_duty'],
             'other_charges' => 0.00,
             'total_charges' => $pCharges['total_charges'],
-            'notes' => "PE Exit / Square Off ({$trade->strike_price} PE)",
+            'notes' => (!empty($peOrder['order_id']) ? "[Zerodha:{$peOrder['order_id']}] " : '') . "PE Exit / Square Off ({$trade->strike_price} PE)",
         ]);
 
         $this->calcService->recalculateTradeFromOrders($trade);
@@ -1365,7 +1495,7 @@ class OrderScreenshotParserService
             'stamp_duty' => $charges['stamp_duty'],
             'other_charges' => 0.00,
             'total_charges' => $charges['total_charges'],
-            'notes' => $notes,
+            'notes' => (!empty($ord['order_id']) ? "[Zerodha:{$ord['order_id']}] " : '') . $notes,
         ]);
 
         $this->calcService->recalculateTradeFromOrders($trade);

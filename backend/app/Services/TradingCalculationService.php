@@ -198,17 +198,21 @@ class TradingCalculationService
 
         $turnover = round($price * $quantity, 2);
         $isBuy = strtoupper(trim($side)) === 'BUY';
-        $isBse = strtoupper(trim($exchange)) === 'BSE';
+        $isBse = in_array(strtoupper(trim($exchange)), ['BSE', 'BFO']);
         $exchangeRatePercent = $isBse ? $bseRatePercent : $nseRatePercent;
 
         $brokerage = round($brokeragePerOrder, 2);
+        $rawExchange = $turnover * ($exchangeRatePercent / 100);
+        $rawSebi = $turnover * ($sebiPerCrore / 10000000);
+        $stampDuty = $isBuy ? (float)round($turnover * ($stampDutyRatePercent / 100)) : 0.00;
         $stt = $isBuy ? 0.00 : round($turnover * ($sttRatePercent / 100), 2);
-        $stampDuty = $isBuy ? round($turnover * ($stampDutyRatePercent / 100), 2) : 0.00;
-        $exchangeCharges = round($turnover * ($exchangeRatePercent / 100), 2);
-        $sebiCharges = round($turnover * ($sebiPerCrore / 10000000), 2);
-        $gst = round(($brokerage + $exchangeCharges + $sebiCharges) * ($gstRatePercent / 100), 2);
+        $rawGst = ($brokerage + $rawExchange + $rawSebi) * ($gstRatePercent / 100);
 
-        $totalCharges = round($brokerage + $stt + $exchangeCharges + $sebiCharges + $stampDuty + $gst, 2);
+        $exchangeCharges = round($rawExchange, 2);
+        $sebiCharges = round($rawSebi, 2);
+        $gst = round($rawGst, 2);
+
+        $totalCharges = round($brokerage + $stt + $rawExchange + $rawSebi + $stampDuty + $rawGst, 2);
 
         return [
             'order_type' => $isBuy ? 'BUY' : 'SELL',

@@ -221,4 +221,11 @@ class Trade extends Model
     {
         return $date->format('Y-m-d');
     }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Trade $trade) {
+            $trade->orders()->delete();
+        });
+    }
 }

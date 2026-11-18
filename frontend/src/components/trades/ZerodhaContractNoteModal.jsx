@@ -96,6 +96,11 @@ export default function ZerodhaContractNoteModal({
     let totalTurnover = 0;
     let executedCount = 0;
 
+    let rawExchange = 0;
+    let rawSebi = 0;
+    let rawStamp = 0;
+    let rawStt = 0;
+
     const orderRows = [];
 
     // Filter to only executed/traded orders
@@ -120,6 +125,13 @@ export default function ZerodhaContractNoteModal({
       }
       totalTurnover += turnover;
 
+      // Exchange detection (BSE / BFO vs NSE / NFO)
+      const sym = String(ord.tradingsymbol || '').toUpperCase();
+      const exch = String(ord.exchange || '').toUpperCase();
+      const isBse = ['BSE', 'BFO'].includes(exch) || sym.startsWith('SENSEX') || sym.startsWith('BANKEX');
+      // BSE txn charge: 0.0325% | NSE txn charge: 0.03553%
+      const txnRate = isBse ? 0.000325 : 0.0003553;
+
       // Extract time
       let timeStr = '—';
       if (ord.order_timestamp) {
@@ -131,11 +143,11 @@ export default function ZerodhaContractNoteModal({
       // Per-order charges matching Zerodha Kite virtual contract note:
       // Brokerage: ₹20 per executed order
       const ordBrokerage = 20.00;
-      // NSE Options transaction charge: 0.03553%
-      const ordExchange = turnover * 0.0003553;
+      // Transaction charge
+      const ordExchange = turnover * txnRate;
       // SEBI fee: 0.0001% (₹10/crore)
       const ordSebi = turnover * 0.000001;
-      // Stamp duty: 0.003% on buy turnover only (rounded)
+      // Stamp duty: 0.003% on buy turnover only (rounded to nearest integer per order)
       const ordStamp = isBuy ? Math.round(turnover * 0.00003) : 0;
       // STT: 0.15% on sell turnover only
       const ordStt = isBuy ? 0 : turnover * 0.0015;
@@ -143,13 +155,18 @@ export default function ZerodhaContractNoteModal({
       const ordGst = (ordBrokerage + ordExchange + ordSebi) * 0.18;
       const ordTotal = ordBrokerage + ordExchange + ordSebi + ordStamp + ordStt + ordGst;
 
+      rawExchange += ordExchange;
+      rawSebi += ordSebi;
+      rawStamp += ordStamp;
+      rawStt += ordStt;
+
       orderRows.push({
         id: ord.order_id || Math.random(),
         rawTimestamp: ord.order_timestamp || '',
         time: timeStr,
         type: isBuy ? 'BUY' : 'SELL',
         tradingsymbol: ord.tradingsymbol,
-        exchange: ord.exchange || 'NFO',
+        exchange: ord.exchange || (isBse ? 'BFO' : 'NFO'),
         quantity: qty,
         price,
         charges: ordTotal,
@@ -166,10 +183,10 @@ export default function ZerodhaContractNoteModal({
 
     // Aggregate totals matching Kite
     const brokerage = executedCount * 20.00;
-    const exchangeFee = totalTurnover * 0.0003553;
-    const sebiFee = totalTurnover * 0.000001;
-    const stampDuty = Math.round(totalBuyTurnover * 0.00003);
-    const stt = totalSellTurnover * 0.0015;
+    const exchangeFee = rawExchange;
+    const sebiFee = rawSebi;
+    const stampDuty = rawStamp;
+    const stt = rawStt;
     const gst = (brokerage + exchangeFee + sebiFee) * 0.18;
     // Total rounds unrounded sum to match Kite's exact total
     const total = brokerage + exchangeFee + sebiFee + stampDuty + stt + gst;
@@ -368,10 +385,10 @@ export default function ZerodhaContractNoteModal({
                             {it.quantity}
                           </td>
                           <td className="py-2.5 px-3 text-right font-mono text-slate-300">
-                            {it.price.toFixed(2)}
+                            {Number(it.price.toFixed(2))}
                           </td>
                           <td className="py-2.5 px-3 text-right font-mono font-semibold text-white">
-                            {it.charges.toFixed(2)}
+                            {Number(it.charges.toFixed(2))}
                           </td>
                         </tr>
                       );

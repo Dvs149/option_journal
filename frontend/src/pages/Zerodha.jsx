@@ -35,7 +35,7 @@ import ZerodhaOrderImportModal from '../components/trades/ZerodhaOrderImportModa
 import ZerodhaContractNoteModal from '../components/trades/ZerodhaContractNoteModal';
 
 // Authentic Zerodha Kite Origami Logo SVG (matches Kite brand icon)
-function KiteIcon({ className = "w-4 h-4 shrink-0" }) {
+export function KiteIcon({ className = "w-4 h-4 shrink-0" }) {
   return (
     <svg viewBox="0 0 24 24" className={className} fill="none">
       <path d="M2.5 12L21.5 2.5L14 12L2.5 12Z" fill="#F6461A" />
@@ -137,6 +137,7 @@ export default function Zerodha() {
   const [accessTokenInput, setAccessTokenInput] = useState('');
   const [isSettingToken, setIsSettingToken] = useState(false);
   const [showDirectToken, setShowDirectToken] = useState(false);
+  const [syncingOrders, setSyncingOrders] = useState(false);
 
   // Fetch integration status & details
   const fetchZerodhaData = useCallback(async (isRefresh = false) => {
@@ -228,6 +229,29 @@ export default function Zerodha() {
       triggerToast(err.response?.data?.message || 'Invalid or expired Zerodha access token', 'error');
     } finally {
       setIsSettingToken(false);
+    }
+  };
+
+  // Auto-sync today's executed Zerodha orders to All Trades
+  const handleAutoSyncTodayOrders = async () => {
+    try {
+      setSyncingOrders(true);
+      const res = await api.post('/zerodha/sync-today-orders');
+      if (res.data?.status === 'success') {
+        const count = res.data.synced_count ?? 0;
+        triggerToast(res.data.message || 'Orders synced successfully', count > 0 ? 'success' : 'info');
+        if (count > 0) {
+          fetchZerodhaData(true);
+        }
+      } else {
+        triggerToast(res.data?.message || 'Failed to sync Zerodha orders', 'error');
+      }
+    } catch (err) {
+      console.error('Auto sync error:', err);
+      const msg = err.response?.data?.message || err.message || 'Failed to sync Zerodha orders';
+      triggerToast(msg, 'error');
+    } finally {
+      setSyncingOrders(false);
     }
   };
 
@@ -399,10 +423,11 @@ export default function Zerodha() {
 
     if (!orders || orders.length === 0) return 0;
 
-    let buyTurnover = 0;
-    let sellTurnover = 0;
-    let totalTurnover = 0;
     let execCount = 0;
+    let rawExchange = 0;
+    let rawSebi = 0;
+    let stampDuty = 0;
+    let rawStt = 0;
 
     const executed = orders.filter((o) => {
       const status = String(o.status || '').toUpperCase();
@@ -416,18 +441,24 @@ export default function Zerodha() {
       const turnover = qty * price;
       if (turnover <= 0 && qty <= 0) return;
       execCount++;
-      if (isBuy) buyTurnover += turnover;
-      else sellTurnover += turnover;
-      totalTurnover += turnover;
+
+      const sym = String(ord.tradingsymbol || '').toUpperCase();
+      const exch = String(ord.exchange || '').toUpperCase();
+      const isBse = ['BSE', 'BFO'].includes(exch) || sym.startsWith('SENSEX') || sym.startsWith('BANKEX');
+      const txnRate = isBse ? 0.000325 : 0.0003553;
+
+      rawExchange += turnover * txnRate;
+      rawSebi += turnover * 0.000001;
+      if (isBuy) {
+        stampDuty += Math.round(turnover * 0.00003);
+      } else {
+        rawStt += turnover * 0.0015;
+      }
     });
 
     if (execCount === 0) return 0;
 
     const brokerage = execCount * 20.00;
-    const rawExchange = totalTurnover * 0.0003553;
-    const rawSebi = totalTurnover * 0.000001;
-    const stampDuty = Math.round(buyTurnover * 0.00003);
-    const rawStt = sellTurnover * 0.0015;
     const rawGst = (brokerage + rawExchange + rawSebi) * 0.18;
 
     return Math.round((brokerage + rawExchange + rawSebi + stampDuty + rawStt + rawGst) * 100) / 100;
@@ -733,6 +764,17 @@ export default function Zerodha() {
               >
                 <FileText className="w-3.5 h-3.5 text-blue-400" />
                 <span>Contract Note</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleAutoSyncTodayOrders}
+                disabled={syncingOrders || orders.length === 0}
+                className="px-3.5 py-2 rounded-xl bg-orange-600/15 hover:bg-orange-600/25 text-orange-400 hover:text-orange-300 text-xs font-semibold border border-orange-500/30 shadow-md shadow-orange-500/10 flex items-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer"
+                title="Automatically check which orders are not yet in All Trades for today and sync them"
+              >
+                <KiteIcon className={`w-3.5 h-3.5 ${syncingOrders ? 'animate-spin' : ''}`} />
+                <span>{syncingOrders ? 'Checking & Syncing...' : 'Auto-Sync Today'}</span>
               </button>
 
               <button
@@ -1169,6 +1211,17 @@ export default function Zerodha() {
                   >
                     <FileText className="w-3.5 h-3.5 text-blue-400" />
                     <span>Contract note</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleAutoSyncTodayOrders}
+                    disabled={syncingOrders || orders.length === 0}
+                    className="px-3 py-1.5 rounded-lg bg-orange-600/15 hover:bg-orange-600/25 text-orange-400 hover:text-orange-300 font-semibold text-xs flex items-center gap-1.5 transition-all border border-orange-500/30 shadow-sm shrink-0 cursor-pointer disabled:opacity-50"
+                    title="Automatically check which orders are not yet in All Trades for today and sync them"
+                  >
+                    <KiteIcon className={`w-3.5 h-3.5 ${syncingOrders ? 'animate-spin' : ''}`} />
+                    <span>{syncingOrders ? 'Syncing...' : 'Auto-Sync'}</span>
                   </button>
 
                   <button

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BrokerageSetting;
+use App\Models\IndexLotSize;
 use App\Models\Trade;
 use App\Models\TradeOrder;
 use App\Models\User;
@@ -24,10 +25,14 @@ class ZerodhaKiteService
     protected string $baseUrl = 'https://api.kite.trade';
     protected string $kiteVersion = '3';
     protected TradingCalculationService $calcService;
+    protected OrderScreenshotParserService $screenshotParserService;
 
-    public function __construct(?TradingCalculationService $calcService = null)
-    {
+    public function __construct(
+        ?TradingCalculationService $calcService = null,
+        ?OrderScreenshotParserService $screenshotParserService = null
+    ) {
         $this->calcService = $calcService ?: app(TradingCalculationService::class);
+        $this->screenshotParserService = $screenshotParserService ?: app(OrderScreenshotParserService::class);
     }
 
     /**
@@ -463,6 +468,11 @@ class ZerodhaKiteService
         $totalTurnover = 0.0;
         $executedCount = 0;
 
+        $totalRawExchange = 0.0;
+        $totalRawSebi = 0.0;
+        $totalStampDuty = 0.0;
+        $totalRawStt = 0.0;
+
         $orderItems = [];
 
         foreach ($orders as $order) {
@@ -481,7 +491,9 @@ class ZerodhaKiteService
             }
             $totalTurnover += $turnover;
 
-            $isBse = in_array(strtoupper($order['exchange'] ?? ''), ['BSE', 'BFO']);
+            $sym = strtoupper($order['tradingsymbol'] ?? '');
+            $exch = strtoupper($order['exchange'] ?? '');
+            $isBse = in_array($exch, ['BSE', 'BFO']) || str_starts_with($sym, 'SENSEX') || str_starts_with($sym, 'BANKEX');
             $txnRate = $isBse ? $bseTxnRatePercent : $nseTxnRatePercent;
 
             // Per-order charges matching Zerodha Kite virtual contract note
@@ -493,12 +505,17 @@ class ZerodhaKiteService
             $ordGst = ($ordBrokerage + $ordExchangeFee + $ordSebiFee) * $gstRatePercent;
             $orderCharges = round($ordBrokerage + $ordExchangeFee + $ordSebiFee + $ordStampDuty + $ordStt + $ordGst, 2);
 
+            $totalRawExchange += $ordExchangeFee;
+            $totalRawSebi += $ordSebiFee;
+            $totalStampDuty += $ordStampDuty;
+            $totalRawStt += $ordStt;
+
             $orderItems[] = [
                 'order_id' => $order['order_id'] ?? null,
                 'order_timestamp' => $order['order_timestamp'] ?? null,
                 'transaction_type' => $order['transaction_type'] ?? 'BUY',
                 'tradingsymbol' => $order['tradingsymbol'] ?? '',
-                'exchange' => $order['exchange'] ?? 'NFO',
+                'exchange' => $order['exchange'] ?? ($isBse ? 'BFO' : 'NFO'),
                 'product' => $order['product'] ?? 'NRML',
                 'quantity' => $qty,
                 'average_price' => $price,
@@ -521,10 +538,10 @@ class ZerodhaKiteService
         });
 
         $brokerage = round($executedCount * $brokeragePerOrder, 2);
-        $rawExchange = $totalTurnover * $nseTxnRatePercent;
-        $rawSebi = $totalTurnover * $sebiRatePercent;
-        $stampDuty = (float)round($totalBuyTurnover * $stampDutyRatePercent);
-        $rawStt = $totalSellTurnover * $sttRatePercent;
+        $rawExchange = $totalRawExchange;
+        $rawSebi = $totalRawSebi;
+        $stampDuty = (float)$totalStampDuty;
+        $rawStt = $totalRawStt;
         $rawGst = ($brokerage + $rawExchange + $rawSebi) * $gstRatePercent;
 
         $exchangeFee = round($rawExchange, 2);
@@ -532,7 +549,7 @@ class ZerodhaKiteService
         $stt = round($rawStt, 2);
         $gst = round($rawGst, 2);
 
-        // Kite computes total from unrounded statutory rates, matching 1336.74 exactly
+        // Kite computes total from unrounded statutory rates, matching 3553.36 exactly
         $totalCharges = round($brokerage + $rawExchange + $rawSebi + $stampDuty + $rawStt + $rawGst, 2);
 
         return [
@@ -582,6 +599,13 @@ class ZerodhaKiteService
                 return in_array($o['order_id'] ?? '', $orderIds);
             });
         }
+
+        // Sort orders in ascending order of execution time (whichever order was created first is added first)
+        usort($orders, function ($a, $b) {
+            $ta = $a['order_timestamp'] ?? $a['exchange_timestamp'] ?? '';
+            $tb = $b['order_timestamp'] ?? $b['exchange_timestamp'] ?? '';
+            return strcmp($ta, $tb);
+        });
 
         $importedCount = 0;
         $rates = BrokerageSetting::forUser($user->id);
@@ -937,6 +961,7 @@ class ZerodhaKiteService
             $rates = $user ? BrokerageSetting::forUser($user->id) : BrokerageSetting::DEFAULTS;
             $brokeragePerOrder = (float)($rates['brokerage_per_order'] ?? 20.00);
             $nseTxnRatePercent = ((float)($rates['nse_txn_rate_percent'] ?? 0.03553)) / 100.0;
+            $bseTxnRatePercent = ((float)($rates['bse_txn_rate_percent'] ?? 0.03250)) / 100.0;
             $sebiRatePercent = ((float)($rates['sebi_per_crore'] ?? 10.00)) / 10000000.0;
             $stampDutyRatePercent = ((float)($rates['stamp_duty_rate_percent'] ?? 0.00300)) / 100.0;
             $sttRatePercent = ((float)($rates['stt_rate_percent'] ?? 0.15000)) / 100.0;
@@ -945,6 +970,10 @@ class ZerodhaKiteService
             $totalBuyTurnover = 0.0;
             $totalSellTurnover = 0.0;
             $totalTurnover = 0.0;
+            $rawExchange = 0.0;
+            $rawSebi = 0.0;
+            $stampDuty = 0.0;
+            $rawStt = 0.0;
 
             foreach ($executedOrders as $o) {
                 $isBuy = strtoupper($o['transaction_type'] ?? '') === 'BUY';
@@ -955,13 +984,22 @@ class ZerodhaKiteService
                 if ($isBuy) $totalBuyTurnover += $turnover;
                 else $totalSellTurnover += $turnover;
                 $totalTurnover += $turnover;
+
+                $sym = strtoupper($o['tradingsymbol'] ?? '');
+                $exch = strtoupper($o['exchange'] ?? '');
+                $isBse = in_array($exch, ['BSE', 'BFO']) || str_starts_with($sym, 'SENSEX') || str_starts_with($sym, 'BANKEX');
+                $txnRate = $isBse ? $bseTxnRatePercent : $nseTxnRatePercent;
+
+                $rawExchange += $turnover * $txnRate;
+                $rawSebi += $turnover * $sebiRatePercent;
+                if ($isBuy) {
+                    $stampDuty += round($turnover * $stampDutyRatePercent);
+                } else {
+                    $rawStt += $turnover * $sttRatePercent;
+                }
             }
 
             $brokerage = round($executedOrdersCount * $brokeragePerOrder, 2);
-            $rawExchange = $totalTurnover * $nseTxnRatePercent;
-            $rawSebi = $totalTurnover * $sebiRatePercent;
-            $stampDuty = (float)round($totalBuyTurnover * $stampDutyRatePercent);
-            $rawStt = $totalSellTurnover * $sttRatePercent;
             $rawGst = ($brokerage + $rawExchange + $rawSebi) * $gstRatePercent;
 
             $contractChargesTotal = round($brokerage + $rawExchange + $rawSebi + $stampDuty + $rawStt + $rawGst, 2);
@@ -1003,43 +1041,319 @@ class ZerodhaKiteService
     /**
      * Parse trading symbol into option journal attributes
      */
-    protected function parseTradingSymbol(string $symbol): array
+    /**
+     * Parse trading symbol to extract underlying, strike, option type, lot size, expiry
+     */
+    public function parseTradingSymbol(string $symbol): array
     {
-        $result = [
-            'index_name' => 'NIFTY',
-            'trading_type' => 'INTRADAY',
-            'option_type' => 'CE',
-            'strike_price' => 25000,
-            'expiry_date' => Carbon::now()->toDateString(),
-            'lot_size' => 25,
+        $sym = strtoupper(trim($symbol));
+        $indexName = 'NIFTY';
+        $lotSize = 65;
+
+        if (str_contains($sym, 'SENSEX')) {
+            $indexName = 'SENSEX';
+            $lotSize = 20;
+        } elseif (str_contains($sym, 'BANKNIFTY')) {
+            $indexName = 'BANKNIFTY';
+            $lotSize = 30;
+        } elseif (str_contains($sym, 'FINNIFTY')) {
+            $indexName = 'FINNIFTY';
+            $lotSize = 65;
+        } elseif (str_contains($sym, 'MIDCPNIFTY')) {
+            $indexName = 'MIDCPNIFTY';
+            $lotSize = 120;
+        } elseif (str_contains($sym, 'BANKEX')) {
+            $indexName = 'BANKEX';
+            $lotSize = 30;
+        }
+
+        $optType = 'CE';
+        if (str_ends_with($sym, 'PE')) {
+            $optType = 'PE';
+        } elseif (str_ends_with($sym, 'CE')) {
+            $optType = 'CE';
+        }
+
+        $strikePrice = 25000.0;
+        if (preg_match('/^(?:NIFTY|SENSEX|BANKNIFTY|FINNIFTY|MIDCPNIFTY|BANKEX)\d{2}(?:[1-9OND]\d{2}|[A-Z]{3})(\d+)(CE|PE)$/i', $sym, $matches)) {
+            $strikePrice = (float)$matches[1];
+        } elseif (preg_match('/(\d{4,6})(CE|PE)$/i', $sym, $matches)) {
+            $strikePrice = (float)$matches[1];
+        }
+
+        if ($indexName === 'NIFTY' && $strikePrice > 50000) {
+            $strikePrice = (float)($strikePrice % 100000);
+        }
+
+        $expiryDate = Carbon::today()->toDateString();
+        $expiryText = '';
+        if (preg_match('/^(?:NIFTY|SENSEX|BANKNIFTY|FINNIFTY|MIDCPNIFTY|BANKEX)(\d{2})(?:([1-9OND])(\d{2})|([A-Z]{3}))/i', $sym, $expMatches)) {
+            $monthMap = [
+                '1' => 'JAN', '2' => 'FEB', '3' => 'MAR', '4' => 'APR', '5' => 'MAY', '6' => 'JUN',
+                '7' => 'JUL', '8' => 'AUG', '9' => 'SEP', 'O' => 'OCT', 'N' => 'NOV', 'D' => 'DEC',
+                'JAN' => 'JAN', 'FEB' => 'FEB', 'MAR' => 'MAR', 'APR' => 'APR', 'MAY' => 'MAY', 'JUN' => 'JUN',
+                'JUL' => 'JUL', 'AUG' => 'AUG', 'SEP' => 'SEP', 'OCT' => 'OCT', 'NOV' => 'NOV', 'DEC' => 'DEC'
+            ];
+            $weeklyMonthChar = $expMatches[2] ?? '';
+            $day = $expMatches[3] ?? '';
+            $monthlyStr = $expMatches[4] ?? '';
+            if (!empty($weeklyMonthChar) && !empty($day)) {
+                $m = $monthMap[strtoupper($weeklyMonthChar)] ?? $weeklyMonthChar;
+                $expiryText = ((int)$day) . " {$m}";
+            } elseif (!empty($monthlyStr)) {
+                $expiryText = $monthMap[strtoupper($monthlyStr)] ?? $monthlyStr;
+            }
+        }
+
+        return [
+            'index_name' => $indexName,
+            'trading_type' => 'Intraday',
+            'option_type' => $optType,
+            'strike_price' => $strikePrice,
+            'expiry_date' => $expiryDate,
+            'expiry_text' => $expiryText,
+            'lot_size' => $lotSize,
         ];
+    }
 
-        if (str_contains($symbol, 'SENSEX')) {
-            $result['index_name'] = 'SENSEX';
-            $result['lot_size'] = 10;
-        } elseif (str_contains($symbol, 'BANKNIFTY')) {
-            $result['index_name'] = 'BANKNIFTY';
-            $result['lot_size'] = 15;
-        } elseif (str_contains($symbol, 'FINNIFTY')) {
-            $result['index_name'] = 'FINNIFTY';
-            $result['lot_size'] = 25;
-        } elseif (str_contains($symbol, 'MIDCPNIFTY')) {
-            $result['index_name'] = 'MIDCPNIFTY';
-            $result['lot_size'] = 50;
+    /**
+     * Get user-defined or default lot sizes
+     */
+    protected function getUserLotSizes(User $user): array
+    {
+        $defaults = IndexLotSize::getExchangeDefaults();
+        $userLotSizes = [];
+        foreach ($defaults as $idx => $item) {
+            $userLotSizes[$idx] = $item['lot_size'];
         }
 
-        if (str_ends_with($symbol, 'PE')) {
-            $result['option_type'] = 'PE';
-        } elseif (str_ends_with($symbol, 'CE')) {
-            $result['option_type'] = 'CE';
+        try {
+            $records = IndexLotSize::where('user_id', $user->id)->get();
+            foreach ($records as $r) {
+                $userLotSizes[strtoupper($r->index_name)] = (int)$r->lot_size;
+            }
+        } catch (\Throwable $e) {
+            // fallback to defaults
         }
 
-        // Extract strike digits if possible
-        if (preg_match('/(\d{4,6})(CE|PE)$/', $symbol, $matches)) {
-            $result['strike_price'] = (float)$matches[1];
+        return $userLotSizes;
+    }
+
+    /**
+     * Auto-sync today's executed Zerodha orders to TradeJournal.
+     * Checks which orders from today's date are NOT yet added in All Trades.
+     * Skips already added orders to prevent duplicate entries.
+     */
+    public function syncTodayOrdersToJournal(User $user): array
+    {
+        $integration = ZerodhaIntegration::where('user_id', $user->id)->first();
+        if (!$integration || !$integration->is_connected) {
+            return [
+                'status' => 'error',
+                'message' => 'Zerodha Kite is not connected. Please connect Kite first.',
+                'synced_count' => 0,
+            ];
         }
 
-        return $result;
+        $details = $this->getAllDetails($user);
+        $allOrders = $details['orders'] ?? [];
+
+        // Filter COMPLETE / EXECUTED orders only
+        $executedOrders = array_values(array_filter($allOrders, function ($o) {
+            $st = strtoupper($o['status'] ?? '');
+            return in_array($st, ['COMPLETE']);
+        }));
+
+        $todayDate = Carbon::today()->toDateString();
+
+        // Filter orders for today's date
+        $todayOrders = array_values(array_filter($executedOrders, function ($o) use ($todayDate) {
+            $ts = $o['order_timestamp'] ?? $o['exchange_timestamp'] ?? null;
+            if (!$ts) return true;
+            return Carbon::parse($ts)->toDateString() === $todayDate;
+        }));
+
+        // Sort today orders in ascending order of execution time (whichever was created first is processed first)
+        usort($todayOrders, function ($a, $b) {
+            $ta = $a['order_timestamp'] ?? $a['exchange_timestamp'] ?? '';
+            $tb = $b['order_timestamp'] ?? $b['exchange_timestamp'] ?? '';
+            return strcmp($ta, $tb);
+        });
+
+        if (empty($todayOrders)) {
+            return [
+                'status' => 'info',
+                'synced_count' => 0,
+                'already_added_count' => 0,
+                'total_zerodha_orders' => 0,
+                'message' => "No executed orders found in Zerodha for today ({$todayDate}).",
+            ];
+        }
+
+        // Clean up any orphaned trade orders whose trade was deleted
+        TradeOrder::where('user_id', $user->id)->whereDoesntHave('trade')->delete();
+
+        // Fetch existing trade orders for today that belong to active (non-deleted) trades
+        $existingTradeOrders = TradeOrder::where('user_id', $user->id)
+            ->where('order_date', $todayDate)
+            ->whereHas('trade')
+            ->with('trade')
+            ->get();
+
+        $matchedTradeOrderIds = [];
+        $addedOrders = [];
+        $unaddedOrders = [];
+
+        foreach ($todayOrders as $ord) {
+            $orderId = (string)($ord['order_id'] ?? '');
+            $sym = $ord['tradingsymbol'] ?? '';
+            $type = strtoupper($ord['transaction_type'] ?? 'BUY');
+            $qty = abs((int)($ord['filled_quantity'] ?? $ord['quantity'] ?? 0));
+            $price = (float)($ord['average_price'] ?? $ord['price'] ?? 0);
+            $parsed = $this->parseTradingSymbol($sym);
+            $orderTime = Carbon::parse($ord['order_timestamp'] ?? now())->format('H:i');
+
+            $isMatched = false;
+
+            // 1. Check if order_id stamped in TradeOrder.notes or Trade.notes of an active trade
+            if (!empty($orderId)) {
+                foreach ($existingTradeOrders as $to) {
+                    if (!in_array($to->id, $matchedTradeOrderIds) && $to->trade) {
+                        if (str_contains($to->notes ?? '', "[Zerodha:{$orderId}]") ||
+                            str_contains($to->trade->notes ?? '', "Order #{$orderId}") ||
+                            str_contains($to->trade->notes ?? '', "[Zerodha:{$orderId}]")) {
+                            $matchedTradeOrderIds[] = $to->id;
+                            $isMatched = true;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            // 2. Parametric matching for orders imported previously via screenshot or manual
+            if (!$isMatched) {
+                foreach ($existingTradeOrders as $to) {
+                    if (!in_array($to->id, $matchedTradeOrderIds)) {
+                        $trade = $to->trade;
+                        if (!$trade) continue;
+
+                        $toType = strtoupper($to->order_type);
+                        $toQty = (int)$to->quantity;
+                        $toPrice = (float)$to->price;
+                        $toTime = Carbon::parse($to->order_time)->format('H:i');
+
+                        $typeMatch = ($toType === $type);
+                        $qtyMatch = ($toQty === $qty);
+                        $priceMatch = (abs($toPrice - $price) < 0.50);
+                        $indexMatch = (strtoupper($trade->index_name) === strtoupper($parsed['index_name']));
+                        $strikeMatch = (abs((float)$trade->strike_price - (float)$parsed['strike_price']) < 0.01);
+                        $optMatch = ($trade->option_type === 'Both' || strtoupper($trade->option_type) === strtoupper($parsed['option_type']));
+
+                        $tDiff = abs(strtotime("{$todayDate} {$orderTime}") - strtotime("{$todayDate} {$toTime}"));
+                        $timeMatch = ($tDiff <= 300); // within 5 minutes
+
+                        if ($typeMatch && $qtyMatch && $priceMatch && $indexMatch && $strikeMatch && $optMatch && $timeMatch) {
+                            $matchedTradeOrderIds[] = $to->id;
+                            $isMatched = true;
+
+                            // Retroactively stamp order_id into notes so next checks are instant
+                            if (!empty($orderId) && !str_contains($to->notes ?? '', "[Zerodha:{$orderId}]")) {
+                                try {
+                                    $to->notes = "[Zerodha:{$orderId}] " . ($to->notes ?? '');
+                                    $to->save();
+                                } catch (\Throwable $e) {
+                                    // ignore save errors
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($isMatched) {
+                $addedOrders[] = $ord;
+            } else {
+                $unaddedOrders[] = $ord;
+            }
+        }
+
+        // If no unadded orders, all are already added
+        if (empty($unaddedOrders)) {
+            return [
+                'status' => 'success',
+                'synced_count' => 0,
+                'already_added_count' => count($addedOrders),
+                'total_zerodha_orders' => count($todayOrders),
+                'message' => 'All ' . count($todayOrders) . " executed order(s) for today ({$todayDate}) are already added in All Trades. Zero duplicates found.",
+            ];
+        }
+
+        // Format unadded orders for OrderScreenshotParserService::importOrders
+        $userLotSizes = $this->getUserLotSizes($user);
+        $formattedOrders = [];
+
+        foreach ($unaddedOrders as $idx => $ord) {
+            $sym = $ord['tradingsymbol'] ?? '';
+            $parsed = $this->parseTradingSymbol($sym);
+            $indexName = $parsed['index_name'];
+            $lotSize = $userLotSizes[$indexName] ?? $parsed['lot_size'] ?? 50;
+            $qty = abs((int)($ord['filled_quantity'] ?? $ord['quantity'] ?? $lotSize));
+            $price = max(0.0, (float)($ord['average_price'] ?? $ord['price'] ?? 0));
+            $orderTimestamp = $ord['order_timestamp'] ?? now()->toDateTimeString();
+            $time = Carbon::parse($orderTimestamp)->format('H:i:s');
+            $orderId = (string)($ord['order_id'] ?? ($idx + 1));
+
+            $formattedOrders[] = [
+                'id' => $orderId,
+                'order_id' => $orderId,
+                'selected' => true,
+                'time' => $time,
+                'raw_timestamp' => $orderTimestamp,
+                'type' => strtoupper($ord['transaction_type'] ?? 'BUY'),
+                'index_name' => $indexName,
+                'strike_price' => (string)$parsed['strike_price'],
+                'option_type' => $parsed['option_type'],
+                'expiry_text' => $parsed['expiry_text'] ?: '19 NOV',
+                'expiry_date' => $parsed['expiry_date'] ?: $todayDate,
+                'quantity' => $qty,
+                'lots' => max(1, (int)round($qty / $lotSize)),
+                'lot_size' => $lotSize,
+                'price' => $price,
+                'turnover' => round($qty * $price, 2),
+                'product' => $ord['product'] ?? 'NRML',
+                'status' => 'COMPLETE',
+            ];
+        }
+
+        // Ensure formatted orders are in strict ascending order of execution time
+        usort($formattedOrders, function ($a, $b) {
+            $ta = $a['raw_timestamp'] ?? ($a['time'] ?? '');
+            $tb = $b['raw_timestamp'] ?? ($b['time'] ?? '');
+            return strcmp($ta, $tb);
+        });
+
+        $accountId = $user->defaultAccount?->id ?? $user->tradingAccounts()->first()?->id ?? null;
+
+        $importResult = $this->screenshotParserService->importOrders(
+            $user,
+            $formattedOrders,
+            $todayDate,
+            $accountId,
+            'smart',
+            'auto'
+        );
+
+        $syncedCount = count($formattedOrders);
+
+        return [
+            'status' => 'success',
+            'synced_count' => $syncedCount,
+            'already_added_count' => count($addedOrders),
+            'total_zerodha_orders' => count($todayOrders),
+            'message' => "Successfully synced {$syncedCount} new order(s) from Zerodha into All Trades!",
+            'import_result' => $importResult,
+        ];
     }
 
     /**

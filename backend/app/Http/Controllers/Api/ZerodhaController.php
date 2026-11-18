@@ -180,4 +180,20 @@ class ZerodhaController extends Controller
             ], 400);
         }
     }
+
+    /**
+     * Auto-sync today's executed Zerodha orders to All Trades (skips existing orders)
+     */
+    public function syncTodayOrders(Request $request): JsonResponse
+    {
+        try {
+            $result = $this->kiteService->syncTodayOrdersToJournal($request->user());
+            return response()->json($result);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to sync Zerodha orders: ' . $e->getMessage(),
+            ], 400);
+        }
+    }
 }

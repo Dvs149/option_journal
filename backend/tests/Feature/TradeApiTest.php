@@ -97,4 +97,96 @@ class TradeApiTest extends TestCase
 
         $deleteResponse->assertStatus(200);
     }
+
+    public function test_sync_and_import_orders_in_ascending_creation_order(): void
+    {
+        $user = User::factory()->create();
+        $account = $user->tradingAccounts()->create([
+            'account_name' => 'Ascending Test Account',
+            'initial_capital' => 500000.00,
+            'is_default' => true,
+        ]);
+
+        $token = $user->createToken('test_token')->plainTextToken;
+
+        // Provide orders intentionally in reverse / descending order (latest first):
+        // Trade 2: 14:44 BUY, 14:47 SELL
+        // Trade 1: 09:40 BUY, 09:41 SELL
+        $reverseOrders = [
+            [
+                'id' => 'ord_4',
+                'order_id' => 'ord_4',
+                'raw_timestamp' => '2026-11-18 14:47:24',
+                'time' => '14:47:24',
+                'type' => 'SELL',
+                'index_name' => 'SENSEX',
+                'strike_price' => '82100',
+                'option_type' => 'CE',
+                'quantity' => 300,
+                'price' => 323.83,
+            ],
+            [
+                'id' => 'ord_3',
+                'order_id' => 'ord_3',
+                'raw_timestamp' => '2026-11-18 14:44:50',
+                'time' => '14:44:50',
+                'type' => 'BUY',
+                'index_name' => 'SENSEX',
+                'strike_price' => '82100',
+                'option_type' => 'CE',
+                'quantity' => 300,
+                'price' => 317.55,
+            ],
+            [
+                'id' => 'ord_2',
+                'order_id' => 'ord_2',
+                'raw_timestamp' => '2026-11-18 09:41:08',
+                'time' => '09:41:08',
+                'type' => 'SELL',
+                'index_name' => 'SENSEX',
+                'strike_price' => '82200',
+                'option_type' => 'CE',
+                'quantity' => 100,
+                'price' => 349.01,
+            ],
+            [
+                'id' => 'ord_1',
+                'order_id' => 'ord_1',
+                'raw_timestamp' => '2026-11-18 09:40:38',
+                'time' => '09:40:38',
+                'type' => 'BUY',
+                'index_name' => 'SENSEX',
+                'strike_price' => '82200',
+                'option_type' => 'CE',
+                'quantity' => 100,
+                'price' => 341.32,
+            ],
+        ];
+
+        $res = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->postJson('/api/trades/import-screenshot-orders', [
+                'orders' => $reverseOrders,
+                'trade_date' => '2026-11-18',
+                'import_mode' => 'smart',
+                'option_type' => 'auto',
+            ]);
+
+        $res->assertStatus(200);
+        $tradeIds = $res->json('trade_ids');
+        $this->assertCount(2, $tradeIds);
+
+        // Verify that Trade 1 (09:40) was created FIRST and has a LOWER ID than Trade 2 (14:44)
+        $firstCreatedTrade = \App\Models\Trade::find($tradeIds[0]);
+        $secondCreatedTrade = \App\Models\Trade::find($tradeIds[1]);
+
+        $this->assertEquals(82200, (int)$firstCreatedTrade->strike_price);
+        $this->assertEquals(82100, (int)$secondCreatedTrade->strike_price);
+        $this->assertLessThan($secondCreatedTrade->id, $firstCreatedTrade->id);
+
+        // Verify that within Trade 1, Leg 1 (BUY 09:40) is order #1 and Leg 2 (SELL 09:41) is order #2
+        $ordersT1 = $firstCreatedTrade->orders;
+        $this->assertEquals('BUY', $ordersT1[0]->order_type);
+        $this->assertEquals('SELL', $ordersT1[1]->order_type);
+        $this->assertLessThan($ordersT1[1]->id, $ordersT1[0]->id);
+    }
 }
