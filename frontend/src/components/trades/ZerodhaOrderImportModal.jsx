@@ -34,7 +34,7 @@ export default function ZerodhaOrderImportModal({
   const [detectedOrders, setDetectedOrders] = useState([]);
   const [tradeDate, setTradeDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [importMode, setImportMode] = useState('smart'); // 'smart' | 'individual'
-  const [optionType, setOptionType] = useState('Both'); // 'Both' | 'auto' | 'CE' | 'PE'
+  const [optionType, setOptionType] = useState('auto'); // 'auto' | 'Both' | 'CE' | 'PE'
   const [importResult, setImportResult] = useState(null);
   const [openTrades, setOpenTrades] = useState([]);
 
@@ -192,6 +192,7 @@ export default function ZerodhaOrderImportModal({
           order_id: ord.order_id || null,
           selected: true,
           time,
+          raw_timestamp: ord.order_timestamp || ord.exchange_timestamp || ord.fill_timestamp || time,
           type,
           index_name,
           strike_price,
@@ -208,19 +209,17 @@ export default function ZerodhaOrderImportModal({
         };
       });
 
-      setDetectedOrders(enriched);
+      // Sort latest order first (descending by timestamp / execution time)
+      enriched.sort((a, b) => {
+        const tA = String(a.raw_timestamp || a.time || '');
+        const tB = String(b.raw_timestamp || b.time || '');
+        const cmp = tB.localeCompare(tA);
+        if (cmp !== 0) return cmp;
+        return (Number(b.id) || 0) - (Number(a.id) || 0);
+      });
 
-      // Auto-detect if order list contains same-strike pairs (CE + PE)
-      const hasSameStrikePair = enriched.some((o1, i) =>
-        enriched.some((o2, j) =>
-          i !== j &&
-          o1.strike_price &&
-          o2.strike_price &&
-          String(o1.strike_price) === String(o2.strike_price) &&
-          o1.index_name === o2.index_name
-        )
-      );
-      setOptionType(hasSameStrikePair ? 'Both' : 'auto');
+      setDetectedOrders(enriched);
+      setOptionType('auto');
     }
   }, [isOpen, rawOrders, tradeDate, getLotSize]);
 
@@ -295,13 +294,16 @@ export default function ZerodhaOrderImportModal({
     setDetectedOrders((prev) => prev.filter((o) => o.id !== id));
   };
 
-  // Add manual row
+  // Add manual row (added at the top since latest is first)
   const handleAddRow = () => {
     const lotSize = getLotSize('NIFTY') || 65;
+    const now = new Date();
+    const currentTime = now.toTimeString().split(' ')[0];
     const newOrd = {
       id: Date.now(),
       selected: true,
-      time: '09:30:00',
+      time: currentTime,
+      raw_timestamp: currentTime,
       type: 'BUY',
       index_name: 'NIFTY',
       strike_price: '25150',
@@ -316,7 +318,7 @@ export default function ZerodhaOrderImportModal({
       product: 'NRML',
       status: 'COMPLETE',
     };
-    setDetectedOrders((prev) => [...prev, newOrd]);
+    setDetectedOrders((prev) => [newOrd, ...prev]);
   };
 
   // Selected orders count
@@ -502,8 +504,8 @@ export default function ZerodhaOrderImportModal({
                     onChange={(e) => handleOptionTypeChange(e.target.value)}
                     className="w-full px-3 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-orange-500 font-semibold"
                   >
-                    <option value="Both">Both (Combine same-strike into 1 entry)</option>
                     <option value="auto">Auto (As Detected)</option>
+                    <option value="Both">Both (Combine same-strike into 1 entry)</option>
                     <option value="CE">CE</option>
                     <option value="PE">PE</option>
                   </select>

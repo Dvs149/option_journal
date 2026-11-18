@@ -259,8 +259,11 @@ export function generatePayoffCurve({
   });
 
   // Check asymptotic directional slope at high and low extremes
-  let slopeLow = 0;
+  // Only Short Calls/Futures have unlimited loss as spot -> +Infinity
+  // Only Long Calls/Futures have unlimited profit as spot -> +Infinity
+  // Long Puts have strictly bounded risk (maximum loss is premium paid)
   let slopeHigh = 0;
+  let futureSlopeLow = 0;
   activeLegs.forEach(leg => {
     const isCall = String(leg.type).toUpperCase() === 'CE';
     const isFut = String(leg.type).toUpperCase() === 'FUT';
@@ -269,17 +272,15 @@ export function generatePayoffCurve({
     const sign = isBuy ? 1 : -1;
 
     if (isFut) {
-      slopeLow += sign * qty;
       slopeHigh += sign * qty;
+      futureSlopeLow += sign * qty;
     } else if (isCall) {
       slopeHigh += sign * qty;
-    } else { // PE
-      slopeLow += -sign * qty;
     }
   });
 
-  const isUnlimitedProfit = slopeHigh > 0 || slopeLow > 0;
-  const isUnlimitedLoss = slopeHigh < 0 || slopeLow < 0;
+  const isUnlimitedProfit = slopeHigh > 0 || futureSlopeLow < 0;
+  const isUnlimitedLoss = slopeHigh < 0 || futureSlopeLow > 0;
 
   // Generate price grid
   for (let price = minPrice; price <= maxPrice; price += stepSize) {

@@ -556,6 +556,22 @@ class OrderScreenshotParserService
         $entryPremium = $isLongEntry ? $buyPrice : $sellPrice;
         $exitPremium = $isLongEntry ? $sellPrice : $buyPrice;
 
+        // Order 1: Initial Order, Order 2: Exit Order
+        $firstOrder = $isLongEntry ? $buy : $sell;
+        $secondOrder = $isLongEntry ? $sell : $buy;
+
+        $exchange = in_array($indexName, ['SENSEX', 'BANKEX']) ? 'BSE' : 'NSE';
+        $firstCharges = $this->calcService->estimateSingleOrderCharges($firstOrder['type'], (float)$firstOrder['price'], $quantity, $exchange, $rates);
+        $secondCharges = $this->calcService->estimateSingleOrderCharges($secondOrder['type'], (float)$secondOrder['price'], $quantity, $exchange, $rates);
+
+        $totBrokerage = round($firstCharges['brokerage'] + $secondCharges['brokerage'], 2);
+        $totStt = round($firstCharges['stt'] + $secondCharges['stt'], 2);
+        $totExchange = round($firstCharges['exchange_charges'] + $secondCharges['exchange_charges'], 2);
+        $totGst = round($firstCharges['gst'] + $secondCharges['gst'], 2);
+        $totSebi = round($firstCharges['sebi_charges'] + $secondCharges['sebi_charges'], 2);
+        $totStamp = round($firstCharges['stamp_duty'] + $secondCharges['stamp_duty'], 2);
+        $totCharges = round($firstCharges['total_charges'] + $secondCharges['total_charges'], 2);
+
         $tradeData = [
             'index_name' => $indexName,
             'trading_type' => 'Intraday',
@@ -568,6 +584,13 @@ class OrderScreenshotParserService
             'quantity' => $quantity,
             'lots' => $lots,
             'trade_date' => $tradeDate,
+            'brokerage' => $totBrokerage,
+            'stt' => $totStt,
+            'exchange_charges' => $totExchange,
+            'gst' => $totGst,
+            'sebi_charges' => $totSebi,
+            'stamp_duty' => $totStamp,
+            'total_charges' => $totCharges,
         ];
 
         $calc = $this->calcService->calculate($tradeData);
@@ -591,27 +614,19 @@ class OrderScreenshotParserService
             'lots' => $lots,
             'gross_profit' => $calc['gross_profit'],
             'gross_loss' => $calc['gross_loss'],
-            'brokerage' => $calc['brokerage'],
-            'stt' => $calc['stt'],
-            'exchange_charges' => $calc['exchange_charges'],
-            'gst' => $calc['gst'],
-            'sebi_charges' => $calc['sebi_charges'],
-            'stamp_duty' => $calc['stamp_duty'],
+            'brokerage' => $totBrokerage,
+            'stt' => $totStt,
+            'exchange_charges' => $totExchange,
+            'gst' => $totGst,
+            'sebi_charges' => $totSebi,
+            'stamp_duty' => $totStamp,
             'other_charges' => 0.00,
-            'total_charges' => $calc['total_charges'],
+            'total_charges' => $totCharges,
             'net_pnl' => $calc['net_pnl'],
             'entry_reason' => 'Imported from Order Book Screenshot',
             'exit_reason' => 'Completed via Screenshot Import',
             'notes' => "Matched pair: BUY @ ₹{$buyPrice} ({$buyTime}) & SELL @ ₹{$sellPrice} ({$sellTime})",
         ]);
-
-        // Order 1: Initial Order
-        $firstOrder = $isLongEntry ? $buy : $sell;
-        $secondOrder = $isLongEntry ? $sell : $buy;
-
-        $exchange = in_array($indexName, ['SENSEX', 'BANKEX']) ? 'BSE' : 'NSE';
-        $firstCharges = $this->calcService->estimateSingleOrderCharges($firstOrder['type'], (float)$firstOrder['price'], $quantity, $exchange, $rates);
-        $secondCharges = $this->calcService->estimateSingleOrderCharges($secondOrder['type'], (float)$secondOrder['price'], $quantity, $exchange, $rates);
 
         TradeOrder::create([
             'trade_id' => $trade->id,
@@ -652,6 +667,8 @@ class OrderScreenshotParserService
             'total_charges' => $secondCharges['total_charges'],
             'notes' => 'Imported Order (Leg 2)',
         ]);
+
+        $this->calcService->recalculateTradeFromOrders($trade);
 
         TradeJournal::create([
             'trade_id' => $trade->id,
@@ -736,6 +753,8 @@ class OrderScreenshotParserService
             'total_charges' => $totalCharges,
             'notes' => 'Initial Order from Screenshot',
         ]);
+
+        $this->calcService->recalculateTradeFromOrders($trade);
 
         TradeJournal::create([
             'trade_id' => $trade->id,
@@ -860,6 +879,8 @@ class OrderScreenshotParserService
             'notes' => "PE Leg ({$strike} PE)",
         ]);
 
+        $this->calcService->recalculateTradeFromOrders($trade);
+
         TradeJournal::create([
             'trade_id' => $trade->id,
             'personal_notes' => "Imported Straddle (Both: {$strike} CE & PE) from Order Book Screenshot",
@@ -900,6 +921,20 @@ class OrderScreenshotParserService
         $entryPremium = $ceEntry + $peEntry;
         $exitPremium = $ceExit + $peExit;
 
+        $exchange = in_array($indexName, ['SENSEX', 'BANKEX']) ? 'BSE' : 'NSE';
+        $ceBuyCharges = $this->calcService->estimateSingleOrderCharges('BUY', $ceEntry, $quantity, $exchange, $rates);
+        $ceSellCharges = $this->calcService->estimateSingleOrderCharges('SELL', $ceExit, $quantity, $exchange, $rates);
+        $peBuyCharges = $this->calcService->estimateSingleOrderCharges('BUY', $peEntry, $quantity, $exchange, $rates);
+        $peSellCharges = $this->calcService->estimateSingleOrderCharges('SELL', $peExit, $quantity, $exchange, $rates);
+
+        $totBrokerage = round($ceBuyCharges['brokerage'] + $ceSellCharges['brokerage'] + $peBuyCharges['brokerage'] + $peSellCharges['brokerage'], 2);
+        $totStt = round($ceBuyCharges['stt'] + $ceSellCharges['stt'] + $peBuyCharges['stt'] + $peSellCharges['stt'], 2);
+        $totExchange = round($ceBuyCharges['exchange_charges'] + $ceSellCharges['exchange_charges'] + $peBuyCharges['exchange_charges'] + $peSellCharges['exchange_charges'], 2);
+        $totGst = round($ceBuyCharges['gst'] + $ceSellCharges['gst'] + $peBuyCharges['gst'] + $peSellCharges['gst'], 2);
+        $totSebi = round($ceBuyCharges['sebi_charges'] + $ceSellCharges['sebi_charges'] + $peBuyCharges['sebi_charges'] + $peSellCharges['sebi_charges'], 2);
+        $totStamp = round($ceBuyCharges['stamp_duty'] + $ceSellCharges['stamp_duty'] + $peBuyCharges['stamp_duty'] + $peSellCharges['stamp_duty'], 2);
+        $totCharges = round($ceBuyCharges['total_charges'] + $ceSellCharges['total_charges'] + $peBuyCharges['total_charges'] + $peSellCharges['total_charges'], 2);
+
         $tradeData = [
             'index_name' => $indexName,
             'trading_type' => 'Intraday',
@@ -916,6 +951,13 @@ class OrderScreenshotParserService
             'quantity' => $quantity,
             'lots' => $lots,
             'trade_date' => $tradeDate,
+            'brokerage' => $totBrokerage,
+            'stt' => $totStt,
+            'exchange_charges' => $totExchange,
+            'gst' => $totGst,
+            'sebi_charges' => $totSebi,
+            'stamp_duty' => $totStamp,
+            'total_charges' => $totCharges,
         ];
 
         $calc = $this->calcService->calculate($tradeData);
@@ -943,20 +985,19 @@ class OrderScreenshotParserService
             'lots' => $lots,
             'gross_profit' => $calc['gross_profit'],
             'gross_loss' => $calc['gross_loss'],
-            'brokerage' => $calc['brokerage'],
-            'stt' => $calc['stt'],
-            'exchange_charges' => $calc['exchange_charges'],
-            'gst' => $calc['gst'],
-            'sebi_charges' => $calc['sebi_charges'],
-            'stamp_duty' => $calc['stamp_duty'],
+            'brokerage' => $totBrokerage,
+            'stt' => $totStt,
+            'exchange_charges' => $totExchange,
+            'gst' => $totGst,
+            'sebi_charges' => $totSebi,
+            'stamp_duty' => $totStamp,
             'other_charges' => 0.00,
-            'total_charges' => $calc['total_charges'],
+            'total_charges' => $totCharges,
             'net_pnl' => $calc['net_pnl'],
             'entry_reason' => 'Imported Closed Straddle from Order Book Screenshot',
             'notes' => "Closed Straddle (Both: {$strike} CE & PE)",
         ]);
 
-        $exchange = in_array($indexName, ['SENSEX', 'BANKEX']) ? 'BSE' : 'NSE';
         foreach ([$ceBuy, $ceSell, $peBuy, $peSell] as $ord) {
             $type = strtoupper($ord['type'] ?? 'BUY');
             $price = (float)($ord['price'] ?? 0);
@@ -981,6 +1022,8 @@ class OrderScreenshotParserService
                 'notes' => ($ord['option_type'] ?? '') . " " . $type,
             ]);
         }
+
+        $this->calcService->recalculateTradeFromOrders($trade);
 
         TradeJournal::create([
             'trade_id' => $trade->id,

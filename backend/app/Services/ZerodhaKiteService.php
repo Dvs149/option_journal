@@ -23,6 +23,12 @@ class ZerodhaKiteService
 {
     protected string $baseUrl = 'https://api.kite.trade';
     protected string $kiteVersion = '3';
+    protected TradingCalculationService $calcService;
+
+    public function __construct(?TradingCalculationService $calcService = null)
+    {
+        $this->calcService = $calcService ?: app(TradingCalculationService::class);
+    }
 
     /**
      * Connect or save Zerodha credentials.
@@ -389,7 +395,7 @@ class ZerodhaKiteService
                 'profile' => $this->formatIntegrationResponse($integration),
                 'margins' => $margins,
                 'orders' => $this->filterExecutedOrders($orders),
-                'all_orders' => $orders,
+                'all_orders' => $this->sortOrdersDescending($orders),
                 'positions' => $positions,
                 'holdings' => $holdings,
                 'mf_holdings' => $mfHoldings,
@@ -578,6 +584,7 @@ class ZerodhaKiteService
         }
 
         $importedCount = 0;
+        $rates = BrokerageSetting::forUser($user->id);
 
         foreach ($orders as $order) {
             $orderId = $order['order_id'] ?? '';
@@ -599,6 +606,16 @@ class ZerodhaKiteService
 
             // Parse instrument symbol (e.g., NIFTY26NOV25200CE or SENSEX26NOV81700PE or INFY)
             $parsed = $this->parseTradingSymbol($symbol);
+            $indexName = strtoupper($parsed['index_name'] ?? 'NIFTY');
+            $exchange = in_array($indexName, ['SENSEX', 'BANKEX']) ? 'BSE' : 'NSE';
+
+            $orderCharges = $this->calcService->estimateSingleOrderCharges(
+                $transactionType,
+                $price,
+                $quantity,
+                $exchange,
+                $rates
+            );
 
             // Create Trade record matching option_journal schema
             $tradeDate = Carbon::parse($orderTimestamp)->toDateString();
@@ -623,9 +640,15 @@ class ZerodhaKiteService
                 'avg_exit_price' => $price,
                 'gross_profit' => 0,
                 'gross_loss' => 0,
-                'brokerage' => 20,
-                'total_charges' => 23.6,
-                'net_pnl' => 0,
+                'brokerage' => $orderCharges['brokerage'],
+                'stt' => $orderCharges['stt'],
+                'exchange_charges' => $orderCharges['exchange_charges'],
+                'gst' => $orderCharges['gst'],
+                'sebi_charges' => $orderCharges['sebi_charges'],
+                'stamp_duty' => $orderCharges['stamp_duty'],
+                'other_charges' => 0.00,
+                'total_charges' => $orderCharges['total_charges'],
+                'net_pnl' => -$orderCharges['total_charges'],
                 'notes' => "Imported from Zerodha Kite (Order #{$orderId})",
             ]);
 
@@ -639,10 +662,18 @@ class ZerodhaKiteService
                 'price' => $price,
                 'order_date' => $tradeDate,
                 'order_time' => Carbon::parse($orderTimestamp)->format('H:i'),
-                'brokerage' => 20,
-                'total_charges' => 23.6,
+                'brokerage' => $orderCharges['brokerage'],
+                'stt' => $orderCharges['stt'],
+                'exchange_charges' => $orderCharges['exchange_charges'],
+                'gst' => $orderCharges['gst'],
+                'sebi_charges' => $orderCharges['sebi_charges'],
+                'stamp_duty' => $orderCharges['stamp_duty'],
+                'other_charges' => 0.00,
+                'total_charges' => $orderCharges['total_charges'],
                 'notes' => "[Zerodha:{$orderId}] " . ($order['tradingsymbol'] ?? '') . " ({$order['product']})",
             ]);
+
+            $this->calcService->recalculateTradeFromOrders($trade);
 
             $importedCount++;
         }
@@ -812,14 +843,33 @@ class ZerodhaKiteService
     }
 
     /**
+     * Sort orders descending (latest order first)
+     */
+    protected function sortOrdersDescending(array $orders): array
+    {
+        usort($orders, function ($a, $b) {
+            $tA = (string)($a['order_timestamp'] ?? $a['exchange_timestamp'] ?? $a['fill_timestamp'] ?? $a['order_time'] ?? '');
+            $tB = (string)($b['order_timestamp'] ?? $b['exchange_timestamp'] ?? $b['fill_timestamp'] ?? $b['order_time'] ?? '');
+            if ($tA !== '' && $tB !== '' && $tA !== $tB) {
+                return strcmp($tB, $tA);
+            }
+            $idA = (string)($a['order_id'] ?? '');
+            $idB = (string)($b['order_id'] ?? '');
+            return strcmp($idB, $idA);
+        });
+        return $orders;
+    }
+
+    /**
      * Filter executed orders
      */
     protected function filterExecutedOrders(array $orders): array
     {
-        return array_values(array_filter($orders, function ($o) {
+        $filtered = array_values(array_filter($orders, function ($o) {
             $status = strtoupper($o['status'] ?? '');
             return in_array($status, ['COMPLETE', 'TRADED', 'EXECUTED']);
         }));
+        return $this->sortOrdersDescending($filtered);
     }
 
     /**
@@ -1445,7 +1495,7 @@ class ZerodhaKiteService
             'profile' => $this->formatIntegrationResponse($integration),
             'margins' => $margins,
             'orders' => $this->filterExecutedOrders($orders),
-            'all_orders' => $orders,
+            'all_orders' => $this->sortOrdersDescending($orders),
             'positions' => $positions,
             'holdings' => $holdings,
             'mf_holdings' => $mfHoldings,

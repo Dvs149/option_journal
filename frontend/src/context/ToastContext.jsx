@@ -30,9 +30,16 @@ export function ToastProvider({ children }) {
   const info = useCallback((msg, duration) => showToast(msg, 'info', duration), [showToast]);
   const warning = useCallback((msg, duration) => showToast(msg, 'warning', duration), [showToast]);
 
+  // Attach helper methods directly to showToast function so both `toast.success()` and `showToast.success()` always work
+  showToast.success = success;
+  showToast.error = error;
+  showToast.info = info;
+  showToast.warning = warning;
+
   const contextValue = useMemo(
     () => ({
       showToast,
+      toast: showToast,
       addToast: showToast,
       triggerToast: showToast,
       show: showToast,

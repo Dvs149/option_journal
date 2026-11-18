@@ -345,8 +345,48 @@ export default function Zerodha() {
   const profile = details?.profile || statusData?.integration || {};
   const summary = details?.summary || {};
   const margins = details?.margins || {};
-  const orders = details?.orders || [];
-  const allOrders = details?.all_orders || orders;
+  // Sort helper: latest executed orders first (descending by timestamp / ID)
+  const sortOrdersLatestFirst = useCallback((list) => {
+    if (!Array.isArray(list)) return [];
+    return [...list].sort((a, b) => {
+      const tA = String(a.order_timestamp || a.exchange_timestamp || a.fill_timestamp || a.order_time || a.time || '');
+      const tB = String(b.order_timestamp || b.exchange_timestamp || b.fill_timestamp || b.order_time || b.time || '');
+      if (tA && tB && tA !== tB) {
+        return tB.localeCompare(tA);
+      }
+      const idA = String(a.order_id || '');
+      const idB = String(b.order_id || '');
+      if (idA && idB && idA !== idB) {
+        return idB.localeCompare(idA);
+      }
+      return 0;
+    });
+  }, []);
+
+  const rawOrders = details?.orders || [];
+  const rawAllOrders = details?.all_orders || rawOrders;
+  const orders = useMemo(() => sortOrdersLatestFirst(rawOrders), [rawOrders, sortOrdersLatestFirst]);
+  const allOrders = useMemo(() => sortOrdersLatestFirst(rawAllOrders), [rawAllOrders, sortOrdersLatestFirst]);
+
+  // Filtered orders (latest executed orders first)
+  const filteredOrders = useMemo(() => {
+    const list = allOrders.filter((order) => {
+      if (orderFilter !== 'ALL') {
+        if (orderFilter === 'COMPLETE' && !['COMPLETE', 'TRADED', 'EXECUTED'].includes(order.status)) return false;
+        if (orderFilter === 'CANCELLED' && order.status !== 'CANCELLED') return false;
+        if (orderFilter === 'REJECTED' && order.status !== 'REJECTED') return false;
+      }
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const sym = (order.tradingsymbol || '').toLowerCase();
+        const oid = (order.order_id || '').toLowerCase();
+        return sym.includes(q) || oid.includes(q);
+      }
+      return true;
+    });
+
+    return sortOrdersLatestFirst(list);
+  }, [allOrders, orderFilter, searchQuery, sortOrdersLatestFirst]);
   const positions = details?.positions || { net: [], day: [] };
   const holdings = details?.holdings || [];
   const mfHoldings = details?.mf_holdings || [];
@@ -614,22 +654,6 @@ export default function Zerodha() {
       </div>
     );
   }
-
-  // Filtered orders
-  const filteredOrders = allOrders.filter((order) => {
-    if (orderFilter !== 'ALL') {
-      if (orderFilter === 'COMPLETE' && !['COMPLETE', 'TRADED', 'EXECUTED'].includes(order.status)) return false;
-      if (orderFilter === 'CANCELLED' && order.status !== 'CANCELLED') return false;
-      if (orderFilter === 'REJECTED' && order.status !== 'REJECTED') return false;
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const sym = (order.tradingsymbol || '').toLowerCase();
-      const oid = (order.order_id || '').toLowerCase();
-      return sym.includes(q) || oid.includes(q);
-    }
-    return true;
-  });
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto px-2 sm:px-4 py-4">

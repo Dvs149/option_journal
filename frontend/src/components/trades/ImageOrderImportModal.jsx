@@ -152,23 +152,12 @@ export default function ImageOrderImportModal({
           };
         });
 
-        setDetectedOrders(enrichedOrders);
+        // Sort latest executed order first
+        enrichedOrders.sort((a, b) => String(b.time || '').localeCompare(String(a.time || '')));
 
-        // Auto-detect if image contains orders of the same strike (CE + PE pair)
-        const hasSameStrikePair = enrichedOrders.some((o1, i) =>
-          enrichedOrders.some((o2, j) =>
-            i !== j &&
-            o1.strike_price &&
-            o2.strike_price &&
-            String(o1.strike_price) === String(o2.strike_price) &&
-            o1.index_name === o2.index_name
-          )
-        );
-        if (hasSameStrikePair) {
-          setOptionType('Both');
-        } else {
-          setOptionType('auto');
-        }
+        setDetectedOrders(enrichedOrders);
+        // Default Option Type is always Auto (As Detected)
+        setOptionType('auto');
 
         setStep('REVIEW');
         showToast(`✓ Detected ${enrichedOrders.length} executed orders from screenshot!`, 'success');
@@ -278,7 +267,7 @@ export default function ImageOrderImportModal({
       product: 'NRML',
       status: 'COMPLETE',
     };
-    setDetectedOrders((prev) => [...prev, newOrd]);
+    setDetectedOrders((prev) => [newOrd, ...prev]);
   };
 
   // Selected orders count
@@ -605,8 +594,8 @@ export default function ImageOrderImportModal({
                     onChange={(e) => handleOptionTypeChange(e.target.value)}
                     className="w-full px-3 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-300 text-xs text-white light:text-slate-900 focus:outline-none focus:border-cyan-500 font-semibold"
                   >
-                    <option value="Both">Both (Combine same-strike into 1 entry)</option>
                     <option value="auto">Auto (As Detected)</option>
+                    <option value="Both">Both (Combine same-strike into 1 entry)</option>
                     <option value="CE">CE</option>
                     <option value="PE">PE</option>
                   </select>

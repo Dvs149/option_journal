@@ -169,17 +169,47 @@ export default function StrategyBuilder() {
   const [availableMargin, setAvailableMargin] = useState(366737);
   const [importingZerodha, setImportingZerodha] = useState(false);
 
-  // Notify when imported legs are loaded
+  // Synchronize state when imported payload arrives or changes
   useEffect(() => {
     if (initialPayload && initialPayload.legs && initialPayload.legs.length > 0) {
+      const targetSym = (initialPayload.symbol || 'NIFTY').toUpperCase();
+      setSymbol(targetSym);
+      activeSymbolRef.current = targetSym;
+      setLegs(initialPayload.legs);
+      if (initialPayload.strategyName) {
+        setStrategyName(initialPayload.strategyName);
+      }
+
+      // Compute spot price from strikes or index default
+      const valid = initialPayload.legs.map((l) => Number(l.strike)).filter((s) => s > 0);
+      const computedSpot = valid.length
+        ? Math.round(valid.reduce((a, b) => a + b, 0) / valid.length)
+        : DEFAULT_INDEX_CONFIG[targetSym]?.atm_strike || 25000;
+
+      setSpotPrice(computedSpot);
+      setTargetPrice(computedSpot);
+      setLotSize(DEFAULT_INDEX_CONFIG[targetSym]?.lot_size || 25);
+      setStrikeStep(DEFAULT_INDEX_CONFIG[targetSym]?.strike_step || 50);
+
+      const exp = initialPayload.legs.find((l) => l.expiry)?.expiry;
+      if (exp) {
+        setSelectedExpiry(exp);
+        try {
+          const expDate = new Date(exp);
+          const today = new Date();
+          const d1 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+          const d2 = new Date(expDate.getFullYear(), expDate.getMonth(), expDate.getDate());
+          const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+          setDaysToExpiry(diff > 0 ? diff : 2);
+        } catch {
+          setDaysToExpiry(2);
+        }
+      }
+
       notify(
-        `Imported ${initialPayload.legs.length} position${initialPayload.legs.length > 1 ? 's' : ''} for ${initialPayload.symbol || 'NIFTY'} into Strategy Builder`,
+        `Imported ${initialPayload.legs.length} position${initialPayload.legs.length > 1 ? 's' : ''} for ${targetSym} into Strategy Builder`,
         'success'
       );
-      try {
-        sessionStorage.removeItem('strategy_builder_import');
-        window.history.replaceState({}, document.title);
-      } catch (e) {}
     }
   }, [initialPayload, notify]);
 

@@ -235,6 +235,27 @@ class TradingCalculationService
             return $trade;
         }
 
+        // Auto-estimate order charges if they are zero/missing
+        $rates = null;
+        $exchange = in_array(strtoupper($trade->index_name), ['SENSEX', 'BANKEX']) ? 'BSE' : 'NSE';
+        foreach ($allOrders as $ord) {
+            if ((float) $ord->total_charges <= 0 && (float) $ord->brokerage <= 0 && (float) $ord->price > 0 && (int) $ord->quantity > 0) {
+                if ($rates === null) {
+                    $rates = \App\Models\BrokerageSetting::forUser($trade->user_id);
+                }
+                $est = $this->estimateSingleOrderCharges($ord->order_type, (float) $ord->price, (int) $ord->quantity, $exchange, $rates);
+                $ord->update([
+                    'brokerage' => $est['brokerage'],
+                    'stt' => $est['stt'],
+                    'exchange_charges' => $est['exchange_charges'],
+                    'gst' => $est['gst'],
+                    'sebi_charges' => $est['sebi_charges'],
+                    'stamp_duty' => $est['stamp_duty'],
+                    'total_charges' => $est['total_charges'],
+                ]);
+            }
+        }
+
         $buyOrders = $allOrders->where('order_type', 'BUY');
         $sellOrders = $allOrders->where('order_type', 'SELL');
 
