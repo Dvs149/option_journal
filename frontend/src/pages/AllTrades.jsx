@@ -2194,8 +2194,11 @@ export default function AllTrades() {
             </div>
           )}
 
-          <div className="rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
+          <div
+            className="rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm overflow-hidden flex flex-col justify-between"
+            style={{ minHeight: `${Math.max(635, (perPage <= 10 ? 10 : perPage) * 65 + 75)}px` }}
+          >
+            <div className="overflow-x-auto flex-1 flex flex-col">
               <table className="w-full text-left text-xs whitespace-nowrap">
                 <thead className="bg-[#0e1626]/60 light:bg-slate-50 border-b border-[#1e293b] light:border-slate-200 text-slate-400 uppercase text-[10px] tracking-wider font-semibold">
                   <tr>
@@ -2292,7 +2295,7 @@ export default function AllTrades() {
                 <tbody className="divide-y divide-[#1e293b]/60 light:divide-slate-100">
                   {loading ? (
                     <tr>
-                      <td colSpan="16" className="py-12 text-center text-slate-400">
+                      <td colSpan="16" className="py-24 text-center text-slate-400">
                         <div className="flex items-center justify-center gap-2">
                           <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                           <span>Loading trades...</span>
@@ -2301,7 +2304,7 @@ export default function AllTrades() {
                     </tr>
                   ) : trades.length === 0 ? (
                     <tr>
-                      <td colSpan="16" className="py-12 text-center text-slate-400">
+                      <td colSpan="16" className="py-24 text-center text-slate-400">
                         No trades found matching current filters.
                       </td>
                     </tr>
@@ -2691,7 +2694,7 @@ export default function AllTrades() {
             </div>
 
             {/* Pagination & Results info */}
-            <div className="p-3.5 border-t border-[#1e293b] light:border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="p-3.5 border-t border-[#1e293b] light:border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs mt-auto">
               <span className="text-slate-400 text-[11px]">
                 Showing {trades.length > 0 ? (pagination.current_page - 1) * perPage + 1 : 0} to{' '}
                 {Math.min(pagination.current_page * perPage, pagination.total)} of {pagination.total} trades

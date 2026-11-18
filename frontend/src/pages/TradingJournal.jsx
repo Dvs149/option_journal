@@ -542,7 +542,10 @@ export default function TradingJournal() {
       {/* Row 2: Journal Entries Table (Left 7 cols) & Journal Details Drawer (Right 5 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left: Journal Entries Table Card */}
-        <div className="lg:col-span-7 p-5 md:p-6 rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-4">
+        <div
+          className="lg:col-span-7 p-5 md:p-6 rounded-3xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-4 flex flex-col justify-between"
+          style={{ minHeight: `${Math.max(620, (perPage <= 10 ? 10 : perPage) * 65 + 75)}px` }}
+        >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h2 className="text-sm font-bold text-white light:text-slate-900">
               Journal Entries
@@ -586,7 +589,7 @@ export default function TradingJournal() {
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto flex-1 flex flex-col">
             <table className="w-full text-left text-xs whitespace-nowrap">
               <thead className="bg-[#0e1626]/60 light:bg-slate-50 border-b border-[#1e293b] text-slate-400 uppercase text-[10px] tracking-wider font-semibold">
                 <tr>
@@ -694,7 +697,7 @@ export default function TradingJournal() {
           </div>
 
           {/* Dynamic Pagination */}
-          <div className="pt-3 border-t border-[#1e293b] light:border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-400">
+          <div className="pt-3 border-t border-[#1e293b] light:border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-400 mt-auto">
             <div>
               {pagination.total > 0 ? (
                 <span>
