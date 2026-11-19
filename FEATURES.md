@@ -201,4 +201,39 @@
 - **Settings -> Integrations Hub**:
   - Configuration card with **Zerodha Email / Client ID**, **Password** (with show/hide toggle), and **Kite API Key & Secret Key**.
   - Connection status badge (`Connected (Live)`, `Pending Daily Login`, `Demo Mode`), client ID, user name, last synced time, and 1-Click Kite Login button.
+- **1-Click Auto-Sync in Strict Chronological Order**:
+  - Automatically fetches today's executed orders from Kite Connect, excludes existing orders, sorts incoming orders ascending by execution timestamp (`first-created first-added`), and pairs matching legs into trade journal records.
+  - Sourced exact BSE / BFO exchange transaction charges (`0.0325%`) and integer-rounded stamp duty accumulation for 100% contract note parity on SENSEX/BANKEX options.
+  - Cascading deletion guarantees that deleting trades deletes linked `trade_orders`, allowing seamless re-syncing.
+
+### 2.12 Capital Management & Dynamic Growth Analytics (`CapitalManagement.jsx`)
+- **Interactive Timeframe Selection (`1M`, `3M`, `6M`, `YTD`, `1Y`, `All`)**:
+  - Quick timeframe pills dynamically recalculate date windows, update the calendar badge (e.g., `01 Nov 2026 - 30 Nov 2026`), and query backend `/api/capital` with active range filters.
+  - Dynamically updates Capital Growth subhead badge (`1 Month`, `3 Months`, `6 Months`, `YTD`, `1 Year`, `All Time`).
+- **Dynamic Capital Growth Chart (Recharts AreaChart)**:
+  - Bounded strictly to the selected timeframe without historical clutter from prior years.
+  - Anchors opening capital at period start to visualize true balance progression.
+  - X-axis standardizes to clean formatted dates (`displayDate`: e.g. `01 Nov`, `18 Nov`).
+  - Y-axis automatically scales with dynamic bounds (`dataMin - 10000`, `dataMax + 10000`) and compact Rupee currency labels (`₹4.3L`, `₹5.2L`).
+  - Interactive tooltip displays full formatted date, total capital balance, and individual day P&L.
+- **Period-Specific KPI Cards**:
+  - Initial Capital (editable modal).
+  - Period Deposits & Withdrawals with transaction counts.
+  - Current Capital with percentage return since start of period or inception.
+  - Period Net Profit and ROI with dynamic color coding (emerald green for profit, rose red for loss).
+- **Deposit & Withdrawal Transaction History**:
+  - Tabbed filtering for All, Deposits, and Withdrawals.
+  - Modal for recording capital deposits and withdrawals.
+  - Inline deletion of transactions with instant balance recalculation.
+- **Position Sizing & Risk Calculator**:
+  - Real-time lot size calculation based on account capital, risk percentage, and stop loss points.
+  - Index dropdown with dynamic lot size synchronization.
+- **Capital Milestones & Growth Targets**:
+  - Progress tracker showing milestones relative to base starting capital (`+10%`, `+25%`, `+50%`, `2x Double`).
+  - Dynamically scales to higher tiers (`2.5x`, `3x`, `5x`, `10x`) when account doubles.
+
+### 2.13 Strategy Builder & Portfolio Payoffs (`StrategyBuilder.jsx`)
+- Option chain modal integration for selecting and inspecting strikes.
+- Interactive multi-leg payoff graph showing expiry P&L curve, maximum profit, maximum risk, and break-even points.
+- Custom strategy drafts with portfolio saving and export.
 

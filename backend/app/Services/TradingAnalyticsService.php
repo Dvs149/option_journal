@@ -18,7 +18,12 @@ class TradingAnalyticsService
     {
         $today = Carbon::today('Asia/Kolkata');
 
-        switch ($filter) {
+        // If explicit fromDate and toDate are given, use them
+        if ($fromDate && $toDate) {
+            return [$fromDate, $toDate];
+        }
+
+        switch (strtolower(trim($filter))) {
             case 'today':
                 return [$today->toDateString(), $today->toDateString()];
             case 'yesterday':
@@ -43,6 +48,12 @@ class TradingAnalyticsService
                     $today->copy()->startOfWeek()->toDateString(),
                     $today->copy()->endOfWeek()->toDateString(),
                 ];
+            case '7d':
+                return [
+                    $today->copy()->subDays(6)->toDateString(),
+                    $today->toDateString(),
+                ];
+            case '1m':
             case 'this_month':
                 return [
                     $today->copy()->startOfMonth()->toDateString(),
@@ -54,10 +65,26 @@ class TradingAnalyticsService
                     $lastMonth->copy()->startOfMonth()->toDateString(),
                     $lastMonth->copy()->endOfMonth()->toDateString(),
                 ];
+            case '3m':
+                return [
+                    $today->copy()->subMonths(2)->startOfMonth()->toDateString(),
+                    $today->copy()->endOfMonth()->toDateString(),
+                ];
+            case '6m':
+                return [
+                    $today->copy()->subMonths(5)->startOfMonth()->toDateString(),
+                    $today->copy()->endOfMonth()->toDateString(),
+                ];
+            case 'ytd':
             case 'this_year':
                 return [
                     $today->copy()->startOfYear()->toDateString(),
                     $today->copy()->endOfYear()->toDateString(),
+                ];
+            case '1y':
+                return [
+                    $today->copy()->subYear()->toDateString(),
+                    $today->toDateString(),
                 ];
             case 'custom':
                 $start = $fromDate ?: $today->copy()->startOfMonth()->toDateString();

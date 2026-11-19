@@ -597,3 +597,121 @@ Content-Type: application/json
     ]
   }
   ```
+
+### 11.11 Auto-Sync Today's Executed Orders
+- **`POST /zerodha/sync-today`**
+- **Description**: Fetches executed orders for today from Zerodha Kite, excludes already-imported orders, sorts new orders in chronological ascending order, and pairs them into trade journal entries.
+- **Response**:
+  ```json
+  {
+    "success": true,
+    "message": "Synchronized 2 executed orders into 1 journal trades",
+    "synced_count": 2,
+    "imported_trades_count": 1
+  }
+  ```
+
+---
+
+## 12. Capital Management & Growth Endpoints
+
+### 12.1 Capital Summary & Growth Chart
+- **`GET /capital`**
+- **Description**: Returns initial capital, current capital, period profit/ROI, deposit/withdrawal totals, transactions, and the capital growth chart points. Supports dynamic timeframe filtering (`1m`, `3m`, `6m`, `ytd`, `1y`, `all`, `custom`) and custom date ranges (`from_date`, `to_date`).
+- **Query Parameters**:
+  - `filter` / `time_range`: `1m`, `3m`, `6m`, `ytd`, `1y`, `all`, `custom` (default: `1m`)
+  - `from_date`: `YYYY-MM-DD` (optional, overrides filter)
+  - `to_date`: `YYYY-MM-DD` (optional, overrides filter)
+- **Response (200 OK)**:
+  ```json
+  {
+    "account": {
+      "id": 1,
+      "account_name": "Primary Trading Account",
+      "initial_capital": 800000.00
+    },
+    "initial_capital": 800000.00,
+    "current_capital": 432340.00,
+    "opening_capital": 453757.00,
+    "total_deposits": 0.00,
+    "total_withdrawals": 60000.00,
+    "period_deposits": 0.00,
+    "period_withdrawals": 60000.00,
+    "lifetime_deposits": 0.00,
+    "lifetime_withdrawals": 60000.00,
+    "net_capital_inflow": -60000.00,
+    "total_profit": -21417.00,
+    "period_profit": -21417.00,
+    "lifetime_profit": -307660.00,
+    "overall_roi": -38.46,
+    "period_roi": -4.72,
+    "highest_capital": 800000.00,
+    "current_drawdown": 367660.00,
+    "today_pnl": -21417.00,
+    "date_range": {
+      "filter": "1m",
+      "start_date": "2026-11-01",
+      "end_date": "2026-11-30",
+      "display": "01 Nov 2026 - 30 Nov 2026"
+    },
+    "growth_chart": [
+      {
+        "date": "2026-11-01",
+        "displayDate": "01 Nov",
+        "capital": 453757.00,
+        "pnl": 0.00
+      },
+      {
+        "date": "2026-11-16",
+        "displayDate": "16 Nov",
+        "capital": 453757.00,
+        "pnl": 0.00,
+        "withdrawals": 60000.00
+      },
+      {
+        "date": "2026-11-18",
+        "displayDate": "18 Nov",
+        "capital": 432340.00,
+        "pnl": -21417.00
+      }
+    ],
+    "transactions": [
+      {
+        "id": 1,
+        "transaction_type": "withdrawal",
+        "amount": 60000.00,
+        "transaction_date": "2026-11-16",
+        "notes": "Bank transfer"
+      }
+    ]
+  }
+  ```
+
+### 12.2 Record Capital Transaction
+- **`POST /capital/transactions`**
+- **Description**: Records a capital deposit or withdrawal.
+- **Request Body**:
+  ```json
+  {
+    "transaction_type": "deposit",
+    "amount": 100000.00,
+    "transaction_date": "2026-11-19",
+    "notes": "Capital addition"
+  }
+  ```
+- **Response (201 Created)**:
+  ```json
+  {
+    "message": "Deposit recorded successfully",
+    "transaction": { "id": 2, "transaction_type": "deposit", "amount": 100000.00 }
+  }
+  ```
+
+### 12.3 Delete Capital Transaction
+- **`DELETE /capital/transactions/{id}`**
+- **Response**: `{ "message": "Transaction removed successfully" }`
+
+### 12.4 Update Initial Starting Capital
+- **`PUT /capital/initial`**
+- **Request Body**: `{ "initial_capital": 800000.00 }`
+- **Response**: `{ "message": "Initial capital updated successfully", "initial_capital": 800000.00 }`

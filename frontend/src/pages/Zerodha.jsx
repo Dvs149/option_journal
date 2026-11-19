@@ -755,27 +755,7 @@ export default function Zerodha() {
 
           {!isNeedsAuth && (
             <>
-              <button
-                type="button"
-                onClick={() => setShowContractNoteModal(true)}
-                disabled={orders.length === 0}
-                className="px-3.5 py-2 rounded-xl bg-[#162033] hover:bg-[#1e2c46] text-slate-200 text-xs font-semibold border border-[#1e293b] flex items-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer"
-                title="View Virtual Contract Note with regulatory charges breakdown"
-              >
-                <FileText className="w-3.5 h-3.5 text-blue-400" />
-                <span>Contract Note</span>
-              </button>
 
-              <button
-                type="button"
-                onClick={handleAutoSyncTodayOrders}
-                disabled={syncingOrders || orders.length === 0}
-                className="px-3.5 py-2 rounded-xl bg-orange-600/15 hover:bg-orange-600/25 text-orange-400 hover:text-orange-300 text-xs font-semibold border border-orange-500/30 shadow-md shadow-orange-500/10 flex items-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer"
-                title="Automatically check which orders are not yet in All Trades for today and sync them"
-              >
-                <KiteIcon className={`w-3.5 h-3.5 ${syncingOrders ? 'animate-spin' : ''}`} />
-                <span>{syncingOrders ? 'Checking & Syncing...' : 'Auto-Sync Today'}</span>
-              </button>
 
               <button
                 type="button"

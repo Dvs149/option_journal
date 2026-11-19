@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Wallet,
@@ -42,15 +42,99 @@ import { useFilter } from '../context/FilterContext';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
 
+export const getTimeframeRange = (range) => {
+  const now = new Date();
+  const formatISO = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  const formatDisplay = (d) => {
+    const day = String(d.getDate()).padStart(2, '0');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${day} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  };
+
+  switch (range) {
+    case '1M': {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return {
+        filter: '1m',
+        from: formatISO(start),
+        to: formatISO(end),
+        display: `${formatDisplay(start)} - ${formatDisplay(end)}`,
+        label: '1 Month',
+      };
+    }
+    case '3M': {
+      const start = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return {
+        filter: '3m',
+        from: formatISO(start),
+        to: formatISO(end),
+        display: `${formatDisplay(start)} - ${formatDisplay(end)}`,
+        label: '3 Months',
+      };
+    }
+    case '6M': {
+      const start = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      return {
+        filter: '6m',
+        from: formatISO(start),
+        to: formatISO(end),
+        display: `${formatDisplay(start)} - ${formatDisplay(end)}`,
+        label: '6 Months',
+      };
+    }
+    case 'YTD': {
+      const start = new Date(now.getFullYear(), 0, 1);
+      const end = now;
+      return {
+        filter: 'ytd',
+        from: formatISO(start),
+        to: formatISO(end),
+        display: `${formatDisplay(start)} - ${formatDisplay(end)}`,
+        label: 'YTD',
+      };
+    }
+    case '1Y': {
+      const start = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+      const end = now;
+      return {
+        filter: '1y',
+        from: formatISO(start),
+        to: formatISO(end),
+        display: `${formatDisplay(start)} - ${formatDisplay(end)}`,
+        label: '1 Year',
+      };
+    }
+    case 'All':
+    default:
+      return {
+        filter: 'all',
+        from: null,
+        to: null,
+        display: 'All Time',
+        label: 'All Time',
+      };
+  }
+};
+
 export default function CapitalManagement() {
   const navigate = useNavigate();
-  const { dateRangeDisplay } = useFilter();
+  const { dateRangeDisplay, filter: globalFilter, fromDate: globalFromDate, toDate: globalToDate } = useFilter();
   const { showToast } = useToast();
   const { isKite } = useTheme();
 
-  // Timeframe
-  const [timeRange, setTimeRange] = useState('1Y');
+  // Timeframe - default to 1M (matching current month)
+  const [timeRange, setTimeRange] = useState('1M');
   const [txTab, setTxTab] = useState('all');
+
+  const activeRangeInfo = useMemo(() => getTimeframeRange(timeRange), [timeRange]);
 
   // Initial Capital & Transaction Modals State
   const [showEditCapitalModal, setShowEditCapitalModal] = useState(false);
@@ -107,21 +191,29 @@ export default function CapitalManagement() {
   const [capitalData, setCapitalData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchCapital();
-  }, []);
-
-  const fetchCapital = async () => {
+  const fetchCapital = useCallback(async (r = timeRange) => {
     try {
       setLoading(true);
-      const res = await api.get('/capital');
+      const tf = getTimeframeRange(r);
+      const params = {
+        filter: tf.filter,
+      };
+      if (tf.from && tf.to) {
+        params.from_date = tf.from;
+        params.to_date = tf.to;
+      }
+      const res = await api.get('/capital', { params });
       setCapitalData(res.data);
     } catch (e) {
       console.warn('Failed to load capital data', e);
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange]);
+
+  useEffect(() => {
+    fetchCapital(timeRange);
+  }, [timeRange, fetchCapital]);
 
   const handleUpdateInitialCapital = async (e) => {
     e.preventDefault();
@@ -191,7 +283,7 @@ export default function CapitalManagement() {
     const dep = capitalData?.total_deposits || 0;
     const withdr = capitalData?.total_withdrawals || 0;
     const profit = capitalData?.total_profit || 0;
-    const roi = capitalData?.overall_roi || 0;
+    const roi = timeRange === 'All' ? (capitalData?.overall_roi || 0) : (capitalData?.period_roi ?? capitalData?.overall_roi ?? 0);
     const txs = capitalData?.transactions || [];
 
     return {
@@ -208,7 +300,7 @@ export default function CapitalManagement() {
       total_profit_pct: roi >= 0 ? `+${roi}%` : `${roi}%`,
       roi: `${roi}%`,
     };
-  }, [capitalData]);
+  }, [capitalData, timeRange]);
 
   const account = capitalData?.account || {
     initial_capital: stats.initial_capital,
@@ -217,10 +309,14 @@ export default function CapitalManagement() {
 
   const capitalGrowthData = useMemo(() => {
     if (!capitalData?.growth_chart || capitalData.growth_chart.length === 0) {
-      return [{ date: 'Today', capital: capitalData?.current_capital || 500000, netProfit: 0 }];
+      const fallbackVal = capitalData?.current_capital || stats.current_capital || 500000;
+      return [{ date: 'Today', displayDate: 'Today', capital: fallbackVal, netProfit: 0 }];
     }
-    return capitalData.growth_chart;
-  }, [capitalData]);
+    return capitalData.growth_chart.map((item) => ({
+      ...item,
+      displayDate: item.displayDate || (item.date ? formatDate(item.date) : 'Today'),
+    }));
+  }, [capitalData, stats.current_capital]);
 
   const allocationData = useMemo(() => {
     const curr = capitalData?.current_capital || 500000;
@@ -378,7 +474,7 @@ export default function CapitalManagement() {
         <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 text-xs text-white light:text-slate-900">
             <Calendar className="w-3.5 h-3.5 text-blue-400" />
-            <span>{dateRangeDisplay || 'All Time'}</span>
+            <span>{activeRangeInfo.display}</span>
           </div>
 
           <div className="flex items-center gap-1 p-1 rounded-xl bg-[#121b2d] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-xs">
@@ -440,7 +536,9 @@ export default function CapitalManagement() {
         {/* Total Deposits */}
         <div className="p-3.5 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-slate-400 font-medium block">Total Deposits</span>
+            <span className="text-[10px] text-slate-400 font-medium block">
+              {timeRange === 'All' ? 'Total Deposits' : `${timeRange} Deposits`}
+            </span>
             <button
               type="button"
               onClick={() => {
@@ -462,7 +560,9 @@ export default function CapitalManagement() {
         {/* Total Withdrawals */}
         <div className="p-3.5 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-1">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-slate-400 font-medium block">Total Withdrawals</span>
+            <span className="text-[10px] text-slate-400 font-medium block">
+              {timeRange === 'All' ? 'Total Withdrawals' : `${timeRange} Withdrawals`}
+            </span>
             <button
               type="button"
               onClick={() => {
@@ -487,8 +587,8 @@ export default function CapitalManagement() {
           <span className="text-base font-bold text-white light:text-slate-900 font-mono-numbers block tracking-tight">
             {formatINR(stats.current_capital)}
           </span>
-          <span className="text-[10px] font-semibold text-emerald-400 flex items-center gap-0.5">
-            <TrendingUp className="w-3 h-3 inline" /> {stats.current_capital_pct}
+          <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${parseFloat(stats.current_capital_pct) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {parseFloat(stats.current_capital_pct) >= 0 ? <TrendingUp className="w-3 h-3 inline" /> : <TrendingDown className="w-3 h-3 inline" />} {stats.current_capital_pct}
           </span>
         </div>
 
@@ -503,22 +603,26 @@ export default function CapitalManagement() {
 
         {/* Total Profit */}
         <div className="p-3.5 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-1">
-          <span className="text-[10px] text-slate-400 font-medium block">Total Profit</span>
-          <span className="text-base font-bold text-emerald-400 font-mono-numbers block tracking-tight">
+          <span className="text-[10px] text-slate-400 font-medium block">
+            {timeRange === 'All' ? 'Total Profit' : `${timeRange} Profit`}
+          </span>
+          <span className={`text-base font-bold font-mono-numbers block tracking-tight ${stats.total_profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
             {formatINR(stats.total_profit)}
           </span>
-          <span className="text-[10px] font-semibold text-emerald-400 flex items-center gap-0.5">
-            <TrendingUp className="w-3 h-3 inline" /> {stats.total_profit_pct}
+          <span className={`text-[10px] font-semibold flex items-center gap-0.5 ${stats.total_profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            {stats.total_profit >= 0 ? <TrendingUp className="w-3 h-3 inline" /> : <TrendingDown className="w-3 h-3 inline" />} {stats.total_profit_pct}
           </span>
         </div>
 
         {/* ROI */}
         <div className="p-3.5 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-1">
-          <span className="text-[10px] text-slate-400 font-medium block">ROI</span>
-          <span className="text-base font-bold text-emerald-400 font-mono-numbers block tracking-tight">
+          <span className="text-[10px] text-slate-400 font-medium block">
+            {timeRange === 'All' ? 'Overall ROI' : `${timeRange} ROI`}
+          </span>
+          <span className={`text-base font-bold font-mono-numbers block tracking-tight ${parseFloat(stats.roi) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
             {stats.roi}
           </span>
-          <span className="text-[10px] text-slate-400 block">Annualized</span>
+          <span className="text-[10px] text-slate-400 block">{timeRange === 'All' ? 'Since Inception' : activeRangeInfo.label}</span>
         </div>
       </div>
 
@@ -552,7 +656,7 @@ export default function CapitalManagement() {
             </div>
 
             <div className="px-2.5 py-1 rounded-xl bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] text-xs text-slate-300">
-              This Year
+              {activeRangeInfo.label}
             </div>
           </div>
 
@@ -571,18 +675,29 @@ export default function CapitalManagement() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.5} vertical={false} />
-                <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} />
-                <YAxis stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => `${(v / 100000).toFixed(0)}L`} domain={[0, 400000]} />
+                <XAxis dataKey="displayDate" stroke="#64748b" fontSize={10} tickLine={false} />
+                <YAxis
+                  stroke="#64748b"
+                  fontSize={10}
+                  tickLine={false}
+                  tickFormatter={(v) => formatCompactINR(v)}
+                  domain={['dataMin - 10000', 'dataMax + 10000']}
+                />
                 <Tooltip
                   content={({ active, payload }) => {
                     if (active && payload && payload.length) {
                       const d = payload[0].payload;
                       return (
                         <div className="bg-[#0b1322] light:bg-white p-2.5 rounded-xl border border-[#1e293b] light:border-slate-200 shadow-xl text-xs font-mono-numbers">
-                          <p className="text-slate-400 font-sans">{d.date}</p>
+                          <p className="text-slate-400 font-sans">{d.date ? formatDate(d.date) : d.displayDate}</p>
                           <p className="text-blue-400 font-bold mt-1 text-sm">
                             Capital: {formatINR(d.capital)}
                           </p>
+                          {d.pnl !== undefined && d.pnl !== 0 && (
+                            <p className={`mt-0.5 font-medium ${d.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                              Day P&L: {d.pnl >= 0 ? '+' : ''}{formatINR(d.pnl)}
+                            </p>
+                          )}
                         </div>
                       );
                     }

@@ -9,6 +9,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.17.0] - 2026-11-19
+
+### Added & Enhanced
+- **Interactive Capital Management Timeframe & Growth Chart Filtering**:
+  - **Dynamic Timeframe Buttons (`1M`, `3M`, `6M`, `YTD`, `1Y`, `All`)**:
+    - Connected quick timeframe pill buttons in `CapitalManagement.jsx` to dynamically compute date ranges and query backend with parameters (`filter`, `from_date`, `to_date`).
+    - Synchronized the calendar date badge (e.g., `01 Nov 2026 – 30 Nov 2026`) to instantly update on timeframe click.
+    - Updated Capital Growth card badge to dynamically show the active period name (`1 Month`, `3 Months`, `6 Months`, `YTD`, `1 Year`, `All Time`) instead of hardcoded `This Year`.
+  - **Dynamic AreaChart Scaling & Clean Date Formatting**:
+    - Filtered Capital Growth area chart exclusively to the selected period, eliminating historical years clutter.
+    - Added opening balance anchor point at period start to visualize true capital growth progression across the timeframe.
+    - Standardized X-axis to clean formatted dates (`displayDate`: e.g. `01 Nov`, `18 Nov`) instead of raw unformatted timestamps (`2022-11-20 00:00:00`).
+    - Replaced hardcoded Y-axis domain (`[0, 400000]`) with dynamic bounds (`dataMin - 10000`, `dataMax + 10000`) and Indian Rupee compact format (`₹4.3L`, `₹5.2L`).
+    - Enhanced tooltip to display formatted date, total capital balance, and individual day P&L.
+  - **Period-Specific KPI Cards & Profit/Loss Styling**:
+    - Updated top cards (`1M Profit`, `1M Deposits`, `1M Withdrawals`, `1M ROI`) to reflect the active period when filtered, with lifetime totals displayed when `All` is selected.
+    - Fixed card color styling: losses now render in rose red (`text-rose-400` with `TrendingDown`) and profits in emerald green (`text-emerald-400` with `TrendingUp`).
+  - **Backend Analytics & Capital API (`CapitalController.php` & `TradingAnalyticsService.php`)**:
+    - Enhanced `TradingAnalyticsService::resolveDateRange` to support `7d`, `1m`, `3m`, `6m`, `ytd`, `1y` and explicit `from_date` / `to_date`.
+    - Extended `GET /api/capital` to accept `filter`, `time_range`, `from_date`, and `to_date`, returning both period metrics and lifetime account metrics.
+    - Added automated PHPUnit test suite in `backend/tests/Feature/CapitalApiTest.php` verifying timeframe filtering, opening capital calculations, and period metrics.
+
+- **Chronological Ascending Order for Trade Imports & Synchronization**:
+  - **First-Created-First-Imported Execution Order**:
+    - Sorted orders in strict ascending chronological order by execution timestamp in `ZerodhaKiteService::syncTodayOrdersToJournal` and `ZerodhaKiteService::importOrdersToJournal`.
+    - Sorted incoming orders ascending in `OrderScreenshotParserService::parseScreenshotAndBuildTrades` before grouping and pairing.
+    - Ensured selected orders in `ZerodhaOrderImportModal.jsx` and `ImageOrderImportModal.jsx` are sorted ascending before API submission.
+    - Added automated test in `TradeApiTest.php` (`test_sync_and_import_orders_in_ascending_creation_order`).
+
+- **Zerodha Virtual Contract Note Parity for BSE / BFO Contracts**:
+  - Sourced exact BSE / BFO exchange transaction charge rate (`0.0325%`) vs. NSE (`0.05%`), resolving contract note discrepancy on SENSEX options.
+  - Implemented exact per-order integer-rounded stamp duty accumulation matching Zerodha Kite's official calculation engine.
+
+- **Cascading Deletion of Associated Orders**:
+  - Configured `Trade` model boot hooks (`deleting`) and `TradeController::destroy` to cascade-delete related `trade_orders` upon trade deletion.
+  - Allows orders previously imported from Zerodha to be cleanly re-synchronized if a trade is deleted.
+
+- **Table Height & Pagination Stabilization**:
+  - Set consistent minimum container heights on table cards in `AllTrades.jsx` and `TradingJournal.jsx`.
+  - Pinned pagination controls to the bottom with `mt-auto`, preventing vertical layout shifts between pages with 1 trade versus 10 trades.
+
+- **Strategy Builder & Option Chain Integration**:
+  - Integrated option chain modal directly into `StrategyBuilder.jsx` for selecting strikes and building strategy payoff curves and portfolio drafts.
+
+---
+
 ## [1.16.5] - 2026-11-13
 
 ### Added & Enhanced

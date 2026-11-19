@@ -26,8 +26,14 @@ This document tracks prioritized future improvements, architectural tasks, and p
   - Added visual Open vs Closed position distinction in Positions tab with Kite-matched bold blue quantity, muted closed rows, All/Open/Closed filters, and index summary headers.
   - Added instant Demo / Sandbox simulation mode for testing without a paid Kite subscription.
   - Integrated live credentials configuration, connection status, and navigation in `Settings -> Integrations`.
-- [ ] **Automated Tests for Calculation Engine**:
-  - Add PHPUnit / Pest tests in `backend/tests/Feature/TradingCalculationTest.php` testing STT, exchange fees, GST, SEBI turnover fees, and stamp duty edge cases against known Indian broker contract notes.
+- [x] **Automated Tests for Calculation Engine & Capital API**:
+  - Added PHPUnit tests in `backend/tests/Feature/CapitalApiTest.php` and `TradeApiTest.php` verifying STT, BSE/BFO exchange fees, GST, SEBI fees, ascending creation order imports, capital opening balance calculations, and timeframe filtering against known contract note standards.
+- [x] **Chronological Ascending Order for Trade Imports**:
+  - Ensured all order imports (Zerodha Kite auto-sync, CSV imports, screenshot parser) sort orders in strict ascending creation order (`first-created first-added`).
+- [x] **Interactive Timeframe Filtering in Capital Management**:
+  - Implemented dynamic timeframe filtering (`1M`, `3M`, `6M`, `YTD`, `1Y`, `All`), period stats, opening capital anchoring, and clean date formatting in `CapitalManagement.jsx` and `CapitalController.php`.
+- [x] **Table Height & Pagination Stabilization**:
+  - Stabilized table container height and bottom-anchored pagination controls across All Trades and Trading Journal.
 - [ ] **Bulk Import Parser Validation Suite**:
   - Write unit tests for `frontend/src/utils/bulkTradeParser.js` ensuring correct parsing of varied Zerodha Kite Tradebook CSV formats, multi-lot orders, and split executions.
 - [ ] **Database Backup & Integrity Check**:

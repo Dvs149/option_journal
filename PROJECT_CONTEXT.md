@@ -74,6 +74,9 @@ The system addresses the core needs of active option traders:
    - Four-tab drawer: Trade Details, Journal Notes, Multi-screenshot Lightbox, and Lessons Learned.
 6. **Capital & Equity Management**:
    - Starting capital, deposit/withdrawal transaction ledger, cumulative equity curve, high-water mark, peak-to-trough drawdown %.
+   - Interactive timeframe filtering (`1M`, `3M`, `6M`, `YTD`, `1Y`, `All`) and custom date ranges.
+   - Dynamic AreaChart bounded to the active period with opening balance anchoring, dynamic Y-axis bounds, and clean date formatting (`displayDate`).
+   - Period-specific KPI cards (Period Profit, Period Deposits, Period Withdrawals, Period ROI) with profit/loss color indications.
 7. **Pine Script Manager**:
    - Repository for TradingView indicators, options strategies, libraries, and webhook alerts.
    - Syntax-highlighted dark inspector, line counts, word wrap, fullscreen modal, one-click copy, `.pine` download, JSON backup/restore.
@@ -86,9 +89,13 @@ The system addresses the core needs of active option traders:
    - Dedicated `/zerodha` module providing strictly read-only visibility into available/utilized funds, real-time net/day positions, executed orders, and equity holdings.
    - Zero order placement/execution capability for 100% account and fund safety.
    - Live authentication with 1-Click Kite Login (`https://kite.zerodha.com/connect/login?v=3&api_key=...`) and automated callback exchange; zero dummy data on live accounts.
+   - 1-Click Auto-Sync today's executed orders in strict ascending creation order (`first-created first-added`).
    - Built-in interactive order review modal (`ZerodhaOrderImportModal.jsx`) with checkbox selection, Smart Match auto-pairing into closed trades, Both (straddle) leg consolidation, and turnover tracking matching screenshot import.
+   - Exact Zerodha Virtual Contract Note parity for NSE and BSE/BFO contracts (0.0325% transaction fee, per-order integer-rounded stamp duty).
    - Instant sandbox/demo simulation mode for testing without a paid Kite subscription.
    - Settings -> Integrations tab for credentials management and live connection status.
+10. **Strategy Builder**:
+   - Multi-leg options payoff builder with live option chain strike selection, break-even analysis, max profit/loss calculations, and draft portfolio saving.
 
 ---
 
