@@ -91,26 +91,56 @@ Content-Type: application/json
 ### 3.1 Get Dashboard Overview
 - **`GET /dashboard`**
 - **Query Parameters**:
-  - `date_preset`: `today`, `yesterday`, `this_week`, `this_month`, `last_month`, `this_year`, `all`
-  - `start_date`: `YYYY-MM-DD`
-  - `end_date`: `YYYY-MM-DD`
+  - `filter`: Preset range (`today`, `yesterday`, `this_week`, `this_month`, `last_month`, `this_year`, `all`, `custom`)
+  - `from_date`: `YYYY-MM-DD` (used only when `filter=custom` or when `filter` is omitted)
+  - `to_date`: `YYYY-MM-DD` (used only when `filter=custom` or when `filter` is omitted)
+  - `trading_account_id`: Specific account ID (optional; defaults to user's active/default trading account)
+- **Date Resolution & Precedence Rules**:
+  - When a named filter (`today`, `yesterday`, `this_week`, etc.) is passed, it strictly dictates date filtering.
+  - Spurious `from_date`/`to_date` values will **not** override named presets.
+  - When `filter=custom`, `from_date` and `to_date` define the exact date bounds.
+  - When `$startDate === $endDate` (e.g. `today`, `yesterday`), `date_range.display` returns a single date (e.g. `19 Nov 2026`) instead of a range.
 - **Response (200 OK)**:
   ```json
   {
-    "kpis": {
-      "net_pnl": 45200.00,
-      "gross_profit": 62000.00,
-      "gross_loss": 12000.00,
-      "total_charges": 4800.00,
-      "total_trades": 24,
-      "win_rate": 66.67,
-      "profit_factor": 5.17,
-      "current_capital": 545200.00
+    "account": {
+      "id": 1,
+      "account_name": "Zerodha Primary",
+      "broker_name": "Zerodha",
+      "initial_capital": 500000.00
     },
-    "recent_trades": [ ... ],
-    "equity_curve": [ { "date": "2026-10-01", "pnl": 5200, "cumulative": 505200 } ],
-    "daily_pnl_chart": [ { "date": "2026-10-01", "net_pnl": 5200, "trades": 3 } ],
-    "index_distribution": [ { "name": "NIFTY", "value": 18 }, { "name": "BANKNIFTY", "value": 6 } ]
+    "date_range": {
+      "filter": "today",
+      "start_date": "2026-11-19",
+      "end_date": "2026-11-19",
+      "display": "19 Nov 2026"
+    },
+    "stats": {
+      "total_net_profit": 5331.00,
+      "total_gross_profit": 5754.00,
+      "total_gross_loss": 0.00,
+      "total_charges": 423.00,
+      "today_pnl": 5331.00,
+      "this_week_pnl": 5331.00,
+      "this_month_pnl": 127754.00,
+      "current_capital": 450859.00,
+      "total_trading_days": 1,
+      "winning_days": 1,
+      "losing_days": 0,
+      "win_rate": 100.0,
+      "trade_win_rate": 100.0,
+      "total_trades": 2,
+      "avg_daily_profit": 5331.00,
+      "avg_daily_loss": 0.00,
+      "max_drawdown": 0.00,
+      "profit_factor": 5.17
+    },
+    "charts": {
+      "daily_pnl": [ { "date": "2026-11-19", "displayDate": "19 Nov", "pnl": 5331.00, "trades": 2 } ],
+      "equity_curve": [ { "date": "2026-11-19", "displayDate": "19 Nov", "cumulative_pnl": 5331.00, "capital": 450859.00 } ],
+      "index_performance": { "total_pnl": 5331.00, "items": [ { "name": "SENSEX", "pnl": 5331.00, "percentage": 100 } ] },
+      "ce_pe_performance": { "total_pnl": 5331.00, "items": [ ... ] }
+    }
   }
   ```
 

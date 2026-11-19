@@ -41,6 +41,12 @@ This document tracks prioritized future improvements, architectural tasks, and p
   - Enforced secure `.env` variable access and database-stored user credentials.
   - Added user modal prompts before OAuth redirect when API key is unconfigured.
   - Updated `backend/.env.example` with clean blank templates.
+- [x] **Dashboard Date Range Filter Reflection & Period KPI Adaptability**:
+  - Fixed query parameter conflict where `from_date` and `to_date` overridden named filters like `today` or `yesterday`.
+  - Updated `TradingAnalyticsService::resolveDateRange` to only use explicit dates for `custom` filters.
+  - Formatted single-day ranges cleanly as `19 Nov 2026` instead of `19 Nov 2026 - 19 Nov 2026`.
+  - Added dynamic period titles to top Dashboard KPI cards (`Today's Net Profit`, `This Week's Net Profit`, etc.).
+  - Added automated unit tests in `FinancialCalculationTest.php`.
 - [ ] **Bulk Import Parser Validation Suite**:
   - Write unit tests for `frontend/src/utils/bulkTradeParser.js` ensuring correct parsing of varied Zerodha Kite Tradebook CSV formats, multi-lot orders, and split executions.
 - [ ] **Database Backup & Integrity Check**:

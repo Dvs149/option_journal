@@ -52,6 +52,7 @@ The system addresses the core needs of active option traders:
    - Multi-order executions breakdown: itemizes all individual BUY/SELL orders with execution time, price, quantity, individual charges, and order-level realized P&L.
    - Dynamic lot sizing with up/down stepper arrows incrementing by index lot size.
    - Real-time gross P&L and net P&L calculation after taxes and brokerage, with dynamic Zerodha-parity red/green styling (+/- prefixes and icon state transitions) on top KPI cards across All Trades, and live query-level KPI card synchronization on every order execution, edit, delete, or partial exit.
+   - Global Dashboard filter synchronization: seamless timeframe filtering across `Today`, `Yesterday`, `This Week`, `This Month`, `Last Month`, `This Year`, `All Time`, and `Custom Range` with dynamic period card titles (`Today's Net Profit`, etc.) and single-day date formatting.
 2. **Indian Regulatory Charges Calculator**:
    - Brokerage: Flat ₹20 per executed order (or customizable per user).
    - STT: 0.15000% on sell-side option premium turnover.

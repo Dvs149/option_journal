@@ -14,16 +14,17 @@ class TradingAnalyticsService
     /**
      * Parse date range from filter string or custom dates.
      */
-    public function resolveDateRange(string $filter = 'this_month', ?string $fromDate = null, ?string $toDate = null): array
+    public function resolveDateRange(?string $filter = 'this_month', ?string $fromDate = null, ?string $toDate = null): array
     {
         $today = Carbon::today('Asia/Kolkata');
+        $cleanFilter = strtolower(trim((string) $filter));
 
-        // If explicit fromDate and toDate are given, use them
-        if ($fromDate && $toDate) {
+        // If filter is explicitly 'custom' or empty, use explicit fromDate and toDate
+        if (($cleanFilter === 'custom' || empty($cleanFilter)) && $fromDate && $toDate) {
             return [$fromDate, $toDate];
         }
 
-        switch (strtolower(trim($filter))) {
+        switch ($cleanFilter) {
             case 'today':
                 return [$today->toDateString(), $today->toDateString()];
             case 'yesterday':
@@ -303,8 +304,10 @@ class TradingAnalyticsService
                 'filter' => $filter,
                 'start_date' => $startDate,
                 'end_date' => $endDate,
-                'display' => $startDate && $endDate 
-                    ? Carbon::parse($startDate)->format('d M Y') . ' - ' . Carbon::parse($endDate)->format('d M Y')
+                'display' => $startDate && $endDate
+                    ? ($startDate === $endDate
+                        ? Carbon::parse($startDate)->format('d M Y')
+                        : Carbon::parse($startDate)->format('d M Y') . ' - ' . Carbon::parse($endDate)->format('d M Y'))
                     : 'All Time',
             ],
             'stats' => [

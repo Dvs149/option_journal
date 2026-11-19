@@ -1326,7 +1326,7 @@ export default function Zerodha() {
                                     isSuccess
                                       ? 'bg-emerald-500/10 text-emerald-400'
                                       : order.status === 'CANCELLED'
-                                      ? 'bg-slate-700/40 text-slate-400'
+                                      ? 'bg-rose-500/10 text-rose-400'
                                       : 'bg-rose-500/10 text-rose-400'
                                   }`}
                                 >

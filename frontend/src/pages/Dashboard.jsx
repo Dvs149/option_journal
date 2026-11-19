@@ -59,6 +59,22 @@ export default function Dashboard() {
       default: return 'This Month';
     }
   }, [filter, dateRangeDisplay]);
+
+  const periodTitlePrefix = useMemo(() => {
+    switch (filter) {
+      case 'today': return "Today's";
+      case 'yesterday': return "Yesterday's";
+      case 'tomorrow':
+      case 'next_working_day': return "Next Day's";
+      case 'this_week': return "This Week's";
+      case 'this_month': return "This Month's";
+      case 'last_month': return "Last Month's";
+      case 'this_year': return "This Year's";
+      case 'all': return "Total";
+      case 'custom': return "Period";
+      default: return "Total";
+    }
+  }, [filter]);
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState(null);
   const today = new Date();
@@ -113,8 +129,8 @@ export default function Dashboard() {
       const res = await api.get('/dashboard', {
         params: {
           filter,
-          from_date: customFrom,
-          to_date: customTo,
+          from_date: filter === 'custom' ? customFrom : undefined,
+          to_date: filter === 'custom' ? customTo : undefined,
         },
       });
       setData(res.data);
@@ -264,7 +280,7 @@ export default function Dashboard() {
       {/* 1. Main Statistics Row (6 Cards) */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2.5 2xl:gap-3.5">
         <MainStatsCard
-          title="Total Net Profit"
+          title={stats.total_net_profit < 0 ? `${periodTitlePrefix} Net Loss` : `${periodTitlePrefix} Net Profit`}
           value={formatINR(stats.total_net_profit)}
           change={hasTrades ? netProfitPct : null}
           isPositiveChange={stats.total_net_profit >= 0}
@@ -272,7 +288,7 @@ export default function Dashboard() {
           variant={stats.total_net_profit >= 0 ? 'green' : (isKite ? 'orange' : 'red')}
         />
         <MainStatsCard
-          title="Total Gross Profit"
+          title={`${periodTitlePrefix} Gross Profit`}
           value={formatINR(stats.total_gross_profit)}
           change={hasTrades ? grossProfitPct : null}
           isPositiveChange={true}
@@ -280,7 +296,7 @@ export default function Dashboard() {
           variant="green"
         />
         <MainStatsCard
-          title="Total Gross Loss"
+          title={`${periodTitlePrefix} Gross Loss`}
           value={formatINR(stats.total_gross_loss)}
           change={hasTrades ? grossLossPct : null}
           isPositiveChange={false}

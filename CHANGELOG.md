@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-11-19
+
+### Fixed
+- **Dashboard Global Filter Reflection & Query Parameter Conflict**:
+  - **Spurious Date Override Resolved**:
+    - Fixed an issue where `GET /dashboard` requests from `Dashboard.jsx` unconditionally included `from_date` and `to_date` (defaulting to the current month in `FilterContext`) even when a specific named filter such as `Today`, `Yesterday`, or `This Week` was selected.
+    - Updated `TradingAnalyticsService::resolveDateRange` to only apply explicit `$fromDate` and `$toDate` parameters when the filter is specifically `'custom'` or empty/null. Named filters (`today`, `yesterday`, `this_week`, `this_month`, `last_month`, `this_year`, `all`) now strictly govern date resolution.
+    - Updated `Dashboard.jsx::fetchDashboard` to send `from_date` and `to_date` query parameters only when `filter === 'custom'`.
+  - **Single-Day Date Range Display Formatting**:
+    - Updated `TradingAnalyticsService` date range payload formatter so single-day ranges (where `$startDate === $endDate`, such as `Today` or `Yesterday`) format cleanly as `19 Nov 2026` instead of `19 Nov 2026 - 19 Nov 2026`.
+    - Resolved header badge display overwrite so selecting `Today` immediately renders `19 Nov 2026` rather than reverting to the full month `01 Nov 2026 - 30 Nov 2026`.
+
+### Enhanced
+- **Dynamic Period-Aware Dashboard KPI Card Titles**:
+  - Added dynamic `periodTitlePrefix` in `Dashboard.jsx` so top metric cards adapt their title to the active filter:
+    - `Today`: `Today's Net Profit` / `Today's Net Loss`, `Today's Gross Profit`, `Today's Gross Loss`.
+    - `Yesterday`: `Yesterday's Net Profit` / `Yesterday's Net Loss`, `Yesterday's Gross Profit`, `Yesterday's Gross Loss`.
+    - `This Week`: `This Week's Net Profit`, `This Week's Gross Profit`, `This Week's Gross Loss`.
+    - `This Month` / `Last Month` / `This Year`: `This Month's Net Profit`, etc.
+    - `All Time`: `Total Net Profit`, `Total Gross Profit`, `Total Gross Loss`.
+    - `Custom`: `Period Net Profit`, `Period Gross Profit`, `Period Gross Loss`.
+  - Secondary metrics (Total Trading Days, Winning Days, Losing Days, Win Rate) and charts (Daily P&L, Cumulative P&L, Index-wise Performance, CE vs PE) now accurately compute exclusively for the selected timeframe.
+
+### Tests
+- Added unit test `test_resolve_date_range_does_not_override_named_filter_with_spurious_dates` in `FinancialCalculationTest.php` to safeguard against parameter overriding regressions.
+
 ## [1.19.0] - 2026-11-19
 
 ### Security & Hardening

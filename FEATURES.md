@@ -29,15 +29,22 @@
 ## 2. In-Depth Feature Breakdown
 
 ### 2.1 Dashboard & Visual Analytics
-- **Primary KPIs**: Net P&L (colored by profit/loss), Gross Profit, Gross Loss, Total Regulatory Charges & Brokerage, Current Capital.
-- **Secondary KPIs**: Total Trades, Winning Days vs Losing Days, Win Rate %, Profit Factor, Max Drawdown, Average Daily P&L.
+- **Timeframe & Date Filter Synchronization**:
+  - Global top navigation date filter (`Today`, `Yesterday`, `This Week`, `This Month`, `Last Month`, `This Year`, `All Time`, `Custom Range`) dynamically re-calculates all Dashboard statistics, charts, and date displays in real time.
+  - Strict date precedence prevents query parameter collisions between named presets and custom date inputs.
+  - Formats single-day date ranges (e.g. `Today` = `19 Nov 2026`) cleanly in header badges.
+- **Dynamic Period-Aware Primary KPIs**:
+  - Cards adapt titles dynamically based on active filter: `${Period} Net Profit` / `${Period} Net Loss`, `${Period} Gross Profit`, `${Period} Gross Loss`.
+  - Baseline comparative cards for `Today's P&L`, `This Month's P&L`, and `Current Capital`.
+- **Secondary KPIs**:
+  - Total Trading Days, Winning Days vs Losing Days, Win Rate %, Profit Factor, Max Drawdown, Average Daily P&L computed strictly for the selected timeframe.
 - **Visual Charts**:
-  - Daily P&L bar chart with green/red bars.
-  - Cumulative Equity Curve with high-water mark.
+  - Daily P&L bar chart with green/red bars and `{filterLabel}` badge.
+  - Cumulative Equity Curve with high-water mark scaled to active timeframe.
   - Monthly P&L breakdown bars.
-  - Index Distribution Donut (NIFTY, BANKNIFTY, SENSEX, etc.).
-  - Option Type Donut (CE vs PE distribution).
-  - Mini Trading Calendar Heatmap preview.
+  - Index Distribution Donut (NIFTY, BANKNIFTY, SENSEX, etc.) reflecting filtered period volume.
+  - Option Type Donut (CE vs PE distribution) reflecting filtered period volume.
+  - Mini Trading Calendar Heatmap preview synchronized with current filter month and official Indian market holidays.
   - Live Risk & Limit gauge indicators.
 
 ### 2.2 Trade Logging Engine (`AddTrade.jsx`)

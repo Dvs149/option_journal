@@ -124,4 +124,24 @@ class FinancialCalculationTest extends TestCase
         $this->assertEquals(31.57, $sellCeOrder['exchange_charges']);
         $this->assertEquals(145.72, $sellCeOrder['stt']);
     }
+
+    public function test_resolve_date_range_does_not_override_named_filter_with_spurious_dates(): void
+    {
+        $today = \Carbon\Carbon::today('Asia/Kolkata')->toDateString();
+
+        // When filter is 'today', even if fromDate and toDate from a different range are passed, 'today' must prevail
+        [$start, $end] = $this->analyticsService->resolveDateRange('today', '2026-11-01', '2026-11-30');
+        $this->assertEquals($today, $start);
+        $this->assertEquals($today, $end);
+
+        // When filter is explicitly 'custom', fromDate and toDate must be used
+        [$customStart, $customEnd] = $this->analyticsService->resolveDateRange('custom', '2026-11-05', '2026-11-15');
+        $this->assertEquals('2026-11-05', $customStart);
+        $this->assertEquals('2026-11-15', $customEnd);
+
+        // When filter is 'all', null range should be returned
+        [$allStart, $allEnd] = $this->analyticsService->resolveDateRange('all', '2026-11-01', '2026-11-30');
+        $this->assertNull($allStart);
+        $this->assertNull($allEnd);
+    }
 }
