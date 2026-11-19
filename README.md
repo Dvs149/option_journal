@@ -18,7 +18,7 @@ The user interface matches modern financial trading terminals (Zerodha Kite, Tra
   - Record trades with option leg details, CE/PE entry/exit prices, strike prices, lot sizes, and automatic charge breakdown.
   - Multi-screenshot attachment for technical charts and setup proof.
 - **All Trades Explorer**:
-  - Searchable, sortable, and filterable trade table with multi-select bulk operations.
+  - Searchable, sortable, and filterable trade table with dynamic profit/loss color-coded top KPI cards (Zerodha parity) and multi-select bulk operations.
   - **Interactive Date Range Filter**: Popover picker with quick presets (*Today, Yesterday, This Week, This Month, Last Month, This Year, All Time*) and Custom Date Range picker.
   - **Comprehensive Export Modal**: Trade-by-trade, Daily, Monthly, and Yearly P&L aggregation in Excel (`.xlsx`), CSV, and PDF report formats with custom column selection.
   - **Trade Details Side Drawer**: Quick tabbed preview (*Details*, *Charges*, *Journal*) with header action icons (Edit, Delete, Close).

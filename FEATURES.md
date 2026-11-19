@@ -51,6 +51,11 @@
 ### 2.3 All Trades Explorer (`AllTrades.jsx`)
 - **Synchronized Real-Time KPI Cards**:
   - Six top KPI cards (**Total Trades**, **Net P&L**, **Gross Profit**, **Gross Loss**, **Total Charges**, **Win Rate**) dynamically bound to the server-side aggregate summary of the currently active query filters.
+  - **Dynamic Profit/Loss Color Palette (Zerodha Parity)**:
+    - **Net P&L**: Dynamically colored in bright emerald green (`text-emerald-400`) with a `+` prefix for net profits (e.g., `+₹5,331`) and bright rose red (`text-rose-400`) with a `-` prefix for net losses (e.g., `-₹21,417`). The top-right Indian Rupee icon badge dynamically transitions between emerald green (`bg-emerald-500/10`) and rose red (`bg-rose-500/10`) to match.
+    - **Gross Profit**: Colored in emerald green (`text-emerald-400`) with a `+` prefix (e.g., `+₹5,754` or `+₹18,102`) and emerald icon badge whenever gross earnings > 0.
+    - **Gross Loss**: Colored in rose red (`text-rose-400`) with a `-` prefix (e.g., `-₹35,976`) and rose icon badge whenever gross losses > 0.
+    - Neutral values or zero trades render cleanly in neutral slate/white.
   - Automatically updates immediately upon executing partial exits, editing executed orders, deleting individual orders, editing trade records, deleting trades, or modifying any index, strategy, status, or date range filters.
 - Paginated table supporting 10, 20, 50, or 100 rows per page with status filters (`All`, `Open Positions`, `Closed Trades`).
 - Multi-order execution breakdown drawer: itemizes all BUY and SELL executions, prices, turnover, individual charges, and realized P&L per order.

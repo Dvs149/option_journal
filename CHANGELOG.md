@@ -9,7 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.17.0] - 2026-11-19
+## [1.18.0] - 2026-11-19
+
+### Enhanced
+- **All Trades Top KPI Cards Red/Green Dynamic Color Coding (Zerodha Parity)**:
+  - **Dynamic Profit/Loss Color Palette**:
+    - **Net P&L**: Configured the primary value to render in emerald green (`text-emerald-400`) with a `+` prefix when profitable (e.g. `+₹5,331`), and in rose red (`text-rose-400`) with a `-` sign when losing (e.g. `-₹21,417`).
+    - **Dynamic Icon Container**: The top-right Indian Rupee badge dynamically switches between emerald green (`bg-emerald-500/10 text-emerald-400`) on profit and rose red (`bg-rose-500/10 text-rose-400`) on loss, matching Zerodha's top metric cards.
+    - **Gross Profit**: Configured to display in emerald green (`text-emerald-400`) with a `+` prefix (e.g. `+₹5,754` or `+₹18,102`) with an emerald icon container whenever gross earnings are greater than 0.
+    - **Gross Loss**: Configured to display in rose red (`text-rose-400`) with a `-` prefix (e.g. `-₹35,976`) with a rose icon container whenever gross losses are greater than 0.
+    - **Zero / Neutral State**: Displays neutral slate/white when values are zero or no trades exist.
+  - **Trade Details Drawer Consistency**:
+    - Updated the Financial Summary box inside the trade details drawer to prefix positive Gross Profit with `+` and active Gross Loss with `-` for visual consistency across views.
 
 ### Added & Enhanced
 - **Interactive Capital Management Timeframe & Growth Chart Filtering**:

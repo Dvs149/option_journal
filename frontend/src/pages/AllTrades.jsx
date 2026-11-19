@@ -1604,12 +1604,29 @@ export default function AllTrades() {
         <div className="p-4 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-slate-400 font-medium">Net P&L</span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+            <div
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                stats.total_trades > 0
+                  ? stats.net_pnl >= 0
+                    ? 'bg-emerald-500/10 text-emerald-400'
+                    : 'bg-rose-500/10 text-rose-400'
+                  : 'bg-slate-500/10 text-slate-400'
+              }`}
+            >
               <IndianRupee className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <span className="text-xl font-bold text-white light:text-slate-900 font-mono-numbers block">
+            <span
+              className={`text-xl font-black font-mono-numbers block transition-colors ${
+                stats.total_trades > 0
+                  ? stats.net_pnl >= 0
+                    ? 'text-emerald-400'
+                    : 'text-rose-400'
+                  : 'text-white light:text-slate-900'
+              }`}
+            >
+              {stats.total_trades > 0 && stats.net_pnl > 0 ? '+' : ''}
               {formatINR(stats.net_pnl)}
             </span>
             <span className={`text-[10px] font-semibold flex items-center gap-0.5 mt-0.5 ${stats.total_trades > 0 ? (stats.net_pnl >= 0 ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-500 font-normal'}`}>
@@ -1629,12 +1646,25 @@ export default function AllTrades() {
         <div className="p-4 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-slate-400 font-medium">Gross Profit</span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+            <div
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                stats.total_trades > 0 && stats.gross_profit > 0
+                  ? 'bg-emerald-500/10 text-emerald-400'
+                  : 'bg-slate-500/10 text-slate-400'
+              }`}
+            >
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <span className="text-xl font-bold text-white light:text-slate-900 font-mono-numbers block">
+            <span
+              className={`text-xl font-black font-mono-numbers block transition-colors ${
+                stats.total_trades > 0 && stats.gross_profit > 0
+                  ? 'text-emerald-400'
+                  : 'text-white light:text-slate-900'
+              }`}
+            >
+              {stats.total_trades > 0 && stats.gross_profit > 0 ? '+' : ''}
               {formatINR(stats.gross_profit)}
             </span>
             <span className={`text-[10px] font-medium block mt-0.5 ${stats.total_trades > 0 && stats.gross_profit > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
@@ -1647,13 +1677,25 @@ export default function AllTrades() {
         <div className="p-4 rounded-2xl bg-[#121b2d] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-sm space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-[11px] text-slate-400 font-medium">Gross Loss</span>
-            <div className="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center">
+            <div
+              className={`w-7 h-7 rounded-lg flex items-center justify-center transition-colors ${
+                stats.total_trades > 0 && stats.gross_loss > 0
+                  ? 'bg-rose-500/10 text-rose-400'
+                  : 'bg-slate-500/10 text-slate-400'
+              }`}
+            >
               <TrendingDown className="w-4 h-4" />
             </div>
           </div>
           <div>
-            <span className="text-xl font-bold text-white light:text-slate-900 font-mono-numbers block">
-              {formatINR(stats.gross_loss)}
+            <span
+              className={`text-xl font-black font-mono-numbers block transition-colors ${
+                stats.total_trades > 0 && stats.gross_loss > 0
+                  ? 'text-rose-400'
+                  : 'text-white light:text-slate-900'
+              }`}
+            >
+              {stats.total_trades > 0 && stats.gross_loss > 0 ? `-${formatINR(Math.abs(stats.gross_loss))}` : formatINR(stats.gross_loss)}
             </span>
             <span className={`text-[10px] font-medium block mt-0.5 ${stats.total_trades > 0 && stats.gross_loss > 0 ? 'text-rose-400' : 'text-slate-500'}`}>
               {stats.total_trades > 0 && stats.gross_loss > 0 ? 'Gross losses' : 'No losses yet'}
@@ -3158,13 +3200,13 @@ export default function AllTrades() {
                   <div className="flex items-center justify-between text-slate-400">
                     <span>Gross Profit</span>
                     <span className="font-bold text-emerald-400 font-mono-numbers">
-                      {formatINR(selectedTrade.status === 'OPEN' ? 0 : selectedTrade.gross_profit)}
+                      {selectedTrade.status === 'OPEN' ? '₹0' : (selectedTrade.gross_profit > 0 ? `+${formatINR(selectedTrade.gross_profit)}` : formatINR(selectedTrade.gross_profit))}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-slate-400">
                     <span>Gross Loss</span>
                     <span className="font-bold text-rose-400 font-mono-numbers">
-                      {formatINR(selectedTrade.status === 'OPEN' ? 0 : selectedTrade.gross_loss)}
+                      {selectedTrade.status === 'OPEN' ? '₹0' : (selectedTrade.gross_loss > 0 ? `-${formatINR(Math.abs(selectedTrade.gross_loss))}` : formatINR(selectedTrade.gross_loss))}
                     </span>
                   </div>
                   <div className="flex items-center justify-between text-slate-400">

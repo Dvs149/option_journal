@@ -34,6 +34,8 @@ This document tracks prioritized future improvements, architectural tasks, and p
   - Implemented dynamic timeframe filtering (`1M`, `3M`, `6M`, `YTD`, `1Y`, `All`), period stats, opening capital anchoring, and clean date formatting in `CapitalManagement.jsx` and `CapitalController.php`.
 - [x] **Table Height & Pagination Stabilization**:
   - Stabilized table container height and bottom-anchored pagination controls across All Trades and Trading Journal.
+- [x] **All Trades KPI Top Cards Red/Green Dynamic Color Coding (Zerodha Parity)**:
+  - Dynamically styled top KPI cards in `AllTrades.jsx` (Net P&L, Gross Profit, Gross Loss) to render numbers in emerald green (`+₹...`) when profitable and rose red (`-₹...`) when negative, with matching dynamic icon badge colors and drawer financial summary sign consistency matching the Zerodha Kite module.
 - [ ] **Bulk Import Parser Validation Suite**:
   - Write unit tests for `frontend/src/utils/bulkTradeParser.js` ensuring correct parsing of varied Zerodha Kite Tradebook CSV formats, multi-lot orders, and split executions.
 - [ ] **Database Backup & Integrity Check**:
