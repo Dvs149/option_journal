@@ -198,6 +198,8 @@
   - Interactive status filtering (`ALL`, `COMPLETE`, `CANCELLED`, `REJECTED`) and symbol/order ID search.
 - **Holdings Valuation**:
   - Stock portfolio display with ISIN, quantity, average cost, LTP, current valuation, cumulative P&L, and daily % change.
+- **Custom Confirmation Modal (`ConfirmationModal.jsx`)**:
+  - Replaced browser-native `window.confirm` popup with an in-app dark/light modal featuring account badge (`Client ID`, `User Name`), warning description, backdrop blur, `Escape` key support, and safe in-flight loading guards.
 - **One-Click Read-Only Journal Ingestion**:
   - Imports completed broker orders directly into TradeJournal trades and trade orders with automatic index detection and charge estimation.
   - Built-in duplicate detection prevents re-importing previously recorded orders.

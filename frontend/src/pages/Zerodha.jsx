@@ -33,6 +33,7 @@ import api from '../api/client';
 import { useToast } from '../context/ToastContext';
 import ZerodhaOrderImportModal from '../components/trades/ZerodhaOrderImportModal';
 import ZerodhaContractNoteModal from '../components/trades/ZerodhaContractNoteModal';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 
 // Authentic Zerodha Kite Origami Logo SVG (matches Kite brand icon)
 export function KiteIcon({ className = "w-4 h-4 shrink-0" }) {
@@ -138,6 +139,8 @@ export default function Zerodha() {
   const [isSettingToken, setIsSettingToken] = useState(false);
   const [showDirectToken, setShowDirectToken] = useState(false);
   const [syncingOrders, setSyncingOrders] = useState(false);
+  const [showDisconnectModal, setShowDisconnectModal] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   // Fetch integration status & details
   const fetchZerodhaData = useCallback(async (isRefresh = false) => {
@@ -335,18 +338,23 @@ export default function Zerodha() {
     }
   };
 
-  // Disconnect
-  const handleDisconnect = async () => {
-    if (!window.confirm('Are you sure you want to disconnect Zerodha Kite Connect?')) {
-      return;
-    }
+  // Disconnect Handlers (Custom Confirmation Modal)
+  const handleOpenDisconnectModal = () => {
+    setShowDisconnectModal(true);
+  };
+
+  const handleConfirmDisconnect = async () => {
     try {
+      setIsDisconnecting(true);
       await api.post('/zerodha/disconnect');
-      triggerToast('Zerodha Kite disconnected', 'info');
+      triggerToast('Zerodha Kite disconnected successfully', 'info');
+      setShowDisconnectModal(false);
       fetchZerodhaData();
     } catch (err) {
       console.error('Disconnect failed', err);
       triggerToast('Failed to disconnect Zerodha', 'error');
+    } finally {
+      setIsDisconnecting(false);
     }
   };
 
@@ -794,8 +802,8 @@ export default function Zerodha() {
 
           <button
             type="button"
-            onClick={handleDisconnect}
-            className="p-2 rounded-xl bg-[#162033] hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-[#1e293b] transition-all"
+            onClick={handleOpenDisconnectModal}
+            className="p-2 rounded-xl bg-[#162033] hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-[#1e293b] transition-all cursor-pointer"
             title="Disconnect Zerodha"
           >
             <LogOut className="w-4 h-4" />
@@ -2145,6 +2153,40 @@ export default function Zerodha() {
         onClose={() => setShowContractNoteModal(false)}
         orders={orders}
         clientInfo={profile}
+      />
+
+      {/* Custom Disconnect Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDisconnectModal}
+        onClose={() => !isDisconnecting && setShowDisconnectModal(false)}
+        onConfirm={handleConfirmDisconnect}
+        isLoading={isDisconnecting}
+        title="Disconnect Zerodha Kite?"
+        message="Are you sure you want to disconnect Zerodha Kite Connect? This will clear your active daily session token. Your journaled trades, notes, and historical logs will remain completely intact."
+        confirmText="Yes, Disconnect"
+        cancelText="Cancel"
+        variant="danger"
+        icon={LogOut}
+        details={
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-orange-500/15 border border-orange-500/30 text-orange-400 font-bold flex items-center justify-center text-xs shrink-0">
+                ▲
+              </div>
+              <div className="min-w-0">
+                <p className="font-bold text-white light:text-slate-900 truncate">
+                  {profile.user_name || 'Zerodha Kite Account'}
+                </p>
+                <p className="text-[11px] text-slate-400 font-mono truncate">
+                  Client ID: <span className="text-slate-200 light:text-slate-700 font-semibold">{profile.broker_user_id || 'N/A'}</span>
+                </p>
+              </div>
+            </div>
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+              Connected
+            </span>
+          </div>
+        }
       />
 
       {/* Connect Modal */}

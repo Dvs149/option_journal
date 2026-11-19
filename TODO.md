@@ -47,6 +47,9 @@ This document tracks prioritized future improvements, architectural tasks, and p
   - Formatted single-day ranges cleanly as `19 Nov 2026` instead of `19 Nov 2026 - 19 Nov 2026`.
   - Added dynamic period titles to top Dashboard KPI cards (`Today's Net Profit`, `This Week's Net Profit`, etc.).
   - Added automated unit tests in `FinancialCalculationTest.php`.
+- [x] **Custom Confirmation Modal for Disconnecting Integrations**:
+  - Replaced native `window.confirm` browser dialogs with theme-aware `ConfirmationModal.jsx`.
+  - Integrated in both `Zerodha.jsx` and `Settings.jsx` with backdrop blur, `Escape` key listeners, client details box, and loading states.
 - [ ] **Bulk Import Parser Validation Suite**:
   - Write unit tests for `frontend/src/utils/bulkTradeParser.js` ensuring correct parsing of varied Zerodha Kite Tradebook CSV formats, multi-lot orders, and split executions.
 - [ ] **Database Backup & Integrity Check**:

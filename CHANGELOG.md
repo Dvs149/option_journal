@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.21.0] - 2026-11-19
+
+### Enhanced & UI
+- **Custom Confirmation Modal for Zerodha Kite Disconnect (`ConfirmationModal.jsx`)**:
+  - **Eliminated Native Browser `window.confirm`**:
+    - Replaced the browser-native JavaScript confirm prompt (`divyeshs-macbook-pro.local:3000 says: Are you sure you want to disconnect Zerodha Kite Connect?`) with a dedicated, theme-aware custom modal component (`ConfirmationModal.jsx`).
+  - **Component Features**:
+    - **Backdrop & Transitions**: Full viewport overlay with `bg-black/75 backdrop-blur-sm`, smooth `animate-fadeIn` and `animate-scaleUp` transitions, and click-outside dismissal.
+    - **Keyboard Accessibility**: Integrated `useEscapeKey` so hitting the `Escape` key closes the dialog safely.
+    - **Account Context Badge**: Highlights active Zerodha account context inside the modal (Origami icon, user display name, client ID, e.g. `NQ2990`, and `Connected` badge).
+    - **Theme Parity**: Complete dark mode (`bg-[#121b2d]`, `border-[#1e293b]`) and light mode (`light:bg-white`, `light:border-slate-200`) styling.
+    - **Loading & Concurrency Protection**: Displays animated spinner (`Loader2`) and disables buttons while disconnect request is in-flight to prevent duplicate API dispatches.
+  - **Unified Deployment**:
+    - Integrated across both `/zerodha` (`Zerodha.jsx`) and `/settings?tab=Integrations` (`Settings.jsx`).
+
 ## [1.20.0] - 2026-11-19
 
 ### Fixed

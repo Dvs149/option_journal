@@ -34,6 +34,7 @@ import {
   SlidersHorizontal,
   ChevronRight,
   ExternalLink,
+  LogOut,
 } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -43,6 +44,7 @@ import { useToast } from '../context/ToastContext';
 import { useModules } from '../context/ModuleContext';
 import { useBrokerage } from '../context/BrokerageContext';
 import { useDropdown } from '../context/DropdownContext';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 
 export default function Settings() {
   const { user, updateUser } = useAuth();
@@ -91,6 +93,8 @@ export default function Settings() {
   const [zerodhaApiKey, setZerodhaApiKey] = useState('');
   const [zerodhaApiSecret, setZerodhaApiSecret] = useState('');
   const [zerodhaConnecting, setZerodhaConnecting] = useState(false);
+  const [showDisconnectZerodhaModal, setShowDisconnectZerodhaModal] = useState(false);
+  const [isDisconnectingZerodha, setIsDisconnectingZerodha] = useState(false);
 
   const fetchZerodhaStatus = useCallback(async () => {
     try {
@@ -177,15 +181,18 @@ export default function Settings() {
     }
   };
 
-  const handleDisconnectZerodha = async () => {
-    if (!window.confirm('Are you sure you want to disconnect Zerodha Kite Connect?')) return;
+  const handleConfirmDisconnectZerodha = async () => {
     try {
+      setIsDisconnectingZerodha(true);
       await api.post('/zerodha/disconnect');
-      triggerToast('Zerodha Kite disconnected', 'info');
+      triggerToast('Zerodha Kite disconnected successfully', 'info');
+      setShowDisconnectZerodhaModal(false);
       fetchZerodhaStatus();
     } catch (err) {
       console.error('Disconnect failed', err);
       triggerToast('Failed to disconnect Zerodha', 'error');
+    } finally {
+      setIsDisconnectingZerodha(false);
     }
   };
 
@@ -1768,7 +1775,7 @@ export default function Settings() {
                           </button>
                           <button
                             type="button"
-                            onClick={handleDisconnectZerodha}
+                            onClick={() => setShowDisconnectZerodhaModal(true)}
                             className="px-2.5 py-1.5 rounded-xl bg-[#162033] hover:bg-rose-500/20 text-rose-400 text-[11px] font-semibold transition-all border border-[#1e293b] whitespace-nowrap shrink-0 cursor-pointer"
                             title="Disconnect Zerodha"
                           >
@@ -2151,7 +2158,7 @@ export default function Settings() {
               </span>
             </div>
           </div>
-  );
+        );
 
   const renderDropdownsCard = () => {
     const totalCount = dropdownOptions?.length || 0;
@@ -2826,6 +2833,39 @@ export default function Settings() {
           </div>
         </div>
       )}
+      {/* Custom Disconnect Zerodha Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDisconnectZerodhaModal}
+        onClose={() => !isDisconnectingZerodha && setShowDisconnectZerodhaModal(false)}
+        onConfirm={handleConfirmDisconnectZerodha}
+        isLoading={isDisconnectingZerodha}
+        title="Disconnect Zerodha Kite?"
+        message="Are you sure you want to disconnect Zerodha Kite Connect? This will clear your active daily session token. Your journaled trades, notes, and historical logs will remain completely intact."
+        confirmText="Yes, Disconnect"
+        cancelText="Cancel"
+        variant="danger"
+        icon={LogOut}
+        details={
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-xl bg-orange-500/15 border border-orange-500/30 text-orange-400 font-bold flex items-center justify-center text-xs shrink-0">
+                ▲
+              </div>
+              <div className="min-w-0">
+                <p className="font-bold text-white light:text-slate-900 truncate">
+                  {zerodhaStatus?.integration?.user_name || 'Zerodha Kite Account'}
+                </p>
+                <p className="text-[11px] text-slate-400 font-mono truncate">
+                  Client ID: <span className="text-slate-200 light:text-slate-700 font-semibold">{zerodhaStatus?.integration?.broker_user_id || 'N/A'}</span>
+                </p>
+              </div>
+            </div>
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+              Connected
+            </span>
+          </div>
+        }
+      />
     </div>
   );
 }

@@ -96,6 +96,7 @@ The system addresses the core needs of active option traders:
    - Instant sandbox/demo simulation mode for testing without a paid Kite subscription.
    - Settings -> Integrations tab for credentials management and live connection status.
    - Zero hardcoded credentials: all API keys and secrets load strictly via user database settings or gitignored `.env` environment variables.
+   - Custom in-app confirmation modal (`ConfirmationModal.jsx`) for disconnecting broker sessions, replacing unstyled native browser `window.confirm()` prompts.
 10. **Strategy Builder**:
    - Multi-leg options payoff builder with live option chain strike selection, break-even analysis, max profit/loss calculations, and draft portfolio saving.
 
