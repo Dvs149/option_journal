@@ -38,6 +38,7 @@ import {
 } from 'recharts';
 import api from '../api/client';
 import { formatINR, formatDate, getDayOfWeek } from '../utils/formatters';
+import { getPaginationPages } from '../utils/pagination';
 import { useFilter } from '../context/FilterContext';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
@@ -723,44 +724,31 @@ export default function TradingJournal() {
               </button>
 
               {/* Page Number Buttons */}
-              {Array.from({ length: pagination.last_page }, (_, i) => i + 1)
-                .filter((p) => {
-                  if (p === 1 || p === pagination.last_page) return true;
-                  if (Math.abs(p - pagination.current_page) <= 1) return true;
-                  return false;
-                })
-                .reduce((acc, p, idx, arr) => {
-                  if (idx > 0 && p - arr[idx - 1] > 1) {
-                    acc.push('ellipsis-' + p);
-                  }
-                  acc.push(p);
-                  return acc;
-                }, [])
-                .map((item) => {
-                  if (typeof item === 'string') {
-                    return (
-                      <span key={item} className="px-1 text-slate-600">
-                        ...
-                      </span>
-                    );
-                  }
-                  const isCurrent = pagination.current_page === item;
+              {getPaginationPages(pagination.current_page, pagination.last_page).map((item, idx) => {
+                if (item === '...') {
                   return (
-                    <button
-                      key={item}
-                      type="button"
-                      disabled={loading}
-                      onClick={() => setPage(item)}
-                      className={`min-w-[28px] h-7 px-2 rounded-lg text-xs font-semibold font-mono-numbers transition-all ${
-                        isCurrent
-                          ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                          : 'bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-slate-400 hover:text-white light:hover:text-slate-900'
-                      }`}
-                    >
-                      {item}
-                    </button>
+                    <span key={`ellipsis-${idx}`} className="px-1 text-slate-600 select-none">
+                      ...
+                    </span>
                   );
-                })}
+                }
+                const isCurrent = pagination.current_page === item;
+                return (
+                  <button
+                    key={`page-${item}`}
+                    type="button"
+                    disabled={loading}
+                    onClick={() => setPage(item)}
+                    className={`min-w-[28px] h-7 px-2 rounded-lg text-xs font-semibold font-mono-numbers transition-all ${
+                      isCurrent
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                        : 'bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-slate-400 hover:text-white light:hover:text-slate-900'
+                    }`}
+                  >
+                    {item}
+                  </button>
+                );
+              })}
 
               {/* Next Button */}
               <button

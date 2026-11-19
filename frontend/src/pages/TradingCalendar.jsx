@@ -42,6 +42,7 @@ import { useEscapeKey } from '../hooks/useEscapeKey';
 import EditTradeModal from '../components/trades/EditTradeModal';
 import EditOrderModal from '../components/trades/EditOrderModal';
 import PartialExitModal from '../components/trades/PartialExitModal';
+import { getPaginationPages } from '../utils/pagination';
 
 // Helper to resolve individual CE and PE leg prices
 const getLegPrices = (trade) => {
@@ -523,19 +524,6 @@ export default function TradingCalendar() {
     const startIndex = (validTradesPage - 1) * tradesPerPage;
     return sortedDayTrades.slice(startIndex, startIndex + tradesPerPage);
   }, [sortedDayTrades, validTradesPage, tradesPerPage]);
-
-  const getPageNumbers = () => {
-    if (totalTradesPages <= 5) {
-      return Array.from({ length: totalTradesPages }, (_, i) => i + 1);
-    }
-    if (validTradesPage <= 3) {
-      return [1, 2, 3, 4, '...', totalTradesPages];
-    }
-    if (validTradesPage >= totalTradesPages - 2) {
-      return [1, '...', totalTradesPages - 3, totalTradesPages - 2, totalTradesPages - 1, totalTradesPages];
-    }
-    return [1, '...', validTradesPage - 1, validTradesPage, validTradesPage + 1, '...', totalTradesPages];
-  };
 
   // Calendar Cells Calculation
   const calendarCells = useMemo(() => {
@@ -1632,7 +1620,7 @@ export default function TradingCalendar() {
                     <ChevronLeft className="w-3.5 h-3.5" />
                   </button>
 
-                  {getPageNumbers().map((pg, idx) =>
+                  {getPaginationPages(validTradesPage, totalTradesPages).map((pg, idx) =>
                     pg === '...' ? (
                       <span key={`ellipsis-${idx}`} className="px-1 text-slate-500 select-none">
                         ...

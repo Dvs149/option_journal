@@ -53,6 +53,10 @@ This document tracks prioritized future improvements, architectural tasks, and p
 - [x] **Pagination for Daily Trades Table in Trading Calendar**:
   - Added pagination controls (`10, 15, 25, 50` per page, prev/next buttons, numbered pages) to `TradingCalendar.jsx` for the selected day's trades table.
   - Automatically resets to page 1 on day/month change or sorting.
+- [x] **Sliding Window Pagination Across All Data Tables (`AllTrades.jsx`, `TradingCalendar.jsx`, `TradingJournal.jsx`)**:
+  - Implemented dynamic sliding window pagination (`getPaginationPages`) in `frontend/src/utils/pagination.js`.
+  - Replaced hardcoded `Math.min(5, last_page)` in `AllTrades.jsx` to dynamically render and highlight active pages 6 through 11+ with surrounding context and smart ellipses.
+  - Applied across `AllTrades.jsx`, `TradingCalendar.jsx`, and `TradingJournal.jsx` with bottom-pinned pagination and stable table container heights.
 - [ ] **Bulk Import Parser Validation Suite**:
   - Write unit tests for `frontend/src/utils/bulkTradeParser.js` ensuring correct parsing of varied Zerodha Kite Tradebook CSV formats, multi-lot orders, and split executions.
 - [ ] **Database Backup & Integrity Check**:

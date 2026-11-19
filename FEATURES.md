@@ -65,6 +65,10 @@
     - Neutral values or zero trades render cleanly in neutral slate/white.
   - Automatically updates immediately upon executing partial exits, editing executed orders, deleting individual orders, editing trade records, deleting trades, or modifying any index, strategy, status, or date range filters.
 - Paginated table supporting 10, 20, 50, or 100 rows per page with status filters (`All`, `Open Positions`, `Closed Trades`).
+  - **Dynamic Sliding Window Pagination (`frontend/src/utils/pagination.js`)**:
+    - Generates a centered sliding window of page numbers around the active page (e.g. `1 ... 4 5 [6] 7 8 ... 11` when on page 6 of 11) with active blue highlighting, prev/next arrows, and clean ellipsis markers.
+    - Resolves pagination freezing on datasets with > 5 pages.
+    - Zero height jumps with bottom-pinned layout (`mt-auto`).
 - Multi-order execution breakdown drawer: itemizes all BUY and SELL executions, prices, turnover, individual charges, and realized P&L per order.
 - **Execute Exit / Partial Order Engine (`PartialExitModal.jsx`)**:
   - Full and partial position closure dialog with dynamic lot stepper increment.

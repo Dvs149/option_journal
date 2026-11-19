@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.23.0] - 2026-11-19
+
+### Fixed & UI
+- **Dynamic Sliding Window Pagination Across All Data Tables (`pagination.js`, `AllTrades.jsx`, `TradingCalendar.jsx`, `TradingJournal.jsx`)**:
+  - **Resolved Missing/Non-Highlighted Active Pages**:
+    - Fixed an issue where navigating past page 5 on datasets with 11+ pages (such as 104 trades at 10/page) failed to render or highlight active pages 6 through 10.
+    - Previously, button generation in `AllTrades.jsx` was hardcoded to `Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => i + 1)`, freezing the visible buttons at `1, 2, 3, 4, 5 ... 11` regardless of the user's active page.
+  - **Shared Sliding Window Utility (`frontend/src/utils/pagination.js`)**:
+    - Created `getPaginationPages(currentPage, lastPage)` generating a window dynamically centered on the active page:
+      - Pages 1 to 5: `1, 2, 3, 4, 5 ... 11`
+      - Page 6: `1 ... 4, 5, 6, 7, 8 ... 11` (Page 6 active in center)
+      - Page 9: `1 ... 7, 8, 9, 10, 11` (Page 9 active)
+      - Page 11: `1 ... 7, 8, 9, 10, 11` (Page 11 active)
+      - Total pages $\le 7$: renders all consecutive numbers (`1, 2, 3, 4, 5, 6, 7`) without ellipsis markers.
+    - Eliminates duplicate ellipsis markers and orphaned single page jumps.
+  - **Universal Deployment**:
+    - Applied across `AllTrades.jsx`, `TradingCalendar.jsx` (daily trades list), and `TradingJournal.jsx`.
+    - Preserved container minimum heights and pinned bottom alignment (`mt-auto`) to guarantee zero layout shifts during page switching.
+
 ## [1.22.0] - 2026-11-19
 
 ### Added & UI

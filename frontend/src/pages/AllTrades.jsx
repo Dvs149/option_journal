@@ -61,6 +61,7 @@ import PartialExitModal from '../components/trades/PartialExitModal';
 import EditOrderModal from '../components/trades/EditOrderModal';
 import OptionChainModal from '../components/trades/OptionChainModal';
 import { KiteIcon } from './Zerodha';
+import { getPaginationPages } from '../utils/pagination';
 import * as XLSX from 'xlsx';
 
 // Helper to resolve individual CE and PE leg prices
@@ -2751,34 +2752,24 @@ export default function AllTrades() {
                   <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
 
-                {Array.from({ length: Math.min(5, pagination.last_page) }, (_, i) => i + 1).map((pg) => (
-                  <button
-                    key={pg}
-                    onClick={() => setPage(pg)}
-                    className={`w-7 h-7 rounded-lg text-xs font-semibold ${
-                      pagination.current_page === pg
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'bg-[#0e1626] light:bg-slate-100 text-slate-400 hover:text-white border border-[#1e293b]'
-                    }`}
-                  >
-                    {pg}
-                  </button>
-                ))}
-
-                {pagination.last_page > 5 && (
-                  <>
-                    <span className="text-slate-500">...</span>
+                {getPaginationPages(pagination.current_page, pagination.last_page).map((pg, idx) =>
+                  pg === '...' ? (
+                    <span key={`ellipsis-${idx}`} className="px-1 text-slate-500 select-none">
+                      ...
+                    </span>
+                  ) : (
                     <button
-                      onClick={() => setPage(pagination.last_page)}
-                      className={`w-7 h-7 rounded-lg text-xs font-semibold ${
-                        pagination.current_page === pagination.last_page
-                          ? 'bg-blue-600 text-white'
+                      key={`page-${pg}`}
+                      onClick={() => setPage(pg)}
+                      className={`w-7 h-7 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
+                        pagination.current_page === pg
+                          ? 'bg-blue-600 text-white shadow-sm'
                           : 'bg-[#0e1626] light:bg-slate-100 text-slate-400 hover:text-white border border-[#1e293b]'
                       }`}
                     >
-                      {pagination.last_page}
+                      {pg}
                     </button>
-                  </>
+                  )
                 )}
 
                 <button
