@@ -162,6 +162,7 @@
   - Interactive actions directly on the calendar: edit trade (`EditTradeModal`), delete trade, edit executed order (`EditOrderModal`), delete order, and execute partial exits (`PartialExitModal`).
   - Identical newest-first sorting (`id desc`) matching All Trades.
   - Displays multi-day `Exit: <Date>` indicator when a trade was taken on an earlier date and squared off on the selected date.
+  - **Full Pagination Controls**: Daily trades table includes `Showing X to Y of Z trades`, pagination page buttons (`1, 2, 3...`), prev/next navigation, and `10 / 15 / 25 / 50` per-page dropdown selector to maintain clean vertical sizing on high-volume days.
 - Synchronized monthly KPIs, bar charts, cumulative equity trend line, and weekday performance distribution.
 
 ### 2.11 Zerodha Kite Connect Read-Only Module (`Zerodha.jsx`, `Settings.jsx`)

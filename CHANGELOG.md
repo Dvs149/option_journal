@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.22.0] - 2026-11-19
+
+### Added & UI
+- **Pagination for Daily Trades Table in Trading Calendar (`TradingCalendar.jsx`)**:
+  - **Eliminated Long Scrolling Lists**:
+    - Resolved table overflow where days with large execution volumes (e.g., 29 trades on 19 Nov 2026) stretched the calendar card endlessly down the page.
+  - **Comprehensive Pagination Controls**:
+    - **Results Summary**: Displays `Showing X to Y of Z trades` with monospace font metrics.
+    - **Previous / Next Navigation**: Added `ChevronLeft` and `ChevronRight` buttons with disabled states at boundaries.
+    - **Smart Numbered Pagination**: Generates page buttons (`1, 2, 3...`) with ellipsis handling for higher page counts.
+    - **Per-Page Selector**: Dropdown to toggle between `10 / page`, `15 / page`, `25 / page`, and `50 / page` (defaults to 10).
+    - **State Resets**: Automatically resets to page 1 upon switching days, months, years, or column sorting.
+    - **Design Parity**: Matched exact layout, button tokens, and dark/light mode themes used in `AllTrades.jsx`.
+
 ## [1.21.0] - 2026-11-19
 
 ### Enhanced & UI

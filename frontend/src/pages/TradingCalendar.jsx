@@ -226,7 +226,14 @@ export default function TradingCalendar() {
   const [expandedTradeIds, setExpandedTradeIds] = useState(new Set());
   const [sortCol, setSortCol] = useState('trade_date');
   const [sortDir, setSortDir] = useState('desc');
+  const [tradesPage, setTradesPage] = useState(1);
+  const [tradesPerPage, setTradesPerPage] = useState(10);
   const { showToast } = useToast();
+
+  // Reset daily trades pagination to page 1 when selected day, month, or year changes
+  useEffect(() => {
+    setTradesPage(1);
+  }, [selectedDayNumber, currentDate.year, currentDate.month]);
 
   // Close modals on Escape
   useEscapeKey(() => setTradeToDelete(null), !!tradeToDelete);
@@ -254,6 +261,7 @@ export default function TradingCalendar() {
       setSortCol(col);
       setSortDir('desc');
     }
+    setTradesPage(1);
   };
 
   const handleOpenEditOrder = (trade, order, e) => {
@@ -505,6 +513,29 @@ export default function TradingCalendar() {
       return sortDir === 'asc' ? idA - idB : idB - idA;
     });
   }, [selectedDayData.trades, sortCol, sortDir]);
+
+  // Pagination for Selected Day's Trades
+  const totalTradesCount = sortedDayTrades.length;
+  const totalTradesPages = Math.max(1, Math.ceil(totalTradesCount / tradesPerPage));
+  const validTradesPage = Math.min(Math.max(1, tradesPage), totalTradesPages);
+
+  const paginatedDayTrades = useMemo(() => {
+    const startIndex = (validTradesPage - 1) * tradesPerPage;
+    return sortedDayTrades.slice(startIndex, startIndex + tradesPerPage);
+  }, [sortedDayTrades, validTradesPage, tradesPerPage]);
+
+  const getPageNumbers = () => {
+    if (totalTradesPages <= 5) {
+      return Array.from({ length: totalTradesPages }, (_, i) => i + 1);
+    }
+    if (validTradesPage <= 3) {
+      return [1, 2, 3, 4, '...', totalTradesPages];
+    }
+    if (validTradesPage >= totalTradesPages - 2) {
+      return [1, '...', totalTradesPages - 3, totalTradesPages - 2, totalTradesPages - 1, totalTradesPages];
+    }
+    return [1, '...', validTradesPage - 1, validTradesPage, validTradesPage + 1, '...', totalTradesPages];
+  };
 
   // Calendar Cells Calculation
   const calendarCells = useMemo(() => {
@@ -1203,8 +1234,8 @@ export default function TradingCalendar() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#1e293b]/60 light:divide-slate-100">
-                  {sortedDayTrades && sortedDayTrades.length > 0 ? (
-                    sortedDayTrades.map((t) => {
+                  {paginatedDayTrades && paginatedDayTrades.length > 0 ? (
+                    paginatedDayTrades.map((t) => {
                       const netVal = parseFloat(t.net_pnl);
                       const grossPnl = parseFloat(t.gross_profit || 0) - parseFloat(t.gross_loss || 0);
                       const tLegs = getLegPrices(t);
@@ -1581,6 +1612,73 @@ export default function TradingCalendar() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalTradesCount > 0 && (
+              <div className="pt-3.5 border-t border-[#1e293b] light:border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs mt-auto">
+                <span className="text-slate-400 text-[11px] font-mono-numbers">
+                  Showing {(validTradesPage - 1) * tradesPerPage + 1} to{' '}
+                  {Math.min(validTradesPage * tradesPerPage, totalTradesCount)} of {totalTradesCount} trades
+                </span>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={validTradesPage <= 1}
+                    onClick={() => setTradesPage((p) => Math.max(1, p - 1))}
+                    className="p-1.5 rounded-lg bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-slate-400 hover:text-white light:hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title="Previous page"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+
+                  {getPageNumbers().map((pg, idx) =>
+                    pg === '...' ? (
+                      <span key={`ellipsis-${idx}`} className="px-1 text-slate-500 select-none">
+                        ...
+                      </span>
+                    ) : (
+                      <button
+                        key={`page-${pg}`}
+                        type="button"
+                        onClick={() => setTradesPage(pg)}
+                        className={`w-7 h-7 rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
+                          validTradesPage === pg
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'bg-[#0e1626] light:bg-slate-100 text-slate-400 hover:text-white light:hover:text-slate-900 border border-[#1e293b] light:border-slate-200'
+                        }`}
+                      >
+                        {pg}
+                      </button>
+                    )
+                  )}
+
+                  <button
+                    type="button"
+                    disabled={validTradesPage >= totalTradesPages}
+                    onClick={() => setTradesPage((p) => Math.min(totalTradesPages, p + 1))}
+                    className="p-1.5 rounded-lg bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-200 text-slate-400 hover:text-white light:hover:text-slate-900 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title="Next page"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+
+                  <select
+                    value={tradesPerPage}
+                    onChange={(e) => {
+                      setTradesPerPage(Number(e.target.value));
+                      setTradesPage(1);
+                    }}
+                    className="ml-2 px-2.5 py-1 rounded-lg bg-[#0e1626] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-slate-300 light:text-slate-700 text-xs cursor-pointer focus:outline-none"
+                  >
+                    <option value={10}>10 / page</option>
+                    <option value={15}>15 / page</option>
+                    <option value={25}>25 / page</option>
+                    <option value={50}>50 / page</option>
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

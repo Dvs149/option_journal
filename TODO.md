@@ -50,6 +50,9 @@ This document tracks prioritized future improvements, architectural tasks, and p
 - [x] **Custom Confirmation Modal for Disconnecting Integrations**:
   - Replaced native `window.confirm` browser dialogs with theme-aware `ConfirmationModal.jsx`.
   - Integrated in both `Zerodha.jsx` and `Settings.jsx` with backdrop blur, `Escape` key listeners, client details box, and loading states.
+- [x] **Pagination for Daily Trades Table in Trading Calendar**:
+  - Added pagination controls (`10, 15, 25, 50` per page, prev/next buttons, numbered pages) to `TradingCalendar.jsx` for the selected day's trades table.
+  - Automatically resets to page 1 on day/month change or sorting.
 - [ ] **Bulk Import Parser Validation Suite**:
   - Write unit tests for `frontend/src/utils/bulkTradeParser.js` ensuring correct parsing of varied Zerodha Kite Tradebook CSV formats, multi-lot orders, and split executions.
 - [ ] **Database Backup & Integrity Check**:
