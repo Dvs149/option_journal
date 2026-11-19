@@ -94,6 +94,7 @@ The system addresses the core needs of active option traders:
    - Exact Zerodha Virtual Contract Note parity for NSE and BSE/BFO contracts (0.0325% transaction fee, per-order integer-rounded stamp duty).
    - Instant sandbox/demo simulation mode for testing without a paid Kite subscription.
    - Settings -> Integrations tab for credentials management and live connection status.
+   - Zero hardcoded credentials: all API keys and secrets load strictly via user database settings or gitignored `.env` environment variables.
 10. **Strategy Builder**:
    - Multi-leg options payoff builder with live option chain strike selection, break-even analysis, max profit/loss calculations, and draft portfolio saving.
 

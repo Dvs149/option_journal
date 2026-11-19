@@ -114,6 +114,21 @@ export default function Settings() {
     }
   }, []);
 
+  const kiteLoginUrl = zerodhaStatus?.login_url || (zerodhaStatus?.api_key && zerodhaStatus.api_key !== 'DEMO_KITE_KEY'
+    ? `https://kite.zerodha.com/connect/login?v=3&api_key=${encodeURIComponent(zerodhaStatus.api_key)}`
+    : (zerodhaApiKey.trim() ? `https://kite.zerodha.com/connect/login?v=3&api_key=${encodeURIComponent(zerodhaApiKey.trim())}` : null));
+
+  const handleKiteLoginClick = (e) => {
+    if (typeof window !== 'undefined' && window.location.origin) {
+      fetch(`http://localhost:5173/__set_origin?origin=${encodeURIComponent(window.location.origin)}`, { mode: 'no-cors' }).catch(() => {});
+    }
+    if (!kiteLoginUrl) {
+      e.preventDefault();
+      setShowZerodhaModal(true);
+      triggerToast('Please configure your Zerodha Kite API Key first.', 'info');
+    }
+  };
+
   useEffect(() => {
     const tabParam = searchParams.get('tab');
     if (tabParam) {
@@ -1732,12 +1747,8 @@ export default function Settings() {
                           </button>
                           {!zerodhaStatus?.is_authenticated && !zerodhaStatus?.is_demo && (
                             <a
-                              href={zerodhaStatus?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${zerodhaStatus?.api_key || '44x8vhyiv5gyizqt'}`}
-                              onClick={() => {
-                                if (typeof window !== 'undefined' && window.location.origin) {
-                                  fetch(`http://localhost:5173/__set_origin?origin=${encodeURIComponent(window.location.origin)}`, { mode: 'no-cors' }).catch(() => {});
-                                }
-                              }}
+                              href={kiteLoginUrl || '#'}
+                              onClick={handleKiteLoginClick}
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-white text-[11px] font-semibold border border-[#2b3a56] hover:border-orange-500/50 transition-all cursor-pointer whitespace-nowrap shadow-sm"
                             >
                               <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" fill="none">
@@ -1767,12 +1778,8 @@ export default function Settings() {
                       ) : (
                         <div className="flex items-center gap-2 flex-wrap">
                           <a
-                            href={zerodhaStatus?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${zerodhaStatus?.api_key || '44x8vhyiv5gyizqt'}`}
-                            onClick={() => {
-                              if (typeof window !== 'undefined' && window.location.origin) {
-                                fetch(`http://localhost:5173/__set_origin?origin=${encodeURIComponent(window.location.origin)}`, { mode: 'no-cors' }).catch(() => {});
-                              }
-                            }}
+                            href={kiteLoginUrl || '#'}
+                            onClick={handleKiteLoginClick}
                             className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-white text-xs font-bold border border-[#2b3a56] hover:border-orange-500/50 transition-all cursor-pointer shadow-md whitespace-nowrap"
                           >
                             <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 shrink-0" fill="none">
@@ -1820,8 +1827,9 @@ export default function Settings() {
                       </div>
 
                       <a
-                        href={zerodhaStatus?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${zerodhaApiKey || 'rc8uazcn34krax8l'}`}
-                        target="_blank"
+                        href={kiteLoginUrl || '#'}
+                        onClick={handleKiteLoginClick}
+                        target={kiteLoginUrl ? '_blank' : undefined}
                         rel="noreferrer"
                         className="px-4 py-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white text-xs font-bold flex items-center justify-center gap-2 shadow-md shadow-orange-600/20 transition-all whitespace-nowrap shrink-0 cursor-pointer"
                       >

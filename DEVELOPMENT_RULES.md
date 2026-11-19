@@ -150,3 +150,8 @@ TradeJournal uses Graphify (`graphifyy`) for codebase structure discovery, AST r
 4. **Zero Dummy Data on Live Connections**:
    - Live connected broker integrations must never display simulated mock orders or fake balances.
    - If a broker session expires or requires daily 2FA authorization, the system must clearly indicate `Pending Daily Login` and provide a 1-click authorization link and token exchange rather than falling back to dummy mock data.
+5. **Zero Hardcoded Credentials & Secrets**:
+   - Never hardcode API keys, API secrets, access tokens, client IDs, passwords, or webhook secrets in source code, components, service fallbacks, or git-tracked files.
+   - All credentials must be loaded strictly from gitignored environment variables (`.env` via `config('services.*')`) or user-configured encrypted records in the database.
+   - Maintain clean, safe blank template definitions in `.env.example`.
+   - Never commit `.env` or credential files to source control; verify `.gitignore` protects all local environment files before pushing.

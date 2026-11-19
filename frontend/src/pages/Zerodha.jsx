@@ -278,6 +278,19 @@ export default function Zerodha() {
     }
   };
 
+  const kiteLoginUrl = statusData?.login_url || details?.login_url || (apiKey.trim() && apiKey.trim() !== 'DEMO_KITE_KEY'
+    ? `https://kite.zerodha.com/connect/login?v=3&api_key=${encodeURIComponent(apiKey.trim())}`
+    : null);
+
+  const handleKiteLoginClick = (e) => {
+    recordOriginAndLogin();
+    if (!kiteLoginUrl) {
+      e.preventDefault();
+      setShowConnectModal(true);
+      triggerToast('Please configure your Zerodha Kite API Key first.', 'info');
+    }
+  };
+
   // Connect via Form with Email & Password + API Key & Secret
   const handleConnect = async (e) => {
     e.preventDefault();
@@ -619,8 +632,8 @@ export default function Zerodha() {
 
               <div className="flex flex-wrap items-center gap-3 pt-4">
                 <a
-                  href={statusData?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${apiKey || '44x8vhyiv5gyizqt'}`}
-                  onClick={recordOriginAndLogin}
+                  href={kiteLoginUrl || '#'}
+                  onClick={handleKiteLoginClick}
                   className="px-5 py-2.5 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-white font-semibold text-xs border border-[#2b3a56] hover:border-orange-500/50 shadow-lg shadow-orange-500/10 transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <KiteIcon className="w-4 h-4" />
@@ -660,8 +673,8 @@ export default function Zerodha() {
                 1-Click dynamic login: Click below to authenticate via Zerodha Kite OAuth without entering secret tokens.
               </p>
               <a
-                href={statusData?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${apiKey || '44x8vhyiv5gyizqt'}`}
-                onClick={recordOriginAndLogin}
+                href={kiteLoginUrl || '#'}
+                onClick={handleKiteLoginClick}
                 className="w-full py-2.5 px-3 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-white text-xs font-semibold border border-[#2b3a56] hover:border-orange-500/50 transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
                 <KiteIcon className="w-4 h-4" />
@@ -744,8 +757,8 @@ export default function Zerodha() {
 
           {isNeedsAuth && (
             <a
-              href={statusData?.login_url || details?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${apiKey || '44x8vhyiv5gyizqt'}`}
-              onClick={recordOriginAndLogin}
+              href={kiteLoginUrl || '#'}
+              onClick={handleKiteLoginClick}
               className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-white text-xs font-semibold border border-[#2b3a56] hover:border-orange-500/50 shadow-md transition-all cursor-pointer"
             >
               <KiteIcon className="w-3.5 h-3.5" />
@@ -836,8 +849,8 @@ export default function Zerodha() {
                   </div>
 
                   <a
-                    href={statusData?.login_url || details?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${apiKey || '44x8vhyiv5gyizqt'}`}
-                    onClick={recordOriginAndLogin}
+                    href={kiteLoginUrl || '#'}
+                    onClick={handleKiteLoginClick}
                     className="inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-white font-bold text-xs border border-[#2b3a56] hover:border-orange-500/50 shadow-lg shadow-orange-500/10 transition-all cursor-pointer shrink-0"
                   >
                     <KiteIcon className="w-4 h-4" />
@@ -2171,8 +2184,8 @@ export default function Zerodha() {
               Authenticate directly via Zerodha Kite OAuth without entering secret tokens or credentials manually.
             </p>
             <a
-              href={statusData?.login_url || `https://kite.zerodha.com/connect/login?v=3&api_key=${apiKey || '44x8vhyiv5gyizqt'}`}
-              onClick={recordOriginAndLogin}
+              href={kiteLoginUrl || '#'}
+              onClick={handleKiteLoginClick}
               className="inline-flex items-center justify-center gap-2.5 px-5 py-2.5 rounded-xl bg-[#162033] hover:bg-[#1f2d47] text-white text-xs font-bold border border-[#2b3a56] hover:border-orange-500/50 shadow-md transition-all cursor-pointer w-full"
             >
               <KiteIcon className="w-4 h-4" />

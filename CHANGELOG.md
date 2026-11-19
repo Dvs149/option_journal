@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-11-19
+
+### Security & Hardening
+- **Zero Hardcoded Secrets & GitHub Repository Security Audit**:
+  - **Purged Hardcoded Credentials Across Codebase**:
+    - Removed all hardcoded Zerodha Kite API keys (``, ``) and API secrets (``) from source code files (`ZerodhaKiteService.php`, `Settings.jsx`, `Zerodha.jsx`).
+    - Standardized credential loading exclusively through secure environment variables (`.env`, `config('services.zerodha.*')`) or encrypted user integration records stored in the database.
+  - **Graceful Unconfigured Fallbacks**:
+    - Updated 1-Click Kite Login buttons in `Zerodha.jsx` and `Settings.jsx` to intercept clicks when no API key is set, prompting the user with an informative modal and toast (`Please configure your Zerodha Kite API Key first.`) rather than linking with a hardcoded fallback key.
+    - Updated backend `ZerodhaKiteService::getStatus` and `exchangeAndSaveToken` to generate `login_url` only when an active API key is present.
+  - **Environment Configuration Templates**:
+    - Updated `backend/.env.example` to document `ZERODHA_API_KEY` and `ZERODHA_API_SECRET` with clean, blank placeholder templates.
+    - Verified that all `.env` files and `frontend/dist` remain strictly gitignored.
+    - Recompiled frontend production assets (`dist/`) to ensure no compiled bundles contain secret keys.
+
 ## [1.18.0] - 2026-11-19
 
 ### Enhanced

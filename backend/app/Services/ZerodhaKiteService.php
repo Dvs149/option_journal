@@ -156,7 +156,7 @@ class ZerodhaKiteService
             'message' => $hasActiveSession
                 ? 'Zerodha Kite Connected & Authenticated with live session!'
                 : 'Zerodha credentials saved! Please complete daily 1-Click Kite Login to unlock live data.',
-            'login_url' => "https://kite.zerodha.com/connect/login?v=3&api_key={$apiKey}",
+            'login_url' => !empty($apiKey) ? "https://kite.zerodha.com/connect/login?v=3&api_key={$apiKey}" : null,
             'integration' => $this->formatIntegrationResponse($integration),
         ];
     }
@@ -229,8 +229,8 @@ class ZerodhaKiteService
     public function getStatus(User $user): array
     {
         $integration = ZerodhaIntegration::where('user_id', $user->id)->first();
-        $apiKey = $integration?->api_key ?: config('services.zerodha.api_key', '44x8vhyiv5gyizqt');
-        $loginUrl = "https://kite.zerodha.com/connect/login?v=3&api_key={$apiKey}";
+        $apiKey = $integration?->api_key ?: config('services.zerodha.api_key');
+        $loginUrl = !empty($apiKey) ? "https://kite.zerodha.com/connect/login?v=3&api_key={$apiKey}" : null;
 
         if (!$integration || !$integration->is_connected) {
             return [
@@ -270,13 +270,15 @@ class ZerodhaKiteService
             return $this->getMockDetails($integration);
         }
 
+        $kiteApiKey = $integration->api_key ?: config('services.zerodha.api_key');
+
         // Check if access_token exists
         if (empty($integration->access_token)) {
             return [
                 'status' => 'needs_auth',
                 'is_demo' => false,
                 'is_authenticated' => false,
-                'login_url' => "https://kite.zerodha.com/connect/login?v=3&api_key={$integration->api_key}",
+                'login_url' => !empty($kiteApiKey) ? "https://kite.zerodha.com/connect/login?v=3&api_key={$kiteApiKey}" : null,
                 'message' => 'Zerodha Kite daily session login required. Please click the login button to authorize your session.',
                 'profile' => $this->formatIntegrationResponse($integration),
                 'margins' => [],
@@ -326,7 +328,7 @@ class ZerodhaKiteService
                     'status' => 'needs_auth',
                     'is_demo' => false,
                     'is_authenticated' => false,
-                    'login_url' => "https://kite.zerodha.com/connect/login?v=3&api_key={$integration->api_key}",
+                    'login_url' => !empty($kiteApiKey) ? "https://kite.zerodha.com/connect/login?v=3&api_key={$kiteApiKey}" : null,
                     'message' => "Zerodha session authentication required: {$err}",
                     'profile' => $this->formatIntegrationResponse($integration),
                     'margins' => [],
@@ -414,7 +416,7 @@ class ZerodhaKiteService
                 'status' => 'needs_auth',
                 'is_demo' => false,
                 'is_authenticated' => false,
-                'login_url' => "https://kite.zerodha.com/connect/login?v=3&api_key={$integration->api_key}",
+                'login_url' => !empty($kiteApiKey) ? "https://kite.zerodha.com/connect/login?v=3&api_key={$kiteApiKey}" : null,
                 'message' => "Zerodha session authentication required: {$e->getMessage()}",
                 'profile' => $this->formatIntegrationResponse($integration),
                 'margins' => [],
@@ -730,8 +732,8 @@ class ZerodhaKiteService
     {
         $integration = ZerodhaIntegration::firstOrNew(['user_id' => $user->id]);
 
-        $apiKey = $integration->api_key ?: config('services.zerodha.api_key', '44x8vhyiv5gyizqt');
-        $apiSecret = $integration->api_secret ?: config('services.zerodha.api_secret', 'prue1z5p6u1t04f72mzz26jijhv7y0y9');
+        $apiKey = $integration->api_key ?: config('services.zerodha.api_key');
+        $apiSecret = $integration->api_secret ?: config('services.zerodha.api_secret');
 
         $cleanedToken = $this->extractRequestToken($requestToken);
         if (empty($cleanedToken)) {
