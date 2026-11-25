@@ -25,6 +25,7 @@ class Story extends Model
         'word_count',
         'estimated_reading_time',
         'reading_progress',
+        'last_read_paragraph',
         'status',
         'is_favorite',
         'last_read_at',
@@ -35,6 +36,7 @@ class Story extends Model
         'word_count' => 'integer',
         'estimated_reading_time' => 'integer',
         'reading_progress' => 'integer',
+        'last_read_paragraph' => 'integer',
         'is_favorite' => 'boolean',
         'last_read_at' => 'datetime',
     ];

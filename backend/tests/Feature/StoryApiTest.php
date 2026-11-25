@@ -166,10 +166,20 @@ class StoryApiTest extends TestCase
         $favResponse->assertStatus(200)
             ->assertJsonPath('data.is_favorite', true);
 
-        // Update progress to 100%
+        // Update progress to 50% with paragraph_index 4
         $progResponse = $this->withHeader('Authorization', "Bearer {$token}")
-            ->patchJson("/api/stories/{$story->id}/progress", ['progress' => 100]);
+            ->patchJson("/api/stories/{$story->id}/progress", [
+                'progress' => 50,
+                'paragraph_index' => 4,
+            ]);
         $progResponse->assertStatus(200)
+            ->assertJsonPath('data.reading_progress', 50)
+            ->assertJsonPath('data.last_read_paragraph', 4);
+
+        // Update progress to 100%
+        $progComplete = $this->withHeader('Authorization', "Bearer {$token}")
+            ->patchJson("/api/stories/{$story->id}/progress", ['progress' => 100]);
+        $progComplete->assertStatus(200)
             ->assertJsonPath('data.reading_progress', 100)
             ->assertJsonPath('data.status', 'completed');
     }

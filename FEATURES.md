@@ -270,6 +270,13 @@
   - **Read (`StoryReaderModal.jsx`)**: Distraction-free reader view with live reading progress percentage, auto-scroll progress tracking, word counter, and reading time estimation (~200 wpm).
   - **Delete**: Soft-deletion supported with theme-aware `ConfirmationModal.jsx`.
 - **Dedicated Long-Form Reader Experience**:
+  - **Automatic Paragraph Reading Resume & Auto-Scroll**:
+    - Automatically remembers the exact paragraph the user was reading when they paused or closed the reader.
+    - **Real-Time Viewport Paragraph Detection**: Dynamically tracks which narrative block, heading, quote, or image the reader's gaze is focused on during scrolling.
+    - **Dual Persistence**: Saves reading position immediately to `localStorage` (`tj_story_pos_{id}`) and debounced to backend database (`stories.last_read_paragraph`).
+    - **Smooth Auto-Scroll on Open**: When reopening any story in Reader mode, smoothly scrolls directly to the exact paragraph with proper top offset.
+    - **Visual Resumption Cue & Pill**: Temporarily highlights the resumed paragraph with a subtle blue pulse glow and displays a floating pill banner (`📍 Resumed at paragraph X`) with a quick 1-click `Top` button to restart.
+    - **Paragraph Indicators**: Displays active paragraph number (`¶X`) in Reader header, footer, Stories list view, and grid cards.
   - **Top Progress Bar**: Dynamic progress line indicating scroll completion percentage from 0% to 100%, automatically persisted to database.
   - **Reading Typography**: 5 font sizes (14px to 26px), 3 line spacing presets (Normal, Relaxed, Loose), and 3 font styles (Classic Book Serif, Clean Sans, Monospace).
   - **Reading Environments**: 4 eye-friendly background themes: Night Dark, Warm Sepia Book Paper (`#fcf7ec`), Charcoal Pure Dark, and Clean Paper Day.

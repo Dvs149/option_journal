@@ -27,6 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **View / Read**: `StoryReaderModal.jsx` provides a dedicated reader view with live reading progress tracking, automatic word count calculation, estimated reading time, and reading typography controls.
     - **Delete**: Protected by custom `ConfirmationModal.jsx` with soft-deletion support in database.
   - **Specialized Reader Mode for Very Long Stories**:
+    - **Automatic Paragraph Reading Resume & Auto-Scroll**:
+      - Remembers the exact paragraph where the reader stopped reading or closed the modal.
+      - **Real-Time Viewport Paragraph Detection**: Dynamically tracks which narrative block, heading, or image the reader's gaze is on during scrolling.
+      - **Dual Persistence**: Saves reading position immediately to client-side `localStorage` (`tj_story_pos_{id}`) and debounced to backend database via `PATCH /api/stories/{id}/progress` (`last_read_paragraph`).
+      - **Smooth Auto-Scroll on Open (Once-Only Session Lock)**: Reopening any story in Reader mode automatically scrolls down smoothly to the exact paragraph once per open session. Isolated from subsequent background story updates or reading progress debounces to prevent recurring auto-scrolls or repeated resume banners while actively reading.
+      - **Subtle Visual Feedback**: Shows a temporary glowing highlight on the resumed paragraph and a floating pill banner (`📍 Resumed at paragraph X`) with a 1-click `Top` shortcut to restart from the beginning.
+      - **Paragraph Indicators & Mobile View Optimization**: Dedicated `flex-shrink-0` paragraph badge (`¶X`) in the Reader header next to the title so it is never pushed off or clipped by long author names or categories on mobile screens. Also added prominent paragraph numbers in Grid cards and List rows without requiring horizontal scroll.
     - **Scroll Progress Tracking**: Real-time reading progress bar pinned to the top of the reader (0% to 100%) with automatic progress persistence to database.
     - **Custom Typography**: Adjust font sizes (14px to 26px), line spacing (normal, relaxed, loose), and font styles (Book Serif, Clean Sans, Monospace).
     - **Reading Background Themes**: 4 specialized reading environments: Night Dark, Warm Sepia/Book Paper, Charcoal, and Clean Day Paper.

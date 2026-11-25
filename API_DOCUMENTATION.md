@@ -877,15 +877,27 @@ Content-Type: application/json
   }
   ```
 
-### 13.7 Update Reading Progress
+### 13.7 Update Reading Progress & Paragraph Position
 - **`PATCH /stories/{id}/progress`**
-- **Request Body**: `{ "progress": 85 }`
+- **Request Body**:
+  ```json
+  {
+    "progress": 85,
+    "paragraph_index": 12
+  }
+  ```
+- **Description**: Updates reading completion percentage (0-100) and the exact paragraph index (`last_read_paragraph`) where the reader paused, enabling smooth auto-scroll resume upon subsequent opens. Automatically sets `status` to `completed` if `progress >= 95`.
 - **Response (200 OK)**:
   ```json
   {
     "status": "success",
     "message": "Reading progress updated",
-    "data": { "id": 1, "reading_progress": 85, "status": "reading" }
+    "data": {
+      "id": 1,
+      "reading_progress": 85,
+      "last_read_paragraph": 12,
+      "status": "reading"
+    }
   }
   ```
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   X,
   Bookmark,
@@ -15,6 +15,9 @@ import {
   BookOpen,
   ZoomIn,
   Download,
+  ArrowUp,
+  MapPin,
+  RotateCcw,
 } from 'lucide-react';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { renderStoryContent } from '../../utils/storyFormatter';
@@ -75,16 +78,93 @@ export default function StoryReaderModal({
   onEdit,
 }) {
   const [themeKey, setThemeKey] = useState('night');
-  const [fontSize, setFontSize] = useState(18); // 15, 17, 18, 20, 22
+  const [fontSize, setFontSize] = useState(18); // 14 to 26
   const [fontFamily, setFontFamily] = useState('serif'); // 'serif', 'sans', 'mono'
   const [lineHeight, setLineHeight] = useState('relaxed'); // 'normal', 'relaxed', 'loose'
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [currentParagraph, setCurrentParagraph] = useState(0);
+  const [resumedParagraph, setResumedParagraph] = useState(null);
+  const [showResumeBanner, setShowResumeBanner] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
 
   const contentRef = useRef(null);
   const containerRef = useRef(null);
+  const hasAutoScrolledRef = useRef(false);
+  const lastScrolledStoryIdRef = useRef(null);
+  const scrollTimerRef = useRef(null);
+  const bannerTimerRef = useRef(null);
+  const highlightTimerRef = useRef(null);
+  const currentPosRef = useRef({ progress: 0, paragraph: 0 });
+
+  // Clear all auto-scroll and highlight timers
+  const clearTimers = useCallback(() => {
+    if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
+    if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+  }, []);
+
+  // Helper to persist position to localStorage and update ref
+  const saveLocalPosition = useCallback((storyId, prog, paragraphIdx) => {
+    try {
+      localStorage.setItem(
+        `tj_story_pos_${storyId}`,
+        JSON.stringify({
+          paragraph: paragraphIdx,
+          progress: prog,
+          timestamp: Date.now(),
+        })
+      );
+    } catch (e) {
+      // LocalStorage non-fatal
+    }
+  }, []);
+
+  // Calculate which paragraph block is currently at the user's reading gaze point
+  const getVisibleParagraphIndex = useCallback(() => {
+    const el = contentRef.current;
+    if (!el) return 0;
+    const containerRect = el.getBoundingClientRect();
+    const blocks = el.querySelectorAll('[data-paragraph-block="true"]');
+    if (!blocks || blocks.length === 0) return 0;
+
+    // The user's active reading focus is ~70px down from the top edge of the scroll view
+    const targetY = containerRect.top + 70;
+    let bestIdx = 0;
+    let minDistance = Infinity;
+
+    for (let i = 0; i < blocks.length; i++) {
+      const b = blocks[i];
+      const rect = b.getBoundingClientRect();
+      if (rect.top <= targetY && rect.bottom >= targetY) {
+        return parseInt(b.getAttribute('data-block-idx') || '0', 10);
+      }
+      const dist = Math.abs(rect.top - targetY);
+      if (dist < minDistance) {
+        minDistance = dist;
+        bestIdx = parseInt(b.getAttribute('data-block-idx') || '0', 10);
+      }
+    }
+    return bestIdx;
+  }, []);
+
+  // Safe close handler that ensures latest position is pushed to parent
+  const handleSafeClose = useCallback(() => {
+    clearTimers();
+    setShowResumeBanner(false);
+    setResumedParagraph(null);
+    lastScrolledStoryIdRef.current = null;
+    hasAutoScrolledRef.current = false;
+
+    if (story) {
+      const activeIdx = getVisibleParagraphIndex();
+      const currentProg = currentPosRef.current.progress;
+      saveLocalPosition(story.id, currentProg, activeIdx);
+      onUpdateProgress?.(story.id, currentProg, activeIdx);
+    }
+    onClose();
+  }, [story, getVisibleParagraphIndex, saveLocalPosition, onUpdateProgress, onClose, clearTimers]);
 
   useEscapeKey(() => {
     if (isOpen) {
@@ -93,46 +173,162 @@ export default function StoryReaderModal({
       } else if (isFullscreen) {
         setIsFullscreen(false);
       } else {
-        onClose();
+        handleSafeClose();
       }
     }
   }, isOpen);
 
-  // Sync initial progress
+  // Reset session refs when modal closes
   useEffect(() => {
-    if (story) {
-      setProgress(story.reading_progress || 0);
+    if (!isOpen) {
+      clearTimers();
+      lastScrolledStoryIdRef.current = null;
+      hasAutoScrolledRef.current = false;
+      setShowResumeBanner(false);
+      setResumedParagraph(null);
     }
-  }, [story]);
+  }, [isOpen, clearTimers]);
 
-  // Track scroll progress
-  const handleScroll = () => {
-    const el = contentRef.current;
-    if (!el) return;
-    const { scrollTop, scrollHeight, clientHeight } = el;
-    const totalScrollable = scrollHeight - clientHeight;
-    if (totalScrollable <= 0) {
-      setProgress(100);
+  // Initial setup and auto-scroll: runs ONCE ONLY per story open session
+  useEffect(() => {
+    if (!isOpen || !story) return;
+
+    // If we have already auto-scrolled for this story in this open session, do nothing!
+    if (lastScrolledStoryIdRef.current === story.id) {
       return;
     }
-    const currentProgress = Math.min(
-      100,
-      Math.max(0, Math.round((scrollTop / totalScrollable) * 100))
-    );
+    lastScrolledStoryIdRef.current = story.id;
+
+    setProgress(story.reading_progress || 0);
+
+    // Resolve saved paragraph index (prefer server model, fallback to localStorage)
+    let savedParagraph = 0;
+    if (typeof story.last_read_paragraph === 'number' && story.last_read_paragraph > 0) {
+      savedParagraph = story.last_read_paragraph;
+    } else {
+      try {
+        const local = localStorage.getItem(`tj_story_pos_${story.id}`);
+        if (local) {
+          const parsed = JSON.parse(local);
+          if (parsed && typeof parsed.paragraph === 'number' && parsed.paragraph > 0) {
+            savedParagraph = parsed.paragraph;
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    currentPosRef.current = {
+      progress: story.reading_progress || 0,
+      paragraph: savedParagraph,
+    };
+    setCurrentParagraph(savedParagraph);
+
+    // If there is a saved reading point, automatically scroll ONCE to that paragraph
+    if (savedParagraph > 0 && !hasAutoScrolledRef.current) {
+      clearTimers();
+
+      scrollTimerRef.current = setTimeout(() => {
+        if (!contentRef.current) return;
+        const targetEl =
+          document.getElementById(`story-block-${savedParagraph}`) ||
+          contentRef.current.querySelector(`[data-block-idx="${savedParagraph}"]`);
+
+        if (targetEl && contentRef.current) {
+          const container = contentRef.current;
+          const containerRect = container.getBoundingClientRect();
+          const targetRect = targetEl.getBoundingClientRect();
+          const scrollOffset =
+            targetRect.top - containerRect.top + container.scrollTop - 60; // 60px padding from top
+
+          container.scrollTo({
+            top: Math.max(0, scrollOffset),
+            behavior: 'smooth',
+          });
+
+          hasAutoScrolledRef.current = true;
+          setResumedParagraph(savedParagraph);
+          setShowResumeBanner(true);
+
+          // Fade out the resume banner after 3.5s
+          bannerTimerRef.current = setTimeout(() => {
+            setShowResumeBanner(false);
+          }, 3500);
+
+          // Gentle fade-out of paragraph highlight after 3.5s
+          highlightTimerRef.current = setTimeout(() => {
+            setResumedParagraph(null);
+          }, 3500);
+        }
+      }, 250);
+    }
+
+    return () => {
+      clearTimers();
+    };
+  }, [isOpen, story?.id, clearTimers]);
+
+  // Track scroll progress and active paragraph
+  const handleScroll = () => {
+    const el = contentRef.current;
+    if (!el || !story) return;
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    const totalScrollable = scrollHeight - clientHeight;
+    let currentProgress = 0;
+    if (totalScrollable <= 0) {
+      currentProgress = 100;
+    } else {
+      currentProgress = Math.min(
+        100,
+        Math.max(0, Math.round((scrollTop / totalScrollable) * 100))
+      );
+    }
+
+    const activeParagraphIdx = getVisibleParagraphIndex();
+
     setProgress(currentProgress);
+    setCurrentParagraph(activeParagraphIdx);
+
+    currentPosRef.current = {
+      progress: currentProgress,
+      paragraph: activeParagraphIdx,
+    };
+
+    saveLocalPosition(story.id, currentProgress, activeParagraphIdx);
   };
 
-  // Debounced save progress when unmounting or periodically
+  // Debounced save progress and paragraph to server when reading or scrolling stops
   useEffect(() => {
     if (!story) return;
     const timer = setTimeout(() => {
-      if (progress > (story.reading_progress || 0)) {
-        onUpdateProgress(story.id, progress);
+      const shouldSave =
+        progress !== story.reading_progress ||
+        currentParagraph !== (story.last_read_paragraph || 0);
+
+      if (shouldSave) {
+        onUpdateProgress?.(story.id, progress, currentParagraph);
       }
     }, 1200);
 
     return () => clearTimeout(timer);
-  }, [progress, story, onUpdateProgress]);
+  }, [progress, currentParagraph, story, onUpdateProgress]);
+
+  // Jump to top / restart from paragraph 0
+  const handleJumpToTop = () => {
+    clearTimers();
+    if (contentRef.current) {
+      contentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    setShowResumeBanner(false);
+    setResumedParagraph(null);
+    setCurrentParagraph(0);
+    hasAutoScrolledRef.current = true;
+    if (story) {
+      saveLocalPosition(story.id, 0, 0);
+      onUpdateProgress?.(story.id, 0, 0);
+    }
+  };
 
   if (!isOpen || !story) return null;
 
@@ -163,7 +359,7 @@ export default function StoryReaderModal({
   };
 
   const handleMarkCompleted = () => {
-    onUpdateProgress(story.id, 100);
+    onUpdateProgress?.(story.id, 100, currentParagraph);
     setProgress(100);
   };
 
@@ -171,14 +367,14 @@ export default function StoryReaderModal({
     <div
       ref={containerRef}
       className={`fixed inset-0 z-50 flex flex-col ${currentTheme.bg} ${
-        isFullscreen ? 'p-0' : 'p-2 sm:p-5 bg-black/80 backdrop-blur-md'
+        isFullscreen ? 'p-0' : 'p-0 sm:p-4 md:p-5 bg-black/80 backdrop-blur-md'
       } animate-fadeIn select-text`}
     >
       <div
-        className={`flex-1 flex flex-col overflow-hidden mx-auto w-full transition-all duration-200 ${
+        className={`flex-1 flex flex-col overflow-hidden mx-auto w-full transition-all duration-200 relative ${
           isFullscreen
             ? 'h-full max-w-none rounded-none border-0'
-            : 'max-w-4xl h-full rounded-2xl border shadow-2xl'
+            : 'max-w-4xl h-full rounded-none sm:rounded-2xl border-0 sm:border shadow-2xl'
         } ${currentTheme.panel} ${currentTheme.border}`}
       >
         {/* Progress Bar (Pinned Top) */}
@@ -191,21 +387,29 @@ export default function StoryReaderModal({
 
         {/* Reader Top Navbar */}
         <header
-          className={`px-4 sm:px-6 py-3 border-b flex items-center justify-between gap-3 ${currentTheme.headerBg} select-none backdrop-blur-md`}
+          className={`px-3 sm:px-6 py-2.5 sm:py-3 border-b flex items-center justify-between gap-2 sm:gap-3 ${currentTheme.headerBg} select-none backdrop-blur-md`}
         >
-          <div className="flex items-center gap-2.5 min-w-0">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-1">
             <span
               className="w-2.5 h-2.5 rounded-full flex-shrink-0"
               style={{ backgroundColor: story.cover_color || '#3b82f6' }}
             />
-            <div className="min-w-0">
-              <h2
-                className={`text-sm sm:text-base font-bold truncate ${currentTheme.text}`}
-                title={story.title}
-              >
-                {story.title}
-              </h2>
-              <p className={`text-[11px] truncate ${currentTheme.textMuted}`}>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <h2
+                  className={`text-xs sm:text-base font-bold truncate ${currentTheme.text}`}
+                  title={story.title}
+                >
+                  {story.title}
+                </h2>
+                <span
+                  className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 flex-shrink-0 shadow-xs"
+                  title={`Current paragraph: ${currentParagraph + 1}`}
+                >
+                  ¶{currentParagraph + 1}
+                </span>
+              </div>
+              <p className={`text-[10px] sm:text-[11px] truncate ${currentTheme.textMuted}`}>
                 {story.author || 'Anonymous'} · {story.category}
               </p>
             </div>
@@ -218,20 +422,20 @@ export default function StoryReaderModal({
               <button
                 type="button"
                 onClick={() => setShowSettings(!showSettings)}
-                className={`p-2 rounded-xl border transition-colors ${
+                className={`p-1.5 sm:p-2 rounded-xl border transition-colors ${
                   showSettings
                     ? 'bg-blue-600 text-white border-blue-500 shadow-md'
                     : `${currentTheme.textMuted} hover:${currentTheme.text} ${currentTheme.border} hover:bg-black/10`
                 }`}
                 title="Reading typography & themes"
               >
-                <Sliders className="w-4 h-4" />
+                <Sliders className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
 
               {/* Settings Dropdown Popover */}
               {showSettings && (
                 <div
-                  className={`absolute right-0 top-12 z-50 w-72 p-4 rounded-2xl border shadow-2xl ${currentTheme.panel} ${currentTheme.border} ${currentTheme.text} animate-scaleUp`}
+                  className={`absolute right-0 top-11 sm:top-12 z-50 w-72 max-w-[calc(100vw-24px)] p-4 rounded-2xl border shadow-2xl ${currentTheme.panel} ${currentTheme.border} ${currentTheme.text} animate-scaleUp`}
                 >
                   <div className="space-y-4 text-xs select-none">
                     {/* Theme selector */}
@@ -376,6 +580,18 @@ export default function StoryReaderModal({
                         ))}
                       </div>
                     </div>
+
+                    {/* Jump to Beginning */}
+                    <div className="pt-2 border-t border-current/10">
+                      <button
+                        type="button"
+                        onClick={handleJumpToTop}
+                        className="w-full py-1.5 px-3 rounded-lg border border-current/20 hover:bg-black/10 flex items-center justify-center gap-1.5 text-xs font-semibold"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5" />
+                        Restart from Beginning
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -385,7 +601,7 @@ export default function StoryReaderModal({
             <button
               type="button"
               onClick={() => onToggleFavorite(story.id)}
-              className={`p-2 rounded-xl border transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-xl border transition-colors ${
                 story.is_favorite
                   ? 'bg-amber-500/15 border-amber-500/30 text-amber-400'
                   : `${currentTheme.textMuted} hover:${currentTheme.text} ${currentTheme.border} hover:bg-black/10`
@@ -393,7 +609,7 @@ export default function StoryReaderModal({
               title={story.is_favorite ? 'Bookmarked' : 'Add bookmark'}
             >
               <Bookmark
-                className={`w-4 h-4 ${story.is_favorite ? 'fill-amber-400' : ''}`}
+                className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${story.is_favorite ? 'fill-amber-400' : ''}`}
               />
             </button>
 
@@ -402,10 +618,10 @@ export default function StoryReaderModal({
               <button
                 type="button"
                 onClick={() => onEdit(story)}
-                className={`p-2 rounded-xl border transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${currentTheme.border} hover:bg-black/10`}
+                className={`p-1.5 sm:p-2 rounded-xl border transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${currentTheme.border} hover:bg-black/10`}
                 title="Edit story"
               >
-                <Edit2 className="w-4 h-4" />
+                <Edit2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             )}
 
@@ -413,7 +629,7 @@ export default function StoryReaderModal({
             <button
               type="button"
               onClick={() => setIsFullscreen(!isFullscreen)}
-              className={`p-2 rounded-xl border transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${currentTheme.border} hover:bg-black/10 hidden sm:inline-flex`}
+              className={`p-1.5 sm:p-2 rounded-xl border transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${currentTheme.border} hover:bg-black/10 hidden sm:inline-flex`}
               title={isFullscreen ? 'Exit fullscreen' : 'Distraction-free fullscreen'}
             >
               {isFullscreen ? (
@@ -426,20 +642,46 @@ export default function StoryReaderModal({
             {/* Close */}
             <button
               type="button"
-              onClick={onClose}
-              className={`p-2 rounded-xl border transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${currentTheme.border} hover:bg-black/10`}
+              onClick={handleSafeClose}
+              className={`p-1.5 sm:p-2 rounded-xl border transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${currentTheme.border} hover:bg-black/10`}
               title="Close reader (Esc)"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           </div>
         </header>
+
+        {/* Floating Resumed Reading Pill Banner */}
+        {showResumeBanner && (
+          <div className="absolute top-12 sm:top-14 left-1/2 -translate-x-1/2 z-40 animate-slideDown pointer-events-auto max-w-[94vw]">
+            <div className="px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-blue-600/95 text-white text-[11px] sm:text-xs font-semibold shadow-xl border border-blue-400/40 backdrop-blur-md flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+              <MapPin className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-blue-200 animate-bounce flex-shrink-0" />
+              <span>Resumed at paragraph {((resumedParagraph ?? currentParagraph) || 0) + 1}</span>
+              <button
+                type="button"
+                onClick={handleJumpToTop}
+                className="ml-1 px-2 py-0.5 rounded-full bg-white/20 hover:bg-white/30 text-[10px] sm:text-[11px] font-medium transition-colors flex items-center gap-1 flex-shrink-0"
+                title="Scroll back to beginning"
+              >
+                <ArrowUp className="w-3 h-3" />
+                Top
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowResumeBanner(false)}
+                className="ml-0.5 p-0.5 rounded-full hover:bg-white/20 text-white/80 hover:text-white flex-shrink-0"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Scrollable Story Body */}
         <div
           ref={contentRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto px-4 sm:px-12 py-8 sm:py-12"
+          className="flex-1 overflow-y-auto px-4 sm:px-12 py-8 sm:py-12 scroll-smooth"
         >
           <article className="max-w-2xl mx-auto">
             {/* Story Header */}
@@ -524,6 +766,7 @@ export default function StoryReaderModal({
               {renderStoryContent(story.content, {
                 onImageClick: (url, caption) => setLightboxImage({ url, caption }),
                 quoteBgClass: currentTheme.quoteBg,
+                resumedBlockIdx: resumedParagraph,
               })}
             </div>
 
@@ -540,12 +783,24 @@ export default function StoryReaderModal({
                   <p className={currentTheme.textMuted}>
                     {progress >= 100
                       ? 'Story completed! 🎉'
-                      : `${progress}% read · Keep enjoying`}
+                      : `${progress}% read · Paragraph ${currentParagraph + 1}`}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
+                {currentParagraph > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleJumpToTop}
+                    className={`px-3 py-2 rounded-xl text-xs font-semibold border ${currentTheme.border} ${currentTheme.textMuted} hover:${currentTheme.text} transition-colors flex items-center gap-1.5`}
+                    title="Jump to the top of the story"
+                  >
+                    <ArrowUp className="w-3.5 h-3.5" />
+                    Back to Top
+                  </button>
+                )}
+
                 {story.status !== 'completed' && (
                   <button
                     type="button"
@@ -559,7 +814,7 @@ export default function StoryReaderModal({
 
                 <button
                   type="button"
-                  onClick={onClose}
+                  onClick={handleSafeClose}
                   className={`px-4 py-2 rounded-xl text-xs font-semibold border ${currentTheme.border} ${currentTheme.textMuted} hover:${currentTheme.text} transition-colors`}
                 >
                   Close Reader

@@ -206,12 +206,14 @@ class StoryController extends Controller
     }
 
     /**
-     * Update reading progress (percentage).
+     * Update reading progress (percentage and paragraph position).
      */
     public function updateProgress(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
             'progress' => ['required', 'integer', 'min:0', 'max:100'],
+            'paragraph_index' => ['nullable', 'integer', 'min:0'],
+            'last_read_paragraph' => ['nullable', 'integer', 'min:0'],
         ]);
 
         $story = Story::forUser($request->user()->id)->findOrFail($id);
@@ -221,6 +223,11 @@ class StoryController extends Controller
             'reading_progress' => $progress,
             'last_read_at' => Carbon::now(),
         ];
+
+        $paragraphIndex = $validated['paragraph_index'] ?? ($validated['last_read_paragraph'] ?? null);
+        if ($paragraphIndex !== null) {
+            $updates['last_read_paragraph'] = $paragraphIndex;
+        }
 
         if ($progress >= 95) {
             $updates['status'] = 'completed';

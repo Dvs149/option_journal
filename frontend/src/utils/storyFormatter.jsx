@@ -120,7 +120,12 @@ export function renderInlineText(text) {
  * @returns {React.ReactNode[]} Array of rendered React nodes
  */
 export function renderStoryContent(content = '', options = {}) {
-  const { onImageClick, imageBorderClass = 'border-current/15', quoteBgClass = 'bg-black/5 dark:bg-white/5 border-l-4 border-blue-500' } = options;
+  const {
+    onImageClick,
+    imageBorderClass = 'border-current/15',
+    quoteBgClass = 'bg-black/5 dark:bg-white/5 border-l-4 border-blue-500',
+    resumedBlockIdx = null,
+  } = options;
 
   if (!content || typeof content !== 'string') return null;
 
@@ -131,6 +136,11 @@ export function renderStoryContent(content = '', options = {}) {
     const trimmed = block.trim();
     if (!trimmed) return null;
 
+    const isResumed = resumedBlockIdx !== null && Number(resumedBlockIdx) === blockIdx;
+    const resumeClass = isResumed
+      ? 'ring-2 ring-blue-500/60 bg-blue-500/10 rounded-xl p-3 -mx-3 shadow-sm transition-all duration-700 ease-out animate-pulse-once'
+      : '';
+
     // Check for Image Markdown: ![alt](url)
     const imageMatch = trimmed.match(/^!\[(.*?)\]\((.*?)\)$/);
     if (imageMatch) {
@@ -138,7 +148,13 @@ export function renderStoryContent(content = '', options = {}) {
       const srcUrl = resolveStoryImageUrl(imageMatch[2] || '');
 
       return (
-        <figure key={`img-${blockIdx}`} className="my-8 text-center select-none">
+        <figure
+          key={`img-${blockIdx}`}
+          id={`story-block-${blockIdx}`}
+          data-block-idx={blockIdx}
+          data-paragraph-block="true"
+          className={`my-8 text-center select-none ${resumeClass}`}
+        >
           <div className="relative inline-block max-w-full overflow-hidden rounded-2xl shadow-xl border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5">
             <img
               src={srcUrl}
@@ -161,7 +177,13 @@ export function renderStoryContent(content = '', options = {}) {
     if (trimmed.includes('![') && trimmed.includes('](')) {
       const parts = trimmed.split(/(!\[.*?\]\(.*?\))/g);
       return (
-        <div key={`mixed-${blockIdx}`} className="space-y-4">
+        <div
+          key={`mixed-${blockIdx}`}
+          id={`story-block-${blockIdx}`}
+          data-block-idx={blockIdx}
+          data-paragraph-block="true"
+          className={`space-y-4 ${resumeClass}`}
+        >
           {parts.map((part, pIdx) => {
             const subImage = part.match(/^!\[(.*?)\]\((.*?)\)$/);
             if (subImage) {
@@ -201,7 +223,10 @@ export function renderStoryContent(content = '', options = {}) {
       return (
         <h2
           key={`h1-${blockIdx}`}
-          className="text-2xl sm:text-3xl font-extrabold tracking-tight mt-10 mb-4 first:mt-0"
+          id={`story-block-${blockIdx}`}
+          data-block-idx={blockIdx}
+          data-paragraph-block="true"
+          className={`text-2xl sm:text-3xl font-extrabold tracking-tight mt-10 mb-4 first:mt-0 ${resumeClass}`}
         >
           {renderInlineText(trimmed.replace(/^#\s+/, ''))}
         </h2>
@@ -213,7 +238,10 @@ export function renderStoryContent(content = '', options = {}) {
       return (
         <h3
           key={`h2-${blockIdx}`}
-          className="text-xl sm:text-2xl font-bold tracking-tight mt-8 mb-3 first:mt-0"
+          id={`story-block-${blockIdx}`}
+          data-block-idx={blockIdx}
+          data-paragraph-block="true"
+          className={`text-xl sm:text-2xl font-bold tracking-tight mt-8 mb-3 first:mt-0 ${resumeClass}`}
         >
           {renderInlineText(trimmed.replace(/^##\s+/, ''))}
         </h3>
@@ -225,7 +253,10 @@ export function renderStoryContent(content = '', options = {}) {
       return (
         <h4
           key={`h3-${blockIdx}`}
-          className="text-lg sm:text-xl font-bold tracking-tight mt-6 mb-2 first:mt-0"
+          id={`story-block-${blockIdx}`}
+          data-block-idx={blockIdx}
+          data-paragraph-block="true"
+          className={`text-lg sm:text-xl font-bold tracking-tight mt-6 mb-2 first:mt-0 ${resumeClass}`}
         >
           {renderInlineText(trimmed.replace(/^###\s+/, ''))}
         </h4>
@@ -235,7 +266,13 @@ export function renderStoryContent(content = '', options = {}) {
     // Horizontal Rule: --- or ***
     if (trimmed === '---' || trimmed === '***' || trimmed === '___') {
       return (
-        <div key={`hr-${blockIdx}`} className="my-10 flex items-center justify-center gap-2 opacity-30 select-none">
+        <div
+          key={`hr-${blockIdx}`}
+          id={`story-block-${blockIdx}`}
+          data-block-idx={blockIdx}
+          data-paragraph-block="true"
+          className="my-10 flex items-center justify-center gap-2 opacity-30 select-none"
+        >
           <span className="w-2 h-2 rounded-full bg-current" />
           <span className="w-2 h-2 rounded-full bg-current" />
           <span className="w-2 h-2 rounded-full bg-current" />
@@ -252,7 +289,10 @@ export function renderStoryContent(content = '', options = {}) {
       return (
         <blockquote
           key={`quote-${blockIdx}`}
-          className={`p-4 sm:p-5 my-6 rounded-2xl italic border-l-4 border-blue-500 ${quoteBgClass}`}
+          id={`story-block-${blockIdx}`}
+          data-block-idx={blockIdx}
+          data-paragraph-block="true"
+          className={`p-4 sm:p-5 my-6 rounded-2xl italic border-l-4 border-blue-500 ${quoteBgClass} ${resumeClass}`}
         >
           {renderInlineText(quoteText)}
         </blockquote>
@@ -261,7 +301,13 @@ export function renderStoryContent(content = '', options = {}) {
 
     // Standard narrative paragraph
     return (
-      <p key={`p-${blockIdx}`} className="leading-relaxed">
+      <p
+        key={`p-${blockIdx}`}
+        id={`story-block-${blockIdx}`}
+        data-block-idx={blockIdx}
+        data-paragraph-block="true"
+        className={`leading-relaxed transition-all duration-700 ${resumeClass}`}
+      >
         {renderInlineText(trimmed)}
       </p>
     );

@@ -242,9 +242,13 @@ export default function Stories() {
   };
 
   // Update Progress from reader
-  const handleUpdateProgress = async (id, progress) => {
+  const handleUpdateProgress = async (id, progress, paragraphIndex = null) => {
     try {
-      const res = await api.patch(`/stories/${id}/progress`, { progress });
+      const payload = { progress };
+      if (typeof paragraphIndex === 'number') {
+        payload.paragraph_index = paragraphIndex;
+      }
+      const res = await api.patch(`/stories/${id}/progress`, payload);
       if (res.data && res.data.status === 'success') {
         const updated = res.data.data;
         setStories((prev) =>
@@ -253,6 +257,7 @@ export default function Stories() {
               ? {
                   ...s,
                   reading_progress: updated.reading_progress,
+                  last_read_paragraph: updated.last_read_paragraph,
                   status: updated.status,
                   last_read_at: updated.last_read_at,
                 }
@@ -263,6 +268,7 @@ export default function Stories() {
           setReadingStory((prev) => ({
             ...prev,
             reading_progress: updated.reading_progress,
+            last_read_paragraph: updated.last_read_paragraph,
             status: updated.status,
             last_read_at: updated.last_read_at,
           }));
@@ -690,9 +696,10 @@ export default function Stories() {
                             Completed
                           </span>
                         ) : isReading ? (
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/20 flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/20 flex items-center gap-1 font-mono-numbers">
                             <Clock className="w-3 h-3" />
                             {story.reading_progress || 0}%
+                            {story.last_read_paragraph > 0 && ` · ¶${story.last_read_paragraph + 1}`}
                           </span>
                         ) : null}
 
@@ -747,11 +754,21 @@ export default function Stories() {
 
                     {/* Progress Bar if started */}
                     {story.reading_progress > 0 && (
-                      <div className="w-full h-1 bg-[#1e293b] light:bg-slate-200 rounded-full overflow-hidden mb-3.5">
-                        <div
-                          className="h-full bg-blue-500 transition-all"
-                          style={{ width: `${story.reading_progress}%` }}
-                        />
+                      <div className="w-full mb-3.5 space-y-1">
+                        <div className="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                          <span>{story.reading_progress}% read</span>
+                          {story.last_read_paragraph > 0 && (
+                            <span className="text-blue-400 font-semibold font-mono">
+                              ¶{story.last_read_paragraph + 1}
+                            </span>
+                          )}
+                        </div>
+                        <div className="w-full h-1 bg-[#1e293b] light:bg-slate-200 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-500 transition-all"
+                            style={{ width: `${story.reading_progress}%` }}
+                          />
+                        </div>
                       </div>
                     )}
 
@@ -825,12 +842,19 @@ export default function Stories() {
                               style={{ backgroundColor: cover }}
                             />
                             <div className="min-w-0">
-                              <h4
-                                onClick={() => handleOpenReader(story)}
-                                className="font-bold text-white light:text-slate-900 hover:text-blue-400 cursor-pointer text-sm truncate max-w-md"
-                              >
-                                {story.title}
-                              </h4>
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <h4
+                                  onClick={() => handleOpenReader(story)}
+                                  className="font-bold text-white light:text-slate-900 hover:text-blue-400 cursor-pointer text-sm truncate max-w-xs sm:max-w-md"
+                                >
+                                  {story.title}
+                                </h4>
+                                {story.last_read_paragraph > 0 && story.status !== 'completed' && (
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 flex-shrink-0">
+                                    ¶{story.last_read_paragraph + 1}
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-slate-400 text-[11px] truncate">
                                 by {story.author || 'Anonymous'}
                               </p>
@@ -865,6 +889,9 @@ export default function Stories() {
                               </span>
                               <span className="font-mono text-slate-400">
                                 {story.reading_progress || 0}%
+                                {story.last_read_paragraph > 0 && story.status !== 'completed' && (
+                                  <span className="text-blue-400 ml-1 font-mono">¶{story.last_read_paragraph + 1}</span>
+                                )}
                               </span>
                             </div>
                             <div className="w-full h-1 bg-slate-800 light:bg-slate-200 rounded-full overflow-hidden">

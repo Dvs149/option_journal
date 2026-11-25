@@ -438,6 +438,7 @@ Stores free-time reading stories, articles, literature, and reading progress wit
 | `word_count` | INT UNSIGNED | No | 0 | Word count (computed automatically) |
 | `estimated_reading_time` | INT UNSIGNED | No | 1 | Estimated reading time in minutes (~200 wpm) |
 | `reading_progress` | TINYINT UNSIGNED | No | 0 | Reading progress percentage (0 - 100%) |
+| `last_read_paragraph` | INT UNSIGNED | No | 0 | Index of the last read paragraph/block for auto-scroll resume |
 | `status` | VARCHAR(20) | No | 'unread' | Reading status (`unread`, `reading`, `completed`) |
 | `is_favorite` | BOOLEAN | No | 0 (false) | Favorite bookmark flag |
 | `last_read_at` | TIMESTAMP | Yes | NULL | Timestamp of last reading session |

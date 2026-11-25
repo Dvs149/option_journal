@@ -104,7 +104,7 @@ The system addresses the core needs of active option traders:
    - Completely standalone reading module for reading stories, literature, philosophy, and reflections during trading breaks and free time.
    - Full story CRUD with title, author, category, synopsis, cover color, tags, reading status, and favorites.
    - Rich Story Editor with multi-channel image embedding: upload button, drag & drop, clipboard image pasting (`Ctrl+V`), external image links, formatting shortcuts, and live Write/Preview tabs.
-   - Built for very long stories: `LONGTEXT` database column, live reading progress percentage, auto-word counting, estimated reading time, reading typography controls (font size, line spacing, font family), 4 eye-friendly background themes (Night, Sepia Book Paper, Charcoal, Clean Paper Day), high-res image lightbox, and distraction-free fullscreen mode.
+   - Built for very long stories: `LONGTEXT` database column, live reading progress percentage, auto-word counting, estimated reading time, reading typography controls (font size, line spacing, font family), 4 eye-friendly background themes (Night, Sepia Book Paper, Charcoal, Clean Paper Day), high-res image lightbox, distraction-free fullscreen mode, and automatic paragraph position tracking with smooth auto-scroll to the exact paragraph where the reader stopped.
    - Curated sample stories seeder and smart sliding-window pagination.
 
 ---
