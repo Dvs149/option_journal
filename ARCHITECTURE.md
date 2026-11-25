@@ -84,6 +84,9 @@ App.jsx (Root Router)
     │       ├── CapitalManagement.jsx
     │       ├── DropdownManager.jsx
     │       ├── PineScriptManager.jsx
+    │       ├── Stories.jsx
+    │       ├── StrategyBuilder.jsx
+    │       ├── Zerodha.jsx
     │       └── Settings.jsx
 ```
 
@@ -93,6 +96,9 @@ App.jsx (Root Router)
 - **`components/trades/EditTradeModal.jsx`**: Tabbed modal for updating trade records, option legs, charges, and notes.
 - **`components/trades/BulkImportModal.jsx`**: Wizard for parsing and bulk importing trade logs from Zerodha CSV exports.
 - **`components/trades/ExportModal.jsx`**: Multi-format report generator (Excel `.xlsx`, CSV, PDF) with customizable date ranges and column toggles.
+- **`components/stories/StoryFormModal.jsx`**: Story authoring and editing modal supporting title, author, category, cover accent color, summary, and long-form content.
+- **`components/stories/StoryReaderModal.jsx`**: Distraction-free reader view with scroll progress tracking, typography sizing, theme switching (Night, Sepia, Charcoal, Paper), and fullscreen mode.
+- **`components/common/ConfirmationModal.jsx`**: Theme-aware confirmation dialog for sensitive actions (story deletion, Zerodha disconnect) replacing native `window.confirm`.
 
 ---
 

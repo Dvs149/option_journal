@@ -745,3 +745,158 @@ Content-Type: application/json
 - **`PUT /capital/initial`**
 - **Request Body**: `{ "initial_capital": 800000.00 }`
 - **Response**: `{ "message": "Initial capital updated successfully", "initial_capital": 800000.00 }`
+
+---
+
+## 13. Free Time Stories & Reader Endpoints
+
+### 13.1 Upload Story Image
+- **`POST /stories/upload-image`**
+- **Description**: Uploads an image file to local public storage for embedding in story content. Supports JPEG, PNG, WEBP, GIF, and SVG up to 10MB.
+- **Request (Multipart Form-Data)**:
+  - `image`: File (image binary)
+- **Response (201 Created)**:
+  ```json
+  {
+    "status": "success",
+    "message": "Image uploaded successfully",
+    "url": "/storage/stories/k5Jd79Xla908df.png",
+    "filename": "mountain_illustration.png"
+  }
+  ```
+
+### 13.2 List Stories
+- **`GET /stories`**
+- **Query Parameters**:
+  - `page`: Page number (default: 1)
+  - `per_page`: Stories per page (default: 12)
+  - `search`: Filter text matching title, author, category, or summary
+  - `category`: Filter by category (or `'all'`)
+  - `status`: Filter by reading status (`unread`, `reading`, `completed`, or `'all'`)
+  - `is_favorite`: Filter favorites (1 or 0)
+  - `sort_by`: `created_at`, `title`, `word_count`, `estimated_reading_time`, `last_read_at` (default: `created_at`)
+  - `sort_order`: `desc` or `asc` (default: `desc`)
+- **Response (200 OK)**:
+  ```json
+  {
+    "status": "success",
+    "data": [
+      {
+        "id": 1,
+        "title": "The Archer and the Unshakable Target",
+        "author": "Ancient Eastern Parable",
+        "category": "Philosophy & Wisdom",
+        "summary": "A master archer teaches an apprentice that true accuracy comes from stillness within.",
+        "content": "In a quiet monastery nestled between mist-covered peaks...",
+        "cover_color": "#10b981",
+        "tags": ["patience", "focus", "mindset"],
+        "word_count": 520,
+        "estimated_reading_time": 3,
+        "reading_progress": 45,
+        "status": "reading",
+        "is_favorite": true,
+        "last_read_at": "2026-11-25T11:30:00.000000Z",
+        "created_at": "2026-11-25T11:00:00.000000Z"
+      }
+    ],
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 12,
+    "total": 1,
+    "stats": {
+      "total_stories": 1,
+      "total_words": 520,
+      "completed_count": 0,
+      "reading_count": 1,
+      "favorites_count": 1,
+      "categories": ["Philosophy & Wisdom"]
+    }
+  }
+  ```
+
+### 13.2 Create Story
+- **`POST /stories`**
+- **Request Body**:
+  ```json
+  {
+    "title": "The Whispering Ledger of Amsterdam",
+    "author": "Historical Fiction",
+    "category": "History & Commerce",
+    "summary": "In 1636 Amsterdam, a merchant discovers that fortunes are preserved by discipline.",
+    "content": "The rain over Amsterdam in the winter of 1636 had the chill of iron...",
+    "cover_color": "#8b5cf6",
+    "tags": ["history", "discipline"],
+    "status": "unread",
+    "is_favorite": false
+  }
+  ```
+- **Response (201 Created)**:
+  ```json
+  {
+    "status": "success",
+    "message": "Story saved successfully",
+    "data": { "id": 2, "title": "The Whispering Ledger of Amsterdam", "word_count": 780, "estimated_reading_time": 4 }
+  }
+  ```
+
+### 13.3 View / Read Story
+- **`GET /stories/{id}`**
+- **Description**: Returns story data and automatically updates `last_read_at` and transitions unread stories to `reading`.
+- **Response (200 OK)**:
+  ```json
+  {
+    "status": "success",
+    "data": { "id": 1, "title": "The Archer and the Unshakable Target", "status": "reading", "last_read_at": "2026-11-25T11:45:00.000000Z" }
+  }
+  ```
+
+### 13.4 Update Story
+- **`PUT /stories/{id}`**
+- **Request Body**: Optional fields: `title`, `author`, `category`, `summary`, `content`, `cover_color`, `tags`, `status`, `is_favorite`, `reading_progress`.
+- **Response (200 OK)**:
+  ```json
+  {
+    "status": "success",
+    "message": "Story updated successfully",
+    "data": { "id": 1, "title": "Updated Title" }
+  }
+  ```
+
+### 13.5 Delete Story
+- **`DELETE /stories/{id}`**
+- **Response (200 OK)**: `{ "status": "success", "message": "Story deleted successfully" }`
+
+### 13.6 Toggle Favorite Bookmark
+- **`PATCH /stories/{id}/favorite`**
+- **Response (200 OK)**:
+  ```json
+  {
+    "status": "success",
+    "message": "Added to favorites",
+    "data": { "id": 1, "is_favorite": true }
+  }
+  ```
+
+### 13.7 Update Reading Progress
+- **`PATCH /stories/{id}/progress`**
+- **Request Body**: `{ "progress": 85 }`
+- **Response (200 OK)**:
+  ```json
+  {
+    "status": "success",
+    "message": "Reading progress updated",
+    "data": { "id": 1, "reading_progress": 85, "status": "reading" }
+  }
+  ```
+
+### 13.8 Seed Curated Sample Stories
+- **`POST /stories/samples`**
+- **Description**: Automatically inserts 3 curated philosophical and inspiring stories into user's library for immediate reading.
+- **Response (200 OK)**:
+  ```json
+  {
+    "status": "success",
+    "message": "Sample stories added successfully",
+    "data": [ ... ]
+  }
+  ```

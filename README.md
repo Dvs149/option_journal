@@ -44,6 +44,10 @@ The user interface matches modern financial trading terminals (Zerodha Kite, Tra
   - Cumulative equity curve, high-water mark, peak-to-trough drawdown calculation, and capital deposit/withdrawal tracking.
 - **Risk Management**:
   - Set daily max loss limits, daily profit targets, monthly drawdown guardrails, and risk parameter alerts.
+- **Free Time Stories & Reader**:
+  - Standalone module for reading stories, literature, and philosophy during trading breaks.
+  - Distraction-free reader mode with scroll progress tracking, typography sizing, eye-friendly themes (Night, Sepia, Charcoal, Paper), and fullscreen mode.
+  - Complete story lifecycle management (create, view, edit, delete, favorite, search, and category filters).
 - **Settings & Dynamic Module Visibility**:
   - Customize which modules appear in navigation, toggle dark/light themes, configure broker fee presets, and manage profile security.
 

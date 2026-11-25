@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\ModuleVisibilityController;
 use App\Http\Controllers\Api\OptionChainController;
 use App\Http\Controllers\Api\PineScriptController;
 use App\Http\Controllers\Api\RiskController;
+use App\Http\Controllers\Api\StoryController;
 use App\Http\Controllers\Api\StrategyController;
 use App\Http\Controllers\Api\StrategyDraftController;
 use App\Http\Controllers\Api\TradeController;
@@ -97,6 +98,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/pine-scripts/{pine_script}/favorite', [PineScriptController::class, 'toggleFavorite']);
     Route::post('/pine-scripts/{pine_script}/duplicate', [PineScriptController::class, 'duplicate']);
     Route::apiResource('pine-scripts', PineScriptController::class);
+
+    // Free Time Stories & Reader
+    Route::post('/stories/upload-image', [StoryController::class, 'uploadImage']);
+    Route::post('/stories/samples', [StoryController::class, 'seedSamples']);
+    Route::patch('/stories/{id}/favorite', [StoryController::class, 'toggleFavorite']);
+    Route::patch('/stories/{id}/progress', [StoryController::class, 'updateProgress']);
+    Route::apiResource('stories', StoryController::class);
 
     // Capital & Targets
     Route::get('/capital', [CapitalController::class, 'index']);

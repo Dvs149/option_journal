@@ -23,6 +23,7 @@ import {
   Code2,
   Flame,
   Layers,
+  BookMarked,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -48,6 +49,7 @@ export default function Sidebar({ onCloseMobile }) {
     { name: 'Analytics & Reports', path: '/analytics', icon: BarChart3 },
     { name: 'Capital Management', path: '/capital-management', icon: Wallet },
     { name: 'Pine Script Manager', path: '/pine-scripts', icon: Code2 },
+    { name: 'Stories', path: '/stories', icon: BookMarked },
     { name: 'Dropdown Manager', path: '/dropdown-manager', icon: SlidersHorizontal },
     { name: 'Zerodha', path: '/zerodha', icon: Flame },
     { name: 'Settings', path: '/settings', icon: Settings },

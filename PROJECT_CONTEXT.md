@@ -100,6 +100,12 @@ The system addresses the core needs of active option traders:
    - Custom in-app confirmation modal (`ConfirmationModal.jsx`) for disconnecting broker sessions, replacing unstyled native browser `window.confirm()` prompts.
 10. **Strategy Builder**:
    - Multi-leg options payoff builder with live option chain strike selection, break-even analysis, max profit/loss calculations, and draft portfolio saving.
+11. **Free Time Stories & Immersive Reader**:
+   - Completely standalone reading module for reading stories, literature, philosophy, and reflections during trading breaks and free time.
+   - Full story CRUD with title, author, category, synopsis, cover color, tags, reading status, and favorites.
+   - Rich Story Editor with multi-channel image embedding: upload button, drag & drop, clipboard image pasting (`Ctrl+V`), external image links, formatting shortcuts, and live Write/Preview tabs.
+   - Built for very long stories: `LONGTEXT` database column, live reading progress percentage, auto-word counting, estimated reading time, reading typography controls (font size, line spacing, font family), 4 eye-friendly background themes (Night, Sepia Book Paper, Charcoal, Clean Paper Day), high-res image lightbox, and distraction-free fullscreen mode.
+   - Curated sample stories seeder and smart sliding-window pagination.
 
 ---
 

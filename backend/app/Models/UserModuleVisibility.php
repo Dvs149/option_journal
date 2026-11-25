@@ -36,6 +36,7 @@ class UserModuleVisibility extends Model
         ['module_key' => 'capital-management', 'sort_order' => 9],
         ['module_key' => 'dropdown-manager', 'sort_order' => 10],
         ['module_key' => 'zerodha', 'sort_order' => 11],
+        ['module_key' => 'stories', 'sort_order' => 12],
     ];
 
     public static function seedDefaultsForUser(int $userId): void

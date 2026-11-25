@@ -9,6 +9,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.24.0] - 2026-11-25
+
+### Added & UI
+- **Free Time Stories & Immersive Reader Module (`/stories`)**:
+  - **Standalone Free Time Reading Hub**:
+    - Built a dedicated, self-contained story management and reader module designed specifically for reading stories and literature during trading breaks and free time.
+    - Completely decoupled from financial and trade logging tables for clean separation of concerns.
+  - **Rich Image Embedding & Story Formatting**:
+    - **Multi-Method Image Uploads**: Add images via device file upload button, drag-and-drop directly onto the editor, or instant clipboard image pasting (`Ctrl+V` / `Cmd+V`).
+    - **Web Image Links**: Added modal popover to embed external image URLs with custom captions.
+    - **Live Write & Preview Tabs**: Side-by-side or toggled Preview mode rendering real-time formatted typography, blockquotes, headings (`#`, `##`), scene breaks (`---`), and high-res image cards.
+    - **Interactive Image Lightbox**: Clicking any image inside the story reader opens a high-resolution distraction-free lightbox with zoom and download capabilities.
+    - **Card Thumbnail Previews**: Grid cards automatically extract and display the story's lead image as a polished book banner.
+  - **Full Story Lifecycle (CRUD)**:
+    - **Add & Edit**: `StoryFormModal.jsx` supports title, author, category/genre, synopsis, rich long-form content, theme accent colors, tags, reading status, and favorites.
+    - **View / Read**: `StoryReaderModal.jsx` provides a dedicated reader view with live reading progress tracking, automatic word count calculation, estimated reading time, and reading typography controls.
+    - **Delete**: Protected by custom `ConfirmationModal.jsx` with soft-deletion support in database.
+  - **Specialized Reader Mode for Very Long Stories**:
+    - **Scroll Progress Tracking**: Real-time reading progress bar pinned to the top of the reader (0% to 100%) with automatic progress persistence to database.
+    - **Custom Typography**: Adjust font sizes (14px to 26px), line spacing (normal, relaxed, loose), and font styles (Book Serif, Clean Sans, Monospace).
+    - **Reading Background Themes**: 4 specialized reading environments: Night Dark, Warm Sepia/Book Paper, Charcoal, and Clean Day Paper.
+    - **Fullscreen Mode**: 1-click distraction-free reading canvas for extensive multi-chapter stories.
+    - **Reading Status Updates**: Auto-updates last read timestamp, transitions from Unread to Reading, and 1-click Mark as Completed.
+  - **Discovery, Filters & Organization**:
+    - Grid card view and tabular list view toggles with automatic `localStorage` persistence (`tj_stories_view_mode`), ensuring the user's selected layout (Grid or List) is remembered across sessions.
+    - Persisted per-page preferences (`tj_stories_per_page`) for seamless browsing.
+    - Search across titles, authors, categories, and synopses.
+    - Status tabs (`All`, `Unread`, `In Progress`, `Completed`, `Favorites`).
+    - Smart sliding-window pagination using `getPaginationPages`.
+    - Curated sample stories seeder (`The Archer and the Unshakable Target`, `The Whispering Ledger of Amsterdam`, `The Stargazer's Apprentice`).
+  - **Backend API & Database Architecture**:
+    - Added `stories` table with `LONGTEXT` content column, soft deletes, and user foreign key indexing (`2026_11_25_120000_create_stories_table.php`).
+    - Implemented `Story` Eloquent model with automatic word count and reading time calculation boot hooks.
+    - Implemented `StoryController.php` with 7 endpoints (`index`, `store`, `show`, `update`, `destroy`, `toggleFavorite`, `updateProgress`, `seedSamples`).
+    - Registered module in `UserModuleVisibility.php`, `Sidebar.jsx`, and `ModuleContext.jsx`.
+    - Added automated Feature test suite `StoryApiTest.php` with 100% pass rate.
+
 ## [1.23.0] - 2026-11-19
 
 ### Fixed & UI

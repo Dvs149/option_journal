@@ -13,6 +13,7 @@ import {
   Code2,
   Flame,
   Layers,
+  BookMarked,
 } from 'lucide-react';
 import api from '../api/client';
 
@@ -104,6 +105,14 @@ export const APP_MODULES = [
     icon: Code2,
     desc: 'Manage, organize, and copy TradingView Pine Script indicators, strategies, and webhook alerts',
     category: 'Tools',
+  },
+  {
+    id: 'stories',
+    name: 'Free Time Stories',
+    path: '/stories',
+    icon: BookMarked,
+    desc: 'Read, write, and enjoy inspiring stories, literature, and articles in your free time with immersive Reader Mode',
+    category: 'Reading',
   },
   {
     id: 'dropdown-manager',

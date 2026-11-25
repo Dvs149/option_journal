@@ -23,6 +23,7 @@
 | **Dynamic Module Visibility** | Production Ready | `pages/Settings.jsx`, `components/layout/Sidebar.jsx` | `ModuleVisibilityController.php`, `UserModuleVisibility.php` |
 | **Zerodha Kite & Multi-Theme System** | Production Ready | `context/ThemeContext.jsx`, `pages/Settings.jsx`, `index.css` | Native Theme Tokens (`index.css`), LocalStorage |
 | **Zerodha Kite Connect Integration** | Production Ready | `pages/Zerodha.jsx`, `pages/Settings.jsx` | `ZerodhaController.php`, `ZerodhaKiteService.php` |
+| **Free Time Stories & Reader** | Production Ready | `pages/Stories.jsx`, `components/stories/*` | `StoryController.php`, `Story.php` |
 
 ---
 
@@ -255,4 +256,31 @@
 - Option chain modal integration for selecting and inspecting strikes.
 - Interactive multi-leg payoff graph showing expiry P&L curve, maximum profit, maximum risk, and break-even points.
 - Custom strategy drafts with portfolio saving and export.
+
+### 2.14 Free Time Stories & Immersive Reader Module (`Stories.jsx`)
+- **Self-Contained Reading Hub**:
+  - Independent, dedicated module for reading stories, literature, philosophy, and personal reflections during free time and trading breaks.
+  - Zero coupling with trading logs, financial databases, or order tables.
+- **Full Story Management (CRUD) & Rich Image Editor**:
+  - **Multi-Channel Image Embedding**: Embed images inside the story via dedicated "Add Image" file picker button, direct drag-and-drop onto the editor canvas, clipboard image pasting (`Ctrl+V` / `Cmd+V`), or external web image links (`![caption](url)`).
+  - **Write & Live Preview Tabs**: Toggled Preview tab allows checking rendered layout, headings, blockquotes, scene dividers, and high-res images before saving.
+  - **Embedded Images Tray**: Displays badges for all images embedded in the current story with status and count.
+  - **Reader Lightbox**: Click any image in Reader mode to expand into a distraction-free high-res lightbox view with download support.
+  - **Create & Edit (`StoryFormModal.jsx`)**: Add title, author/source, category/genre, synopsis preview, rich story text (supporting very long narratives), custom theme accent colors, tags, and favorite bookmark.
+  - **Read (`StoryReaderModal.jsx`)**: Distraction-free reader view with live reading progress percentage, auto-scroll progress tracking, word counter, and reading time estimation (~200 wpm).
+  - **Delete**: Soft-deletion supported with theme-aware `ConfirmationModal.jsx`.
+- **Dedicated Long-Form Reader Experience**:
+  - **Top Progress Bar**: Dynamic progress line indicating scroll completion percentage from 0% to 100%, automatically persisted to database.
+  - **Reading Typography**: 5 font sizes (14px to 26px), 3 line spacing presets (Normal, Relaxed, Loose), and 3 font styles (Classic Book Serif, Clean Sans, Monospace).
+  - **Reading Environments**: 4 eye-friendly background themes: Night Dark, Warm Sepia Book Paper (`#fcf7ec`), Charcoal Pure Dark, and Clean Paper Day.
+  - **Fullscreen Toggle**: 1-click distraction-free reading canvas.
+  - **State Actions**: 1-click Mark as Completed, favorite toggle, and in-place story edit shortcut.
+- **Search, Filters & Layout Flexibility**:
+  - Grid card view with color ribbon accents, reading status badges, and synopsis previews.
+  - Tabular list view for rapid browsing.
+  - **Persistent View Mode**: Automatically saves and remembers the user's selected view mode (Grid vs List) and per-page size in `localStorage` across page reloads and browser sessions.
+  - Live search across titles, authors, categories, and keywords.
+  - Status filters: `All`, `Unread`, `In Progress`, `Completed`, `Favorites`.
+  - Smart sliding-window pagination (`getPaginationPages`) ensuring active pages are always centered and visible.
+  - 1-Click "Sample Stories" seeder loading curated philosophical, historical, and sci-fi parables.
 

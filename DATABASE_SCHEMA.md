@@ -23,6 +23,7 @@ erDiagram
     users ||--o| brokerage_settings : "has"
     users ||--o{ dropdown_options : "customizes"
     users ||--o{ pine_scripts : "stores"
+    users ||--o{ stories : "reads_and_writes"
     users ||--o{ personal_access_tokens : "authenticates"
 
     trading_accounts ||--o{ trades : "houses"
@@ -418,3 +419,35 @@ Stores credentials, tokens, profile details, and sync status for Zerodha Kite Co
 | `meta` | JSON | Yes | NULL | JSON metadata (enabled exchanges, products, order types) |
 | `created_at` | TIMESTAMP | Yes | NULL | Creation timestamp |
 | `updated_at` | TIMESTAMP | Yes | NULL | Last update timestamp |
+
+---
+
+### 3.13 `stories`
+Stores free-time reading stories, articles, literature, and reading progress with long-form text support.
+| Column | Type | Nullable | Default | Description |
+|---|---|---|---|---|
+| `id` | BIGINT UNSIGNED | No | AUTO_INCREMENT | Primary Key |
+| `user_id` | BIGINT UNSIGNED | No | - | Foreign Key -> `users.id` (ON DELETE CASCADE) |
+| `title` | VARCHAR(255) | No | - | Story title |
+| `author` | VARCHAR(255) | Yes | 'Anonymous' | Author, origin, or source |
+| `category` | VARCHAR(50) | No | 'General' | Category / genre (Indexed) |
+| `summary` | TEXT | Yes | NULL | Short synopsis / card preview |
+| `content` | LONGTEXT | No | - | Full story narrative (supports very long texts) |
+| `cover_color` | VARCHAR(30) | Yes | '#3b82f6' | Accent cover ribbon color |
+| `tags` | JSON | Yes | NULL | Array of keyword tags |
+| `word_count` | INT UNSIGNED | No | 0 | Word count (computed automatically) |
+| `estimated_reading_time` | INT UNSIGNED | No | 1 | Estimated reading time in minutes (~200 wpm) |
+| `reading_progress` | TINYINT UNSIGNED | No | 0 | Reading progress percentage (0 - 100%) |
+| `status` | VARCHAR(20) | No | 'unread' | Reading status (`unread`, `reading`, `completed`) |
+| `is_favorite` | BOOLEAN | No | 0 (false) | Favorite bookmark flag |
+| `last_read_at` | TIMESTAMP | Yes | NULL | Timestamp of last reading session |
+| `deleted_at` | TIMESTAMP | Yes | NULL | Soft delete timestamp |
+| `created_at` | TIMESTAMP | Yes | NULL | Creation timestamp |
+| `updated_at` | TIMESTAMP | Yes | NULL | Last update timestamp |
+
+**Indexes**:
+- `PRIMARY` (`id`)
+- `stories_user_id_foreign` (`user_id`)
+- `stories_user_id_status_index` (`user_id`, `status`)
+- `stories_user_id_is_favorite_index` (`user_id`, `is_favorite`)
+- `stories_user_id_category_index` (`user_id`, `category`)

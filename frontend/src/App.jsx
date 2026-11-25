@@ -24,6 +24,7 @@ import AnalyticsReports from './pages/AnalyticsReports';
 import CapitalManagement from './pages/CapitalManagement';
 import DropdownManager from './pages/DropdownManager';
 import PineScriptManager from './pages/PineScriptManager';
+import Stories from './pages/Stories';
 import Zerodha from './pages/Zerodha';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
@@ -85,6 +86,7 @@ export default function App() {
                           <Route path="analytics" element={<AnalyticsReports />} />
                           <Route path="capital-management" element={<CapitalManagement />} />
                           <Route path="pine-scripts" element={<PineScriptManager />} />
+                          <Route path="stories" element={<Stories />} />
                           <Route path="dropdown-manager" element={<DropdownManager />} />
                           <Route path="dropdowns" element={<Navigate to="/dropdown-manager" replace />} />
                           <Route path="zerodha" element={<Zerodha />} />

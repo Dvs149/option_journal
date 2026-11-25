@@ -57,6 +57,12 @@ This document tracks prioritized future improvements, architectural tasks, and p
   - Implemented dynamic sliding window pagination (`getPaginationPages`) in `frontend/src/utils/pagination.js`.
   - Replaced hardcoded `Math.min(5, last_page)` in `AllTrades.jsx` to dynamically render and highlight active pages 6 through 11+ with surrounding context and smart ellipses.
   - Applied across `AllTrades.jsx`, `TradingCalendar.jsx`, and `TradingJournal.jsx` with bottom-pinned pagination and stable table container heights.
+- [x] **Free Time Stories & Immersive Reader Module (`/stories`)**:
+  - Built dedicated standalone reading module for trading breaks and free time.
+  - Implemented full story CRUD, category/genre filters, search, favorites, and reading status tracking.
+  - Provided rich story editor supporting embedded images via file picker upload, drag & drop, clipboard pasting (`Ctrl+V`), and external URLs, plus live Write/Preview tabs.
+  - Created distraction-free reader mode with live progress scroll percentage, typography controls (5 font sizes, 3 font styles, line spacing), 4 background themes (Night, Sepia Book Paper, Charcoal, Clean Day Paper), high-res image lightbox, and fullscreen mode.
+  - Added curated sample stories seeder and automated feature test suite (`StoryApiTest.php`).
 - [ ] **Bulk Import Parser Validation Suite**:
   - Write unit tests for `frontend/src/utils/bulkTradeParser.js` ensuring correct parsing of varied Zerodha Kite Tradebook CSV formats, multi-lot orders, and split executions.
 - [ ] **Database Backup & Integrity Check**:
