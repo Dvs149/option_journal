@@ -52,6 +52,7 @@ import SeriesManagerModal from '../components/stories/SeriesManagerModal';
 
 const STORIES_VIEW_MODE_KEY = 'tj_stories_view_mode';
 const STORIES_PER_PAGE_KEY = 'tj_stories_per_page';
+const STORIES_LAST_READ_KEY = 'tj_last_read_story';
 
 export default function Stories() {
   const { showToast } = useToast();
@@ -60,6 +61,17 @@ export default function Stories() {
   // Story list state
   const [stories, setStories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lastReadStory, setLastReadStory] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORIES_LAST_READ_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      // ignore
+    }
+    return null;
+  });
   const [stats, setStats] = useState({
     total_stories: 0,
     total_words: 0,
@@ -202,6 +214,53 @@ export default function Stories() {
     return () => clearTimeout(timer);
   }, []);
 
+  // Synchronize or detect last read story from a list of stories
+  const syncLastReadFromList = useCallback((storyList) => {
+    if (!Array.isArray(storyList) || storyList.length === 0) return;
+    setLastReadStory((prev) => {
+      if (prev && prev.id) {
+        const matched = storyList.find((s) => s.id === prev.id);
+        if (matched) {
+          const updated = {
+            ...prev,
+            ...matched,
+            reading_progress: matched.reading_progress ?? prev.reading_progress,
+            last_read_paragraph: matched.last_read_paragraph ?? prev.last_read_paragraph,
+          };
+          try {
+            localStorage.setItem(STORIES_LAST_READ_KEY, JSON.stringify(updated));
+          } catch (e) {}
+          return updated;
+        }
+      } else {
+        // Find most recently read story that was touched
+        const withReadAt = [...storyList].filter((s) => s.last_read_at || s.reading_progress > 0);
+        if (withReadAt.length > 0) {
+          withReadAt.sort((a, b) => new Date(b.last_read_at || 0) - new Date(a.last_read_at || 0));
+          const latest = withReadAt[0];
+          const meta = {
+            id: latest.id,
+            title: latest.title,
+            author: latest.author || '',
+            category: latest.category || '',
+            series_name: latest.series_name || null,
+            part_number: latest.part_number || null,
+            reading_progress: latest.reading_progress || 0,
+            last_read_paragraph: latest.last_read_paragraph || 0,
+            cover_color: latest.cover_color || '#3b82f6',
+            status: latest.status || 'reading',
+            last_read_at: latest.last_read_at,
+          };
+          try {
+            localStorage.setItem(STORIES_LAST_READ_KEY, JSON.stringify(meta));
+          } catch (e) {}
+          return meta;
+        }
+      }
+      return prev;
+    });
+  }, []);
+
   // Fetch stories
   const fetchStories = useCallback(async () => {
     setLoading(true);
@@ -227,12 +286,14 @@ export default function Stories() {
           status: statusFilter !== 'all' && statusFilter !== 'series_only' ? statusFilter : undefined,
           is_favorite: statusFilter === 'favorites' ? 1 : undefined,
         });
-        setStories(offlineRes.data || []);
+        const offlineList = offlineRes.data || [];
+        setStories(offlineList);
         setTotalPages(offlineRes.last_page || 1);
         setTotalCount(offlineRes.total || 0);
         if (offlineRes.stats) {
           setStats(offlineRes.stats);
         }
+        syncLastReadFromList(offlineList);
       } catch (err) {
         console.error('Failed to load offline stories:', err);
       } finally {
@@ -273,16 +334,18 @@ export default function Stories() {
 
       const res = await api.get('/stories', { params });
       if (res.data && res.data.status === 'success') {
-        setStories(res.data.data || []);
+        const onlineList = res.data.data || [];
+        setStories(onlineList);
         setTotalPages(res.data.last_page || 1);
         setTotalCount(res.data.total || 0);
         if (res.data.stats) {
           setStats(res.data.stats);
         }
         setIsOffline(false);
+        syncLastReadFromList(onlineList);
 
         // Background non-blocking cache of fetched stories & stats (zero lag via idle callback)
-        cacheStoriesChunked(res.data.data || [], res.data.stats).catch(() => {});
+        cacheStoriesChunked(onlineList, res.data.stats).catch(() => {});
       }
     } catch (err) {
       console.warn('Network request failed, falling back to offline IndexedDB cache:', err);
@@ -305,13 +368,15 @@ export default function Stories() {
           is_favorite: statusFilter === 'favorites' ? 1 : undefined,
         });
         if (offlineRes && offlineRes.data.length > 0) {
-          setStories(offlineRes.data);
+          const fallbackList = offlineRes.data;
+          setStories(fallbackList);
           setTotalPages(offlineRes.last_page || 1);
           setTotalCount(offlineRes.total || 0);
           if (offlineRes.stats) {
             setStats(offlineRes.stats);
           }
           setIsOffline(true);
+          syncLastReadFromList(fallbackList);
           showToast('info', 'Loaded from offline storage');
         } else {
           showToast('error', 'Failed to load stories');
@@ -323,7 +388,7 @@ export default function Stories() {
       setLoading(false);
       getOfflineStatus().then(setOfflineStatus).catch(() => {});
     }
-  }, [page, perPage, sortBy, sortOrder, search, selectedCategory, selectedSeries, statusFilter, showToast]);
+  }, [page, perPage, sortBy, sortOrder, search, selectedCategory, selectedSeries, statusFilter, showToast, syncLastReadFromList]);
 
   // Manual trigger for downloading and caching all stories offline
   const handleManualOfflineSync = async () => {
@@ -464,6 +529,12 @@ export default function Stories() {
         setReaderOpen(false);
         setReadingStory(null);
       }
+      if (lastReadStory && lastReadStory.id === storyToDelete.id) {
+        setLastReadStory(null);
+        try {
+          localStorage.removeItem(STORIES_LAST_READ_KEY);
+        } catch (e) {}
+      }
       fetchStories();
     } catch (err) {
       console.error('Failed to delete story:', err);
@@ -524,6 +595,24 @@ export default function Stories() {
       }));
     }
 
+    // Keep lastReadStory updated
+    setLastReadStory((prev) => {
+      if (prev && prev.id === id) {
+        const updated = {
+          ...prev,
+          reading_progress: Math.max(prev.reading_progress || 0, progress),
+          last_read_paragraph: typeof paragraphIndex === 'number' ? paragraphIndex : prev.last_read_paragraph,
+          status: progress >= 95 ? 'completed' : progress > 0 ? 'reading' : prev.status,
+          last_read_at: new Date().toISOString(),
+        };
+        try {
+          localStorage.setItem(STORIES_LAST_READ_KEY, JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
+      }
+      return prev;
+    });
+
     // 2. Persist to non-blocking IndexedDB and enqueue for sync
     try {
       await saveOfflineProgress(id, progress, paragraphIndex);
@@ -549,6 +638,25 @@ export default function Stories() {
   const handleOpenReader = async (story) => {
     let storyToRead = story;
 
+    // Immediately persist and update lastReadStory
+    const metaToSave = {
+      id: story.id,
+      title: story.title,
+      author: story.author || '',
+      category: story.category || '',
+      series_name: story.series_name || null,
+      part_number: story.part_number || null,
+      reading_progress: story.reading_progress || 0,
+      last_read_paragraph: story.last_read_paragraph || 0,
+      cover_color: story.cover_color || '#3b82f6',
+      status: story.status || 'reading',
+      last_read_at: new Date().toISOString(),
+    };
+    setLastReadStory(metaToSave);
+    try {
+      localStorage.setItem(STORIES_LAST_READ_KEY, JSON.stringify(metaToSave));
+    } catch (e) {}
+
     // If story has no content or browser is offline, retrieve full story from IndexedDB
     if (!story.content || (typeof navigator !== 'undefined' && !navigator.onLine)) {
       try {
@@ -569,12 +677,26 @@ export default function Stories() {
       try {
         const res = await api.get(`/stories/${story.id}`);
         if (res.data && res.data.data) {
-          setReadingStory(res.data.data);
+          const fresh = res.data.data;
+          setReadingStory(fresh);
           setStories((prev) =>
-            prev.map((s) => (s.id === story.id ? res.data.data : s))
+            prev.map((s) => (s.id === story.id ? fresh : s))
           );
+          // Keep lastReadStory updated with fresh server data
+          setLastReadStory((prev) => {
+            const updated = {
+              ...prev,
+              ...fresh,
+              reading_progress: fresh.reading_progress ?? prev?.reading_progress,
+              last_read_paragraph: fresh.last_read_paragraph ?? prev?.last_read_paragraph,
+            };
+            try {
+              localStorage.setItem(STORIES_LAST_READ_KEY, JSON.stringify(updated));
+            } catch (e) {}
+            return updated;
+          });
           // Keep cache in sync in idle callback
-          cacheStoriesChunked([res.data.data]).catch(() => {});
+          cacheStoriesChunked([fresh]).catch(() => {});
         }
       } catch (e) {
         console.warn('Reader load error:', e);
@@ -611,10 +733,7 @@ export default function Stories() {
               </div>
               <div>
                 <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-white light:text-slate-900 flex items-center gap-2">
-                  Free Time Stories
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    Reader Mode
-                  </span>
+                  Stories
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-400 light:text-slate-500">
                   Relax, reflect, and enjoy inspiring stories, literature, and thoughts in your free time
@@ -732,6 +851,35 @@ export default function Stories() {
               </button>
             )}
 
+            {/* Resume Last Read Story Button */}
+            {lastReadStory && (
+              <button
+                type="button"
+                onClick={() => handleOpenReader(lastReadStory)}
+                className={`group px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex items-center gap-2 shadow-sm cursor-pointer border ${
+                  isKite
+                    ? 'bg-[#1e1e1e] border-[#ff5722]/50 text-[#ff5722] hover:bg-[#252525] hover:border-[#ff5722]'
+                    : 'bg-emerald-500/15 light:bg-emerald-50 border-emerald-500/35 light:border-emerald-300 text-emerald-400 light:text-emerald-700 hover:bg-emerald-500/25 light:hover:bg-emerald-100 hover:border-emerald-500/60 shadow-emerald-500/10'
+                }`}
+                title={`Continue reading: "${lastReadStory.title}" (${lastReadStory.reading_progress || 0}% read)`}
+              >
+                <BookOpen className="w-4 h-4 text-emerald-400 light:text-emerald-600 flex-shrink-0 animate-pulse" />
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider opacity-80 flex-shrink-0">
+                    Resume:
+                  </span>
+                  <span className="truncate max-w-[120px] sm:max-w-[180px] md:max-w-[220px] text-white light:text-slate-900 font-semibold">
+                    {lastReadStory.title}
+                  </span>
+                  {typeof lastReadStory.reading_progress === 'number' && (
+                    <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-emerald-500/25 text-emerald-300 light:bg-emerald-200 light:text-emerald-800 flex-shrink-0">
+                      {lastReadStory.reading_progress}%
+                    </span>
+                  )}
+                </div>
+              </button>
+            )}
+
             {/* Add Story Button */}
             <button
               type="button"
@@ -739,7 +887,7 @@ export default function Stories() {
                 setEditingStory(null);
                 setFormModalOpen(true);
               }}
-              className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2"
+              className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2 flex-shrink-0"
             >
               <Plus className="w-4 h-4" />
               Write Story
