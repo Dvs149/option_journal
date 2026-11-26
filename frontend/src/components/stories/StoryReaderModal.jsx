@@ -18,7 +18,13 @@ import {
   ArrowUp,
   MapPin,
   RotateCcw,
+  Layers,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Plus,
 } from 'lucide-react';
+import api from '../../api/client';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { renderStoryContent } from '../../utils/storyFormatter';
 
@@ -76,6 +82,8 @@ export default function StoryReaderModal({
   onToggleFavorite,
   onUpdateProgress,
   onEdit,
+  onNavigatePart,
+  onAddNextPart,
 }) {
   const [themeKey, setThemeKey] = useState('night');
   const [fontSize, setFontSize] = useState(18); // 14 to 26
@@ -83,6 +91,8 @@ export default function StoryReaderModal({
   const [lineHeight, setLineHeight] = useState('relaxed'); // 'normal', 'relaxed', 'loose'
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showPartsDropdown, setShowPartsDropdown] = useState(false);
+  const [siblingParts, setSiblingParts] = useState([]);
   const [progress, setProgress] = useState(0);
   const [currentParagraph, setCurrentParagraph] = useState(0);
   const [resumedParagraph, setResumedParagraph] = useState(null);
@@ -97,6 +107,54 @@ export default function StoryReaderModal({
   const bannerTimerRef = useRef(null);
   const highlightTimerRef = useRef(null);
   const currentPosRef = useRef({ progress: 0, paragraph: 0 });
+
+  // Fetch or update sibling parts whenever story or series changes
+  useEffect(() => {
+    if (story?.series_name && story?.id) {
+      if (Array.isArray(story.sibling_parts) && story.sibling_parts.length > 0) {
+        setSiblingParts(story.sibling_parts);
+      } else {
+        api
+          .get(`/stories/${story.id}/parts`)
+          .then((res) => {
+            if (res.data?.status === 'success') {
+              setSiblingParts(res.data.data || []);
+            }
+          })
+          .catch(() => {});
+      }
+    } else {
+      setSiblingParts([]);
+    }
+    setShowPartsDropdown(false);
+  }, [story?.id, story?.series_name]);
+
+  const sortedParts = React.useMemo(() => {
+    return [...siblingParts].sort(
+      (a, b) => (a.part_number || 0) - (b.part_number || 0)
+    );
+  }, [siblingParts]);
+
+  const currentPartIndex = React.useMemo(() => {
+    return sortedParts.findIndex((p) => p.id === story?.id);
+  }, [sortedParts, story?.id]);
+
+  const prevPart =
+    currentPartIndex > 0 ? sortedParts[currentPartIndex - 1] : null;
+  const nextPart =
+    currentPartIndex !== -1 && currentPartIndex < sortedParts.length - 1
+      ? sortedParts[currentPartIndex + 1]
+      : null;
+
+  const handleSwitchPart = (targetPart) => {
+    if (!targetPart || targetPart.id === story?.id) return;
+    // Persist current story progress before switching
+    if (story?.id) {
+      onUpdateProgress?.(story.id, progress, currentParagraph);
+    }
+    setShowPartsDropdown(false);
+    onNavigatePart?.(targetPart);
+  };
 
   // Clear all auto-scroll and highlight timers
   const clearTimers = useCallback(() => {
@@ -395,9 +453,9 @@ export default function StoryReaderModal({
               style={{ backgroundColor: story.cover_color || '#3b82f6' }}
             />
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 min-w-0">
+              <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
                 <h2
-                  className={`text-xs sm:text-base font-bold truncate ${currentTheme.text}`}
+                  className={`text-xs sm:text-base font-bold truncate max-w-xs sm:max-w-md ${currentTheme.text}`}
                   title={story.title}
                 >
                   {story.title}
@@ -408,6 +466,98 @@ export default function StoryReaderModal({
                 >
                   ¶{currentParagraph + 1}
                 </span>
+
+                {/* Series & Part Badge / Dropdown Toggle */}
+                {story.series_name && (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowPartsDropdown(!showPartsDropdown)}
+                      className="px-2 py-0.5 rounded-md text-[10px] sm:text-[11px] font-semibold bg-blue-500/15 text-blue-400 hover:bg-blue-500/25 border border-blue-500/30 transition-colors flex items-center gap-1 cursor-pointer flex-shrink-0"
+                      title="Click to view all parts in this series"
+                    >
+                      <Layers className="w-3 h-3 text-blue-400" />
+                      <span className="truncate max-w-[100px] sm:max-w-[150px]">
+                        {story.series_name}
+                      </span>
+                      <span>
+                        · Part {story.part_number || 1}
+                        {sortedParts.length > 1 ? `/${sortedParts.length}` : ''}
+                      </span>
+                      <ChevronDown className="w-3 h-3 opacity-70" />
+                    </button>
+
+                    {/* Series Parts Dropdown Menu */}
+                    {showPartsDropdown && (
+                      <div
+                        className={`absolute left-0 top-7 z-50 w-72 max-w-[85vw] p-2 rounded-2xl border shadow-2xl ${currentTheme.panel} ${currentTheme.border} ${currentTheme.text} animate-scaleUp`}
+                      >
+                        <div className="px-2 py-1.5 border-b border-current/10 flex items-center justify-between">
+                          <span className="text-[11px] font-bold text-blue-400 flex items-center gap-1.5">
+                            <Layers className="w-3.5 h-3.5" />
+                            {story.series_name}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {sortedParts.length} {sortedParts.length === 1 ? 'Part' : 'Parts'}
+                          </span>
+                        </div>
+                        <div className="max-h-60 overflow-y-auto divide-y divide-current/5 py-1">
+                          {sortedParts.map((part) => {
+                            const isCurrent = part.id === story.id;
+                            return (
+                              <button
+                                key={part.id}
+                                type="button"
+                                onClick={() => {
+                                  setShowPartsDropdown(false);
+                                  if (!isCurrent) handleSwitchPart(part);
+                                }}
+                                className={`w-full text-left px-2.5 py-2 rounded-xl text-xs flex items-center justify-between gap-2 transition-colors ${
+                                  isCurrent
+                                    ? 'bg-blue-600/20 text-blue-400 font-bold border border-blue-500/30'
+                                    : 'hover:bg-black/10 light:hover:bg-slate-100 opacity-80 hover:opacity-100'
+                                }`}
+                              >
+                                <div className="min-w-0">
+                                  <span className="font-semibold block truncate">
+                                    Part {part.part_number || 1}: {part.title}
+                                  </span>
+                                  <span className="text-[10px] opacity-70">
+                                    {(part.word_count || 0).toLocaleString()} words · ~{part.estimated_reading_time || 1}m
+                                  </span>
+                                </div>
+                                <div className="flex-shrink-0">
+                                  {part.status === 'completed' ? (
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                                  ) : part.reading_progress > 0 ? (
+                                    <span className="text-[10px] font-mono text-blue-400">{part.reading_progress}%</span>
+                                  ) : (
+                                    <span className="text-[10px] opacity-50">Unread</span>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {onAddNextPart && (
+                          <div className="pt-1.5 border-t border-current/10">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowPartsDropdown(false);
+                                onAddNextPart(story);
+                              }}
+                              className="w-full py-1.5 rounded-lg text-xs font-semibold text-blue-400 hover:bg-blue-500/10 flex items-center justify-center gap-1.5 transition-colors"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                              Add Next Part
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
               <p className={`text-[10px] sm:text-[11px] truncate ${currentTheme.textMuted}`}>
                 {story.author || 'Anonymous'} · {story.category}
@@ -769,6 +919,73 @@ export default function StoryReaderModal({
                 resumedBlockIdx: resumedParagraph,
               })}
             </div>
+
+            {/* Multi-Part Series Navigation Card */}
+            {story.series_name && (
+              <div
+                className={`mt-12 p-4 sm:p-5 rounded-2xl border ${currentTheme.border} ${currentTheme.quoteBg} space-y-3.5`}
+              >
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <Layers className="w-4 h-4 text-blue-400" />
+                    <span className="text-xs font-bold">
+                      Series: {story.series_name}
+                    </span>
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-mono font-semibold">
+                      Part {story.part_number || 1}
+                      {sortedParts.length > 1 ? ` of ${sortedParts.length}` : ''}
+                    </span>
+                  </div>
+
+                  {progress >= 100 && nextPart && (
+                    <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1 animate-pulse">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Part completed! Continue below:
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between gap-3 pt-2 border-t border-current/10 flex-wrap">
+                  {prevPart ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchPart(prevPart)}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-semibold border ${currentTheme.border} hover:bg-black/10 transition-colors flex items-center gap-1.5 cursor-pointer`}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span>Previous: Part {prevPart.part_number}</span>
+                    </button>
+                  ) : (
+                    <div />
+                  )}
+
+                  {nextPart ? (
+                    <button
+                      type="button"
+                      onClick={() => handleSwitchPart(nextPart)}
+                      className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30 transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <span>
+                        Next: Part {nextPart.part_number}
+                        {nextPart.title ? ` (${nextPart.title})` : ''}
+                      </span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    onAddNextPart && (
+                      <button
+                        type="button"
+                        onClick={() => onAddNextPart(story)}
+                        className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600 hover:text-white border border-emerald-500/30 transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        Add Part {(story.part_number || sortedParts.length) + 1}
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Bottom Story Footer */}
             <footer className="mt-16 pt-10 border-t border-current/15 flex flex-col sm:flex-row items-center justify-between gap-4">

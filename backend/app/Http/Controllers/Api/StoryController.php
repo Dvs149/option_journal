@@ -24,6 +24,16 @@ class StoryController extends Controller
             $query->category($request->category);
         }
 
+        // Filter by series name
+        if ($request->filled('series_name') && $request->series_name !== 'all') {
+            $query->series($request->series_name);
+        }
+
+        // Filter by series type (series_only / standalone_only)
+        if ($request->filled('series_filter') && $request->series_filter !== 'all') {
+            $query->seriesFilter($request->series_filter);
+        }
+
         // Filter by reading status
         if ($request->filled('status') && $request->status !== 'all') {
             $query->status($request->status);
@@ -34,20 +44,26 @@ class StoryController extends Controller
             $query->favorites();
         }
 
-        // Search in title, author, category, summary
+        // Search in title, author, category, summary, series_name
         if ($request->filled('search')) {
             $query->search($request->search);
         }
 
         // Sorting
-        $sortBy = $request->get('sort_by', 'created_at');
+        $sortBy = $request->get('sort_by');
         $sortOrder = strtolower($request->get('sort_order', 'desc')) === 'asc' ? 'asc' : 'desc';
 
-        $allowedSorts = ['created_at', 'title', 'word_count', 'estimated_reading_time', 'last_read_at', 'reading_progress'];
-        if (in_array($sortBy, $allowedSorts)) {
-            $query->orderBy($sortBy, $sortOrder);
+        // When a specific series is selected and no explicit sort specified, order parts sequentially (1, 2, 3...)
+        if (empty($sortBy) && $request->filled('series_name') && $request->series_name !== 'all') {
+            $query->orderBy('part_number', 'asc')->orderBy('id', 'asc');
         } else {
-            $query->latest();
+            $sortBy = $sortBy ?: 'created_at';
+            $allowedSorts = ['created_at', 'title', 'word_count', 'estimated_reading_time', 'last_read_at', 'reading_progress', 'part_number', 'series_name'];
+            if (in_array($sortBy, $allowedSorts)) {
+                $query->orderBy($sortBy, $sortOrder);
+            } else {
+                $query->latest();
+            }
         }
 
         $perPage = max(1, min((int) $request->get('per_page', 12), 100));
@@ -66,6 +82,13 @@ class StoryController extends Controller
             ->pluck('category')
             ->values();
 
+        $seriesList = (clone $baseQuery)->whereNotNull('series_name')
+            ->where('series_name', '!=', '')
+            ->distinct()
+            ->pluck('series_name')
+            ->values();
+        $seriesCount = $seriesList->count();
+
         return response()->json([
             'status' => 'success',
             'data' => $stories->items(),
@@ -80,6 +103,8 @@ class StoryController extends Controller
                 'reading_count' => $readingCount,
                 'favorites_count' => $favoritesCount,
                 'categories' => $categories,
+                'series_count' => $seriesCount,
+                'series_list' => $seriesList,
             ],
         ]);
     }
@@ -93,6 +118,9 @@ class StoryController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'author' => ['nullable', 'string', 'max:255'],
             'category' => ['nullable', 'string', 'max:50'],
+            'series_name' => ['nullable', 'string', 'max:255'],
+            'part_number' => ['nullable', 'integer', 'min:1'],
+            'part_title' => ['nullable', 'string', 'max:255'],
             'summary' => ['nullable', 'string', 'max:1000'],
             'content' => ['required', 'string'],
             'cover_color' => ['nullable', 'string', 'max:30'],
@@ -103,11 +131,23 @@ class StoryController extends Controller
 
         $tags = $this->normalizeTags($validated['tags'] ?? null);
 
+        // Auto-assign next part_number if series_name is given without an explicit part_number
+        $partNumber = $validated['part_number'] ?? null;
+        if (!empty($validated['series_name']) && empty($partNumber)) {
+            $maxPart = Story::forUser($request->user()->id)
+                ->where('series_name', trim($validated['series_name']))
+                ->max('part_number');
+            $partNumber = $maxPart ? ($maxPart + 1) : 1;
+        }
+
         $story = Story::create([
             'user_id' => $request->user()->id,
             'title' => $validated['title'],
             'author' => $validated['author'] ?? 'Anonymous',
             'category' => !empty($validated['category']) ? $validated['category'] : 'General',
+            'series_name' => !empty($validated['series_name']) ? trim($validated['series_name']) : null,
+            'part_number' => $partNumber,
+            'part_title' => $validated['part_title'] ?? null,
             'summary' => $validated['summary'] ?? null,
             'content' => $validated['content'],
             'cover_color' => $validated['cover_color'] ?? '#3b82f6',
@@ -116,10 +156,13 @@ class StoryController extends Controller
             'is_favorite' => (bool) ($validated['is_favorite'] ?? false),
         ]);
 
+        $storyData = $story->toArray();
+        $storyData['sibling_parts'] = $story->getSiblingParts();
+
         return response()->json([
             'status' => 'success',
             'message' => 'Story saved successfully',
-            'data' => $story,
+            'data' => $storyData,
         ], 201);
     }
 
@@ -137,9 +180,12 @@ class StoryController extends Controller
         }
         $story->update($updates);
 
+        $storyData = $story->toArray();
+        $storyData['sibling_parts'] = $story->getSiblingParts();
+
         return response()->json([
             'status' => 'success',
-            'data' => $story,
+            'data' => $storyData,
         ]);
     }
 
@@ -154,6 +200,9 @@ class StoryController extends Controller
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'author' => ['nullable', 'string', 'max:255'],
             'category' => ['nullable', 'string', 'max:50'],
+            'series_name' => ['nullable', 'string', 'max:255'],
+            'part_number' => ['nullable', 'integer', 'min:1'],
+            'part_title' => ['nullable', 'string', 'max:255'],
             'summary' => ['nullable', 'string', 'max:1000'],
             'content' => ['sometimes', 'required', 'string'],
             'cover_color' => ['nullable', 'string', 'max:30'],
@@ -167,12 +216,20 @@ class StoryController extends Controller
             $validated['tags'] = $this->normalizeTags($validated['tags']);
         }
 
+        if (array_key_exists('series_name', $validated)) {
+            $validated['series_name'] = !empty($validated['series_name']) ? trim($validated['series_name']) : null;
+        }
+
         $story->update($validated);
+
+        $fresh = $story->fresh();
+        $storyData = $fresh->toArray();
+        $storyData['sibling_parts'] = $fresh->getSiblingParts();
 
         return response()->json([
             'status' => 'success',
             'message' => 'Story updated successfully',
-            'data' => $story->fresh(),
+            'data' => $storyData,
         ]);
     }
 
@@ -438,6 +495,188 @@ EOT
             'url' => $url,
             'filename' => $file->getClientOriginalName(),
         ], 201);
+    }
+
+    /**
+     * Get all sibling parts in the same series for a given story.
+     */
+    public function getParts(Request $request, int $id): JsonResponse
+    {
+        $story = Story::forUser($request->user()->id)->findOrFail($id);
+        return response()->json([
+            'status' => 'success',
+            'data' => $story->getSiblingParts(),
+        ]);
+    }
+
+    /**
+     * Get all multi-part story series for the authenticated user, grouped with aggregated stats.
+     */
+    public function seriesIndex(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $stories = Story::forUser($user->id)
+            ->whereNotNull('series_name')
+            ->where('series_name', '!=', '')
+            ->orderBy('series_name', 'asc')
+            ->orderBy('part_number', 'asc')
+            ->orderBy('id', 'asc')
+            ->get();
+
+        $grouped = $stories->groupBy('series_name')->map(function ($parts, $seriesName) {
+            $totalWords = $parts->sum('word_count');
+            $completedCount = $parts->where('status', 'completed')->count();
+            $readingCount = $parts->where('status', 'reading')->count();
+            $unreadCount = $parts->where('status', 'unread')->count();
+            $firstPart = $parts->first();
+            $latestRead = $parts->whereNotNull('last_read_at')->sortByDesc('last_read_at')->first();
+
+            $avgProgress = $parts->count() > 0 ? (int) round($parts->avg('reading_progress')) : 0;
+
+            return [
+                'series_name' => $seriesName,
+                'parts_count' => $parts->count(),
+                'total_words' => $totalWords,
+                'estimated_reading_time' => (int) ceil($totalWords / 200),
+                'completed_count' => $completedCount,
+                'reading_count' => $readingCount,
+                'unread_count' => $unreadCount,
+                'overall_progress' => $avgProgress,
+                'author' => $firstPart->author ?? 'Anonymous',
+                'category' => $firstPart->category ?? 'General',
+                'cover_color' => $firstPart->cover_color ?? '#3b82f6',
+                'last_read_at' => $latestRead ? $latestRead->last_read_at : null,
+                'parts' => $parts->map(function ($p) {
+                    return [
+                        'id' => $p->id,
+                        'title' => $p->title,
+                        'part_number' => $p->part_number,
+                        'part_title' => $p->part_title,
+                        'status' => $p->status,
+                        'reading_progress' => $p->reading_progress,
+                        'last_read_paragraph' => $p->last_read_paragraph,
+                        'word_count' => $p->word_count,
+                        'estimated_reading_time' => $p->estimated_reading_time,
+                        'is_favorite' => $p->is_favorite,
+                    ];
+                })->values(),
+            ];
+        })->values();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $grouped,
+        ]);
+    }
+
+    /**
+     * Batch assign or reorder a list of stories under a series name.
+     */
+    public function assignSeries(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'series_name' => ['required', 'string', 'max:255'],
+            'stories' => ['required', 'array'],
+            'stories.*.id' => ['required', 'integer'],
+            'stories.*.part_number' => ['nullable', 'integer', 'min:1'],
+        ]);
+
+        $user = $request->user();
+        $seriesName = trim($validated['series_name']);
+        $updatedCount = 0;
+
+        foreach ($validated['stories'] as $idx => $item) {
+            $story = Story::forUser($user->id)->find($item['id']);
+            if ($story) {
+                $partNum = $item['part_number'] ?? ($idx + 1);
+                $story->update([
+                    'series_name' => $seriesName,
+                    'part_number' => $partNum,
+                ]);
+                $updatedCount++;
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => "Successfully assigned {$updatedCount} stories to series '{$seriesName}'",
+        ]);
+    }
+
+    /**
+     * Auto-detect potential series from existing stories based on common naming patterns.
+     */
+    public function autoDetectSeries(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $stories = Story::forUser($user->id)
+            ->where(function ($q) {
+                $q->whereNull('series_name')->orWhere('series_name', '');
+            })
+            ->get(['id', 'title', 'author', 'category', 'cover_color', 'word_count']);
+
+        $candidates = [];
+
+        foreach ($stories as $story) {
+            $title = trim($story->title);
+
+            // Pattern 1: "... - Part 2" or "... – Part 2" or "... : Part 2"
+            if (preg_match('/^(.*?)\s*[-–:]\s*part\s*(\d+)(.*)$/i', $title, $m)) {
+                $baseName = trim($m[1]);
+                $partNum = (int) $m[2];
+                $candidates[$baseName][] = [
+                    'story_id' => $story->id,
+                    'title' => $story->title,
+                    'suggested_part' => $partNum,
+                    'author' => $story->author,
+                    'category' => $story->category,
+                ];
+            }
+            // Pattern 2: "... (Part 2)" or "... [Part 2]"
+            elseif (preg_match('/^(.*?)\s*[\(\[]part\s*(\d+)[\)\]](.*)$/i', $title, $m)) {
+                $baseName = trim($m[1]);
+                $partNum = (int) $m[2];
+                $candidates[$baseName][] = [
+                    'story_id' => $story->id,
+                    'title' => $story->title,
+                    'suggested_part' => $partNum,
+                    'author' => $story->author,
+                    'category' => $story->category,
+                ];
+            }
+            // Pattern 3: "part 1", "part 2", "part 3" (matching user's exact case!)
+            elseif (preg_match('/^part\s*(\d+)/i', $title, $m)) {
+                // Group by author or category if available, otherwise "Multi-Part Collection"
+                $baseName = !empty($story->author) && $story->author !== 'Anonymous'
+                    ? "{$story->author}'s Series"
+                    : (!empty($story->category) && $story->category !== 'General'
+                        ? "{$story->category} Series"
+                        : "Stories Collection");
+                $partNum = (int) $m[1];
+                $candidates[$baseName][] = [
+                    'story_id' => $story->id,
+                    'title' => $story->title,
+                    'suggested_part' => $partNum,
+                    'author' => $story->author,
+                    'category' => $story->category,
+                ];
+            }
+        }
+
+        $result = [];
+        foreach ($candidates as $name => $items) {
+            usort($items, fn($a, $b) => $a['suggested_part'] <=> $b['suggested_part']);
+            $result[] = [
+                'series_name' => $name,
+                'count' => count($items),
+                'items' => $items,
+            ];
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $result,
+        ]);
     }
 
     /**

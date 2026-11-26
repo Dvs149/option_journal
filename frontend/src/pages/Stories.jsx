@@ -23,6 +23,8 @@ import {
   ArrowUpDown,
   Filter,
   Eye,
+  Layers,
+  CopyPlus,
 } from 'lucide-react';
 import api from '../api/client';
 import { useToast } from '../context/ToastContext';
@@ -32,6 +34,7 @@ import { extractFirstImageUrl, cleanStorySummary } from '../utils/storyFormatter
 import StoryFormModal from '../components/stories/StoryFormModal';
 import StoryReaderModal from '../components/stories/StoryReaderModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
+import SeriesManagerModal from '../components/stories/SeriesManagerModal';
 
 const STORIES_VIEW_MODE_KEY = 'tj_stories_view_mode';
 const STORIES_PER_PAGE_KEY = 'tj_stories_per_page';
@@ -50,12 +53,15 @@ export default function Stories() {
     reading_count: 0,
     favorites_count: 0,
     categories: [],
+    series_count: 0,
+    series_list: [],
   });
 
   // Query / Filter state
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all'); // all, unread, reading, completed, favorites
+  const [selectedSeries, setSelectedSeries] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('all'); // all, series_only, unread, reading, completed, favorites
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
   const [page, setPage] = useState(1);
@@ -118,6 +124,7 @@ export default function Stories() {
   const [storyToDelete, setStoryToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const [seriesManagerOpen, setSeriesManagerOpen] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
 
   // Fetch stories
@@ -134,8 +141,20 @@ export default function Stories() {
       if (search.trim()) params.search = search.trim();
       if (selectedCategory !== 'all') params.category = selectedCategory;
 
+      if (selectedSeries !== 'all') {
+        if (selectedSeries === '__series_only__') {
+          params.series_filter = 'series_only';
+        } else if (selectedSeries === '__standalone_only__') {
+          params.series_filter = 'standalone_only';
+        } else {
+          params.series_name = selectedSeries;
+        }
+      }
+
       if (statusFilter === 'favorites') {
         params.is_favorite = 1;
+      } else if (statusFilter === 'series_only') {
+        params.series_filter = 'series_only';
       } else if (statusFilter !== 'all') {
         params.status = statusFilter;
       }
@@ -155,7 +174,22 @@ export default function Stories() {
     } finally {
       setLoading(false);
     }
-  }, [page, perPage, sortBy, sortOrder, search, selectedCategory, statusFilter, showToast]);
+  }, [page, perPage, sortBy, sortOrder, search, selectedCategory, selectedSeries, statusFilter, showToast]);
+
+  const handleAddNextPart = (story) => {
+    const nextPartNum = (story.part_number || 1) + 1;
+    setEditingStory({
+      isNextPart: true,
+      series_name: story.series_name || story.title,
+      part_number: nextPartNum,
+      title: `Part ${nextPartNum}`,
+      author: story.author || '',
+      category: story.category || 'General',
+      cover_color: story.cover_color || '#3b82f6',
+      tags: story.tags || '',
+    });
+    setFormModalOpen(true);
+  };
 
   useEffect(() => {
     fetchStories();
@@ -371,6 +405,22 @@ export default function Stories() {
               </button>
             </div>
 
+            {/* Manage Series Button */}
+            <button
+              type="button"
+              onClick={() => setSeriesManagerOpen(true)}
+              className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-200 text-slate-300 light:text-slate-700 hover:text-white light:hover:text-slate-900 hover:border-blue-500/50 transition-all flex items-center gap-1.5 shadow-sm"
+              title="Manage multi-part stories, series orders, and auto-detected parts"
+            >
+              <Layers className="w-3.5 h-3.5 text-blue-400" />
+              <span>Manage Series</span>
+              {stats.series_count > 0 && (
+                <span className="px-1.5 py-0.2 rounded-md text-[10px] bg-blue-500/20 text-blue-400 font-mono font-bold">
+                  {stats.series_count}
+                </span>
+              )}
+            </button>
+
             {/* Seed Sample Stories Button */}
             <button
               type="button"
@@ -526,6 +576,29 @@ export default function Stories() {
                   ))}
               </select>
 
+              {/* Series Dropdown */}
+              <select
+                value={selectedSeries}
+                onChange={(e) => {
+                  setSelectedSeries(e.target.value);
+                  setPage(1);
+                }}
+                className="px-3 py-2 rounded-xl bg-[#0b0f19] light:bg-slate-50 border border-[#1e293b] light:border-slate-300 text-xs font-semibold text-slate-300 light:text-slate-700 focus:outline-none focus:border-blue-500"
+              >
+                <option value="all">All Series & Standalone</option>
+                <option value="__series_only__">📚 Multi-Part Only</option>
+                <option value="__standalone_only__">📄 Standalone Only</option>
+                {stats.series_list && stats.series_list.length > 0 && (
+                  <optgroup label="Specific Series">
+                    {stats.series_list.map((s) => (
+                      <option key={s} value={s}>
+                        Series: {s}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </select>
+
               {/* Sort By Dropdown */}
               <select
                 value={`${sortBy}-${sortOrder}`}
@@ -540,6 +613,7 @@ export default function Stories() {
                 <option value="created_at-desc">Newest First</option>
                 <option value="created_at-asc">Oldest First</option>
                 <option value="title-asc">Title (A-Z)</option>
+                <option value="part_number-asc">Part Number (1, 2, 3...)</option>
                 <option value="word_count-desc">Longest Read</option>
                 <option value="word_count-asc">Shortest Read</option>
                 <option value="last_read_at-desc">Recently Read</option>
@@ -551,6 +625,7 @@ export default function Stories() {
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 border-t border-[#1e293b]/50 light:border-slate-100">
             {[
               { id: 'all', label: 'All Stories', count: stats.total_stories },
+              { id: 'series_only', label: 'Multi-Part Series', count: stats.series_count },
               { id: 'unread', label: 'Unread', count: stats.total_stories - stats.reading_count - stats.completed_count },
               { id: 'reading', label: 'In Progress', count: stats.reading_count },
               { id: 'completed', label: 'Completed', count: stats.completed_count },
@@ -593,6 +668,56 @@ export default function Stories() {
             })}
           </div>
         </div>
+
+        {/* Active Series Filter Banner */}
+        {selectedSeries !== 'all' && (
+          <div className="p-3.5 rounded-2xl bg-blue-600/10 border border-blue-500/25 flex items-center justify-between gap-3 text-xs flex-wrap animate-fadeIn shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center font-bold">
+                <Layers className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="font-bold text-white light:text-slate-900 block">
+                  {selectedSeries === '__series_only__'
+                    ? 'Showing All Multi-Part Series Stories'
+                    : selectedSeries === '__standalone_only__'
+                    ? 'Showing Standalone Stories Only'
+                    : `Viewing Series: ${selectedSeries}`}
+                </span>
+                <span className="text-[11px] text-slate-400">
+                  {selectedSeries !== '__series_only__' && selectedSeries !== '__standalone_only__'
+                    ? 'Parts are listed in chronological reading order'
+                    : 'Filtered library view'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {selectedSeries !== '__series_only__' && selectedSeries !== '__standalone_only__' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleAddNextPart({ series_name: selectedSeries, part_number: stories.length });
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-semibold flex items-center gap-1.5 hover:bg-emerald-500 transition-colors shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Next Part
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedSeries('all');
+                  setPage(1);
+                }}
+                className="px-3 py-1.5 rounded-xl bg-[#0b0f19] light:bg-slate-100 border border-[#1e293b] light:border-slate-300 text-slate-300 light:text-slate-700 hover:text-white light:hover:text-slate-900 transition-colors"
+              >
+                Clear Series Filter
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Stories Listing Area */}
         {loading ? (
@@ -679,15 +804,34 @@ export default function Stories() {
                   <div className="p-5 flex-1 flex flex-col">
                     {/* Header Row: Category & Status */}
                     <div className="flex items-center justify-between gap-2 mb-3">
-                      <span
-                        className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider truncate max-w-[170px]"
-                        style={{
-                          backgroundColor: `${cover}18`,
-                          color: cover,
-                        }}
-                      >
-                        {story.category}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                        <span
+                          className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider truncate max-w-[140px]"
+                          style={{
+                            backgroundColor: `${cover}18`,
+                            color: cover,
+                          }}
+                        >
+                          {story.category}
+                        </span>
+
+                        {story.series_name && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedSeries(story.series_name);
+                              setPage(1);
+                            }}
+                            className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/15 text-purple-400 border border-purple-500/25 hover:bg-purple-500/30 transition-colors flex items-center gap-1 cursor-pointer truncate max-w-[140px]"
+                            title={`Click to filter series: ${story.series_name}`}
+                          >
+                            <Layers className="w-3 h-3 text-purple-400 flex-shrink-0" />
+                            <span className="truncate">{story.series_name}</span>
+                            <span className="font-mono">· P{story.part_number || 1}</span>
+                          </button>
+                        )}
+                      </div>
 
                       <div className="flex items-center gap-1.5 flex-shrink-0">
                         {isCompleted ? (
@@ -786,6 +930,14 @@ export default function Stories() {
                       <div className="flex items-center gap-1">
                         <button
                           type="button"
+                          onClick={() => handleAddNextPart(story)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                          title={`Add next part to ${story.series_name || story.title}`}
+                        >
+                          <CopyPlus className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => {
                             setEditingStory(story);
                             setFormModalOpen(true);
@@ -846,6 +998,20 @@ export default function Stories() {
                                 ¶{story.last_read_paragraph + 1}
                               </span>
                             )}
+                            {story.series_name && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedSeries(story.series_name);
+                                  setPage(1);
+                                }}
+                                className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1 flex-shrink-0"
+                              >
+                                <Layers className="w-2.5 h-2.5 text-purple-400" />
+                                <span>P{story.part_number || 1}</span>
+                              </button>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-400 truncate">
                             <span className="truncate">by {story.author || 'Anonymous'}</span>
@@ -903,6 +1069,14 @@ export default function Stories() {
 
                       {/* Actions: Bookmark, Edit, Delete */}
                       <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleAddNextPart(story)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-emerald-400 transition-colors"
+                          title="Add next part"
+                        >
+                          <CopyPlus className="w-3.5 h-3.5" />
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleToggleFavorite(story.id)}
@@ -985,6 +1159,22 @@ export default function Stories() {
                                     ¶{story.last_read_paragraph + 1}
                                   </span>
                                 )}
+                                {story.series_name && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedSeries(story.series_name);
+                                      setPage(1);
+                                    }}
+                                    className="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-500/15 text-purple-400 border border-purple-500/25 hover:bg-purple-500/30 transition-colors flex items-center gap-1 cursor-pointer flex-shrink-0"
+                                    title={`Click to filter series: ${story.series_name}`}
+                                  >
+                                    <Layers className="w-3 h-3 text-purple-400" />
+                                    <span className="truncate max-w-[130px]">{story.series_name}</span>
+                                    <span className="font-mono font-bold">· Part {story.part_number || 1}</span>
+                                  </button>
+                                )}
                               </div>
                               <p className="text-slate-400 text-[11px] truncate">
                                 by {story.author || 'Anonymous'}
@@ -1036,6 +1226,14 @@ export default function Stories() {
 
                         <td className="py-3.5 px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleAddNextPart(story)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors"
+                              title={`Add next part to ${story.series_name || story.title}`}
+                            >
+                              <CopyPlus className="w-3.5 h-3.5" />
+                            </button>
                             <button
                               type="button"
                               onClick={() => handleToggleFavorite(story.id)}
@@ -1168,6 +1366,7 @@ export default function Stories() {
         onSubmit={handleSaveStory}
         initialData={editingStory}
         isLoading={formSubmitting}
+        existingSeriesList={stats.series_list || []}
       />
 
       {/* Story Reader Modal (Immersive Reader Mode) */}
@@ -1183,6 +1382,37 @@ export default function Stories() {
         onEdit={(story) => {
           setEditingStory(story);
           setFormModalOpen(true);
+        }}
+        onNavigatePart={(part) => {
+          handleOpenReader(part);
+        }}
+        onAddNextPart={(story) => {
+          setReaderOpen(false);
+          handleAddNextPart(story);
+        }}
+      />
+
+      {/* Series Manager Modal */}
+      <SeriesManagerModal
+        isOpen={seriesManagerOpen}
+        onClose={() => setSeriesManagerOpen(false)}
+        onOpenReader={(part) => {
+          handleOpenReader(part);
+        }}
+        onAddNewPart={(seriesData) => {
+          setEditingStory({
+            isNextPart: true,
+            series_name: seriesData.series_name,
+            part_number: seriesData.part_number,
+            title: `Part ${seriesData.part_number}`,
+            author: seriesData.author,
+            category: seriesData.category,
+            cover_color: seriesData.cover_color,
+          });
+          setFormModalOpen(true);
+        }}
+        onSeriesUpdated={() => {
+          fetchStories();
         }}
       />
 

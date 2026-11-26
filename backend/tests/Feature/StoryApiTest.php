@@ -219,4 +219,92 @@ class StoryApiTest extends TestCase
         $url = $response->json('url');
         $this->assertStringStartsWith('/storage/stories/', $url);
     }
+
+    public function test_can_manage_multi_part_series_and_fetch_sibling_parts(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('test_token')->plainTextToken;
+
+        // Create Part 1
+        $res1 = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/stories', [
+                'title' => 'Part 1',
+                'series_name' => 'The Epic Odyssey',
+                'part_number' => 1,
+                'content' => 'First part narrative content.',
+            ]);
+        $res1->assertStatus(201);
+        $story1Id = $res1->json('data.id');
+
+        // Create Part 2 (auto-assigns part_number = 2)
+        $res2 = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/stories', [
+                'title' => 'Part 2',
+                'series_name' => 'The Epic Odyssey',
+                'content' => 'Second part narrative content.',
+            ]);
+        $res2->assertStatus(201)
+            ->assertJsonPath('data.part_number', 2);
+        $story2Id = $res2->json('data.id');
+
+        // Show Part 1 - should include sibling_parts (Part 1 and Part 2)
+        $showRes = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson("/api/stories/{$story1Id}");
+        $showRes->assertStatus(200)
+            ->assertJsonPath('status', 'success')
+            ->assertJsonCount(2, 'data.sibling_parts');
+
+        // Series grouped endpoint
+        $seriesRes = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/stories/series');
+        $seriesRes->assertStatus(200)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.series_name', 'The Epic Odyssey')
+            ->assertJsonPath('data.0.parts_count', 2);
+    }
+
+    public function test_can_bulk_assign_series_and_auto_detect(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('test_token')->plainTextToken;
+
+        // Create two standalone stories with naming like "part 1" and "part 2"
+        $s1 = Story::create([
+            'user_id' => $user->id,
+            'title' => 'part 1',
+            'author' => 'Ancient Eastern Parable',
+            'category' => 'Philosophy & Wisdom',
+            'content' => 'Part 1 content text here.',
+        ]);
+        $s2 = Story::create([
+            'user_id' => $user->id,
+            'title' => 'part 2',
+            'author' => 'Ancient Eastern Parable',
+            'category' => 'Philosophy & Wisdom',
+            'content' => 'Part 2 content text here.',
+        ]);
+
+        // Auto-detect endpoint
+        $detectRes = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/stories/series/auto-detect');
+        $detectRes->assertStatus(200)
+            ->assertJsonPath('status', 'success');
+
+        // Bulk assign them into a named series
+        $assignRes = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/stories/series/assign', [
+                'series_name' => 'Ancient Eastern Parable Series',
+                'stories' => [
+                    ['id' => $s1->id, 'part_number' => 1],
+                    ['id' => $s2->id, 'part_number' => 2],
+                ],
+            ]);
+        $assignRes->assertStatus(200)
+            ->assertJsonPath('status', 'success');
+
+        $this->assertEquals('Ancient Eastern Parable Series', $s1->fresh()->series_name);
+        $this->assertEquals(1, $s1->fresh()->part_number);
+        $this->assertEquals('Ancient Eastern Parable Series', $s2->fresh()->series_name);
+        $this->assertEquals(2, $s2->fresh()->part_number);
+    }
 }

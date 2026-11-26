@@ -18,6 +18,9 @@ class Story extends Model
         'title',
         'author',
         'category',
+        'series_name',
+        'part_number',
+        'part_title',
         'summary',
         'content',
         'cover_color',
@@ -33,6 +36,7 @@ class Story extends Model
 
     protected $casts = [
         'tags' => 'array',
+        'part_number' => 'integer',
         'word_count' => 'integer',
         'estimated_reading_time' => 'integer',
         'reading_progress' => 'integer',
@@ -95,6 +99,27 @@ class Story extends Model
         return $query;
     }
 
+    public function scopeSeries($query, ?string $seriesName)
+    {
+        if ($seriesName && $seriesName !== 'all') {
+            return $query->where('series_name', $seriesName);
+        }
+        return $query;
+    }
+
+    public function scopeSeriesFilter($query, ?string $filter)
+    {
+        if ($filter === 'series_only') {
+            return $query->whereNotNull('series_name')->where('series_name', '!=', '');
+        }
+        if ($filter === 'standalone_only') {
+            return $query->where(function ($q) {
+                $q->whereNull('series_name')->orWhere('series_name', '');
+            });
+        }
+        return $query;
+    }
+
     public function scopeSearch($query, ?string $term)
     {
         if (!$term) {
@@ -105,7 +130,36 @@ class Story extends Model
             $q->where('title', 'like', "%{$term}%")
               ->orWhere('author', 'like', "%{$term}%")
               ->orWhere('category', 'like', "%{$term}%")
-              ->orWhere('summary', 'like', "%{$term}%");
+              ->orWhere('summary', 'like', "%{$term}%")
+              ->orWhere('series_name', 'like', "%{$term}%")
+              ->orWhere('part_title', 'like', "%{$term}%");
         });
+    }
+
+    /**
+     * Get all sibling parts in the same series for this user, ordered by part_number.
+     */
+    public function getSiblingParts()
+    {
+        if (empty($this->series_name)) {
+            return collect();
+        }
+
+        return static::where('user_id', $this->user_id)
+            ->where('series_name', $this->series_name)
+            ->orderBy('part_number', 'asc')
+            ->orderBy('id', 'asc')
+            ->get([
+                'id',
+                'title',
+                'series_name',
+                'part_number',
+                'part_title',
+                'status',
+                'reading_progress',
+                'last_read_paragraph',
+                'word_count',
+                'estimated_reading_time',
+            ]);
     }
 }

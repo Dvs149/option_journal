@@ -63,6 +63,7 @@ This document tracks prioritized future improvements, architectural tasks, and p
   - Provided rich story editor supporting embedded images via file picker upload, drag & drop, clipboard pasting (`Ctrl+V`), and external URLs, plus live Write/Preview tabs.
   - Created distraction-free reader mode with live progress scroll percentage, typography controls (5 font sizes, 3 font styles, line spacing), 4 background themes (Night, Sepia Book Paper, Charcoal, Clean Day Paper), high-res image lightbox, and fullscreen mode.
   - Added intelligent paragraph splitting tool (`splitIntoShortParagraphs`) in `StoryFormModal.jsx` to automatically convert large text walls into 2-3 line paragraphs with zero content deletion, selection awareness, and real-time feedback.
+  - Built comprehensive Multi-Part Stories & Series Management system: added `series_name`, `part_number`, and `part_title` schema, in-reader Previous/Next part navigation and parts drawer, dedicated `SeriesManagerModal.jsx` with auto-detection of existing stories (`part 1`, `part 2`), series filter tabs, and 1-click `+ Part` actions.
   - Added automatic paragraph reading position tracking with smooth auto-scroll to the exact paragraph where the reader stopped, glowing visual resumption highlight, and quick jump-to-top shortcut.
   - Added curated sample stories seeder and automated feature test suite (`StoryApiTest.php`).
 - [ ] **Bulk Import Parser Validation Suite**:

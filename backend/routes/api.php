@@ -100,10 +100,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('pine-scripts', PineScriptController::class);
 
     // Free Time Stories & Reader
+    Route::get('/stories/series', [StoryController::class, 'seriesIndex']);
+    Route::post('/stories/series/assign', [StoryController::class, 'assignSeries']);
+    Route::post('/stories/series/auto-detect', [StoryController::class, 'autoDetectSeries']);
     Route::post('/stories/upload-image', [StoryController::class, 'uploadImage']);
     Route::post('/stories/samples', [StoryController::class, 'seedSamples']);
     Route::patch('/stories/{id}/favorite', [StoryController::class, 'toggleFavorite']);
     Route::patch('/stories/{id}/progress', [StoryController::class, 'updateProgress']);
+    Route::get('/stories/{id}/parts', [StoryController::class, 'getParts']);
     Route::apiResource('stories', StoryController::class);
 
     // Capital & Targets

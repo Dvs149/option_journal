@@ -28,6 +28,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       - **Zero Content Loss**: 100% preserves every word, punctuation mark, dialogue quote, markdown heading (`#`, `##`), blockquote (`>`), divider (`---`), and image (`![alt](url)`).
       - **Selection & Full Text Support**: Splits selected text if highlighted in the textarea, or formats the entire story content if no selection exists.
       - **Live Confirmation Toast**: Shows real-time badge in toolbar (`✓ Split X large paragraphs into Y short paragraphs (2-3 lines each)`) with automatic timeout.
+  - **Multi-Part Stories & Series Management Hub**:
+    - **Database Schema & Relational Grouping**:
+      - Added `series_name`, `part_number`, and `part_title` columns with compound indexes (`[user_id, series_name]`, `[user_id, series_name, part_number]`) to `stories` table.
+      - Automatically computes sibling parts, series part ordering, and series-wide statistics (total words, completed parts, overall progress).
+    - **Story Editor Multi-Part Controls (`StoryFormModal.jsx`)**:
+      - Dedicated multi-part story toggle card with autocomplete of existing series names (`<datalist>`), automatic detection from story titles (e.g. `Title - Part 3`), and part numbering.
+      - Auto-assigns next part number (`max + 1`) if part number is omitted.
+    - **Seamless In-Reader Part Transition (`StoryReaderModal.jsx`)**:
+      - Added Previous Part (`← Previous: Part X`) and Next Part (`Next: Part Y →`) navigation buttons at the bottom of each chapter.
+      - In-Reader Series Dropdown: Clickable header pill showing active series and part number with an expandable parts menu displaying reading progress and 1-click jumps across all chapters without closing the reader.
+    - **Series Manager Modal & Auto-Detection (`SeriesManagerModal.jsx`)**:
+      - Dedicated modal accessible via the top navigation bar (`Manage Series`) with active series overview and part reordering arrows (Move Up / Down).
+      - **1-Click Auto-Detection**: Scans existing standalone stories with part-based naming patterns (e.g. `part 1`, `part 2`, `part 3`, etc.) and groups them into unified series with one click.
+      - **Manual Grouping & Renaming**: Allows selecting existing stories to group into a new series or renaming an entire series across all parts simultaneously.
+    - **Library Organization & Filtering (`Stories.jsx`)**:
+      - Added `Multi-Part Series` status filter tab and Series dropdown selector.
+      - Displays prominent series badges (`📚 [Series Name] · P[X]`) in both Grid and Table views with 1-click filtering.
+      - Added `+ Part` shortcut buttons in card and table row actions for instant chapter addition.
   - **Full Story Lifecycle (CRUD)**:
     - **Add & Edit**: `StoryFormModal.jsx` supports title, author, category/genre, synopsis, rich long-form content, theme accent colors, tags, reading status, and favorites.
     - **View / Read**: `StoryReaderModal.jsx` provides a dedicated reader view with live reading progress tracking, automatic word count calculation, estimated reading time, and reading typography controls.

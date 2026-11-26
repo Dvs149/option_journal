@@ -23,6 +23,7 @@ import {
   Quote,
   Minus,
   WrapText,
+  Layers,
   Eye,
   Edit3,
   Loader2,
@@ -60,11 +61,16 @@ export default function StoryFormModal({
   onSubmit,
   initialData = null,
   isLoading = false,
+  existingSeriesList = [],
 }) {
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
   const [category, setCategory] = useState('Philosophy & Wisdom');
   const [customCategory, setCustomCategory] = useState('');
+  const [seriesName, setSeriesName] = useState('');
+  const [partNumber, setPartNumber] = useState('1');
+  const [partTitle, setPartTitle] = useState('');
+  const [isSeries, setIsSeries] = useState(false);
   const [summary, setSummary] = useState('');
   const [content, setContent] = useState('');
   const [coverColor, setCoverColor] = useState('#3b82f6');
@@ -108,6 +114,15 @@ export default function StoryFormModal({
         setCategory('Other');
         setCustomCategory(cat);
       }
+      const hasSeries = Boolean(initialData.series_name);
+      setIsSeries(hasSeries);
+      setSeriesName(initialData.series_name || '');
+      setPartNumber(
+        initialData.part_number !== undefined && initialData.part_number !== null
+          ? String(initialData.part_number)
+          : '1'
+      );
+      setPartTitle(initialData.part_title || '');
       setSummary(initialData.summary || '');
       setContent(initialData.content || '');
       setCoverColor(initialData.cover_color || '#3b82f6');
@@ -122,6 +137,10 @@ export default function StoryFormModal({
       setAuthor('');
       setCategory('Philosophy & Wisdom');
       setCustomCategory('');
+      setIsSeries(false);
+      setSeriesName('');
+      setPartNumber('1');
+      setPartTitle('');
       setSummary('');
       setContent('');
       setCoverColor('#3b82f6');
@@ -303,6 +322,10 @@ export default function StoryFormModal({
       setError('Story content is required.');
       return;
     }
+    if (isSeries && !seriesName.trim()) {
+      setError('Series name is required when marking this story as part of a series.');
+      return;
+    }
 
     const finalCategory =
       category === 'Other' && customCategory.trim()
@@ -313,6 +336,9 @@ export default function StoryFormModal({
       title: title.trim(),
       author: author.trim() || 'Anonymous',
       category: finalCategory,
+      series_name: isSeries && seriesName.trim() ? seriesName.trim() : null,
+      part_number: isSeries && partNumber ? Math.max(1, parseInt(partNumber, 10)) : null,
+      part_title: isSeries && partTitle.trim() ? partTitle.trim() : null,
       summary: summary.trim(),
       content: content.trim(),
       cover_color: coverColor,
@@ -354,8 +380,13 @@ export default function StoryFormModal({
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-white light:text-slate-900">
-                {initialData ? 'Edit Story' : 'Add New Story'}
+              <h3 className="text-base sm:text-lg font-bold text-white light:text-slate-900 flex items-center gap-2 flex-wrap">
+                <span>{initialData ? 'Edit Story' : 'Add New Story'}</span>
+                {isSeries && seriesName && (
+                  <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                    {seriesName} · Part {partNumber || 1}
+                  </span>
+                )}
               </h3>
               <p className="text-xs text-slate-400 light:text-slate-500">
                 {wordCount > 0
@@ -431,6 +462,103 @@ export default function StoryFormModal({
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Multi-Part Story / Series Control Card */}
+            <div className="p-3.5 rounded-xl bg-[#0b0f19] light:bg-slate-50 border border-[#1e293b] light:border-slate-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2.5 cursor-pointer text-xs font-semibold text-slate-300 light:text-slate-700 select-none">
+                  <input
+                    type="checkbox"
+                    checked={isSeries}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setIsSeries(checked);
+                      if (checked && !seriesName) {
+                        // Smart auto-detect from title: e.g. "Story Name - Part 3" or "Story Name (Part 3)"
+                        const match =
+                          title.match(/^(.*?)\s*[-–:]\s*part\s*(\d+)/i) ||
+                          title.match(/^(.*?)\s*[\(\[]part\s*(\d+)[\)\]]/i);
+                        if (match) {
+                          setSeriesName(match[1].trim());
+                          setPartNumber(match[2]);
+                        }
+                      }
+                    }}
+                    className="w-4 h-4 rounded text-blue-600 bg-[#0e1626] border-slate-700 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                  />
+                  <span className="flex items-center gap-1.5">
+                    <Layers className="w-4 h-4 text-blue-400" />
+                    This story is part of a Multi-Part Series (Part 1, 2, 3...)
+                  </span>
+                </label>
+
+                {isSeries && (
+                  <span className="text-[11px] font-mono font-bold text-blue-400 bg-blue-500/10 px-2.5 py-0.5 rounded-md border border-blue-500/20">
+                    Part {partNumber || 1}
+                  </span>
+                )}
+              </div>
+
+              {isSeries && (
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-2.5 border-t border-[#1e293b]/60 light:border-slate-200 animate-fadeIn">
+                  <div className="sm:col-span-2">
+                    <label className="block text-[11px] font-semibold text-slate-300 light:text-slate-700 mb-1">
+                      Series Name / Main Title <span className="text-rose-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      list="existing-series-list"
+                      value={seriesName}
+                      onChange={(e) => setSeriesName(e.target.value)}
+                      placeholder="e.g. The Archer Chronicles, Amsterdam Mystery"
+                      required={isSeries}
+                      className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none focus:border-blue-500"
+                    />
+                    <datalist id="existing-series-list">
+                      {existingSeriesList &&
+                        existingSeriesList.map((s) => <option key={s} value={s} />)}
+                    </datalist>
+                    <span className="text-[10px] text-slate-500 mt-1 block">
+                      Type a new series name or pick from existing
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-300 light:text-slate-700 mb-1">
+                      Part Number <span className="text-rose-400">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={partNumber}
+                      onChange={(e) => setPartNumber(e.target.value)}
+                      placeholder="1"
+                      required={isSeries}
+                      className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none focus:border-blue-500 font-mono-numbers"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-1 block">
+                      1, 2, 3, 4...
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-300 light:text-slate-700 mb-1">
+                      Part Subtitle <span className="text-slate-500 font-normal">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={partTitle}
+                      onChange={(e) => setPartTitle(e.target.value)}
+                      placeholder="e.g. The Arrival"
+                      className="w-full px-3 py-2 rounded-xl bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-300 text-white light:text-slate-900 text-xs focus:outline-none focus:border-blue-500"
+                    />
+                    <span className="text-[10px] text-slate-500 mt-1 block">
+                      Custom chapter title
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Category & Status & Color */}

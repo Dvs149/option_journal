@@ -270,6 +270,12 @@
     - Guarantees 100% preservation of all words, punctuation, dialogue quotes, markdown headings, blockquotes, images, dividers, and lists without deleting or truncating content.
     - Supports splitting either user-selected text or the full story content, complete with instant visual feedback badges.
   - **Reader Lightbox**: Click any image in Reader mode to expand into a distraction-free high-res lightbox view with download support.
+  - **Multi-Part Stories & Series Management**:
+    - **Relational Series Organization**: Supports `series_name`, `part_number`, and `part_title` in database with automatic series stats and progress aggregation.
+    - **In-Reader Seamless Navigation (`StoryReaderModal.jsx`)**: Seamless "Previous Part" and "Next Part" buttons plus interactive parts drawer displaying read progress across all parts without closing the reader.
+    - **Series Manager Modal (`SeriesManagerModal.jsx`)**: Dedicated management dialog to view active series, reorder chapters, batch-assign existing unlinked stories, and 1-click auto-detect multi-part stories based on title patterns (e.g. `part 1`, `part 2`).
+    - **Editor Integration (`StoryFormModal.jsx`)**: Easy series checkbox with autocomplete `<datalist>` of existing series and automated next part calculation.
+    - **Filtered Series Views & Badges (`Stories.jsx`)**: Series filter dropdown, `Multi-Part Series` status tab, active series banner, and 1-click `+ Part` shortcut buttons in cards and tables.
   - **Create & Edit (`StoryFormModal.jsx`)**: Add title, author/source, category/genre, synopsis preview, rich story text (supporting very long narratives), custom theme accent colors, tags, and favorite bookmark.
   - **Read (`StoryReaderModal.jsx`)**: Distraction-free reader view with live reading progress percentage, auto-scroll progress tracking, word counter, and reading time estimation (~200 wpm).
   - **Delete**: Soft-deletion supported with theme-aware `ConfirmationModal.jsx`.
