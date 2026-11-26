@@ -1464,8 +1464,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/CHANGELOG.md": {
-    "mtime": 1795604035.8684695,
-    "ast_hash": "5ad9a5d26639bbbd7de180b7842f80f2",
+    "mtime": 1795656937.7966502,
+    "ast_hash": "c5b89edad04225178586ed5057e12e25",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/DATABASE_SCHEMA.md": {
@@ -1474,8 +1474,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/TODO.md": {
-    "mtime": 1795603856.2864423,
-    "ast_hash": "9ea75abb9a63f5a92ae4b38a7485cad4",
+    "mtime": 1795656962.5316546,
+    "ast_hash": "991dee71032bdcadbd110b2384bc28c2",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/AI_RULES.md": {
@@ -1499,8 +1499,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/FEATURES.md": {
-    "mtime": 1795603837.52727,
-    "ast_hash": "86a1eb48d8da9a992023670db252c188",
+    "mtime": 1795656950.4823797,
+    "ast_hash": "b8c219eff4aaebfd326dcbf6bffdc529",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/index.html": {
@@ -2159,8 +2159,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/utils/storyFormatter.jsx": {
-    "mtime": 1795603534.5489874,
-    "ast_hash": "b80f698f33cb30935da7ba726bd4684a",
+    "mtime": 1795656787.3194468,
+    "ast_hash": "e423ea22fce76c1172775e7ce1effb33",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/common/ConfirmationModal.jsx": {
@@ -2174,13 +2174,13 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/components/stories/StoryFormModal.jsx": {
-    "mtime": 1795587722.4079375,
-    "ast_hash": "3816d426058f5c2a0a0dd84238b37937",
+    "mtime": 1795656886.491987,
+    "ast_hash": "376f7343563b86722be67607254c3f59",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/Stories.jsx": {
-    "mtime": 1795604569.1569803,
-    "ast_hash": "2ca2f12648470ee27b3c2d2b824e2baf",
+    "mtime": 1795609554.1917121,
+    "ast_hash": "860444e5e0040f4a9bebb90165f2fcbe",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/database/migrations/2026_11_25_120000_create_stories_table.php": {

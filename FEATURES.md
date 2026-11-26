@@ -265,6 +265,10 @@
   - **Multi-Channel Image Embedding**: Embed images inside the story via dedicated "Add Image" file picker button, direct drag-and-drop onto the editor canvas, clipboard image pasting (`Ctrl+V` / `Cmd+V`), or external web image links (`![caption](url)`).
   - **Write & Live Preview Tabs**: Toggled Preview tab allows checking rendered layout, headings, blockquotes, scene dividers, and high-res images before saving.
   - **Embedded Images Tray**: Displays badges for all images embedded in the current story with status and count.
+  - **Intelligent Paragraph Splitter Tool (`splitIntoShortParagraphs`)**:
+    - Dedicated toolbar button with `WrapText` icon in `StoryFormModal.jsx` to split large monolithic text blocks into digestible 2 to 3 line paragraphs (~20–32 words, ~140–200 characters max).
+    - Guarantees 100% preservation of all words, punctuation, dialogue quotes, markdown headings, blockquotes, images, dividers, and lists without deleting or truncating content.
+    - Supports splitting either user-selected text or the full story content, complete with instant visual feedback badges.
   - **Reader Lightbox**: Click any image in Reader mode to expand into a distraction-free high-res lightbox view with download support.
   - **Create & Edit (`StoryFormModal.jsx`)**: Add title, author/source, category/genre, synopsis preview, rich story text (supporting very long narratives), custom theme accent colors, tags, and favorite bookmark.
   - **Read (`StoryReaderModal.jsx`)**: Distraction-free reader view with live reading progress percentage, auto-scroll progress tracking, word counter, and reading time estimation (~200 wpm).

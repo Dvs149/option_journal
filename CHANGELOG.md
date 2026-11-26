@@ -22,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Live Write & Preview Tabs**: Side-by-side or toggled Preview mode rendering real-time formatted typography, blockquotes, headings (`#`, `##`), scene breaks (`---`), and high-res image cards.
     - **Interactive Image Lightbox**: Clicking any image inside the story reader opens a high-resolution distraction-free lightbox with zoom and download capabilities.
     - **Card Thumbnail Previews**: Grid cards automatically extract and display the story's lead image as a polished book banner.
+    - **Intelligent Paragraph Splitter Tool (`splitIntoShortParagraphs`)**:
+      - Added dedicated `Split Paragraphs` toolbar button with `WrapText` icon in `StoryFormModal.jsx`.
+      - Automatically decomposes massive walls of text into short, highly-readable paragraphs of 2 to 3 lines each (~20–32 words, ~140–200 characters) separated by clean `\n\n` double newlines.
+      - **Zero Content Loss**: 100% preserves every word, punctuation mark, dialogue quote, markdown heading (`#`, `##`), blockquote (`>`), divider (`---`), and image (`![alt](url)`).
+      - **Selection & Full Text Support**: Splits selected text if highlighted in the textarea, or formats the entire story content if no selection exists.
+      - **Live Confirmation Toast**: Shows real-time badge in toolbar (`✓ Split X large paragraphs into Y short paragraphs (2-3 lines each)`) with automatic timeout.
   - **Full Story Lifecycle (CRUD)**:
     - **Add & Edit**: `StoryFormModal.jsx` supports title, author, category/genre, synopsis, rich long-form content, theme accent colors, tags, reading status, and favorites.
     - **View / Read**: `StoryReaderModal.jsx` provides a dedicated reader view with live reading progress tracking, automatic word count calculation, estimated reading time, and reading typography controls.
@@ -41,6 +47,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Reading Status Updates**: Auto-updates last read timestamp, transitions from Unread to Reading, and 1-click Mark as Completed.
   - **Discovery, Filters & Organization**:
     - Grid card view and tabular list view toggles with automatic `localStorage` persistence (`tj_stories_view_mode`), ensuring the user's selected layout (Grid or List) is remembered across sessions.
+    - **Responsive Mobile List View (Zero Horizontal Scroll)**: Replaced rigid 5-column desktop table on mobile screens (`< md`) with a native stacked mobile card row displaying Story Title, Category badge, Author, Words & Length, Status & Progress bar with percentage, and all Action buttons (`Read`, `Bookmark`, `Edit`, `Delete`) within the 100% viewport width. Seamlessly preserves the full 5-column table on desktop (`>= md`).
+    - **Header Natural Scroll**: Removed `sticky top-0 z-20` positioning from the Free Time Stories header banner in `Stories.jsx`, ensuring it scrolls away naturally with the page instead of floating over list and grid content when scrolling.
     - Persisted per-page preferences (`tj_stories_per_page`) for seamless browsing.
     - Search across titles, authors, categories, and synopses.
     - Status tabs (`All`, `Unread`, `In Progress`, `Completed`, `Favorites`).

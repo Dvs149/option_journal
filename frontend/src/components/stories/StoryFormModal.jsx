@@ -22,6 +22,7 @@ import {
   Heading2,
   Quote,
   Minus,
+  WrapText,
   Eye,
   Edit3,
   Loader2,
@@ -29,7 +30,7 @@ import {
 } from 'lucide-react';
 import api from '../../api/client';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
-import { renderStoryContent } from '../../utils/storyFormatter';
+import { renderStoryContent, splitIntoShortParagraphs } from '../../utils/storyFormatter';
 
 const POPULAR_CATEGORIES = [
   'Philosophy & Wisdom',
@@ -80,6 +81,7 @@ export default function StoryFormModal({
   const [showUrlModal, setShowUrlModal] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [urlCaption, setUrlCaption] = useState('');
+  const [splitFeedback, setSplitFeedback] = useState('');
 
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -239,6 +241,56 @@ export default function StoryFormModal({
     setUrlInput('');
     setUrlCaption('');
     setShowUrlModal(false);
+  };
+
+  // Converts big paragraphs into small 2-3 line paragraphs without deleting any content
+  const handleSplitParagraphs = () => {
+    if (!content.trim()) return;
+
+    const textarea = textareaRef.current;
+    const selStart = textarea?.selectionStart;
+    const selEnd = textarea?.selectionEnd;
+    const hasSelection =
+      selStart !== undefined && selEnd !== undefined && selStart !== selEnd;
+
+    let newContent = '';
+    let beforeCount = 0;
+    let afterCount = 0;
+
+    if (hasSelection) {
+      const selectedText = content.substring(selStart, selEnd);
+      const splitSelected = splitIntoShortParagraphs(selectedText);
+      newContent =
+        content.substring(0, selStart) + splitSelected + content.substring(selEnd);
+      beforeCount = selectedText.split(/\n\s*\n/).filter((b) => b.trim()).length;
+      afterCount = splitSelected.split(/\n\s*\n/).filter((b) => b.trim()).length;
+    } else {
+      newContent = splitIntoShortParagraphs(content);
+      beforeCount = content.split(/\n\s*\n/).filter((b) => b.trim()).length;
+      afterCount = newContent.split(/\n\s*\n/).filter((b) => b.trim()).length;
+    }
+
+    setContent(newContent);
+
+    if (afterCount > beforeCount) {
+      setSplitFeedback(
+        `Split ${beforeCount} large paragraph${beforeCount === 1 ? '' : 's'} into ${afterCount} short paragraphs (2-3 lines each)`
+      );
+    } else {
+      setSplitFeedback(
+        `Formatted into ${afterCount} paragraphs (2-3 lines each)`
+      );
+    }
+
+    setTimeout(() => {
+      setSplitFeedback('');
+    }, 4500);
+
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }, 50);
   };
 
   const handleSubmit = (e) => {
@@ -599,11 +651,33 @@ export default function StoryFormModal({
                     >
                       <Minus className="w-3.5 h-3.5" />
                     </button>
+
+                    <div className="w-[1px] h-4 bg-slate-700 light:bg-slate-300 mx-1" />
+
+                    {/* Split Paragraphs Button (2-3 lines each) */}
+                    <button
+                      type="button"
+                      onClick={handleSplitParagraphs}
+                      disabled={!content.trim()}
+                      className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white border border-emerald-500/30 transition-all flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                      title="Convert large paragraphs into 2-3 lines each without deleting any content (works on selected text or whole story)"
+                    >
+                      <WrapText className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Split Paragraphs</span>
+                      <span className="sm:hidden">Split</span>
+                    </button>
                   </div>
 
-                  <span className="text-[11px] text-slate-400 hidden md:inline">
-                    💡 Tip: Drag & drop or paste (<kbd className="font-mono px-1 py-0.5 rounded bg-black/20 text-slate-300">Ctrl+V</kbd>) images directly into the text
-                  </span>
+                  {splitFeedback ? (
+                    <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20 animate-fadeIn flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      {splitFeedback}
+                    </span>
+                  ) : (
+                    <span className="text-[11px] text-slate-400 hidden md:inline">
+                      💡 Tip: Drag & drop or paste (<kbd className="font-mono px-1 py-0.5 rounded bg-black/20 text-slate-300">Ctrl+V</kbd>) images directly into the text
+                    </span>
+                  )}
                 </div>
               )}
 

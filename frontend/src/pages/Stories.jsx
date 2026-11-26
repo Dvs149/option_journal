@@ -317,7 +317,7 @@ export default function Stories() {
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-[#0b0f19] light:bg-[#f8fafc] text-white light:text-slate-900 pb-16">
       {/* Top Banner / Header */}
-      <div className="px-4 sm:px-8 py-6 border-b border-[#1e293b] light:border-slate-200 bg-[#0e1626]/60 light:bg-white/80 backdrop-blur-md sticky top-0 z-20">
+      <div className="px-4 sm:px-8 py-6 border-b border-[#1e293b] light:border-slate-200 bg-[#0e1626]/60 light:bg-white/80">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 max-w-7xl mx-auto">
           <div>
             <div className="flex items-center gap-3">
@@ -816,7 +816,138 @@ export default function Stories() {
         ) : (
           /* List / Table View */
           <div className="rounded-2xl bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-200 overflow-hidden shadow-sm">
-            <div className="overflow-x-auto">
+            {/* Mobile Stacked List View (< md screens: fits 100% width without horizontal scroll) */}
+            <div className="block md:hidden divide-y divide-[#1e293b]/60 light:divide-slate-100">
+              {stories.map((story) => {
+                const cover = story.cover_color || '#3b82f6';
+                const isCompleted = story.status === 'completed';
+                return (
+                  <div
+                    key={story.id}
+                    className="p-3.5 hover:bg-[#121b2d]/50 light:hover:bg-slate-50/80 transition-colors space-y-2.5"
+                  >
+                    {/* Top Row: Story Title, Category & Read Action */}
+                    <div className="flex items-start justify-between gap-2.5">
+                      <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                        <span
+                          className="w-1.5 h-10 rounded-full flex-shrink-0 mt-0.5"
+                          style={{ backgroundColor: cover }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <h4
+                              onClick={() => handleOpenReader(story)}
+                              className="font-bold text-white light:text-slate-900 hover:text-blue-400 cursor-pointer text-sm leading-snug"
+                            >
+                              {story.title}
+                            </h4>
+                            {story.last_read_paragraph > 0 && !isCompleted && (
+                              <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30 flex-shrink-0">
+                                ¶{story.last_read_paragraph + 1}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-400 truncate">
+                            <span className="truncate">by {story.author || 'Anonymous'}</span>
+                            <span>·</span>
+                            <span
+                              className="px-2 py-0.5 rounded-full text-[10px] font-semibold flex-shrink-0"
+                              style={{
+                                backgroundColor: `${cover}18`,
+                                color: cover,
+                              }}
+                            >
+                              {story.category}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Read Button */}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenReader(story)}
+                        className="px-3 py-1 rounded-lg text-xs font-semibold bg-blue-600 text-white hover:bg-blue-500 transition-colors flex-shrink-0 shadow-sm"
+                      >
+                        Read
+                      </button>
+                    </div>
+
+                    {/* Bottom Row: Words & Length, Status & Progress, and Secondary Actions */}
+                    <div className="pt-2 border-t border-[#1e293b]/40 light:border-slate-100 flex items-center justify-between gap-2 text-[11px]">
+                      {/* Words & Time */}
+                      <div className="flex items-center gap-1.5 text-slate-400 font-mono-numbers">
+                        <span className="flex items-center gap-1">
+                          <FileText className="w-3 h-3 text-blue-400" />
+                          {(story.word_count || 0).toLocaleString()}
+                        </span>
+                        <span>·</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-emerald-400" />
+                          ~{story.estimated_reading_time || 1}m
+                        </span>
+                      </div>
+
+                      {/* Status & Progress Bar */}
+                      <div className="flex items-center gap-1.5 flex-1 max-w-[120px]">
+                        <div className="w-full h-1.5 bg-slate-800 light:bg-slate-200 rounded-full overflow-hidden flex-1">
+                          <div
+                            className="h-full bg-blue-500"
+                            style={{ width: `${story.reading_progress || 0}%` }}
+                          />
+                        </div>
+                        <span className="font-mono text-slate-400 text-[10px] flex-shrink-0">
+                          {story.reading_progress || 0}%
+                        </span>
+                      </div>
+
+                      {/* Actions: Bookmark, Edit, Delete */}
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleFavorite(story.id)}
+                          className="p-1 rounded-lg text-slate-400 hover:text-amber-400 transition-colors"
+                          title={story.is_favorite ? 'Favorited' : 'Bookmark'}
+                        >
+                          <Bookmark
+                            className={`w-3.5 h-3.5 ${
+                              story.is_favorite
+                                ? 'fill-amber-400 text-amber-400'
+                                : 'text-slate-500'
+                            }`}
+                          />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setEditingStory(story);
+                            setFormModalOpen(true);
+                          }}
+                          className="p-1 rounded-lg text-slate-400 hover:text-white transition-colors"
+                          title="Edit"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStoryToDelete(story);
+                            setDeleteModalOpen(true);
+                          }}
+                          className="p-1 rounded-lg text-slate-400 hover:text-rose-400 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View (>= md screens) */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead>
                   <tr className="border-b border-[#1e293b] light:border-slate-200 bg-[#0b0f19]/40 light:bg-slate-50 text-slate-400 uppercase tracking-wider text-[11px] font-semibold">
