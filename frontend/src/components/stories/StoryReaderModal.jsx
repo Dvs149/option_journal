@@ -23,10 +23,12 @@ import {
   ChevronRight,
   ChevronDown,
   Plus,
+  WifiOff,
 } from 'lucide-react';
 import api from '../../api/client';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { renderStoryContent } from '../../utils/storyFormatter';
+import { getOfflineStory } from '../../utils/storyOfflineStorage';
 
 const THEMES = {
   night: {
@@ -121,7 +123,16 @@ export default function StoryReaderModal({
               setSiblingParts(res.data.data || []);
             }
           })
-          .catch(() => {});
+          .catch(() => {
+            // Offline fallback: load sibling parts from IndexedDB
+            getOfflineStory(story.id)
+              .then((cached) => {
+                if (cached && Array.isArray(cached.sibling_parts)) {
+                  setSiblingParts(cached.sibling_parts);
+                }
+              })
+              .catch(() => {});
+          });
       }
     } else {
       setSiblingParts([]);
@@ -559,9 +570,17 @@ export default function StoryReaderModal({
                   </div>
                 )}
               </div>
-              <p className={`text-[10px] sm:text-[11px] truncate ${currentTheme.textMuted}`}>
-                {story.author || 'Anonymous'} · {story.category}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className={`text-[10px] sm:text-[11px] truncate ${currentTheme.textMuted}`}>
+                  {story.author || 'Anonymous'} · {story.category}
+                </p>
+                {typeof navigator !== 'undefined' && !navigator.onLine && (
+                  <span className="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                    <WifiOff className="w-2.5 h-2.5" />
+                    Offline
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 

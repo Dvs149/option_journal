@@ -100,6 +100,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('pine-scripts', PineScriptController::class);
 
     // Free Time Stories & Reader
+    Route::get('/stories/offline-bundle', [StoryController::class, 'offlineBundle']);
+    Route::post('/stories/batch-progress', [StoryController::class, 'batchProgressSync']);
     Route::get('/stories/series', [StoryController::class, 'seriesIndex']);
     Route::post('/stories/series/assign', [StoryController::class, 'assignSeries']);
     Route::post('/stories/series/auto-detect', [StoryController::class, 'autoDetectSeries']);

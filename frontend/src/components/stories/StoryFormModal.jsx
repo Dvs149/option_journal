@@ -381,7 +381,13 @@ export default function StoryFormModal({
             </div>
             <div>
               <h3 className="text-base sm:text-lg font-bold text-white light:text-slate-900 flex items-center gap-2 flex-wrap">
-                <span>{initialData ? 'Edit Story' : 'Add New Story'}</span>
+                <span>
+                  {initialData?.isNextPart
+                    ? `Add Part ${partNumber || ''} to Series`
+                    : initialData?.id
+                    ? 'Edit Story'
+                    : 'Add New Story'}
+                </span>
                 {isSeries && seriesName && (
                   <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/30">
                     {seriesName} · Part {partNumber || 1}
@@ -962,7 +968,9 @@ export default function StoryFormModal({
                 <CheckCircle2 className="w-4 h-4" />
                 {isLoading
                   ? 'Saving...'
-                  : initialData
+                  : initialData?.isNextPart
+                  ? 'Save Part'
+                  : initialData?.id
                   ? 'Update Story'
                   : 'Save Story'}
               </button>

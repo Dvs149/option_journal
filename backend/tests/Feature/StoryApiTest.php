@@ -307,4 +307,112 @@ class StoryApiTest extends TestCase
         $this->assertEquals('Ancient Eastern Parable Series', $s2->fresh()->series_name);
         $this->assertEquals(2, $s2->fresh()->part_number);
     }
+
+    public function test_offline_bundle_and_batch_progress_sync(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('test_token')->plainTextToken;
+
+        $s1 = Story::create([
+            'user_id' => $user->id,
+            'title' => 'Story Alpha',
+            'author' => 'Author A',
+            'category' => 'Fiction',
+            'content' => 'Paragraph one.\n\nParagraph two.\n\nParagraph three.',
+            'status' => 'unread',
+            'reading_progress' => 0,
+        ]);
+        $s2 = Story::create([
+            'user_id' => $user->id,
+            'title' => 'Story Beta',
+            'author' => 'Author B',
+            'category' => 'Wisdom',
+            'content' => 'Wisdom content paragraph.',
+            'status' => 'unread',
+            'reading_progress' => 0,
+        ]);
+
+        // 1. Test offline bundle endpoint
+        $bundleRes = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/stories/offline-bundle');
+
+        $bundleRes->assertStatus(200)
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('count', 2)
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('stats.total_stories', 2);
+
+        // 2. Test batch progress sync (simulating reading while offline)
+        $batchRes = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/stories/batch-progress', [
+                'updates' => [
+                    [
+                        'story_id' => $s1->id,
+                        'progress' => 65,
+                        'paragraph_index' => 2,
+                    ],
+                    [
+                        'story_id' => $s2->id,
+                        'progress' => 100,
+                        'paragraph_index' => 1,
+                    ],
+                ],
+            ]);
+
+        $batchRes->assertStatus(200)
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('synced_count', 2);
+
+        $s1Fresh = $s1->fresh();
+        $this->assertEquals(65, $s1Fresh->reading_progress);
+        $this->assertEquals(2, $s1Fresh->last_read_paragraph);
+        $this->assertEquals('reading', $s1Fresh->status);
+
+        $s2Fresh = $s2->fresh();
+        $this->assertEquals(100, $s2Fresh->reading_progress);
+        $this->assertEquals(1, $s2Fresh->last_read_paragraph);
+        $this->assertEquals('completed', $s2Fresh->status);
+    }
+
+    public function test_create_next_part_for_story_with_parent_story_link(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('test_token')->plainTextToken;
+
+        // Standalone story (no series yet)
+        $parentStory = Story::create([
+            'user_id' => $user->id,
+            'title' => 'The Whispering Ledger of Amsterdam',
+            'author' => 'Historical Fiction',
+            'category' => 'History & Commerce',
+            'content' => 'First part narrative in Amsterdam.',
+            'status' => 'unread',
+        ]);
+
+        $this->assertNull($parentStory->series_name);
+        $this->assertNull($parentStory->part_number);
+
+        // User clicks "+ Add next part" which sends parent_story_id, series_name, part_number = 2
+        $res = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson('/api/stories', [
+                'title' => 'Part 2',
+                'series_name' => 'The Whispering Ledger of Amsterdam',
+                'part_number' => 2,
+                'parent_story_id' => $parentStory->id,
+                'content' => 'Second part narrative in Amsterdam continues.',
+            ]);
+
+        $res->assertStatus(201)
+            ->assertJsonPath('status', 'success')
+            ->assertJsonPath('data.part_number', 2)
+            ->assertJsonPath('data.series_name', 'The Whispering Ledger of Amsterdam');
+
+        // Check parent story now automatically got assigned Part 1 in that series
+        $parentFresh = $parentStory->fresh();
+        $this->assertEquals('The Whispering Ledger of Amsterdam', $parentFresh->series_name);
+        $this->assertEquals(1, $parentFresh->part_number);
+
+        // And sibling parts includes both Part 1 and Part 2
+        $this->assertCount(2, $res->json('data.sibling_parts'));
+    }
 }

@@ -25,12 +25,26 @@ import {
   Eye,
   Layers,
   CopyPlus,
+  Wifi,
+  WifiOff,
+  HardDriveDownload,
+  CheckCheck,
+  RefreshCw,
 } from 'lucide-react';
 import api from '../api/client';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
 import { getPaginationPages } from '../utils/pagination';
 import { extractFirstImageUrl, cleanStorySummary } from '../utils/storyFormatter';
+import {
+  cacheStoriesChunked,
+  getOfflineStories,
+  getOfflineStory,
+  saveOfflineProgress,
+  syncOfflineQueue,
+  syncOfflineBundle,
+  getOfflineStatus,
+} from '../utils/storyOfflineStorage';
 import StoryFormModal from '../components/stories/StoryFormModal';
 import StoryReaderModal from '../components/stories/StoryReaderModal';
 import ConfirmationModal from '../components/common/ConfirmationModal';
@@ -127,9 +141,107 @@ export default function Stories() {
   const [seriesManagerOpen, setSeriesManagerOpen] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
 
+  // Offline support state
+  const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
+  const [offlineStatus, setOfflineStatus] = useState({
+    cached_count: 0,
+    is_offline_ready: false,
+    pending_queue_count: 0,
+  });
+  const [isSyncingOffline, setIsSyncingOffline] = useState(false);
+  const [offlineSyncProgress, setOfflineSyncProgress] = useState(null);
+
+  // Monitor network status and sync pending progress queue when online
+  useEffect(() => {
+    const handleOnline = async () => {
+      setIsOffline(false);
+      showToast('success', 'Back online! Syncing reading progress...');
+      try {
+        const syncRes = await syncOfflineQueue(api);
+        if (syncRes && syncRes.synced > 0) {
+          showToast('success', `Synced ${syncRes.synced} offline reading progress updates`);
+        }
+      } catch (e) {
+        console.warn('Queue sync error:', e);
+      }
+      fetchStories();
+      getOfflineStatus().then(setOfflineStatus).catch(() => {});
+    };
+
+    const handleOffline = () => {
+      setIsOffline(true);
+      showToast('info', 'Offline mode active. All cached stories remain available.');
+      getOfflineStatus().then(setOfflineStatus).catch(() => {});
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    getOfflineStatus().then(setOfflineStatus).catch(() => {});
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [showToast]);
+
+  // Background bundle sync: runs during idle time after mount to ensure ALL stories are cached offline
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (typeof navigator !== 'undefined' && navigator.onLine && !isSyncingOffline) {
+        syncOfflineBundle(api)
+          .then((res) => {
+            if (res && res.count > 0) {
+              getOfflineStatus().then(setOfflineStatus);
+            }
+          })
+          .catch(() => {});
+      }
+    }, 2800);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   // Fetch stories
   const fetchStories = useCallback(async () => {
     setLoading(true);
+
+    // If browser is offline, directly load from IndexedDB
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      setIsOffline(true);
+      try {
+        const offlineRes = await getOfflineStories({
+          page,
+          per_page: perPage,
+          sort_by: sortBy,
+          sort_order: sortOrder,
+          search,
+          category: selectedCategory,
+          series_name: selectedSeries !== 'all' && !selectedSeries.startsWith('__') ? selectedSeries : undefined,
+          series_filter:
+            selectedSeries === '__series_only__'
+              ? 'series_only'
+              : selectedSeries === '__standalone_only__'
+              ? 'standalone_only'
+              : undefined,
+          status: statusFilter !== 'all' && statusFilter !== 'series_only' ? statusFilter : undefined,
+          is_favorite: statusFilter === 'favorites' ? 1 : undefined,
+        });
+        setStories(offlineRes.data || []);
+        setTotalPages(offlineRes.last_page || 1);
+        setTotalCount(offlineRes.total || 0);
+        if (offlineRes.stats) {
+          setStats(offlineRes.stats);
+        }
+      } catch (err) {
+        console.error('Failed to load offline stories:', err);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Online request
     try {
       const params = {
         page,
@@ -167,20 +279,117 @@ export default function Stories() {
         if (res.data.stats) {
           setStats(res.data.stats);
         }
+        setIsOffline(false);
+
+        // Background non-blocking cache of fetched stories & stats (zero lag via idle callback)
+        cacheStoriesChunked(res.data.data || [], res.data.stats).catch(() => {});
       }
     } catch (err) {
-      console.error('Failed to load stories:', err);
-      showToast('error', 'Failed to load stories');
+      console.warn('Network request failed, falling back to offline IndexedDB cache:', err);
+      try {
+        const offlineRes = await getOfflineStories({
+          page,
+          per_page: perPage,
+          sort_by: sortBy,
+          sort_order: sortOrder,
+          search,
+          category: selectedCategory,
+          series_name: selectedSeries !== 'all' && !selectedSeries.startsWith('__') ? selectedSeries : undefined,
+          series_filter:
+            selectedSeries === '__series_only__'
+              ? 'series_only'
+              : selectedSeries === '__standalone_only__'
+              ? 'standalone_only'
+              : undefined,
+          status: statusFilter !== 'all' && statusFilter !== 'series_only' ? statusFilter : undefined,
+          is_favorite: statusFilter === 'favorites' ? 1 : undefined,
+        });
+        if (offlineRes && offlineRes.data.length > 0) {
+          setStories(offlineRes.data);
+          setTotalPages(offlineRes.last_page || 1);
+          setTotalCount(offlineRes.total || 0);
+          if (offlineRes.stats) {
+            setStats(offlineRes.stats);
+          }
+          setIsOffline(true);
+          showToast('info', 'Loaded from offline storage');
+        } else {
+          showToast('error', 'Failed to load stories');
+        }
+      } catch (offlineErr) {
+        showToast('error', 'Failed to load stories');
+      }
     } finally {
       setLoading(false);
+      getOfflineStatus().then(setOfflineStatus).catch(() => {});
     }
   }, [page, perPage, sortBy, sortOrder, search, selectedCategory, selectedSeries, statusFilter, showToast]);
 
-  const handleAddNextPart = (story) => {
-    const nextPartNum = (story.part_number || 1) + 1;
+  // Manual trigger for downloading and caching all stories offline
+  const handleManualOfflineSync = async () => {
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      showToast('info', 'You are currently offline. Local cache is active.');
+      return;
+    }
+    setIsSyncingOffline(true);
+    setOfflineSyncProgress({ current: 0, total: stats.total_stories || 100, percent: 0 });
+    try {
+      const result = await syncOfflineBundle(api, (progress) => {
+        setOfflineSyncProgress(progress);
+      });
+      if (result.success) {
+        showToast('success', `All ${result.count} stories cached for offline reading!`);
+        const status = await getOfflineStatus();
+        setOfflineStatus(status);
+      }
+    } catch (err) {
+      console.error('Offline sync failed:', err);
+      showToast('error', 'Failed to complete offline cache sync');
+    } finally {
+      setIsSyncingOffline(false);
+      setOfflineSyncProgress(null);
+    }
+  };
+
+  const extractBaseSeriesName = (title) => {
+    if (!title) return '';
+    return (
+      title
+        .replace(/\s*[-–—:|]\s*(part|chapter|ch\.?|pt\.?|episode|ep\.?)\s*\d+.*$/i, '')
+        .replace(/\s+(part|chapter|ch\.?|pt\.?|episode|ep\.?)\s*\d+.*$/i, '')
+        .trim() || title
+    );
+  };
+
+  const handleAddNextPart = async (story) => {
+    const rawSeries = story.series_name || extractBaseSeriesName(story.title);
+    const seriesName = rawSeries ? rawSeries.trim() : '';
+
+    let nextPartNum = (story.part_number || 1) + 1;
+    try {
+      if (story.id) {
+        const partsRes = await api.get(`/stories/${story.id}/parts`);
+        if (partsRes.data?.data?.length > 0) {
+          const maxPart = Math.max(...partsRes.data.data.map((p) => p.part_number || 1));
+          nextPartNum = maxPart + 1;
+        }
+      } else if (seriesName) {
+        const matching = stories.filter(
+          (s) => (s.series_name || '').toLowerCase() === seriesName.toLowerCase()
+        );
+        if (matching.length > 0) {
+          const maxPart = Math.max(...matching.map((p) => p.part_number || 1));
+          nextPartNum = maxPart + 1;
+        }
+      }
+    } catch (e) {
+      // fallback
+    }
+
     setEditingStory({
       isNextPart: true,
-      series_name: story.series_name || story.title,
+      parent_story_id: story.id || null,
+      series_name: seriesName,
       part_number: nextPartNum,
       title: `Part ${nextPartNum}`,
       author: story.author || '',
@@ -199,7 +408,10 @@ export default function Stories() {
   const handleSaveStory = async (payload) => {
     setFormSubmitting(true);
     try {
-      if (editingStory) {
+      // Only treat as update if editingStory has an id and is NOT creating a next part
+      const isUpdatingExisting = Boolean(editingStory && editingStory.id && !editingStory.isNextPart);
+
+      if (isUpdatingExisting) {
         const res = await api.put(`/stories/${editingStory.id}`, payload);
         if (res.data && res.data.status === 'success') {
           showToast('success', 'Story updated successfully');
@@ -212,10 +424,21 @@ export default function Stories() {
           fetchStories();
         }
       } else {
-        const res = await api.post('/stories', payload);
+        const postPayload = { ...payload };
+        if (editingStory?.isNextPart && editingStory?.parent_story_id) {
+          postPayload.parent_story_id = editingStory.parent_story_id;
+        }
+
+        const res = await api.post('/stories', postPayload);
         if (res.data && res.data.status === 'success') {
-          showToast('success', 'New story created');
+          showToast(
+            'success',
+            editingStory?.isNextPart
+              ? `Part ${payload.part_number || ''} added to series!`
+              : 'New story created'
+          );
           setFormModalOpen(false);
+          setEditingStory(null);
           fetchStories();
         }
       }
@@ -275,59 +498,87 @@ export default function Stories() {
     }
   };
 
-  // Update Progress from reader
+  // Update Progress from reader (works both online and 100% offline)
   const handleUpdateProgress = async (id, progress, paragraphIndex = null) => {
+    // 1. Immediately update UI state
+    setStories((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? {
+              ...s,
+              reading_progress: Math.max(s.reading_progress || 0, progress),
+              last_read_paragraph: typeof paragraphIndex === 'number' ? paragraphIndex : s.last_read_paragraph,
+              status: progress >= 95 ? 'completed' : progress > 0 ? 'reading' : s.status,
+              last_read_at: new Date().toISOString(),
+            }
+          : s
+      )
+    );
+    if (readingStory && readingStory.id === id) {
+      setReadingStory((prev) => ({
+        ...prev,
+        reading_progress: Math.max(prev?.reading_progress || 0, progress),
+        last_read_paragraph: typeof paragraphIndex === 'number' ? paragraphIndex : prev?.last_read_paragraph,
+        status: progress >= 95 ? 'completed' : progress > 0 ? 'reading' : prev?.status,
+        last_read_at: new Date().toISOString(),
+      }));
+    }
+
+    // 2. Persist to non-blocking IndexedDB and enqueue for sync
     try {
-      const payload = { progress };
-      if (typeof paragraphIndex === 'number') {
-        payload.paragraph_index = paragraphIndex;
-      }
-      const res = await api.patch(`/stories/${id}/progress`, payload);
-      if (res.data && res.data.status === 'success') {
-        const updated = res.data.data;
-        setStories((prev) =>
-          prev.map((s) =>
-            s.id === id
-              ? {
-                  ...s,
-                  reading_progress: updated.reading_progress,
-                  last_read_paragraph: updated.last_read_paragraph,
-                  status: updated.status,
-                  last_read_at: updated.last_read_at,
-                }
-              : s
-          )
-        );
-        if (readingStory && readingStory.id === id) {
-          setReadingStory((prev) => ({
-            ...prev,
-            reading_progress: updated.reading_progress,
-            last_read_paragraph: updated.last_read_paragraph,
-            status: updated.status,
-            last_read_at: updated.last_read_at,
-          }));
+      await saveOfflineProgress(id, progress, paragraphIndex);
+    } catch (e) {
+      console.warn('Offline storage progress save error:', e);
+    }
+
+    // 3. If online, send to API in background
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      try {
+        const payload = { progress };
+        if (typeof paragraphIndex === 'number') {
+          payload.paragraph_index = paragraphIndex;
         }
+        await api.patch(`/stories/${id}/progress`, payload);
+      } catch (err) {
+        console.warn('Progress API call failed, kept in offline queue:', err);
       }
-    } catch (err) {
-      console.error('Failed to update progress:', err);
     }
   };
 
-  // Open Reader Mode
+  // Open Reader Mode (resolves complete content from local cache if offline)
   const handleOpenReader = async (story) => {
-    setReadingStory(story);
-    setReaderOpen(true);
-    // Ping API to update last_read_at and transition unread to reading
-    try {
-      const res = await api.get(`/stories/${story.id}`);
-      if (res.data && res.data.data) {
-        setReadingStory(res.data.data);
-        setStories((prev) =>
-          prev.map((s) => (s.id === story.id ? res.data.data : s))
-        );
+    let storyToRead = story;
+
+    // If story has no content or browser is offline, retrieve full story from IndexedDB
+    if (!story.content || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+      try {
+        const cached = await getOfflineStory(story.id);
+        if (cached && cached.content) {
+          storyToRead = cached;
+        }
+      } catch (e) {
+        console.warn('Could not read cached story:', e);
       }
-    } catch (e) {
-      console.warn('Reader load:', e);
+    }
+
+    setReadingStory(storyToRead);
+    setReaderOpen(true);
+
+    // If online, ping API to update last_read_at and sync server fields
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      try {
+        const res = await api.get(`/stories/${story.id}`);
+        if (res.data && res.data.data) {
+          setReadingStory(res.data.data);
+          setStories((prev) =>
+            prev.map((s) => (s.id === story.id ? res.data.data : s))
+          );
+          // Keep cache in sync in idle callback
+          cacheStoriesChunked([res.data.data]).catch(() => {});
+        }
+      } catch (e) {
+        console.warn('Reader load error:', e);
+      }
     }
   };
 
@@ -425,13 +676,61 @@ export default function Stories() {
             <button
               type="button"
               onClick={handleSeedSamples}
-              disabled={isSeeding}
-              className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-200 text-slate-300 light:text-slate-700 hover:text-white light:hover:text-slate-900 hover:border-blue-500/50 transition-all flex items-center gap-1.5 shadow-sm"
+              disabled={isSeeding || isOffline}
+              className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-200 text-slate-300 light:text-slate-700 hover:text-white light:hover:text-slate-900 hover:border-blue-500/50 transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50"
               title="Add 3 curated sample stories"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               {isSeeding ? 'Adding...' : 'Sample Stories'}
             </button>
+
+            {/* Offline Cache Status / Sync Button */}
+            {isOffline ? (
+              <div
+                className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-amber-500/15 border border-amber-500/30 text-amber-300 flex items-center gap-1.5 shadow-sm"
+                title="Reading stories from local IndexedDB cache"
+              >
+                <WifiOff className="w-3.5 h-3.5 text-amber-400" />
+                <span>Offline Mode</span>
+                {offlineStatus.cached_count > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-md text-[10px] bg-amber-500/20 text-amber-300 font-mono font-bold">
+                    {offlineStatus.cached_count}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleManualOfflineSync}
+                disabled={isSyncingOffline}
+                className="px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#0e1626] light:bg-white border border-[#1e293b] light:border-slate-200 text-slate-300 light:text-slate-700 hover:text-white light:hover:text-slate-900 hover:border-sky-500/50 transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-70"
+                title={
+                  offlineStatus.is_offline_ready
+                    ? `All stories cached for offline reading (${offlineStatus.cached_count} saved). Click to refresh cache.`
+                    : 'Download and cache all stories for offline reading'
+                }
+              >
+                {isSyncingOffline ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 text-sky-400 animate-spin" />
+                    <span>Caching {offlineSyncProgress?.percent || 0}%...</span>
+                  </>
+                ) : offlineStatus.is_offline_ready ? (
+                  <>
+                    <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Offline Ready</span>
+                    <span className="px-1.5 py-0.2 rounded-md text-[10px] bg-emerald-500/20 text-emerald-400 font-mono font-bold">
+                      {offlineStatus.cached_count}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <HardDriveDownload className="w-3.5 h-3.5 text-sky-400" />
+                    <span>Cache for Offline</span>
+                  </>
+                )}
+              </button>
+            )}
 
             {/* Add Story Button */}
             <button
@@ -451,6 +750,45 @@ export default function Stories() {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto w-full px-4 sm:px-8 py-6 space-y-6">
+        {/* Offline Banner when disconnected */}
+        {isOffline && (
+          <div className="rounded-2xl p-4 bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border border-amber-500/30 text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md animate-fadeIn">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center flex-shrink-0">
+                <WifiOff className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="text-sm font-bold text-amber-100">
+                    Offline Reading Mode Active
+                  </h4>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-500/20 text-amber-300 font-mono">
+                    {stats.total_stories || offlineStatus.cached_count} Stories Available Offline
+                  </span>
+                </div>
+                <p className="text-xs text-amber-300/80 mt-0.5">
+                  You are reading directly from your local browser storage. All chapters, formatted paragraphs, bookmarks, and images are fully accessible without an internet connection.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof navigator !== 'undefined' && navigator.onLine) {
+                  setIsOffline(false);
+                  fetchStories();
+                  showToast('success', 'Connection restored! Syncing...');
+                } else {
+                  showToast('info', 'Still offline. You can continue reading cached stories.');
+                }
+              }}
+              className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 transition-colors flex items-center gap-1.5 whitespace-nowrap self-end sm:self-center"
+            >
+              <RefreshCw className="w-3 h-3" />
+              Check Connection
+            </button>
+          </div>
+        )}
         {/* KPI Summary Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
           {/* Total Stories */}

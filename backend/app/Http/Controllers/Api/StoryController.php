@@ -127,9 +127,22 @@ class StoryController extends Controller
             'tags' => ['nullable'],
             'status' => ['nullable', 'string', 'in:unread,reading,completed'],
             'is_favorite' => ['nullable', 'boolean'],
+            'parent_story_id' => ['nullable', 'integer'],
         ]);
 
         $tags = $this->normalizeTags($validated['tags'] ?? null);
+
+        // If parent_story_id is provided and the parent story does not have a series_name yet,
+        // automatically assign the parent story to this series as Part 1!
+        if (!empty($validated['parent_story_id']) && !empty($validated['series_name'])) {
+            $parent = Story::forUser($request->user()->id)->find($validated['parent_story_id']);
+            if ($parent && empty($parent->series_name)) {
+                $parent->update([
+                    'series_name' => trim($validated['series_name']),
+                    'part_number' => 1,
+                ]);
+            }
+        }
 
         // Auto-assign next part_number if series_name is given without an explicit part_number
         $partNumber = $validated['part_number'] ?? null;
@@ -676,6 +689,118 @@ EOT
         return response()->json([
             'status' => 'success',
             'data' => $result,
+        ]);
+    }
+
+    /**
+     * Get complete offline bundle of all stories for the authenticated user.
+     * Supports optional 'since' timestamp to fetch modified stories.
+     */
+    public function offlineBundle(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $query = Story::forUser($user->id);
+
+        if ($request->filled('since')) {
+            try {
+                $since = Carbon::parse($request->get('since'));
+                $query->where('updated_at', '>=', $since);
+            } catch (\Exception $e) {
+                // If invalid date format, continue with full query
+            }
+        }
+
+        $stories = $query->orderBy('series_name', 'asc')
+            ->orderBy('part_number', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Overall stats for authenticated user
+        $baseQuery = Story::forUser($user->id);
+        $totalStories = (clone $baseQuery)->count();
+        $totalWords = (clone $baseQuery)->sum('word_count');
+        $completedCount = (clone $baseQuery)->where('status', 'completed')->count();
+        $readingCount = (clone $baseQuery)->where('status', 'reading')->count();
+        $favoritesCount = (clone $baseQuery)->where('is_favorite', true)->count();
+        $categories = (clone $baseQuery)->select('category')
+            ->distinct()
+            ->whereNotNull('category')
+            ->pluck('category')
+            ->values();
+
+        $seriesList = (clone $baseQuery)->whereNotNull('series_name')
+            ->where('series_name', '!=', '')
+            ->distinct()
+            ->pluck('series_name')
+            ->values();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $stories,
+            'count' => $stories->count(),
+            'synced_at' => Carbon::now()->toIso8601String(),
+            'stats' => [
+                'total_stories' => $totalStories,
+                'total_words' => (int) $totalWords,
+                'completed_count' => $completedCount,
+                'reading_count' => $readingCount,
+                'favorites_count' => $favoritesCount,
+                'categories' => $categories,
+                'series_count' => $seriesList->count(),
+                'series_list' => $seriesList,
+            ],
+        ]);
+    }
+
+    /**
+     * Batch sync reading progress recorded while offline.
+     */
+    public function batchProgressSync(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'updates' => ['required', 'array'],
+            'updates.*.story_id' => ['required', 'integer'],
+            'updates.*.progress' => ['required', 'integer', 'min:0', 'max:100'],
+            'updates.*.paragraph_index' => ['nullable', 'integer', 'min:0'],
+            'updates.*.timestamp' => ['nullable', 'string'],
+        ]);
+
+        $user = $request->user();
+        $synced = [];
+
+        foreach ($validated['updates'] as $item) {
+            $story = Story::forUser($user->id)->find($item['story_id']);
+            if (!$story) continue;
+
+            $progress = (int) $item['progress'];
+            $updates = [
+                'reading_progress' => max((int) $story->reading_progress, $progress),
+                'last_read_at' => !empty($item['timestamp']) ? Carbon::parse($item['timestamp']) : Carbon::now(),
+            ];
+
+            if (isset($item['paragraph_index']) && $item['paragraph_index'] !== null) {
+                $updates['last_read_paragraph'] = (int) $item['paragraph_index'];
+            }
+
+            if ($progress >= 95) {
+                $updates['status'] = 'completed';
+            } elseif ($progress > 0 && $story->status === 'unread') {
+                $updates['status'] = 'reading';
+            }
+
+            $story->update($updates);
+            $synced[] = [
+                'id' => $story->id,
+                'reading_progress' => $story->reading_progress,
+                'last_read_paragraph' => $story->last_read_paragraph,
+                'status' => $story->status,
+            ];
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'synced_count' => count($synced),
+            'synced' => $synced,
         ]);
     }
 
