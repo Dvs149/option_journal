@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Calendar,
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { getMonthWeekRanges } from '../../context/FilterContext';
 
 export default function Navbar({
   filter,
@@ -43,19 +44,39 @@ export default function Navbar({
     }
   }, [showCustomModal, customFrom, customTo]);
 
-  const filterOptions = [
-    { key: 'today', label: "Today" },
-    { key: 'yesterday', label: "Yesterday" },
-    { key: 'tomorrow', label: "Tomorrow / Next Working Day" },
-    { key: 'this_week', label: "This Week" },
-    { key: 'this_month', label: "This Month" },
-    { key: 'last_month', label: "Last Month" },
-    { key: 'this_year', label: "This Year" },
-    { key: 'all', label: "All Time" },
-    { key: 'custom', label: "Custom Range..." },
-  ];
+  const monthWeeks = useMemo(() => getMonthWeekRanges(), []);
 
-  const currentLabel = filterOptions.find((o) => o.key === filter)?.label || 'This Month';
+  const filterOptions = useMemo(() => {
+    return [
+      { key: 'today', label: "Today" },
+      { key: 'yesterday', label: "Yesterday" },
+      { key: 'tomorrow', label: "Tomorrow / Next Working Day" },
+      { key: 'this_week', label: "This Week" },
+      // Weeks of current month
+      ...monthWeeks.map((w) => ({
+        key: w.key,
+        label: w.label,
+        dateHint: w.dateHint,
+        isCurrent: w.isCurrent,
+      })),
+      { key: 'this_month', label: "This Month" },
+      { key: 'last_month', label: "Last Month" },
+      { key: 'this_year', label: "This Year" },
+      { key: 'all', label: "All Time" },
+      { key: 'custom', label: "Custom Range..." },
+    ];
+  }, [monthWeeks]);
+
+  const currentLabel = useMemo(() => {
+    const found = filterOptions.find((o) => o.key === filter);
+    if (found) return found.label;
+    if (filter === 'week_1' || filter === '1st_week') return '1st Week';
+    if (filter === 'week_2' || filter === '2nd_week') return '2nd Week';
+    if (filter === 'week_3' || filter === '3rd_week') return '3rd Week';
+    if (filter === 'week_4' || filter === '4th_week') return '4th Week';
+    if (filter === 'week_5' || filter === '5th_week') return '5th Week';
+    return 'This Month';
+  }, [filter, filterOptions]);
 
   return (
     <header className="h-16 px-4 md:px-8 border-b border-[#1e293b] light:border-slate-200 bg-[#0e1626]/80 light:bg-white/80 backdrop-blur-md flex items-center justify-between sticky top-0 z-30">
@@ -87,7 +108,7 @@ export default function Navbar({
           </button>
 
           {showFilterDropdown && (
-            <div className="absolute left-0 mt-2 w-56 sm:w-60 rounded-xl bg-[#162033] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-2xl py-1 z-50">
+            <div className="absolute left-0 mt-2 w-64 rounded-xl bg-[#162033] light:bg-white border border-[#1e293b] light:border-slate-200 shadow-2xl py-1 z-50 max-h-[85vh] overflow-y-auto">
               {filterOptions.map((opt) => (
                 <button
                   key={opt.key}
@@ -99,13 +120,37 @@ export default function Navbar({
                       onFilterChange(opt.key);
                     }
                   }}
-                  className={`w-full text-left px-3.5 py-2 text-xs font-medium transition-colors ${
+                  className={`w-full text-left px-3.5 py-2 text-xs font-medium transition-colors flex items-center justify-between ${
                     filter === opt.key
                       ? 'bg-blue-600 text-white font-semibold'
                       : 'text-slate-300 light:text-slate-700 hover:bg-[#1f2d47] light:hover:bg-slate-100'
                   }`}
                 >
-                  {opt.label}
+                  <span className="flex items-center gap-1.5 min-w-0">
+                    <span className="truncate">{opt.label}</span>
+                    {opt.isCurrent && (
+                      <span
+                        className={`text-[9px] px-1.5 py-0.2 rounded font-semibold uppercase shrink-0 ${
+                          filter === opt.key
+                            ? 'bg-white/20 text-white'
+                            : 'bg-blue-500/15 text-blue-400 light:bg-blue-100 light:text-blue-700'
+                        }`}
+                      >
+                        Current
+                      </span>
+                    )}
+                  </span>
+                  {opt.dateHint && (
+                    <span
+                      className={`text-[10px] font-mono shrink-0 ml-2 ${
+                        filter === opt.key
+                          ? 'text-blue-100'
+                          : 'text-slate-400 light:text-slate-500'
+                      }`}
+                    >
+                      {opt.dateHint}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

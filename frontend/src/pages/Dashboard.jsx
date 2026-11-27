@@ -51,6 +51,16 @@ export default function Dashboard() {
       case 'next_working_day':
         return 'Tomorrow / Next Working Day';
       case 'this_week': return 'This Week';
+      case 'week_1':
+      case '1st_week': return '1st Week';
+      case 'week_2':
+      case '2nd_week': return '2nd Week';
+      case 'week_3':
+      case '3rd_week': return '3rd Week';
+      case 'week_4':
+      case '4th_week': return '4th Week';
+      case 'week_5':
+      case '5th_week': return '5th Week';
       case 'this_month': return 'This Month';
       case 'last_month': return 'Last Month';
       case 'this_year': return 'This Year';
@@ -67,6 +77,16 @@ export default function Dashboard() {
       case 'tomorrow':
       case 'next_working_day': return "Next Day's";
       case 'this_week': return "This Week's";
+      case 'week_1':
+      case '1st_week': return "1st Week's";
+      case 'week_2':
+      case '2nd_week': return "2nd Week's";
+      case 'week_3':
+      case '3rd_week': return "3rd Week's";
+      case 'week_4':
+      case '4th_week': return "4th Week's";
+      case 'week_5':
+      case '5th_week': return "5th Week's";
       case 'this_month': return "This Month's";
       case 'last_month': return "Last Month's";
       case 'this_year': return "This Year's";

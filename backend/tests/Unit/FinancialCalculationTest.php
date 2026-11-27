@@ -144,4 +144,31 @@ class FinancialCalculationTest extends TestCase
         $this->assertNull($allStart);
         $this->assertNull($allEnd);
     }
+
+    public function test_resolve_date_range_for_weeks_of_month(): void
+    {
+        $today = \Carbon\Carbon::today('Asia/Kolkata');
+        $daysInMonth = $today->daysInMonth;
+        $monthPrefix = $today->format('Y-m');
+
+        [$w1Start, $w1End] = $this->analyticsService->resolveDateRange('week_1');
+        $this->assertEquals("{$monthPrefix}-01", $w1Start);
+        $this->assertEquals(sprintf('%s-%02d', $monthPrefix, min(7, $daysInMonth)), $w1End);
+
+        [$w2Start, $w2End] = $this->analyticsService->resolveDateRange('2nd_week');
+        $this->assertEquals(sprintf('%s-%02d', $monthPrefix, min(8, $daysInMonth)), $w2Start);
+        $this->assertEquals(sprintf('%s-%02d', $monthPrefix, min(14, $daysInMonth)), $w2End);
+
+        [$w3Start, $w3End] = $this->analyticsService->resolveDateRange('week_3');
+        $this->assertEquals(sprintf('%s-%02d', $monthPrefix, min(15, $daysInMonth)), $w3Start);
+        $this->assertEquals(sprintf('%s-%02d', $monthPrefix, min(21, $daysInMonth)), $w3End);
+
+        [$w4Start, $w4End] = $this->analyticsService->resolveDateRange('4th_week');
+        $this->assertEquals(sprintf('%s-%02d', $monthPrefix, min(22, $daysInMonth)), $w4Start);
+        $this->assertEquals(sprintf('%s-%02d', $monthPrefix, min(28, $daysInMonth)), $w4End);
+
+        [$w5Start, $w5End] = $this->analyticsService->resolveDateRange('week_5');
+        $this->assertEquals(sprintf('%s-%02d', $monthPrefix, min(29, $daysInMonth)), $w5Start);
+        $this->assertEquals($today->copy()->endOfMonth()->toDateString(), $w5End);
+    }
 }

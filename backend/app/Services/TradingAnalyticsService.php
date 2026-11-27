@@ -49,6 +49,41 @@ class TradingAnalyticsService
                     $today->copy()->startOfWeek()->toDateString(),
                     $today->copy()->endOfWeek()->toDateString(),
                 ];
+            case 'week_1':
+            case '1st_week': {
+                $daysInMonth = $today->daysInMonth;
+                $start = $today->copy()->startOfMonth();
+                $end = $today->copy()->day(min(7, $daysInMonth));
+                return [$start->toDateString(), $end->toDateString()];
+            }
+            case 'week_2':
+            case '2nd_week': {
+                $daysInMonth = $today->daysInMonth;
+                $start = $today->copy()->day(min(8, $daysInMonth));
+                $end = $today->copy()->day(min(14, $daysInMonth));
+                return [$start->toDateString(), $end->toDateString()];
+            }
+            case 'week_3':
+            case '3rd_week': {
+                $daysInMonth = $today->daysInMonth;
+                $start = $today->copy()->day(min(15, $daysInMonth));
+                $end = $today->copy()->day(min(21, $daysInMonth));
+                return [$start->toDateString(), $end->toDateString()];
+            }
+            case 'week_4':
+            case '4th_week': {
+                $daysInMonth = $today->daysInMonth;
+                $start = $today->copy()->day(min(22, $daysInMonth));
+                $end = $today->copy()->day(min(28, $daysInMonth));
+                return [$start->toDateString(), $end->toDateString()];
+            }
+            case 'week_5':
+            case '5th_week': {
+                $daysInMonth = $today->daysInMonth;
+                $start = $today->copy()->day(min(29, $daysInMonth));
+                $end = $today->copy()->endOfMonth();
+                return [$start->toDateString(), $end->toDateString()];
+            }
             case '7d':
                 return [
                     $today->copy()->subDays(6)->toDateString(),

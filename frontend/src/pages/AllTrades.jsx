@@ -49,7 +49,7 @@ import api from '../api/client';
 import { formatINR, formatDate, formatTime, formatDateTime, getDayOfWeek } from '../utils/formatters';
 import { useLotSizes } from '../context/LotSizeContext';
 import { useToast } from '../context/ToastContext';
-import { useFilter } from '../context/FilterContext';
+import { useFilter, getMonthWeekRanges } from '../context/FilterContext';
 import { useBrokerage } from '../context/BrokerageContext';
 import { useDropdown } from '../context/DropdownContext';
 import { useTheme } from '../context/ThemeContext';
@@ -1789,6 +1789,10 @@ export default function AllTrades() {
                       { key: 'yesterday', label: 'Yesterday' },
                       { key: 'tomorrow', label: 'Next Working Day' },
                       { key: 'this_week', label: 'This Week' },
+                      ...getMonthWeekRanges().map((w) => ({
+                        key: w.key,
+                        label: w.label,
+                      })),
                       { key: 'this_year', label: 'This Year' },
                       { key: 'all', label: 'All Time' },
                     ].map((preset) => (
