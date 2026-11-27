@@ -415,4 +415,77 @@ class StoryApiTest extends TestCase
         // And sibling parts includes both Part 1 and Part 2
         $this->assertCount(2, $res->json('data.sibling_parts'));
     }
+
+    public function test_cross_device_last_read_story_sync(): void
+    {
+        $user = User::factory()->create();
+        $token = $user->createToken('test_token')->plainTextToken;
+
+        $story1 = Story::create([
+            'user_id' => $user->id,
+            'title' => 'Story One',
+            'author' => 'Author A',
+            'category' => 'Philosophy',
+            'content' => 'Paragraph one. Paragraph two.',
+            'status' => 'unread',
+        ]);
+
+        $story2 = Story::create([
+            'user_id' => $user->id,
+            'title' => 'Story Two',
+            'author' => 'Author B',
+            'category' => 'Fiction',
+            'content' => 'First line of second story.',
+            'status' => 'unread',
+        ]);
+
+        // 1. Initial listing returns stories
+        $res = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/stories');
+        $res->assertStatus(200);
+
+        // 2. User reads story 1 on Device A via /api/stories/{id}/last-read
+        $postRes = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson("/api/stories/{$story1->id}/last-read");
+        $postRes->assertStatus(200)
+            ->assertJsonPath('status', 'success');
+
+        $this->assertEquals($story1->id, $user->fresh()->last_read_story_id);
+
+        // 3. User accesses /api/stories/last-read
+        $getLastRes = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/stories/last-read');
+        $getLastRes->assertStatus(200)
+            ->assertJsonPath('data.id', $story1->id);
+
+        // 4. Device B loads stories list -> gets story1 as last_read_story
+        $listRes = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/stories');
+        $listRes->assertStatus(200)
+            ->assertJsonPath('last_read_story.id', $story1->id);
+
+        // 5. User switches to story 2 on Device B and updates progress
+        $progressRes = $this->withHeader('Authorization', "Bearer {$token}")
+            ->patchJson("/api/stories/{$story2->id}/progress", [
+                'progress' => 45,
+                'paragraph_index' => 12,
+            ]);
+        $progressRes->assertStatus(200);
+
+        // Verify DB pointer is now story2
+        $this->assertEquals($story2->id, $user->fresh()->last_read_story_id);
+
+        // 6. Device A refreshes or calls offline-bundle -> receives story2
+        $bundleRes = $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson('/api/stories/offline-bundle');
+        $bundleRes->assertStatus(200)
+            ->assertJsonPath('last_read_story.id', $story2->id);
+
+        // 7. Deleting the active last read story clears pointer gracefully
+        $delRes = $this->withHeader('Authorization', "Bearer {$token}")
+            ->deleteJson("/api/stories/{$story2->id}");
+        $delRes->assertStatus(200);
+
+        $this->assertNull($user->fresh()->last_read_story_id);
+    }
 }

@@ -102,6 +102,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Free Time Stories & Reader
     Route::get('/stories/offline-bundle', [StoryController::class, 'offlineBundle']);
     Route::post('/stories/batch-progress', [StoryController::class, 'batchProgressSync']);
+    Route::get('/stories/last-read', [StoryController::class, 'getLastRead']);
+    Route::post('/stories/{id}/last-read', [StoryController::class, 'setLastRead']);
     Route::get('/stories/series', [StoryController::class, 'seriesIndex']);
     Route::post('/stories/series/assign', [StoryController::class, 'assignSeries']);
     Route::post('/stories/series/auto-detect', [StoryController::class, 'autoDetectSeries']);

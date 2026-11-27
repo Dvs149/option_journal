@@ -89,6 +89,21 @@ class StoryController extends Controller
             ->values();
         $seriesCount = $seriesList->count();
 
+        // Resolve user's last read story from database across all devices
+        $lastReadStory = null;
+        if ($user->last_read_story_id) {
+            $lastReadStory = Story::forUser($user->id)->find($user->last_read_story_id);
+        }
+        if (!$lastReadStory) {
+            $lastReadStory = Story::forUser($user->id)
+                ->whereNotNull('last_read_at')
+                ->latest('last_read_at')
+                ->first();
+            if ($lastReadStory) {
+                $user->update(['last_read_story_id' => $lastReadStory->id]);
+            }
+        }
+
         return response()->json([
             'status' => 'success',
             'data' => $stories->items(),
@@ -96,6 +111,7 @@ class StoryController extends Controller
             'last_page' => $stories->lastPage(),
             'per_page' => $stories->perPage(),
             'total' => $stories->total(),
+            'last_read_story' => $lastReadStory,
             'stats' => [
                 'total_stories' => $totalStories,
                 'total_words' => (int) $totalWords,
@@ -186,6 +202,10 @@ class StoryController extends Controller
     {
         $story = Story::forUser($request->user()->id)->findOrFail($id);
 
+        // Update user's last read story pointer in database for cross-device sync
+        $user = $request->user();
+        $user->update(['last_read_story_id' => $story->id]);
+
         // Update last read timestamp and mark as reading if it was unread
         $updates = ['last_read_at' => Carbon::now()];
         if ($story->status === 'unread') {
@@ -252,6 +272,10 @@ class StoryController extends Controller
     public function destroy(Request $request, int $id): JsonResponse
     {
         $story = Story::forUser($request->user()->id)->findOrFail($id);
+        $user = $request->user();
+        if ($user->last_read_story_id === $story->id) {
+            $user->update(['last_read_story_id' => null]);
+        }
         $story->delete();
 
         return response()->json([
@@ -287,6 +311,10 @@ class StoryController extends Controller
         ]);
 
         $story = Story::forUser($request->user()->id)->findOrFail($id);
+
+        // Update user's last read story pointer in database
+        $user = $request->user();
+        $user->update(['last_read_story_id' => $story->id]);
 
         $progress = $validated['progress'];
         $updates = [
@@ -734,10 +762,26 @@ EOT
             ->pluck('series_name')
             ->values();
 
+        // Resolve user's last read story from database across all devices
+        $lastReadStory = null;
+        if ($user->last_read_story_id) {
+            $lastReadStory = Story::forUser($user->id)->find($user->last_read_story_id);
+        }
+        if (!$lastReadStory) {
+            $lastReadStory = Story::forUser($user->id)
+                ->whereNotNull('last_read_at')
+                ->latest('last_read_at')
+                ->first();
+            if ($lastReadStory) {
+                $user->update(['last_read_story_id' => $lastReadStory->id]);
+            }
+        }
+
         return response()->json([
             'status' => 'success',
             'data' => $stories,
             'count' => $stories->count(),
+            'last_read_story' => $lastReadStory,
             'synced_at' => Carbon::now()->toIso8601String(),
             'stats' => [
                 'total_stories' => $totalStories,
@@ -794,13 +838,75 @@ EOT
                 'reading_progress' => $story->reading_progress,
                 'last_read_paragraph' => $story->last_read_paragraph,
                 'status' => $story->status,
+                'last_read_at' => $story->last_read_at,
             ];
+        }
+
+        if (!empty($synced)) {
+            // Point user's last_read_story_id to the most recently touched story in the batch
+            $latest = collect($synced)->sortByDesc('last_read_at')->first();
+            if ($latest) {
+                $user->update(['last_read_story_id' => $latest['id']]);
+            }
         }
 
         return response()->json([
             'status' => 'success',
             'synced_count' => count($synced),
             'synced' => $synced,
+        ]);
+    }
+
+    /**
+     * Get the active last-read story for the authenticated user across all devices.
+     */
+    public function getLastRead(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $story = null;
+
+        if ($user->last_read_story_id) {
+            $story = Story::forUser($user->id)->find($user->last_read_story_id);
+        }
+
+        if (!$story) {
+            $story = Story::forUser($user->id)
+                ->whereNotNull('last_read_at')
+                ->latest('last_read_at')
+                ->first();
+
+            if ($story) {
+                $user->update(['last_read_story_id' => $story->id]);
+            }
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $story,
+        ]);
+    }
+
+    /**
+     * Explicitly set or update the user's active last-read story across all devices.
+     */
+    public function setLastRead(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+        $story = Story::forUser($user->id)->findOrFail($id);
+
+        $now = Carbon::now();
+        $updates = ['last_read_at' => $now];
+        if ($story->status === 'unread') {
+            $updates['status'] = 'reading';
+        }
+        $story->update($updates);
+
+        $user->update(['last_read_story_id' => $story->id]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Last read story updated successfully',
+            'data' => $story->fresh(),
         ]);
     }
 

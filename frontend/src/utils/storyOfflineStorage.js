@@ -528,11 +528,13 @@ export async function syncOfflineBundle(apiClient, onProgress = null) {
     if (res.data && res.data.status === 'success') {
       const stories = res.data.data || [];
       const stats = res.data.stats || null;
+      const lastReadStory = res.data.last_read_story || null;
       await cacheStoriesChunked(stories, stats, onProgress);
       return {
         success: true,
         count: stories.length,
         stats,
+        last_read_story: lastReadStory,
         synced_at: res.data.synced_at,
       };
     }

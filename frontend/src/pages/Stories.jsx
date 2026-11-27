@@ -206,6 +206,12 @@ export default function Stories() {
             if (res && res.count > 0) {
               getOfflineStatus().then(setOfflineStatus);
             }
+            if (res && res.last_read_story) {
+              setLastReadStory(res.last_read_story);
+              try {
+                localStorage.setItem(STORIES_LAST_READ_KEY, JSON.stringify(res.last_read_story));
+              } catch (e) {}
+            }
           })
           .catch(() => {});
       }
@@ -342,7 +348,22 @@ export default function Stories() {
           setStats(res.data.stats);
         }
         setIsOffline(false);
-        syncLastReadFromList(onlineList);
+
+        // Cross-Device Sync: Single source of truth is the user's last_read_story stored in the database
+        if (res.data.last_read_story) {
+          const serverStory = res.data.last_read_story;
+          setLastReadStory(serverStory);
+          try {
+            localStorage.setItem(STORIES_LAST_READ_KEY, JSON.stringify(serverStory));
+          } catch (e) {}
+        } else if (res.data.last_read_story === null) {
+          setLastReadStory(null);
+          try {
+            localStorage.removeItem(STORIES_LAST_READ_KEY);
+          } catch (e) {}
+        } else {
+          syncLastReadFromList(onlineList);
+        }
 
         // Background non-blocking cache of fetched stories & stats (zero lag via idle callback)
         cacheStoriesChunked(onlineList, res.data.stats).catch(() => {});
@@ -656,6 +677,11 @@ export default function Stories() {
     try {
       localStorage.setItem(STORIES_LAST_READ_KEY, JSON.stringify(metaToSave));
     } catch (e) {}
+
+    // Immediately persist last-read story to database for cross-device synchronization
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      api.post(`/stories/${story.id}/last-read`).catch(() => {});
+    }
 
     // If story has no content or browser is offline, retrieve full story from IndexedDB
     if (!story.content || (typeof navigator !== 'undefined' && !navigator.onLine)) {

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -20,6 +21,7 @@ class User extends Authenticatable
         'username',
         'email',
         'password',
+        'last_read_story_id',
     ];
 
     protected $hidden = [
@@ -78,5 +80,10 @@ class User extends Authenticatable
     public function zerodhaIntegration(): HasOne
     {
         return $this->hasOne(ZerodhaIntegration::class);
+    }
+
+    public function lastReadStory(): BelongsTo
+    {
+        return $this->belongsTo(Story::class, 'last_read_story_id');
     }
 }
