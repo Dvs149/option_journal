@@ -1169,8 +1169,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/app/Models/User.php": {
-    "mtime": 1794562726.0802376,
-    "ast_hash": "9b8c69cf184757a947c68388a58d1ae5",
+    "mtime": 1795756823.6564844,
+    "ast_hash": "6519bf66ddbd21f97fe16e1aa4bc8140",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/app/Models/DropdownOption.php": {
@@ -1444,8 +1444,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/routes/api.php": {
-    "mtime": 1795664497.2523973,
-    "ast_hash": "b1ed9ff2482c2cb7f68cdd25c8d98188",
+    "mtime": 1795756931.3341691,
+    "ast_hash": "2f7fcb0a2ae65ad3392b41aa82fbbb70",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/PROJECT_CONTEXT.md": {
@@ -2179,8 +2179,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/pages/Stories.jsx": {
-    "mtime": 1795701970.5512376,
-    "ast_hash": "6695745aebf6b1ba156984073d13a846",
+    "mtime": 1795757290.659846,
+    "ast_hash": "88538e41c5d38bbfff4c8a2773310332",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/database/migrations/2026_11_25_120000_create_stories_table.php": {
@@ -2199,8 +2199,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/app/Http/Controllers/Api/StoryController.php": {
-    "mtime": 1795665056.1923373,
-    "ast_hash": "24ea9299be3e17d48ec6da996fc11585",
+    "mtime": 1795757170.0541935,
+    "ast_hash": "299222adac86ccb1f492c77cbb14622b",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/tests/Feature/CapitalApiTest.php": {
@@ -2209,8 +2209,8 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/tests/Feature/StoryApiTest.php": {
-    "mtime": 1795665113.5509918,
-    "ast_hash": "f005ebe11d87dbdf579a65be72c197a8",
+    "mtime": 1795757314.396931,
+    "ast_hash": "54708c1dfc630d66cc7ca6611c0117f9",
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/backend/storage/app/public/stories/S8wB0LTgQcdAd3SsuRmhOEJKZyR4avYTnLp1QGew.jpg": {
@@ -2244,8 +2244,13 @@
     "semantic_hash": ""
   },
   "/Users/divyeshlunagariya/mern/option_journal/frontend/src/utils/storyOfflineStorage.js": {
-    "mtime": 1795664564.076476,
-    "ast_hash": "19ce837b6ee4993c35422eda75daf8db",
+    "mtime": 1795757233.2800121,
+    "ast_hash": "c74d028eb3e8795b40e9310c6fddc851",
+    "semantic_hash": ""
+  },
+  "/Users/divyeshlunagariya/mern/option_journal/backend/database/migrations/2026_11_27_110000_add_last_read_story_id_to_users_table.php": {
+    "mtime": 1795756784.0927017,
+    "ast_hash": "b8072e2796adc4a9907c72448e7c00b3",
     "semantic_hash": ""
   }
 }
